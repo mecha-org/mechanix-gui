@@ -112,7 +112,7 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
     final currentValue = controller.value;
     final increment =
         angularVelocity * 0.008; // INCREASED scale factor for faster rotation
-    controller.value = (currentValue + increment) % 1.0;
+    controller.value = (currentValue - increment) % 1.0;
   }
 
   void _handleDragEnd() {
@@ -120,19 +120,8 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
     final player = context.read<SongsBloc>().player;
     player.seek(currentDuration);
 
-    setState(() {
-      _isDraggingVinyl = false;
-    });
-
     // Apply momentum/decay effect
     _startVelocityDecay();
-
-    // Resume normal playback after a short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (widget.isPlaying && !_isDraggingVinyl) {
-        controller.repeat();
-      }
-    });
   }
 
   void _startVelocityDecay() {
@@ -144,6 +133,16 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
       if (_dragRotationVelocity.abs() < 0.1) {
         timer.cancel();
         _dragRotationVelocity = 0.0;
+
+        // NOW it's safe to mark drag as complete and resume rotation
+        setState(() {
+          _isDraggingVinyl = false;
+        });
+
+        // Resume rotation immediately if playing
+        if (mounted && widget.isPlaying) {
+          controller.repeat();
+        }
         return;
       }
 
@@ -178,7 +177,7 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
           animation: controller,
           builder: (context, child) {
             return Transform.rotate(
-              angle: controller.value * 2 * math.pi,
+              angle: -controller.value * 2 * math.pi,
               child: SizedBox(
                 width: 300,
                 height: 300,
@@ -205,6 +204,11 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
         ),
         const ToneArm(),
 
+        Positioned(
+          right: -49,
+          top: -29,
+          child: Image.asset(MusicIcons.toneCircleIcon, height: 57, width: 57),
+        ),
         Positioned(
           bottom: -30,
           left: -30,

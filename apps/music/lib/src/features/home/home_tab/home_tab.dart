@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
@@ -52,22 +53,32 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return Scrollbar(
       controller: scrollController,
-      physics: const BouncingScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 0,
-        children: [
-          TitleWidget(
-            title: "Music",
-            textStyle: TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
-          ).padOnly(left: 16, top: 12),
-          const RecentSong(),
-          const TopPlaylists(),
-          const TopMusic(),
-          const SizedBox(height: 40),
-        ],
+      child: ScrollConfiguration(
+        behavior: const ScrollBehavior().copyWith(
+          overscroll: false,
+          scrollbars: false,
+          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
+        ),
+        child: SingleChildScrollView(
+          controller: scrollController,
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 0,
+            children: [
+              TitleWidget(
+                title: "Music",
+                textStyle: TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
+              ).padOnly(left: 16, top: 12),
+              const RecentSong(),
+              const TopPlaylists(),
+              const TopMusic(),
+              const SizedBox(height: 40),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -76,36 +76,53 @@ class _FavouritesTabState extends State<FavouritesTab> {
 
               BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
                 selector: (state) => state.favouriteSongs,
-                builder:
-                    (context, songs) => SliverPrototypeExtentList(
-                      prototypeItem: const SizedBox(height: 79),
-                      delegate: SliverChildBuilderDelegate(
-                        childCount: songs.length,
-                        (context, index) {
-                          final song = songs[index];
-
-                          return BlocSelector<SongsBloc, SongsState, bool>(
-                            selector:
-                                (state) =>
-                                    state.currentSong?.id == song.id &&
-                                    state.musicMode == MusicMode.favorite,
-                            builder: (context, isCurrentSong) {
-                              return SongTile(
-                                onTap: () {
-                                  context.read<SongsBloc>().add(
-                                    PlayFavoriteSongs(song: song),
-                                  );
-                                },
-                                song: song,
-                                isCurrentSong: isCurrentSong,
-                              );
-                            },
-                          );
-                        },
+                builder: (context, songs) {
+                  if (songs.isEmpty) {
+                    return SliverToBoxAdapter(
+                      child: Container(
+                        margin: EdgeInsets.only(top: 2),
+                        child: Text(
+                          "No liked songs yet",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white70,
+                          ),
+                        ),
                       ),
+                    );
+                  }
+
+                  return SliverPrototypeExtentList(
+                    prototypeItem: const SizedBox(height: 79),
+                    delegate: SliverChildBuilderDelegate(
+                      childCount: songs.length,
+                      (context, index) {
+                        final song = songs[index];
+
+                        return BlocSelector<SongsBloc, SongsState, bool>(
+                          selector:
+                              (state) =>
+                                  state.currentSong?.id == song.id &&
+                                  state.musicMode == MusicMode.favorite,
+                          builder: (context, isCurrentSong) {
+                            return SongTile(
+                              onTap: () {
+                                context.read<SongsBloc>().add(
+                                  PlayFavoriteSongs(song: song),
+                                );
+                              },
+                              song: song,
+                              isCurrentSong: isCurrentSong,
+                            );
+                          },
+                        );
+                      },
                     ),
+                  );
+                },
               ),
-              const SliverToBoxAdapter(child: SizedBox(height: 60)),
+
             ],
           ),
         ),

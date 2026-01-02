@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_music/models/models.dart';
+import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
@@ -20,7 +21,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<TogglePlayPause>(_onTogglePlayPause);
     on<PlayNext>(_onPlayNext);
     on<PlayPrevious>(_onPlayPrevious);
-    on<ShuffleToggle>(_shuffleToggle);
     on<MusicTabSwitch>(_musicTabSwitch);
     on<FavouriteToggle>(_onToggleFavourite);
     on<DeleteSong>(_onDeleteSong);
@@ -50,31 +50,20 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<AddPlaylistToQueue>(_addPlaylistToQueue);
     on<PlayFavoriteSongs>(playFavouriteSongs);
     on<ToggleScrolling>(toggleScrolling);
+    on<SetRepeatMode>(_onSetRepeatMode);
+    on<ToggleRepeat>(_onToggleRepeat);
+    on<OnSongComplete>(_onSongComplete);
+    on<ShuffleToggle>(_shuffleToggle);
+
     add(ScanSongs());
   }
 
   void _initializePlayerListeners() {
-    // Listen to position changes
-    // player.stream.position.listen((position) {
-    //   if (!isClosed) {
-    //     add(UpdatePosition(position));
-    //   }
-    // });
-
-    // // Listen to duration changes
-    // player.stream.duration.listen((duration) {
-    //   if (!isClosed) {
-    //     add(UpdateDuration(duration));
-    //   }
-    // });
-
     // Listen to playback completion
     player.stream.completed.listen((completed) {
-      logger.i("Playback completed");
-
-      // emit(state.copyWith(isPlaying: false, currentSong: null));
       if (completed) {
-        add(PlayNext());
+        logger.i("Playback completed: ${state.currentSong?.title}");
+        add(const OnSongComplete());
       }
     });
   }
@@ -367,7 +356,16 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       }
 
       // ============================================================================
-      // PLAYLIST MODE - Manual navigation
+      // REPEAT ONE + Manual Skip - Switch to Repeat All
+      // ============================================================================
+      if (state.repeatMode == RepeatMode.one) {
+        logger.i("Repeat one detected on manual skip, switching to repeat all");
+        emit(state.copyWith(repeatMode: RepeatMode.all));
+        // Continue to play next song with repeat all behavior
+      }
+
+      // ============================================================================
+      // PLAYLIST MODE - Manual navigation with repeat
       // ============================================================================
       if (state.musicMode == MusicMode.playlist) {
         logger.i("Next song in playlist");
@@ -380,22 +378,49 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           return;
         }
 
-        // If last song → stop
+        // If last song
         if (currentIndex == state.playlistSongs.length - 1) {
-          logger.i("Reached end of playlist");
-          if (state.isPlaying) {
-            await player.pause();
-            emit(state.copyWith(isPlaying: false));
+          if (state.repeatMode == RepeatMode.all) {
+            // Repeat all - loop to first song
+            logger.i("Repeat all enabled, looping to first song in playlist");
+            final nextSong = state.playlistSongs.first;
+
+            final media = Media(nextSong.path);
+            await player.open(media, play: true);
+
+            await songsRepository.addToRecentlyPlayed(nextSong);
+            add(RecentSongs());
+
+            emit(
+              state.copyWith(
+                currentSong: nextSong,
+                isPlaying: player.state.playing,
+                currentPlaylist: state.currentPlaylist.copyWith(
+                  currentIndex: 0,
+                  currentSongId: nextSong.id,
+                ),
+              ),
+            );
+
+            logger.i("First song in playlist: ${nextSong.title}");
+            return;
+          } else {
+            // No repeat - stop at end
+            logger.i("Reached end of playlist");
+            if (state.isPlaying) {
+              // await player.pause();
+              // emit(state.copyWith(isPlaying: false));
+            }
+            return;
           }
-          return;
         }
 
+        // Play next song in playlist
         final nextIndex = currentIndex + 1;
         final nextSong = state.playlistSongs[nextIndex];
 
-        // Play next song manually
         final media = Media(nextSong.path);
-        await player.open(media, play: state.isPlaying);
+        await player.open(media, play: true);
 
         await songsRepository.addToRecentlyPlayed(nextSong);
         add(RecentSongs());
@@ -415,9 +440,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
-      // // ============================================================================
-      // // FAVORITES MODE - Behaves like normal mode with favorites list
-      // // ============================================================================
+      // ============================================================================
+      // FAVORITES MODE - Navigate with repeat
+      // ============================================================================
       if (state.musicMode == MusicMode.favorite) {
         logger.i("Next song in favorites");
 
@@ -426,57 +451,68 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         );
 
         if (currentInFavorites == -1) {
-          logger.w(
-            "Current song not found in favorites, switching to main list",
-          );
-          // Fall through to normal mode logic
-        } else if (currentInFavorites == state.favouriteSongs.length - 1) {
-          // Last song in favorites → loop to first or stop
-          logger.i("Reached end of favorites, looping to first");
-          final nextSong = state.favouriteSongs.first;
-
-          final media = Media(nextSong.path);
-          await player.open(media, play: state.isPlaying);
-
-          await songsRepository.addToRecentlyPlayed(nextSong);
-          add(RecentSongs());
-
-          emit(
-            state.copyWith(
-              currentSong: nextSong,
-              isPlaying: player.state.playing,
-              error: null,
-            ),
-          );
-
-          logger.i("Playing first favorite: ${nextSong.title}");
-          return;
-        } else {
-          // Play next from favorites
-          final nextIndex = currentInFavorites + 1;
-          final nextSong = state.favouriteSongs[nextIndex];
-
-          final media = Media(nextSong.path);
-          await player.open(media, play: state.isPlaying);
-
-          await songsRepository.addToRecentlyPlayed(nextSong);
-          add(RecentSongs());
-
-          emit(
-            state.copyWith(
-              currentSong: nextSong,
-              isPlaying: player.state.playing,
-              error: null,
-            ),
-          );
-
-          logger.i("Next from favorites: ${nextSong.title}");
+          logger.w("Current song not found in favorites");
           return;
         }
+
+        // If last song in favorites
+        if (currentInFavorites == state.favouriteSongs.length - 1) {
+          if (state.repeatMode == RepeatMode.all) {
+            // Repeat all - loop to first favorite
+            logger.i("Repeat all enabled, looping to first favorite");
+            final nextSong = state.favouriteSongs.first;
+
+            final media = Media(nextSong.path);
+            await player.open(media, play: true);
+
+            await songsRepository.addToRecentlyPlayed(nextSong);
+            add(RecentSongs());
+
+            emit(
+              state.copyWith(
+                currentSong: nextSong,
+                isPlaying: player.state.playing,
+                error: null,
+              ),
+            );
+
+            logger.i("Playing first favorite: ${nextSong.title}");
+            return;
+          } else {
+            // No repeat - stop at end
+            logger.i("Reached end of favorites");
+            if (state.isPlaying) {
+              // await player.pause();
+              // emit(state.copyWith(isPlaying: false));
+            }
+            return;
+          }
+        }
+
+        // Play next from favorites
+        final nextIndex = currentInFavorites + 1;
+        final nextSong = state.favouriteSongs[nextIndex];
+
+        final media = Media(nextSong.path);
+        await player.open(media, play: true);
+
+        await songsRepository.addToRecentlyPlayed(nextSong);
+        add(RecentSongs());
+
+        emit(
+          state.copyWith(
+            currentSong: nextSong,
+            isPlaying: player.state.playing,
+            error: null,
+          ),
+        );
+
+        logger.i("Next from favorites: ${nextSong.title}");
+        return;
       }
 
       // ============================================================================
-      // NORMAL MODE - Using currentIndex
+      // NORMAL MODE - Queue/main list navigation with repeat and shuffle
       // ============================================================================
       SongInfo? nextSong;
       List<SongInfo> updatedQueue = state.playbackQueue;
@@ -493,31 +529,77 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
             "Next from queue at index $newCurrentIndex: ${nextSong.title}",
           );
         } else {
-          // Last in queue, EXIT queue, CLEAR IT, and continue from last queue song's position
-          final lastQueueSongInList = state.songs.indexWhere(
-            (song) => song.id == state.playbackQueue.last.id,
-          );
-
-          if (lastQueueSongInList != -1) {
-            final nextIndex = (lastQueueSongInList + 1) % state.songs.length;
-            nextSong = state.songs[nextIndex];
-            updatedQueue = []; // CLEAR THE QUEUE after exiting
-            newCurrentIndex = null; // Reset currentIndex
-            logger.i(
-              "Exited queue forward, CLEARING queue, continuing in main list: ${nextSong.title}",
+          // Last in queue
+          if (state.repeatMode == RepeatMode.all) {
+            // Repeat all - loop to first in queue
+            logger.i("Repeat all enabled, looping to first song in queue");
+            newCurrentIndex = 0;
+            nextSong = state.playbackQueue[0];
+            logger.i("First song in queue: ${nextSong.title}");
+          } else {
+            // No repeat - EXIT queue, CLEAR IT, and continue from last queue song's position
+            final lastQueueSongInList = state.songs.indexWhere(
+              (song) => song.id == state.playbackQueue.last.id,
             );
+
+            if (lastQueueSongInList != -1) {
+              if (state.isShuffled) {
+                // Shuffle mode - pick random song from main list
+                logger.i("Exited queue, shuffle enabled, picking random song");
+                final availableSongs = List<SongInfo>.from(state.songs);
+                availableSongs.shuffle();
+                nextSong = availableSongs.first;
+              } else {
+                // Normal mode - continue sequential
+                final nextIndex =
+                    (lastQueueSongInList + 1) % state.songs.length;
+                nextSong = state.songs[nextIndex];
+              }
+              updatedQueue = []; // CLEAR THE QUEUE after exiting
+              newCurrentIndex = null; // Reset currentIndex
+              logger.i(
+                "Exited queue forward, CLEARING queue, continuing in main list: ${nextSong.title}",
+              );
+            }
           }
         }
       } else {
         // Currently NOT in queue - stay in main list
-        final currentInList = state.songs.indexWhere(
-          (song) => song.id == state.currentSong!.id,
-        );
+        if (state.isShuffled) {
+          // Shuffle mode - pick random song excluding current
+          logger.i("Shuffle enabled, picking random next song from main list");
 
-        if (currentInList != -1) {
-          final nextIndex = (currentInList + 1) % state.songs.length;
-          nextSong = state.songs[nextIndex];
-          logger.i("Next from main list: ${nextSong.title}");
+          final availableSongs = List<SongInfo>.from(state.songs)
+            ..removeWhere((song) => song.id == state.currentSong!.id);
+
+          if (availableSongs.isEmpty) {
+            logger.w("No more songs available for shuffle");
+            return;
+          }
+
+          availableSongs.shuffle();
+          nextSong = availableSongs.first;
+          logger.i("Shuffled next from main list: ${nextSong.title}");
+        } else {
+          // Normal sequential mode
+          final currentInList = state.songs.indexWhere(
+            (song) => song.id == state.currentSong!.id,
+          );
+
+          if (currentInList != -1) {
+            // Check if at last song and repeat all is enabled
+            if (currentInList == state.songs.length - 1 &&
+                state.repeatMode == RepeatMode.all) {
+              logger.i(
+                "Repeat all enabled, looping to first song in main list",
+              );
+              nextSong = state.songs.first;
+            } else {
+              final nextIndex = (currentInList + 1) % state.songs.length;
+              nextSong = state.songs[nextIndex];
+            }
+            logger.i("Next from main list: ${nextSong.title}");
+          }
         }
       }
 
@@ -527,7 +609,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       }
 
       final media = Media(nextSong.path);
-      await player.open(media);
+      await player.open(media, play: true);
 
       await songsRepository.addToRecentlyPlayed(nextSong);
       add(RecentSongs());
@@ -561,6 +643,15 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       }
 
       // ============================================================================
+      // REPEAT ONE + Manual Skip - Switch to Repeat All
+      // ============================================================================
+      if (state.repeatMode == RepeatMode.one) {
+        logger.i("Repeat one detected on manual skip, switching to repeat all");
+        emit(state.copyWith(repeatMode: RepeatMode.all));
+        // Continue to play previous song with repeat all behavior
+      }
+
+      // ============================================================================
       // PLAYLIST MODE - Manual navigation
       // ============================================================================
       if (state.musicMode == MusicMode.playlist) {
@@ -572,18 +663,47 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           return;
         }
 
-        // If first song → stop
+        // If first song
         if (currentIndex == 0) {
-          logger.i("Reached start of playlist");
-          return;
+          if (state.repeatMode == RepeatMode.all) {
+            // Loop to last song if repeat all is enabled
+            logger.i(
+              "At first song with repeat all, looping to last song in playlist",
+            );
+            final lastIndex = state.playlistSongs.length - 1;
+            final prevSong = state.playlistSongs[lastIndex];
+
+            final media = Media(prevSong.path);
+            await player.open(media, play: true);
+
+            await songsRepository.addToRecentlyPlayed(prevSong);
+            add(RecentSongs());
+
+            emit(
+              state.copyWith(
+                currentSong: prevSong,
+                isPlaying: player.state.playing,
+                currentPlaylist: state.currentPlaylist.copyWith(
+                  currentIndex: lastIndex,
+                  currentSongId: prevSong.id,
+                ),
+              ),
+            );
+
+            logger.i("Last song in playlist: ${prevSong.title}");
+            return;
+          } else {
+            logger.i("Reached start of playlist");
+            return;
+          }
         }
 
+        // Play previous song in playlist
         final prevIndex = currentIndex - 1;
         final prevSong = state.playlistSongs[prevIndex];
 
-        // Play previous song manually
         final media = Media(prevSong.path);
-        await player.open(media, play: state.isPlaying);
+        await player.open(media, play: true);
 
         await songsRepository.addToRecentlyPlayed(prevSong);
         add(RecentSongs());
@@ -603,9 +723,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
-      // // ============================================================================
-      // // FAVORITES MODE - Behaves like normal mode with favorites list
-      // // ============================================================================
+      // ============================================================================
+      // FAVORITES MODE - Navigate backwards
+      // ============================================================================
       if (state.musicMode == MusicMode.favorite) {
         logger.i("Previous song in favorites");
 
@@ -616,32 +736,59 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         if (currentInFavorites == -1) {
           logger.w("Current song not found in favorites, cannot go back");
           return;
-        } else if (currentInFavorites == 0) {
-          // First song in favorites → do nothing or loop to last
-          logger.i("At first song in favorites, cannot go previous");
-          return;
-        } else {
-          // Play previous from favorites
-          final prevIndex = currentInFavorites - 1;
-          final prevSong = state.favouriteSongs[prevIndex];
-
-          final media = Media(prevSong.path);
-          await player.open(media, play: state.isPlaying);
-
-          await songsRepository.addToRecentlyPlayed(prevSong);
-          add(RecentSongs());
-
-          emit(
-            state.copyWith(
-              currentSong: prevSong,
-              isPlaying: player.state.playing,
-              error: null,
-            ),
-          );
-
-          logger.i("Previous from favorites: ${prevSong.title}");
-          return;
         }
+
+        // If first song in favorites
+        if (currentInFavorites == 0) {
+          if (state.repeatMode == RepeatMode.all) {
+            // Loop to last favorite if repeat all is enabled
+            logger.i(
+              "At first favorite with repeat all, looping to last favorite",
+            );
+            final prevSong = state.favouriteSongs.last;
+
+            final media = Media(prevSong.path);
+            await player.open(media, play: true);
+
+            await songsRepository.addToRecentlyPlayed(prevSong);
+            add(RecentSongs());
+
+            emit(
+              state.copyWith(
+                currentSong: prevSong,
+                isPlaying: player.state.playing,
+                error: null,
+              ),
+            );
+
+            logger.i("Playing last favorite: ${prevSong.title}");
+            return;
+          } else {
+            logger.i("At first song in favorites, cannot go previous");
+            return;
+          }
+        }
+
+        // Play previous from favorites
+        final prevIndex = currentInFavorites - 1;
+        final prevSong = state.favouriteSongs[prevIndex];
+
+        final media = Media(prevSong.path);
+        await player.open(media, play: true);
+
+        await songsRepository.addToRecentlyPlayed(prevSong);
+        add(RecentSongs());
+
+        emit(
+          state.copyWith(
+            currentSong: prevSong,
+            isPlaying: player.state.playing,
+            error: null,
+          ),
+        );
+
+        logger.i("Previous from favorites: ${prevSong.title}");
+        return;
       }
 
       // ============================================================================
@@ -654,50 +801,58 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       if (state.playbackQueue.isNotEmpty && newCurrentIndex != null) {
         // Currently IN queue - use currentIndex
         if (newCurrentIndex == 0) {
-          // First song in queue → EXIT queue and go to previous in main list
-          final firstQueueSongInList = state.songs.indexWhere(
-            (song) => song.id == state.playbackQueue.first.id,
-          );
-
-          if (firstQueueSongInList > 0) {
-            final prevIndex = firstQueueSongInList - 1;
-            prevSong = state.songs[prevIndex];
-            newCurrentIndex = null; // Reset currentIndex (exiting queue)
-
-            final media = Media(prevSong.path);
-            await player.open(media);
-            await songsRepository.addToRecentlyPlayed(prevSong);
-            add(RecentSongs());
-
-            emit(
-              state.copyWith(
-                currentSong: prevSong,
-                playbackQueue: [], // CLEAR THE QUEUE
-                currentIndex: null,
-                isPlaying: player.state.playing,
-                error: null,
-              ),
-            );
-
-            logger.i(
-              "Exited queue backward, CLEARING queue, continuing in main list: ${prevSong.title}",
-            );
-            return;
+          if (state.repeatMode == RepeatMode.all) {
+            // Loop to last song in queue if repeat all is enabled
+            logger.i("At first song in queue with repeat all, looping to last");
+            newCurrentIndex = state.playbackQueue.length - 1;
+            prevSong = state.playbackQueue[newCurrentIndex];
+            logger.i("Last song in queue: ${prevSong.title}");
           } else {
-            // First song in both queue and main list → do nothing
-            logger.i(
-              "At first song in queue and main list, cannot go previous",
+            // First song in queue → EXIT queue and go to previous in main list
+            final firstQueueSongInList = state.songs.indexWhere(
+              (song) => song.id == state.playbackQueue.first.id,
             );
-            return;
-          }
-        }
 
-        // Play previous from queue
-        newCurrentIndex = newCurrentIndex - 1;
-        prevSong = state.playbackQueue[newCurrentIndex];
-        logger.i(
-          "Previous from queue at index $newCurrentIndex: ${prevSong.title}",
-        );
+            if (firstQueueSongInList > 0) {
+              final prevIndex = firstQueueSongInList - 1;
+              prevSong = state.songs[prevIndex];
+              newCurrentIndex = null; // Reset currentIndex (exiting queue)
+
+              final media = Media(prevSong.path);
+              await player.open(media);
+              await songsRepository.addToRecentlyPlayed(prevSong);
+              add(RecentSongs());
+
+              emit(
+                state.copyWith(
+                  currentSong: prevSong,
+                  playbackQueue: [], // CLEAR THE QUEUE
+                  currentIndex: null,
+                  isPlaying: player.state.playing,
+                  error: null,
+                ),
+              );
+
+              logger.i(
+                "Exited queue backward, CLEARING queue, continuing in main list: ${prevSong.title}",
+              );
+              return;
+            } else {
+              // First song in both queue and main list → do nothing
+              logger.i(
+                "At first song in queue and main list, cannot go previous",
+              );
+              return;
+            }
+          }
+        } else {
+          // Play previous from queue
+          newCurrentIndex = newCurrentIndex - 1;
+          prevSong = state.playbackQueue[newCurrentIndex];
+          logger.i(
+            "Previous from queue at index $newCurrentIndex: ${prevSong.title}",
+          );
+        }
       } else {
         // Currently NOT in queue → main list
         final currentIndex = state.songs.indexWhere(
@@ -705,13 +860,21 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         );
 
         if (currentIndex <= 0) {
-          // First song in main list → do nothing
-          logger.i("At first song in main list, cannot go previous");
-          return;
+          if (state.repeatMode == RepeatMode.all && state.songs.isNotEmpty) {
+            // Loop to last song if repeat all is enabled
+            logger.i(
+              "At first song in main list with repeat all, looping to last",
+            );
+            prevSong = state.songs.last;
+          } else {
+            // First song in main list → do nothing
+            logger.i("At first song in main list, cannot go previous");
+            return;
+          }
+        } else {
+          prevSong = state.songs[currentIndex - 1];
+          logger.i("Previous from main list: ${prevSong.title}");
         }
-
-        prevSong = state.songs[currentIndex - 1];
-        logger.i("Previous from main list: ${prevSong.title}");
       }
 
       final media = Media(prevSong.path);
@@ -738,25 +901,173 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     ShuffleToggle event,
     Emitter<SongsState> emit,
   ) async {
-    logger.i("Toggling shuffle ${event.isShuffle} ");
-    final isUpdated = await songsRepository.shuffleToggle(
-      event.playlistId,
-      event.isShuffle,
-    );
+    try {
+      final bool newShuffleState = event.isShuffle;
+      logger.i("Toggling shuffle: $newShuffleState");
 
-    if (isUpdated) {
-      await player.setShuffle(event.isShuffle);
+      // ============================================================================
+      // PLAYLIST MODE - Shuffle playlist songs
+      // ============================================================================
+      if (state.musicMode == MusicMode.playlist) {
+        if (newShuffleState) {
+          // Enable shuffle - create shuffled version of playlist
+          logger.i("Enabling shuffle for playlist");
+
+          final currentSong = state.currentSong;
+          if (currentSong == null) {
+            logger.w("No current song to shuffle around");
+            return;
+          }
+
+          // Create shuffled list excluding current song
+          final remainingSongs = List<SongInfo>.from(state.playlistSongs)
+            ..removeWhere((song) => song.id == currentSong.id);
+          remainingSongs.shuffle();
+
+          // Put current song at the beginning
+          final shuffledPlaylist = [currentSong, ...remainingSongs];
+
+          emit(
+            state.copyWith(
+              playlistSongs: shuffledPlaylist,
+              isShuffled: true,
+              currentPlaylist: state.currentPlaylist.copyWith(
+                currentIndex: 0, // Current song is now at index 0
+                isShuffle: true,
+              ),
+            ),
+          );
+
+          logger.i("Playlist shuffled with ${shuffledPlaylist.length} songs");
+        } else {
+          // Disable shuffle - restore original order
+          logger.i("Disabling shuffle for playlist, restoring original order");
+
+          // Fetch original playlist order from repository
+          final originalPlaylist = await songsRepository.getPlaylistSongs(
+            state.currentPlaylist.playlistId!,
+          );
+
+          // Find current song in original playlist
+          final currentSongIndex = originalPlaylist.indexWhere(
+            (song) => song.id == state.currentSong?.id,
+          );
+
+          emit(
+            state.copyWith(
+              playlistSongs: originalPlaylist,
+              isShuffled: false,
+              currentPlaylist: state.currentPlaylist.copyWith(
+                currentIndex: currentSongIndex >= 0 ? currentSongIndex : 0,
+                isShuffle: false,
+              ),
+            ),
+          );
+
+          logger.i("Playlist restored to original order");
+        }
+        return;
+      }
+
+      // ============================================================================
+      // FAVORITES MODE - Shuffle favorites
+      // ============================================================================
+      if (state.musicMode == MusicMode.favorite) {
+        if (newShuffleState) {
+          // Enable shuffle - create shuffled version of favorites
+          logger.i("Enabling shuffle for favorites");
+
+          final currentSong = state.currentSong;
+          if (currentSong == null) {
+            logger.w("No current song to shuffle around");
+            return;
+          }
+
+          // Create shuffled list excluding current song
+          final remainingFavorites = List<SongInfo>.from(state.favouriteSongs)
+            ..removeWhere((song) => song.id == currentSong.id);
+          remainingFavorites.shuffle();
+
+          // Put current song at the beginning
+          final shuffledFavorites = [currentSong, ...remainingFavorites];
+
+          emit(
+            state.copyWith(favouriteSongs: shuffledFavorites, isShuffled: true),
+          );
+
+          logger.i("Favorites shuffled with ${shuffledFavorites.length} songs");
+        } else {
+          // Disable shuffle - restore original order
+          logger.i("Disabling shuffle for favorites, restoring original order");
+
+          // Fetch original favorites order from repository
+          final originalFavorites = await songsRepository.getFavouriteSongs();
+
+          emit(
+            state.copyWith(
+              favouriteSongs: originalFavorites,
+              isShuffled: false,
+            ),
+          );
+
+          logger.i("Favorites restored to original order");
+        }
+        return;
+      }
+
+      // ============================================================================
+      // NORMAL MODE - Shuffle queue or main list
+      // ============================================================================
+      if (newShuffleState) {
+        // Enable shuffle
+        logger.i("Enabling shuffle for normal mode");
+
+        final currentSong = state.currentSong;
+        if (currentSong == null) {
+          logger.w("No current song to shuffle around");
+          emit(state.copyWith(isShuffled: true));
+          return;
+        }
+
+        // If queue exists, shuffle the queue
+        if (state.playbackQueue.isNotEmpty && state.currentIndex != null) {
+          logger.i("Shuffling queue");
+
+          final currentIndex = state.currentIndex!;
+
+          // Split queue into played and remaining
+          final remainingSongs =
+              state.playbackQueue.sublist(currentIndex + 1).toList()..shuffle();
+
+          // Rebuild queue: already played + current + shuffled remaining
+          final shuffledQueue = [
+            ...state.playbackQueue.sublist(0, currentIndex + 1),
+            ...remainingSongs,
+          ];
+
+          emit(state.copyWith(playbackQueue: shuffledQueue, isShuffled: true));
+
+          logger.i("Queue shuffled with ${shuffledQueue.length} songs");
+        } else {
+          // No queue - just mark as shuffled, will apply when playing next
+          logger.i("No active queue, marking shuffle state");
+          emit(state.copyWith(isShuffled: true));
+        }
+      } else {
+        // Disable shuffle
+        logger.i("Disabling shuffle for normal mode");
+
+        // Just mark as not shuffled - original order is maintained
+        // (We can't "unshuffle" without knowing original order)
+        emit(state.copyWith(isShuffled: false));
+
+        logger.i("Shuffle disabled");
+      }
+    } catch (e) {
+      logger.e("Error toggling shuffle: $e");
+      emit(state.copyWith(error: "Failed to toggle shuffle: $e"));
     }
-    add(LoadPlaylist());
-    // emit(state.copyWith());
-    // logger.i("Shuffle: ${state.isShuffled}");
   }
-
-  // // Future<void> _onToggleRepeat(
-  // //   ToggleRepeat event,
-  // //   Emitter<SongsState> emit,
-  // // ) async {
-  // // }
 
   // Future<void> _onPlayPrevious(
   //   PlayPrevious event,
@@ -854,16 +1165,21 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           favouriteSongs:
               state.favouriteSongs.isNotEmpty
                   ? state.favouriteSongs
+                      //  remove if unfavourited
+                      .where(
+                        (song) =>
+                            !(event.songIds.contains(song.id) &&
+                                event.isFavourite == false),
+                      )
                       .map(
                         (song) =>
                             event.songIds.contains(song.id)
-                                ? song = song.copyWith(
-                                  isFavourite: event.isFavourite,
-                                )
+                                ? song.copyWith(isFavourite: event.isFavourite)
                                 : song,
                       )
                       .toList()
                   : state.favouriteSongs,
+
           songs:
               state.songs
                   .map(
@@ -985,9 +1301,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         return;
       }
 
-      // // ============================================================================
-      // // FAVORITES MODE → Convert to Queue Mode
-      // // ============================================================================
+      // ============================================================================
+      // FAVORITES MODE → Convert to Queue Mode
+      // ============================================================================
       if (state.musicMode == MusicMode.favorite) {
         logger.i("Converting favorites mode to queue mode");
 
@@ -1132,11 +1448,27 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     logger.i("Loading playlist");
-    final playlist = await songsRepository.getPlaylist();
+
+    final playlists = await songsRepository.getPlaylist();
+    final selectedPlaylist = state.selectedPlaylist;
+
+    // Try to find updated version of selected playlist (if any)
+    final PlaylistInfo? updatedSelectedPlaylist =
+        selectedPlaylist == null
+            ? null
+            : playlists.firstWhere(
+              (p) => p.id == selectedPlaylist.id,
+              orElse: () => selectedPlaylist,
+            );
 
     emit(
-      state.copyWith(bottomBarView: BottomBarView.normal, playlists: playlist),
+      state.copyWith(
+        playlists: playlists,
+        selectedPlaylist: updatedSelectedPlaylist,
+        bottomBarView: BottomBarView.normal,
+      ),
     );
+
     logger.i("Playlist loaded successfully");
   }
 
@@ -1161,6 +1493,9 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
               state.playlists.where((p) => p.id != event.playlistId).toList(),
         ),
       );
+      if (state.musicTab == MusicTabs.playlistInfo) {
+        add(BackTabEvent());
+      }
     }
     logger.i("Playlist deleted successfully");
   }
@@ -1439,10 +1774,26 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       await songsRepository.addToRecentlyPlayed(event.song);
       add(RecentSongs());
 
+      // If shuffle is enabled, shuffle favorites list with current song first
+      List<SongInfo> favoritesToUse = state.favouriteSongs;
+
+      if (state.isShuffled && favoritesToUse.isNotEmpty) {
+        logger.i("Shuffling favorites with current song first");
+
+        final remainingFavorites =
+            List<SongInfo>.from(favoritesToUse)
+              ..removeWhere((song) => song.id == event.song.id)
+              ..shuffle();
+
+        favoritesToUse = [event.song, ...remainingFavorites];
+        logger.i("Favorites shuffled");
+      }
+
       emit(
         state.copyWith(
           isPlaying: true,
           currentSong: event.song,
+          favouriteSongs: favoritesToUse,
           musicMode: MusicMode.favorite,
           playbackQueue: [], // Clear queue
           currentIndex: null, // Not using currentIndex in favorites mode
@@ -1632,7 +1983,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
           "Inserted ${playlistSongs.length} playlist songs as Play Next at index ${newCurrentIndex + 1}",
         );
       } else {
-        //  ADD TO QUEUE → append entire playlist to end
+        // ➕ ADD TO QUEUE → append entire playlist to end
         updatedQueue.addAll(playlistSongs);
         logger.i(
           "Appended ${playlistSongs.length} playlist songs to end of queue",
@@ -1655,6 +2006,70 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         "Error adding playlist to queue: ${event.playlistId}, error: $e",
       );
       emit(state.copyWith(error: "Failed to add playlist to queue: $e"));
+    }
+  }
+
+  Future<void> _onToggleRepeat(
+    ToggleRepeat event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      final RepeatMode nextMode;
+
+      switch (state.repeatMode) {
+        case RepeatMode.none:
+          nextMode = RepeatMode.one;
+          logger.i("Repeat mode changed: none → one");
+          break;
+        case RepeatMode.one:
+          nextMode = RepeatMode.all;
+          logger.i("Repeat mode changed: one → all");
+          break;
+        case RepeatMode.all:
+          nextMode = RepeatMode.none;
+          logger.i("Repeat mode changed: all → none");
+          break;
+      }
+
+      emit(state.copyWith(repeatMode: nextMode));
+      logger.i("Current repeat mode: $nextMode");
+    } catch (e) {
+      logger.e("Error toggling repeat mode: $e");
+    }
+  }
+
+  Future<void> _onSetRepeatMode(
+    SetRepeatMode event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      emit(state.copyWith(repeatMode: event.mode));
+      logger.i("Repeat mode set to: ${event.mode}");
+    } catch (e) {
+      logger.e("Error setting repeat mode: $e");
+    }
+  }
+
+  Future<void> _onSongComplete(
+    OnSongComplete event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      logger.i("Song completed: ${state.currentSong?.title}");
+
+      // REPEAT ONE - Replay the same song
+      if (state.repeatMode == RepeatMode.one && state.currentSong != null) {
+        logger.i("Repeat one enabled, replaying song");
+        final media = Media(state.currentSong!.path);
+        await player.open(media, play: true);
+        emit(state.copyWith(isPlaying: true));
+        return;
+      }
+
+      // Otherwise, automatically play next song (handles repeat all internally)
+      add(PlayNext());
+    } catch (e) {
+      logger.e("Error handling song completion: $e");
     }
   }
 

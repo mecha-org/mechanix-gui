@@ -6,14 +6,27 @@ import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
-import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
+import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 
-class SongMenu extends StatelessWidget {
+class SongMenu extends StatefulWidget {
   final SongInfo song;
   final VoidCallback? onToggleFavourite;
-  const SongMenu({super.key, required this.song, this.onToggleFavourite});
+  final bool isDeleteMenu;
+
+  const SongMenu({
+    super.key,
+    required this.song,
+    this.onToggleFavourite,
+    required this.isDeleteMenu,
+  });
+
+  @override
+  State<SongMenu> createState() => _SongMenuState();
+}
+
+class _SongMenuState extends State<SongMenu> {
+  bool isMenuOpen = false;
+
   void _showAddToPlaylistSheet(BuildContext context) {
     context.read<SongsBloc>().add(LoadPlaylist());
 
@@ -21,84 +34,153 @@ class SongMenu extends StatelessWidget {
       topTabWidth: 370,
       topTabRightSideShiftLength: 40,
       context,
-      child: AddToPlaylistSheet(song: song),
+      child: AddToPlaylistSheet(song: widget.song),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return MechanixMenu(
-      animationDuration: const Duration(milliseconds: 100),
-      topTabWidth: 10,
-      topTabRightSideShiftLength: 80,
-      dropdownPosition: DropdownPosition.centerRight,
-      // theme: MechanixMenuThemeData(
-      //   decoration: BoxDecoration(color: context.tertiary),
-      //   itemBackgroundColor: context.tertiary,
-      // ),
-
-      buttonIcon: const IconWidget(
-        boxHeight: 24,
-        boxWidth: 24,
-        iconHeight: 24,
-        iconWidth: 24,
-        iconColor: Colors.white,
-        iconPath: MusicIcons.threeDotIcon,
+    return Theme(
+      data: Theme.of(context).copyWith(
+        splashColor: Colors.transparent,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
       ),
-      items: [
-        MechanixMenuItemsType(
-          onTap:
-              () => context.read<SongsBloc>().add(
-                AddToQueue(song, playNext: true),
+      child: PopupMenuButton<_SongMenuAction>(
+        tooltip: '',
+        padding: EdgeInsets.zero,
+        // offset: const Offset(0, 36),
+        offset: const Offset(-45, 10),
+
+        color: MusicColors.tapColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        style: ButtonStyle(
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStatePropertyAll(Colors.transparent),
+        ),
+        // ✅ track open / close
+        onOpened: () => setState(() => isMenuOpen = true),
+        onCanceled: () => setState(() => isMenuOpen = false),
+        onSelected: (action) {
+          setState(() => isMenuOpen = false);
+
+          switch (action) {
+            case _SongMenuAction.playNext:
+              context.read<SongsBloc>().add(
+                AddToQueue(widget.song, playNext: true),
+              );
+              break;
+
+            case _SongMenuAction.addToQueue:
+              context.read<SongsBloc>().add(AddToQueue(widget.song));
+              break;
+
+            case _SongMenuAction.addToPlaylist:
+              _showAddToPlaylistSheet(context);
+              break;
+
+            case _SongMenuAction.toggleFavourite:
+              widget.onToggleFavourite?.call();
+              break;
+
+            case _SongMenuAction.delete:
+              context.read<SongsBloc>().add(DeleteSong(widget.song));
+              break;
+          }
+        },
+
+        // ✅ SAME pressed UI as PlaylistMenu
+        icon: Container(
+          height: 40,
+          width: 40,
+          decoration: BoxDecoration(
+            color:
+                isMenuOpen ? MusicColors.backgroundColor : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Image.asset(
+              MusicIcons.threeDotIcon,
+              width: 28,
+              height: 28,
+              color: isMenuOpen ? MusicColors.borderColor : Colors.white,
+            ),
+          ),
+        ),
+
+        itemBuilder:
+            (context) => [
+              _menuItem(
+                value: _SongMenuAction.playNext,
+                title: 'Play Next',
+                icon: MusicIcons.playNextIcon,
               ),
-          title: "Play Next",
-          leading: IconWidget(
-            iconPath: MusicIcons.playNextIcon,
-            iconColor: Colors.white,
-          ),
-        ),
-        MechanixMenuItemsType(
-          onTap: () {
-            context.read<SongsBloc>().add(AddToQueue(song));
-          },
-          title: "Add to queue",
-          leading: const IconWidget(
-            iconPath: MusicIcons.queueIcon,
-            iconColor: Colors.white,
-          ),
-        ),
-        MechanixMenuItemsType(
-          onTap: () => _showAddToPlaylistSheet(context),
-          title: "Add to playlist",
-          leading: const IconWidget(
-            iconPath: MusicIcons.addSongIcon,
-            iconColor: Colors.white,
-          ),
-        ),
-        MechanixMenuItemsType(
-          onTap: () => onToggleFavourite?.call(),
-          title: song.isFavourite ? "Unlike Track" : "Add to liked",
-          leading: IconWidget(
-            iconPath:
-                song.isFavourite
-                    ? MusicIcons.filledFavouriteIcon
-                    : MusicIcons.favouritesIcon,
-            iconColor: song.isFavourite?MusicColors.borderColor:Colors.white,
-          ),
-        ),
-        MechanixMenuItemsType(
-          onTap: () => context.read<SongsBloc>().add(DeleteSong(song)),
-          title: "Delete",
-          titleTextStyle: TextStyle(
-            color: MusicColors.deleteColor,
-            fontFamily: "Overused Grotesk",
-          ),
-          leading: const IconWidget(
-            iconPath: MusicIcons.deleteIcon,
-            iconColor: MusicColors.deleteColor,
-          ),
-        ),
-      ],
+              _menuItem(
+                value: _SongMenuAction.addToQueue,
+                title: 'Add to queue',
+                icon: MusicIcons.queueIcon,
+              ),
+              _menuItem(
+                value: _SongMenuAction.addToPlaylist,
+                title: 'Add to playlist',
+                icon: MusicIcons.addSongIcon,
+              ),
+              _menuItem(
+                value: _SongMenuAction.toggleFavourite,
+                title:
+                    widget.song.isFavourite ? 'Unlike Track' : 'Add to liked',
+                icon:
+                    widget.song.isFavourite
+                        ? MusicIcons.filledFavouriteIcon
+                        : MusicIcons.favouritesIcon,
+                color:
+                    widget.song.isFavourite
+                        ? MusicColors.borderColor
+                        : MusicColors.primaryTextColor,
+              ),
+              if (widget.isDeleteMenu)
+                _menuItem(
+                  value: _SongMenuAction.delete,
+                  title: 'Delete',
+                  icon: MusicIcons.deleteIcon,
+                  color: MusicColors.deleteColor,
+                ),
+            ],
+      ),
     );
   }
+
+  PopupMenuItem<_SongMenuAction> _menuItem({
+    required _SongMenuAction value,
+    required String title,
+    required String icon,
+    Color color = MusicColors.primaryTextColor,
+  }) {
+    return PopupMenuItem<_SongMenuAction>(
+      value: value,
+      height: 42,
+      child: Row(
+        children: [
+          Image.asset(icon, width: 20, height: 20, color: color),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: TextStyle(
+              color: color,
+              fontFamily: 'Overused Grotesk',
+              fontSize: 18,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _SongMenuAction {
+  playNext,
+  addToQueue,
+  addToPlaylist,
+  toggleFavourite,
+  delete,
 }

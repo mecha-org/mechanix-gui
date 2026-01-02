@@ -112,7 +112,10 @@ class _RecentSongState extends State<RecentSong> {
                                     : MusicColors.disabledColor,
                           ),
                           iconSize: 40,
-                          onPressed: () => _scrollRight(pages.length),
+                          onPressed:
+                              currentPage < pages.length - 1
+                                  ? () => _scrollRight(pages.length)
+                                  : null,
                         ),
                       ],
                     ),

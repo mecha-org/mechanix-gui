@@ -78,8 +78,6 @@ class _MusicTabState extends State<MusicTab> {
                   return SongsListView(songs: songs);
                 },
               ),
-
-              const SliverToBoxAdapter(child: SizedBox(height: 60)),
             ],
           ),
         ),

@@ -32,12 +32,18 @@ class TogglePlayPause extends SongsEvent {}
 class PlayNext extends SongsEvent {}
 
 class ShuffleToggle extends SongsEvent {
-  final String playlistId;
   final bool isShuffle;
-  const ShuffleToggle({required this.playlistId, required this.isShuffle});
+
+  const ShuffleToggle(this.isShuffle);
+
+  @override
+  List<Object?> get props => [isShuffle];
 }
 
 // class  ToggleRepeat extends SongsEvent {}
+class ToggleRepeat extends SongsEvent {
+  const ToggleRepeat();
+}
 // class FavouriteToggle extends SongsEvent {}
 
 class PlayPrevious extends SongsEvent {}
@@ -70,9 +76,6 @@ class UpdateDuration extends SongsEvent {
 class SetRepeatMode extends SongsEvent {
   final RepeatMode mode;
   const SetRepeatMode(this.mode);
-
-  @override
-  List<Object?> get props => [mode];
 }
 
 // Enum for repeat modes
@@ -214,7 +217,12 @@ class AddPlaylistToQueue extends SongsEvent {
 
   const AddPlaylistToQueue({required this.playlistId, this.playNext = false});
 }
+
 class ToggleScrolling extends SongsEvent {
   final bool isScrolling;
   const ToggleScrolling(this.isScrolling);
+}
+
+class OnSongComplete extends SongsEvent {
+  const OnSongComplete();
 }

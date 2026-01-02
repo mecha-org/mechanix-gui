@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:mechanix_music/src/features/audio_player/upcoming_track/upcoming_song_progress_bar.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
+import 'package:mechanix_music/src/features/presentation/song_tile.dart';
+import 'package:tuple/tuple.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 
 class UpcomingTrack extends StatelessWidget {
@@ -35,147 +40,116 @@ class UpcomingTrack extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black,
-      padding: EdgeInsets.only(left: 16, right: 20, top: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Now Playing Section
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Album Artwork
-              ArtworkIcon(artworkPath: songDetails.artworkPath, size: 108),
-              SizedBox(width: 28),
+          Padding(
+            padding: EdgeInsets.only(left: 16, right: 20, top: 24),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Album Artwork
+                ArtworkIcon(artworkPath: songDetails.artworkPath, size: 108),
+                SizedBox(width: 28),
 
-              // Song Info and Controls Column
-              Expanded(
-                child: Column(
-                  spacing: 24,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title and Action Icons Row
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Song Info
-                        Expanded(
-                          child: Column(
+                // Song Info and Controls Column
+                Expanded(
+                  child: Column(
+                    spacing: 24,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title and Action Icons Row
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Song Info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  songDetails.title,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: MusicColors.headingTextColor,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.2,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  songDetails.artist,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Action Icons
+                          Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Text(
-                                songDetails.title,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: MusicColors.headingTextColor,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  height: 1.2,
-                                ),
-                                maxLines: 1,
+                              MusicIconButton(
+                                onPressed: () {
+                                  context.read<SongsBloc>().add(
+                                    FavouriteToggle(
+                                      songIds: [songDetails.id],
+                                      isFavourite: !isFavorited,
+                                    ),
+                                  );
+                                },
+                                backgroundColor: Colors.transparent,
+                                icon:
+                                    isFavorited
+                                        ? MusicIcons.filledFavouriteIcon
+                                        : MusicIcons.favouritesIcon,
+                                buttonSize: 44,
+                                iconSize: 24,
                               ),
-                              SizedBox(height: 14),
-                              Text(
-                                songDetails.artist,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                                maxLines: 1,
+                              MusicIconButton(
+                                onPressed:
+                                    () => _showAddToPlaylistSheet(context),
+                                backgroundColor: Colors.transparent,
+                                icon: MusicIcons.addSongIcon,
+                                iconSize: 24,
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        // Action Icons
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            MusicIconButton(
-                              onPressed: () {
-                                context.read<SongsBloc>().add(
-                                  FavouriteToggle(
-                                    songIds: [songDetails.id],
-                                    isFavourite: !isFavorited,
-                                  ),
-                                );
-                              },
-                              backgroundColor: Colors.transparent,
-                              icon:
-                                  isFavorited
-                                      ? MusicIcons.filledFavouriteIcon
-                                      : MusicIcons.favouritesIcon,
-                              buttonSize: 44,
-                              iconSize: 24,
-                            ),
-                            MusicIconButton(
-                              onPressed: () => _showAddToPlaylistSheet(context),
-                              backgroundColor: Colors.transparent,
-                              icon: MusicIcons.addSongIcon,
-                              iconSize: 24,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-
-                    // Progress Bar
-                    Container(
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: SliderTheme(
-                              data: SliderThemeData(
-                                padding: EdgeInsets.zero,
-                                trackHeight: 2,
-                                thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: 6,
-                                ),
-                                overlayShape: RoundSliderOverlayShape(
-                                  overlayRadius: 12,
-                                ),
-                                activeTrackColor: Colors.white,
-                                inactiveTrackColor: Colors.white30,
-                                thumbColor: Colors.white,
-                              ),
-                              child: Slider(
-                                value: 0.3, // Replace with actual progress
-                                onChanged: (value) {},
-                                min: 0,
-                                max: 1,
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(width: 12),
-                          Text(
-                            '00:25',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
                         ],
                       ),
-                    ),
-                  ],
+
+                      // Progress Bar
+                      const UpcomingSongProgressBar(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
           SizedBox(height: 24),
 
-          // Upcoming Tracks Section Header
+          // Upcoming Tracks Section
           Expanded(
             child: Container(
-              color: MusicColors.tapColor,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage(MusicIcons.backgroundSliderIcon),
+                  fit: BoxFit.fill,
+                ),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Upcoming tracks',
@@ -185,11 +159,129 @@ class UpcomingTrack extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+
+                  // Upcoming tracks list will go here
+                  BlocSelector<SongsBloc, SongsState, MusicMode>(
+                    selector: (state) => state.musicMode,
+                    builder: (context, musicMode) {
+                      if (musicMode == MusicMode.favorite) {
+                        return BlocSelector<
+                          SongsBloc,
+                          SongsState,
+                          Tuple2<SongInfo?, List<SongInfo>>
+                        >(
+                          selector:
+                              (state) => Tuple2(
+                                state.currentSong,
+                                state.favouriteSongs,
+                              ),
+                          builder: (context, data) {
+                            final List<SongInfo> queue = data.item2;
+                            final int currentIndex = data.item2.indexWhere(
+                              (song) => song.id == data.item1?.id,
+                            );
+
+                            //  Safety checks
+                            final List<SongInfo> upcomingSongs =
+                                (currentIndex >= 0 &&
+                                        currentIndex + 1 < queue.length)
+                                    ? queue.sublist(currentIndex + 1)
+                                    : [];
+
+                            if (upcomingSongs.isEmpty) {
+                              return const Text("No Upcoming Tracks");
+                            }
+
+                            return Expanded(
+                              child: ListView.builder(
+                                itemCount: upcomingSongs.length,
+                                itemBuilder: (context, index) {
+                                  return SongTile(song: upcomingSongs[index]);
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      }
+                      if (musicMode == MusicMode.playlist) {
+                        return BlocSelector<
+                          SongsBloc,
+                          SongsState,
+                          Tuple2<CurrentPlaylist?, List<SongInfo>>
+                        >(
+                          selector:
+                              (state) => Tuple2(
+                                state.currentPlaylist,
+                                state.playlistSongs,
+                              ),
+                          builder: (context, data) {
+                            final int? currentIndex = data.item1?.currentIndex;
+                            final List<SongInfo> queue = data.item2;
+
+                            //  Safety checks
+                            final List<SongInfo> upcomingSongs =
+                                (currentIndex != null &&
+                                        currentIndex >= 0 &&
+                                        currentIndex + 1 < queue.length)
+                                    ? queue.sublist(currentIndex + 1)
+                                    : [];
+
+                            if (upcomingSongs.isEmpty) {
+                              return const Text("No Upcoming Tracks");
+                            }
+
+                            return Expanded(
+                              child: ListView.builder(
+                                itemCount: upcomingSongs.length,
+                                itemBuilder: (context, index) {
+                                  return SongTile(song: upcomingSongs[index]);
+                                },
+                              ),
+                            );
+                          },
+                        );
+                      }
+
+                      return BlocSelector<
+                        SongsBloc,
+                        SongsState,
+                        Tuple2<int?, List<SongInfo>>
+                      >(
+                        selector:
+                            (state) =>
+                                Tuple2(state.currentIndex, state.playbackQueue),
+                        builder: (context, data) {
+                          final int? currentIndex = data.item1;
+                          final List<SongInfo> queue = data.item2;
+
+                          //  Safety checks
+                          final List<SongInfo> upcomingSongs =
+                              (currentIndex != null &&
+                                      currentIndex >= 0 &&
+                                      currentIndex + 1 < queue.length)
+                                  ? queue.sublist(currentIndex + 1)
+                                  : [];
+
+                          if (upcomingSongs.isEmpty) {
+                            return const Text("No Upcoming Tracks");
+                          }
+
+                          return Expanded(
+                            child: ListView.builder(
+                              itemCount: upcomingSongs.length,
+                              itemBuilder: (context, index) {
+                                return SongTile(song: upcomingSongs[index]);
+                              },
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
           ),
-          // Upcoming tracks list would go here
         ],
       ),
     );

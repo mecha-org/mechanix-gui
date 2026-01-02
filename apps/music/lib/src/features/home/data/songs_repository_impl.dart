@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:audio_metadata_extractor/audio_metadata_extractor.dart';
+import 'package:audio_metadata_reader/audio_metadata_reader.dart'
+    hide AudioMetadata;
 import 'package:hive/hive.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_music/models/models.dart';
@@ -51,8 +53,16 @@ class SongsRepositoryImpl extends SongsRepository {
       // Get cache directory for artwork
       final cacheDir = await _getArtworkCacheDirectory();
 
-      final tempInfos = <SongInfo>[];
-      final home = Directory('/home/dhanish');
+      await ensureSongsConnected();
+      final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      // Create a map of existing songs by path for quick lookup
+      final existingSongsByPath = <String, SongInfo>{};
+      for (final song in songsBox.values) {
+        existingSongsByPath[song.path] = song;
+      }
+
+      final home = Directory('/home/mecha');
 
       final files =
           await home
@@ -66,18 +76,38 @@ class SongsRepositoryImpl extends SongsRepository {
               .cast<File>()
               .toList();
 
+      // Track which paths were found in the scan
+      final scannedPaths = <String>{};
       final seen = <String>{};
       logger.i("Total audio files found: ${files.length}");
 
+      final tempInfos = <SongInfo>[];
+
       for (int index = 0; index < files.length; index++) {
         final file = files[index];
+        scannedPaths.add(file.path);
+
         try {
           final stat = await file.stat();
           final key = "${file.uri.pathSegments.last}_${stat.size}";
           if (!seen.add(key)) continue;
 
-          final albumArtMetadata = await AudioMetadata.extract(file);
+          final existingSong = existingSongsByPath[file.path];
 
+          // Check if song exists and file hasn't been modified
+          if (existingSong != null) {
+            // File exists in database, just update index and keep existing data
+            final updatedSong = existingSong.copyWith(index: index);
+            await songsBox.put(updatedSong.id, updatedSong);
+            tempInfos.add(updatedSong);
+            logger.d("Updated existing song: ${file.path}");
+            continue;
+          }
+
+          // New song - extract metadata
+          // final albumArtMetadata = await AudioMetadata.extract(file);
+          final metadata = await readMetadata(file);
+          final albumArtMetadata = await AudioMetadata.extract(file);
           // Save artwork to cache and get path
           String? artworkCachePath;
           if (albumArtMetadata?.coverData != null) {
@@ -88,44 +118,146 @@ class SongsRepositoryImpl extends SongsRepository {
             );
           }
 
-          tempInfos.add(
-            SongInfo(
-              index: index,
-              id: uuid.v4(),
-              path: file.path,
-              title: albumArtMetadata?.trackName ?? file.uri.pathSegments.last,
-              artist: albumArtMetadata?.firstArtists ?? 'Unknown Artist',
-              album: albumArtMetadata?.album,
-              duration: albumArtMetadata?.duration?.toString(),
-              artworkPath: artworkCachePath, // Store file path instead of bytes
-            ),
+          final newSong = SongInfo(
+            index: index,
+            id: uuid.v4(),
+            path: file.path,
+            title: albumArtMetadata?.trackName ?? file.uri.pathSegments.last,
+            artist: albumArtMetadata?.firstArtists ?? 'Unknown Artist',
+            album: albumArtMetadata?.album,
+            duration: metadata.duration?.inSeconds.toString(),
+            artworkPath: artworkCachePath,
           );
+
+          await songsBox.put(newSong.id, newSong);
+          tempInfos.add(newSong);
+          logger.d("Added new song: ${file.path}");
         } catch (e) {
           logger.w("Error processing file ${file.path}: $e");
-          tempInfos.add(
-            SongInfo(
+
+          final existingSong = existingSongsByPath[file.path];
+          if (existingSong != null) {
+            // Keep existing song data even if processing fails
+            final updatedSong = existingSong.copyWith(index: index);
+            await songsBox.put(updatedSong.id, updatedSong);
+            tempInfos.add(updatedSong);
+          } else {
+            // Create minimal song info for new files that failed processing
+            final newSong = SongInfo(
               index: index,
               id: uuid.v4(),
               path: file.path,
               title: file.uri.pathSegments.last,
               artist: 'Unknown Artist',
-            ),
-          );
+            );
+            await songsBox.put(newSong.id, newSong);
+            tempInfos.add(newSong);
+          }
         }
       }
 
-      logger.i("Storing songs in Hive");
-      await ensureSongsConnected();
-      final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
-      await songsBox.clear();
-      for (final song in tempInfos) {
-        await songsBox.put(song.id, song);
+      // Remove songs that no longer exist on disk
+      final songsToRemove = <String>[];
+      for (final song in songsBox.values) {
+        if (!scannedPaths.contains(song.path)) {
+          songsToRemove.add(song.id);
+
+          // Delete artwork cache if exists
+          if (song.artworkPath != null) {
+            try {
+              final artworkFile = File(song.artworkPath!);
+              if (await artworkFile.exists()) {
+                await artworkFile.delete();
+                logger.d("Deleted artwork cache: ${song.artworkPath}");
+              }
+            } catch (e) {
+              logger.w("Error deleting artwork cache: $e");
+            }
+          }
+        }
       }
-      logger.i("Songs scanning completed");
+
+      // Remove songs from box
+      for (final songId in songsToRemove) {
+        await songsBox.delete(songId);
+        logger.d("Removed song with id: $songId");
+      }
+
+      // Remove songs from playlists
+      if (songsToRemove.isNotEmpty) {
+        await _removeSongsFromPlaylists(songsToRemove);
+        await _removeFromRecents(songsToRemove);
+      }
+
+      logger.i(
+        "Songs scanning completed. Added/Updated: ${tempInfos.length}, Removed: ${songsToRemove.length}",
+      );
       return tempInfos;
     } catch (e) {
       logger.e("Error scanning songs: $e");
       return [];
+    }
+  }
+
+  Future<void> _removeFromRecents(List<String> songIds) async {
+    try {
+      await ensureRecentlyPlayedConnected();
+
+      final recentSongs = Hive.box<RecentlyPlayed>(
+        TableName.recentlyPlayedTable,
+      );
+
+      final keysToRemove = <dynamic>[];
+
+      // Find all recent songs that contain the deleted song IDs
+      for (final entry in recentSongs.toMap().entries) {
+        if (songIds.contains(entry.value.song.id)) {
+          keysToRemove.add(entry.key);
+        }
+      }
+
+      // Remove the found entries
+      for (final key in keysToRemove) {
+        await recentSongs.delete(key);
+        logger.d("Removed song from recent songs with key: $key");
+      }
+
+      logger.i("Removed ${keysToRemove.length} songs from recently played");
+    } catch (e) {
+      logger.w("Error removing songs from recently played: $e");
+    }
+  }
+
+  // Helper method to remove songs from all playlists
+  Future<void> _removeSongsFromPlaylists(List<String> songIds) async {
+    try {
+      // Assuming you have a playlists box
+      final playlistsBox = Hive.box<PlaylistInfo>(
+        TableName.playlistTable,
+      ); // Adjust according to your playlist model
+
+      for (final playlist in playlistsBox.values) {
+        bool modified = false;
+        final updatedSongIds =
+            playlist.songIds.where((id) {
+              if (songIds.contains(id)) {
+                modified = true;
+                return false;
+              }
+              return true;
+            }).toList();
+
+        if (modified) {
+          final updatedPlaylist = playlist.copyWith(
+            songIds: updatedSongIds,
+            coverImagePath: playlist.coverImagePath,
+          );
+          await playlistsBox.put(playlist.id, updatedPlaylist);
+          logger.d("Removed deleted songs from playlist: ${playlist.name}");
+        }
+      }
+    } catch (e) {
+      logger.w("Error removing songs from playlists: $e");
     }
   }
 
@@ -499,7 +631,7 @@ class SongsRepositoryImpl extends SongsRepository {
                 // Add song to playlist
                 final updatedPlaylist = playlist.copyWith(
                   songIds: [...playlist.songIds, songId],
-                  coverImagePath: playlist.coverImagePath,
+                  coverImagePath: song.artworkPath ?? playlist.coverImagePath,
                 );
                 await playlistBox.put(playlistId, updatedPlaylist);
               }
@@ -749,11 +881,53 @@ class SongsRepositoryImpl extends SongsRepository {
   Future<List<SearchInfo>> getStoredSearchItems() async {
     try {
       logger.i("Getting stored search items");
+
       await ensureSearchHistoryConnected();
-      final box = Hive.box<SearchInfo>(TableName.searchTable);
-      final searchedItems = box.values.toList();
-      searchedItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return searchedItems;
+      await ensurePlaylistConnected();
+      await ensureSongsConnected();
+
+      final searchBox = Hive.box<SearchInfo>(TableName.searchTable);
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      final List<SearchInfo> results = [];
+
+      for (final searchItem in searchBox.values) {
+        if (searchItem.isPlaylist) {
+          // Fetch latest playlist
+          final playlist = playlistBox.get(searchItem.playlistInfo!.id);
+
+          if (playlist != null) {
+            results.add(
+              SearchInfo(
+                id: searchItem.id,
+                isPlaylist: true,
+                playlistInfo: playlist,
+                createdAt: searchItem.createdAt,
+              ),
+            );
+          }
+        } else {
+          // 🔹 Fetch latest song
+          final song = songsBox.get(searchItem.songInfo!.id);
+
+          if (song != null) {
+            results.add(
+              SearchInfo(
+                id: searchItem.id,
+                isPlaylist: false,
+                songInfo: song,
+                createdAt: searchItem.createdAt,
+              ),
+            );
+          }
+        }
+      }
+
+      // 🔹 Sort by recent searches
+      results.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+      return results;
     } catch (e, stack) {
       logger.e(
         "Error getting stored search items",

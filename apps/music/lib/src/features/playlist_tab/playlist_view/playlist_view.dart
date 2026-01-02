@@ -160,9 +160,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                       controller: scrollController,
                       slivers: [
                         //Top View
-                        PlaylistTopView(
-                          playlistInfo: playlist,
-                        ),
+                        PlaylistTopView(playlistInfo: playlist),
 
                         SliverToBoxAdapter(child: SizedBox(height: 16)),
                         // Audio Actions
@@ -226,7 +224,11 @@ class _PlaylistViewState extends State<PlaylistView> {
                                         selector:
                                             (state) =>
                                                 state.currentSong?.id ==
-                                                displaySongs[index].id,
+                                                    displaySongs[index].id &&
+                                                state
+                                                        .currentPlaylist
+                                                        .playlistId ==
+                                                    playlist.id,
                                         builder:
                                             (context, isCurrentSong) =>
                                                 SongTile(
@@ -284,7 +286,11 @@ class _PlaylistViewState extends State<PlaylistView> {
                                           selector:
                                               (state) =>
                                                   state.currentSong?.id ==
-                                                  displaySongs[index].id,
+                                                      displaySongs[index].id &&
+                                                  state
+                                                          .currentPlaylist
+                                                          .playlistId ==
+                                                      playlist.id,
                                           builder:
                                               (context, isCurrentSong) => Row(
                                                 children: [

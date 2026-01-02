@@ -113,8 +113,8 @@ class _TopMusicState extends State<TopMusic> {
                           iconSize: 40,
                           onPressed:
                               currentPage < pages.length - 1
-                                  ? null
-                                  : () => _scrollRight(pages.length),
+                                  ? () => _scrollRight(pages.length)
+                                  : null,
                         ),
                       ],
                     ),

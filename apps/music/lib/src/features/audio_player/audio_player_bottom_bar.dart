@@ -51,16 +51,25 @@ class AudioPlayerBottomBar extends StatelessWidget {
               ),
             ],
             centerWidget: [
-              BottomBarButton(
-                onPressed: () {
-                  // context.read<SongsBloc>().add(MusicTabSwitch(MusicTabs.home));
-                },
-                iconTheme: const MechanixBottomBarIconThemeData(
-                  iconSize: Size(24, 24),
-                  iconBoxSize: Size(44, 44),
+              BottomBarButton.widget(
+                widget: BlocSelector<SongsBloc, SongsState, RepeatMode>(
+                  selector: (state) => state.repeatMode,
+                  builder: (context, state) {
+                    final String icon =
+                        state == RepeatMode.none
+                            ? MusicIcons.repeatIcon
+                            : state == RepeatMode.one
+                            ? MusicIcons.repeatOnceIcon
+                            : MusicIcons.repeatPlaylistIcon;
+                    return IconButton(
+                      onPressed: () {
+                        context.read<SongsBloc>().add(ToggleRepeat());
+                      },
+                      iconSize: 44,
+                      icon: Image.asset(icon, width: 24, height: 24),
+                    );
+                  },
                 ),
-
-                iconPath: MusicIcons.repeatIcon,
               ),
               BottomBarButton(
                 onPressed: () {
@@ -91,17 +100,27 @@ class AudioPlayerBottomBar extends StatelessWidget {
                 iconPath: MusicIcons.nextIcon,
               ),
 
-              BottomBarButton(
-                onPressed: () {
-                  // context.read<SongsBloc>().add(
-                  //   MusicTabSwitch(MusicTabs.favorites),
-                  // );
-                },
-                iconTheme: const MechanixBottomBarIconThemeData(
-                  iconSize: Size(24, 24),
-                  iconBoxSize: Size(44, 44),
+              BottomBarButton.widget(
+                widget: BlocSelector<SongsBloc, SongsState, bool>(
+                  selector: (state) => state.isShuffled,
+                  builder: (context, state) {
+                    return IconButton(
+                      onPressed: () {
+                        context.read<SongsBloc>().add(
+                          ShuffleToggle(!state),
+                        );
+                      },
+                      iconSize: 44,
+                      icon: Image.asset(
+                        state
+                            ? MusicIcons.shuffleEnableIcon
+                            : MusicIcons.shuffleIcon,
+                        width: 24,
+                        height: 24,
+                      ),
+                    );
+                  },
                 ),
-                iconPath: MusicIcons.shuffleIcon,
               ),
             ],
             anchorWidget: [

@@ -26,10 +26,7 @@ class SwipeableList extends StatelessWidget {
             // Optional confirmation (recommended)
             return true;
           },
-          onDismissed:
-              isCurrentSong
-                  ? (_) => {context.read<SongsBloc>().add(DeleteSong(song))}
-                  : null,
+          onDismissed: (_) => {context.read<SongsBloc>().add(DeleteSong(song))},
           child: SongTile(
             song: song,
             isCurrentSong: isCurrentSong,
