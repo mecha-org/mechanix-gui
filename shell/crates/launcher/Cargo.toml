@@ -17,6 +17,7 @@ commons = { path = "../commons" }
 settings = { path = "../settings" }
 theme = { path = "../theme" }
 status_bar = { path = "../status_bar" }
+power_options = { path = "../power_options" }
 settings_drawer = { path = "../settings_drawer" }
 universal_search = { path = "../universal_search" }
 running_apps = { path = "../running_apps" }
@@ -68,6 +69,11 @@ assets = [
         "../../../assets/icons/notifications/*",
         "usr/share/mechanix/shell/launcher/assets/icons/notifications/",
         "755",
+    ],
+    [
+        "../../../assets/icons/power-options/*",
+        "usr/share/mechanix/shell/launcher/assets/icons/power-options/",
+        "755",
     ]
 ]
 
@@ -98,4 +104,9 @@ assets = [
 
     # Notifications icons
     { source = "../../../assets/icons/notifications/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/notifications/", mode = "755" },
+
+    # Power options icons
+    { source = "../../../assets/icons/power-options/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/power-options/", mode = "755" },
+
+
 ]
