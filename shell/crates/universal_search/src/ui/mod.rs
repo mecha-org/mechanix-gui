@@ -15,12 +15,15 @@ use models::DragInfo;
 use models::SearchResults;
 use models::UniversalSearch;
 use mxsearch::service::MxSearchService;
+use theme::ActiveTheme;
+use theme::prelude::AlphaExt;
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 56.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
-const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+
+const NAVBAR_SIZE: (f32, f32) = (199.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
 
 impl DragInfo {
@@ -58,12 +61,14 @@ impl UniversalSearch {
         .detach();
 
         let text_input = cx.new(|cx| {
-            TextInput::new(cx).on_change(move |input, cx| {
-                let query = input.content.to_string();
-                entity.update(cx, |this, cx| {
-                    this.perform_search(query, cx);
-                });
-            })
+            TextInput::new(cx)
+                .placeholder("Search here...")
+                .on_change(move |input, cx| {
+                    let query = input.content.to_string();
+                    entity.update(cx, |this, cx| {
+                        this.perform_search(query, cx);
+                    });
+                })
         });
 
         Self {
@@ -253,6 +258,7 @@ impl Render for UniversalSearch {
         div()
             .w_full()
             .h_full()
+            // .h(px(584.))
             .child(self.universal_search_items(cx))
     }
 }
@@ -319,6 +325,7 @@ impl UniversalSearch {
     }
 
     fn universal_search_items(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         let apps = sample_recent_apps();
 
         self.app_count = apps.len();
@@ -362,7 +369,8 @@ impl UniversalSearch {
 
             div()
                 .size_full()
-                .bg(rgb(0x2b2b2b))
+                // .bg(rgb(0x2b2b2b))
+                .bg(colors.background_1000)
                 .w(size.width)
                 .h(size.height)
                 .rounded(px(10.43))
@@ -488,7 +496,7 @@ impl UniversalSearch {
             .h_full()
             .w_full()
             .bg(gpui::black())
-            .px(px(16.0))
+            // .px(px(16.0))
             .flex()
             .flex_col()
             // .on_mouse_up(MouseButton::Left, cx.listener(UniversalSearch::on_mouse_up))
@@ -520,40 +528,89 @@ impl UniversalSearch {
                     //     cx.listener(UniversalSearch::on_mouse_down),
                     // )
                     .child(
-                        div().absolute().top(self.scroll_offset).w_full().child(
-                            div()
-                                .grid()
-                                .child(
-                                    div()
-                                        .my(px(8.0))
-                                        .flex()
-                                        .justify_center()
-                                        .col_span_full()
-                                        .row_span_full()
-                                        .child(
-                                            div()
-                                                .bg(rgb(0x181818))
-                                                .flex()
-                                                .border_1()
-                                                .border_color(rgb(0x363636))
-                                                .rounded(px(16.0))
-                                                .w(grid_size.width)
-                                                .h(grid_size.height)
-                                                .content_center()
-                                                .items_center()
-                                                .px(px(9.))
+                        div()
+                            .absolute()
+                            .top(self.scroll_offset)
+                            .w_full()
+                            .px_4()
+                            .child(
+                                div()
+                                    .child(
+                                        div()
+                                            .w_full()
+                                            .h_full()
+                                            .flex()
+                                            .flex_col()
+                                            .pt(px(36.)) // this shall be replaced with status bar height
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .flex_row()
+                                                    .justify_between()
+                                                    .items_center()
+                                                    .child(
+                                                        div()
+                                                            .text_size(px(20.0))
+                                                            .text_color(colors.foreground_200)
+                                                            .child("Search"),
+                                                    )
+                                                    .child(
+                                                        div()
+                                                            .text_size(px(16.0))
+                                                            .text_color(colors.background_700)
+                                                            .child("Clear all"),
+                                                    ),
+                                            )
+                                            .child(
+                                                // result !
+                                                div().flex().flex_col()
+                                                .h(px(30.))
                                                 .child(
-                                                    div()
-                                                        .gap(px(26.0))
-                                                        .grid()
-                                                        .grid_cols(columns)
-                                                        .grid_rows(rows)
-                                                        .children(app_children),
+                                                    div().flex().flex_row().child(
+                                                        div()
+                                                            .text_size(px(16.0))
+                                                            .text_color(colors.background_500)
+                                                            .child("Search an app, a file, a word or anything literally"),
+                                                    ),
                                                 ),
-                                        ),
-                                )
-                                .children(file_children),
-                        ),
+                                            ),
+                                    )
+                                    .children(file_children),
+                            ),
+                        // .child(
+                        //     div()
+                        //         // .grid()
+                        //         // .child(
+                        //         //     div()
+                        //         //         .my(px(8.0))
+                        //         //         .flex()
+                        //         //         .justify_center()
+                        //         //         .col_span_full()
+                        //         //         .row_span_full()
+                        //         //         .child(
+                        //         //             div()
+                        //         //                 .bg(rgb(0x181818))
+                        //         //                 .flex()
+                        //         //                 .border_1()
+                        //         //                 .border_color(rgb(0x363636))
+                        //         //                 .rounded(px(16.0))
+                        //         //                 .w(grid_size.width)
+                        //         //                 .h(grid_size.height)
+                        //         //                 .content_center()
+                        //         //                 .items_center()
+                        //         //                 .px(px(9.))
+                        //         //                 .child(
+                        //         //                     div()
+                        //         //                         .gap(px(26.0))
+                        //         //                         .grid()
+                        //         //                         .grid_cols(columns)
+                        //         //                         .grid_rows(rows)
+                        //         //                         .children(app_children),
+                        //         //                 ),
+                        //         //         ),
+                        //         // )
+                        //         .children(file_children),
+                        // ),
                     ),
             )
             .child(
@@ -562,94 +619,139 @@ impl UniversalSearch {
                     .w_full()
                     .bottom(px(0.0))
                     .child(
-                        div().size_full().flex().flex_row().items_center().child(
-                            div()
-                                .size_full()
-                                .flex()
-                                .flex_row()
-                                .justify_between()
-                                .items_center()
-                                .rounded(px(28.0))
-                                .bg(rgb(0x363636))
-                                .border_color(rgb(0x575757))
-                                .child(
-                                    div().flex().flex_row().items_center().child(
-                                        div()
-                                            .flex()
-                                            .flex_row()
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .items_center()
-                                                    .justify_center()
-                                                    .mr(px(8.0))
-                                                    .ml(px(16.0))
-                                                    .w(px(24.0))
-                                                    .h(px(24.0))
-                                                    .rounded(px(8.0))
-                                                    .child(
-                                                        div().w(px(17.0)).h(px(17.0)).child(
-                                                            Icon::from(search_icon.clone())
-                                                                .size((px(17.0), px(17.0)))
-                                                                .text_color(rgb(0x808080)),
-                                                        ),
-                                                    ),
-                                            )
-                                            .child(
-                                                div().text_size(px(20.0)).child(text_input.clone()),
-                                            ),
-                                    ),
-                                )
-                                .child(
-                                    div()
-                                        .size_full()
-                                        .h(px(40.0))
-                                        .w(px(48.0))
-                                        .rounded(px(21.54))
-                                        .mr(px(8.0))
-                                        .flex()
-                                        .items_center()
-                                        .justify_center()
-                                        .border_1()
-                                        .id("button")
-                                        .on_click(cx.listener(
-                                            |this: &mut UniversalSearch, _event, _window, cx| {
-                                                this.text_input.update(cx, |input, cx| {
-                                                    input.content = "".into();
-                                                    input.selected_range = 0..0;
-                                                    input.selection_reversed = false;
-                                                    input.marked_range = None;
-                                                    input.last_layout = None;
-                                                    input.last_bounds = None;
-                                                    input.is_selecting = false;
-                                                    cx.notify();
-                                                });
-                                            },
-                                        ))
-                                        .border_color(rgb(0x808080))
-                                        .child(
+                        div()
+                            .size_full()
+                            .flex()
+                            .flex_row()
+                            .items_center()
+                            .bg(colors.accent_400.with_alpha(0.1))
+                            .border_color(colors.background_700)
+                            .border_1()
+                            .py(px(6.))
+                            .child(
+                                div()
+                                    .w(px(488.))
+                                    .h(px(44.))
+                                    .ml_2()
+                                    .flex()
+                                    .flex_row()
+                                    .justify_between()
+                                    .items_center()
+                                    .bg(colors.background_800)
+                                    .border_color(colors.accent_500)
+                                    .border_1()
+                                    .rounded_sm()
+                                    .child(
+                                        div().flex().flex_row().items_center().child(
                                             div()
-                                                .size_full()
                                                 .flex()
-                                                .items_center()
-                                                .justify_center()
+                                                .flex_row()
                                                 .child(
                                                     div()
-                                                        .h(px(21.5))
-                                                        .w(px(21.5))
                                                         .flex()
+                                                        .flex_row()
                                                         .items_center()
                                                         .justify_center()
+                                                        // .mr(px(8.0))
+                                                        // .ml(px(16.0))
+                                                        .py_2()
+                                                        .ml_3()
+                                                        .mr_2()
+                                                        .w(px(24.0))
+                                                        .h(px(24.0))
+                                                        .rounded(px(8.0))
                                                         .child(
-                                                            Icon::from(x_icon.clone())
-                                                                .size((px(15.0), px(15.0)))
-                                                                .text_color(rgb(0xe9e9e9)),
+                                                            div().child(
+                                                                Icon::from(search_icon.clone())
+                                                                    .size((px(24.0), px(24.0)))
+                                                                    .text_color(colors.accent_300),
+                                                            ),
                                                         ),
+                                                )
+                                                .child(
+                                                    div()
+                                                        .text_size(px(20.0))
+                                                        .child(text_input.clone()),
                                                 ),
                                         ),
-                                ),
-                        ),
+                                    ), // .child(
+                                       //     div()
+                                       //         .size_full()
+                                       //         .h(px(40.0))
+                                       //         .w(px(48.0))
+                                       //         .mr(px(8.0))
+                                       //         .flex()
+                                       //         .items_center()
+                                       //         .justify_center()
+                                       //         .id("button")
+                                       //         .on_click(cx.listener(
+                                       //             |this: &mut UniversalSearch, _event, _window, cx| {
+                                       //                 this.text_input.update(cx, |input, cx| {
+                                       //                     input.content = "".into();
+                                       //                     input.selected_range = 0..0;
+                                       //                     input.selection_reversed = false;
+                                       //                     input.marked_range = None;
+                                       //                     input.last_layout = None;
+                                       //                     input.last_bounds = None;
+                                       //                     input.is_selecting = false;
+                                       //                     cx.notify();
+                                       //                 });
+                                       //             },
+                                       //         ))
+                                       //         .border_color(rgb(0x808080))
+                                       //         .child(
+                                       //             div()
+                                       //                 .size_full()
+                                       //                 .flex()
+                                       //                 .items_center()
+                                       //                 .justify_center()
+                                       //                 .child(
+                                       //                     div()
+                                       //                         .h(px(21.5))
+                                       //                         .w(px(21.5))
+                                       //                         .flex()
+                                       //                         .items_center()
+                                       //                         .justify_center()
+                                       //                         .child(
+                                       //                             Icon::from(x_icon.clone())
+                                       //                                 .size((px(24.0), px(24.0)))
+                                       //                                 .text_color(rgb(0xe9e9e9)),
+                                       //                         ),
+                                       //                 ),
+                                       //         ),
+                                       // ),
+                            )
+                            .child(
+                                div()
+                                    .size_full()
+                                    .h(px(40.0))
+                                    .w(px(40.0))
+                                    .flex()
+                                    .flex_row()
+                                    .items_center()
+                                    .justify_center()
+                                    // .p_2()
+                                    .id("cancel-button")
+                                    .on_click(cx.listener(
+                                        |this: &mut UniversalSearch, _event, _window, cx| {
+                                            this.text_input.update(cx, |input, cx| {
+                                                input.content = "".into();
+                                                input.selected_range = 0..0;
+                                                input.selection_reversed = false;
+                                                input.marked_range = None;
+                                                input.last_layout = None;
+                                                input.last_bounds = None;
+                                                input.is_selecting = false;
+                                                cx.notify();
+                                            });
+                                        },
+                                    ))
+                                    .child(
+                                        Icon::from(x_icon.clone())
+                                            .size((px(24.0), px(24.0)))
+                                            .text_color(rgb(0xe9e9e9)),
+                                    ),
+                            ),
                     ),
             )
     }
