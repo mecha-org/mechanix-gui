@@ -24,6 +24,8 @@ use std::{
     collections::{HashMap, VecDeque},
     time::Duration,
 };
+use theme::ActiveTheme;
+use theme::prelude::Theme;
 
 /// A list of notifications.
 pub struct NotificationList {
@@ -297,7 +299,7 @@ impl NotificationCenter {
 
 impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
 
-const NAVBAR_SIZE: (f32, f32) = (198.5, 28.29);
+const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
 impl NotificationCenter {
     pub fn set_visible(&mut self, visible: bool) {
@@ -644,6 +646,8 @@ impl NotificationCenter {
 
 impl Render for NotificationCenter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         let open_y = 0.;
         let closed_y = Self::closed_pos();
 
@@ -715,19 +719,18 @@ impl Render for NotificationCenter {
                                             px(NAVBAR_SIZE.0),
                                             px(NAVBAR_SIZE.1),
                                         ));
-                                        w.border_radius(px(2.));
-                                        w.border_width(px(2.));
+                                        // w.border_width(px(2.));
                                         w.upper_wing_side(WingSide::Left);
-                                        w.w(px(NAVBAR_SIZE.0))
-                                            .h(px(NAVBAR_SIZE.1))
-                                            .bg(if (self.is_visible) {
-                                                rgb(0x000000)
+                                        w.w(px(NAVBAR_SIZE.0)).h(px(NAVBAR_SIZE.1)).bg(
+                                            if self.is_visible {
+                                                colors.background_1000
                                             } else {
-                                                rgb(0x151515)
-                                            })
-                                            .when(!self.is_visible, |w| {
-                                                w.border_2().border_color(rgba(0xAA640033))
-                                            })
+                                                colors.background_800
+                                            },
+                                        )
+                                        // .when(!self.is_visible, |w| {
+                                        //     w.border_t_2().border_color(colors.background_700)
+                                        // })
                                     })
                                     .on_mouse_down(
                                         MouseButton::Left,

@@ -1,8 +1,7 @@
 // working switch
 use gpui::{prelude::FluentBuilder, *};
 use std::{rc::Rc, time::Duration};
-
-use crate::constants::*;
+use theme::prelude::Theme;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SwitchSize {
@@ -109,16 +108,18 @@ impl Styled for Switch {
 
 impl RenderOnce for Switch {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let checked = self.checked;
         let on_click = self.on_click.clone();
         let toggle_state = window.use_keyed_state(self.id.clone(), cx, |_, _| checked);
 
         // Color definitions
-        let primary_color = gpui::rgb(AMBER_600);
-        let bg_color = gpui::rgb(DARK_NEUTRAL_900);
-        let thumb_color = gpui::rgb(DARK_NEUTRAL_900);
-        let thumb_color_unchecked = gpui::rgb(0x323232);
-        let transparent = gpui::rgba(0x00000000);
+        let primary_color = colors.accent_200;
+        let bg_color = colors.background_900;
+        let thumb_color = colors.background_900;
+        let thumb_color_unchecked = colors.background_400;
+        let transparent = colors.background_1000;
 
         let (bg, toggle_bg) = match checked {
             true => (primary_color, thumb_color),
@@ -166,7 +167,7 @@ impl RenderOnce for Switch {
                         .border_color(if checked {
                             transparent
                         } else {
-                            rgb(DARK_NEUTRAL_100)
+                            colors.foreground_800
                         })
                         .bg(bg)
                         .child(
@@ -180,7 +181,7 @@ impl RenderOnce for Switch {
                                 .border_color(if checked {
                                     transparent
                                 } else {
-                                    rgb(DARK_NEUTRAL_100)
+                                    colors.foreground_800
                                 })
                                 .map(|this| {
                                     let prev_checked = toggle_state.read(cx);

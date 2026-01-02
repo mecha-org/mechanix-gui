@@ -1,4 +1,5 @@
 use gpui::*;
+use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
     prelude::*,
@@ -8,16 +9,26 @@ use crate::{
     },
 };
 
+// TODO: when auto brightness is enabled, hightlight the row
+
 impl SettingsDrawer {
     pub fn render_display_modal(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
+        let colors = Theme::global(cx).colors.clone();
+
+        let auto_brightness = self.auto_brightness;
+        let dark_mode = self.dark_mode;
+        let is_active = auto_brightness | dark_mode;
+
+        let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
+
         div()
             .flex()
             .flex_col()
-            .bg(rgb(DARK_NEUTRAL_900))
+            .bg(colors.background_1000)
             .size_full()
             .border_1()
             .rounded_xl()
-            .border_color(rgb(AMBER_900))
+            .border_color(colors.accent_200.with_alpha(0.4))
             .child(self.render_header_div(cx, "Display brightness"))
             .child(
                 div()
@@ -45,7 +56,7 @@ impl SettingsDrawer {
                             .p_4()
                             .flex_shrink_0()
                             .border_y_1()
-                            .border_color(rgb(DARK_NEUTRAL_700))
+                            .border_color(colors.accent_200.with_alpha(0.4))
                             .child(
                                 div()
                                     .flex()
@@ -54,13 +65,13 @@ impl SettingsDrawer {
                                     .child(
                                         Icon::new(IconName::AutoBrightness)
                                             .size((px(28.), px(28.)))
-                                            .text_color(rgb(AMBER_600)),
+                                            .text_color(icon_color),
                                     )
                                     .child(
                                         div()
                                             .pl_2()
                                             .font_weight(FontWeight::NORMAL)
-                                            .text_color(rgb(AMBER_600))
+                                            .text_color(text_color)
                                             .child("Auto brightness"),
                                     ),
                             )
@@ -92,13 +103,13 @@ impl SettingsDrawer {
                                     .child(
                                         Icon::new(IconName::DarkMode)
                                             .size((px(28.), px(28.)))
-                                            .text_color(rgb(DARK_NEUTRAL_0)),
+                                            .text_color(icon_color),
                                     )
                                     .child(
                                         div()
                                             .pl_2()
                                             .font_weight(FontWeight::NORMAL)
-                                            .text_color(rgb(DARK_NEUTRAL_0))
+                                            .text_color(text_color)
                                             .child("Dark mode"),
                                     ),
                             )

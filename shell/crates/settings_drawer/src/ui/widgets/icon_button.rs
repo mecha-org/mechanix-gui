@@ -1,15 +1,15 @@
 use std::rc::Rc;
 
-use crate::{constants::*, ui::icon::Icon};
+use crate::ui::icon::Icon;
 use gpui::{LongPressEvent, prelude::FluentBuilder, *};
-use theme::prelude::Theme;
+use theme::prelude::{AlphaExt, Theme};
 
-const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
-const ACTIVE_ICON_COLOR: u32 = AMBER_600; // default - gray | custom can be - amber
-const ACTIVE_ICON_BG_COLOR: u32 = 0xC6760040; // for pressed 
-const LONG_PRESS_ACTIVE_ICON_BG_COLOR: u32 = 0xAA64004D;
-const BG_COLOR: u32 = DARK_NEUTRAL_900;
-const BORDER_COLOR: u32 = AMBER_1000;
+// const ICON_COLOR: u32 = DARK_NEUTRAL_100; // default - gray | custom can be - white or active - amber
+// const ACTIVE_ICON_COLOR: u32 = AMBER_600; // default - gray | custom can be - amber
+// const ACTIVE_ICON_BG_COLOR: u32 = 0xC6760040; // for pressed
+// const LONG_PRESS_ACTIVE_ICON_BG_COLOR: u32 = 0xAA64004D;
+// const BG_COLOR: u32 = DARK_NEUTRAL_900;
+// const BORDER_COLOR: u32 = AMBER_1000;
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -20,10 +20,10 @@ pub struct IconButton {
     active: bool,
     on_click: Option<Rc<dyn Fn(&ClickEvent, &mut Window, &mut App)>>,
     size: Option<(Pixels, Pixels)>,
-    icon_color: Option<Hsla>,
-    bg_color: Option<Hsla>,
-    active_icon_color: Option<Hsla>,
-    active_bg_color: Option<Hsla>,
+    icon_color: Option<Rgba>,
+    bg_color: Option<Rgba>,
+    active_icon_color: Option<Rgba>,
+    active_bg_color: Option<Rgba>,
     border: Option<Pixels>,
     label: Option<String>,
     on_long_press: Option<Rc<dyn Fn(&LongPressEvent, &mut Window, &mut App)>>,
@@ -89,22 +89,22 @@ impl IconButton {
         self
     }
 
-    pub fn icon_color(mut self, icon_color: impl Into<Hsla>) -> Self {
+    pub fn icon_color(mut self, icon_color: impl Into<Rgba>) -> Self {
         self.icon_color = Some(icon_color.into());
         self
     }
 
-    pub fn bg_color(mut self, bg_color: impl Into<Hsla>) -> Self {
+    pub fn bg_color(mut self, bg_color: impl Into<Rgba>) -> Self {
         self.bg_color = Some(bg_color.into());
         self
     }
 
-    pub fn active_icon_color(mut self, active_icon_color: impl Into<Hsla>) -> Self {
+    pub fn active_icon_color(mut self, active_icon_color: impl Into<Rgba>) -> Self {
         self.active_icon_color = Some(active_icon_color.into());
         self
     }
 
-    pub fn active_bg_color(mut self, active_bg_color: impl Into<Hsla>) -> Self {
+    pub fn active_bg_color(mut self, active_bg_color: impl Into<Rgba>) -> Self {
         self.active_bg_color = Some(active_bg_color.into());
         self
     }
@@ -129,6 +129,13 @@ impl RenderOnce for IconButton {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
 
+        let t_icon_color = colors.foreground_400;
+        let t_active_icon_color = colors.accent_200; // default - gray | custom can be - amber
+        let t_active_icon_bg_color = colors.accent_200.with_alpha(0.1); // for pressed 
+        let t_long_press_active_icon_bg_color = colors.accent_200.with_alpha(0.2);
+        let t_bg_color = colors.background_900;
+        let t_border_color = colors.accent_400.with_alpha(0.4);
+
         let main = self
             .main
             .flex()
@@ -136,20 +143,21 @@ impl RenderOnce for IconButton {
             .h(px(84.0))
             .rounded(px(8.0))
             .border(if self.active { px(1.5) } else { px(0.) })
-            .border_color(rgb(BORDER_COLOR)) // KEEP THIS
+            .border_color(t_border_color) // KEEP THIS
             .active(|this| {
                 let mut style = this.clone();
                 style = style
                     .clone()
                     .bg(if self.on_long_press.is_some() {
-                        rgba(LONG_PRESS_ACTIVE_ICON_BG_COLOR).into()
+                        t_long_press_active_icon_bg_color
                     } else if let Some(active_bg_color) = self.active_bg_color {
                         active_bg_color
                     } else {
-                        rgba(ACTIVE_ICON_BG_COLOR).into()
+                        t_active_icon_bg_color
                     })
-                    .border(px(1.5))
-                    .border_color(rgb(BORDER_COLOR));
+                    .into();
+
+                style = style.border(px(1.5)).border_color(t_border_color);
                 style
             }) // GPUI's active state
             .items_center()
@@ -158,7 +166,7 @@ impl RenderOnce for IconButton {
                 this.bg(if let Some(bg_color) = self.bg_color {
                     bg_color
                 } else {
-                    rgb(BG_COLOR).into()
+                    t_bg_color
                 })
             })
             .when(!self.pressed && self.active, |this| {
@@ -181,17 +189,17 @@ impl RenderOnce for IconButton {
                 }
             })
             .when_some(self.icon, |this, icon| {
-                let color: Hsla = if self.active {
+                let color: Rgba = if self.active {
                     if let Some(active_icon_color) = self.active_icon_color {
                         active_icon_color
                     } else {
-                        rgb(ACTIVE_ICON_COLOR).into()
+                        t_active_icon_color.into()
                     }
                 } else {
                     if let Some(icon_color) = self.icon_color {
                         icon_color
                     } else {
-                        rgb(ICON_COLOR).into()
+                        t_icon_color.into()
                     }
                 };
                 this.child(icon.text_color(color))
@@ -204,7 +212,7 @@ impl RenderOnce for IconButton {
                 .justify_center()
                 .child(label)
                 .text_sm()
-                .text_color(rgb(DARK_NEUTRAL_100))
+                .text_color(colors.foreground_600)
         } else {
             main
         }

@@ -15,6 +15,7 @@ futures = { workspace = true }
 desktop_dbus = { path = "../../../dbus/mechanix/desktop"}
 commons = { path = "../commons"}
 settings = { path = "../settings"}
+theme = { path = "../theme" }
 smol = "2.0.2"
 uuid = "1.18.1"
 regex = "1.11.3"

@@ -1,9 +1,12 @@
 use futures::SinkExt;
 use gpui::*;
 use shell_state::{NmMessage, ShellState};
+use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
-    helper::get_wireless_strength_icon, prelude::*, ui::icon::{Icon, IconName},
+    helper::get_wireless_strength_icon,
+    prelude::*,
+    ui::icon::{Icon, IconName},
 };
 
 const HEADER_HEIGHT: f32 = 60.0;
@@ -34,12 +37,7 @@ pub trait ScrollBehavior {
 
     fn on_mouse_down(&mut self, event: &MouseDownEvent);
     fn on_mouse_up(&mut self);
-    fn on_mouse_move(
-        &mut self,
-        event: &MouseMoveEvent,
-        window_height: Pixels,
-        item_count: usize,
-    );
+    fn on_mouse_move(&mut self, event: &MouseMoveEvent, window_height: Pixels, item_count: usize);
 }
 
 #[derive(Debug, Clone)]
@@ -102,12 +100,7 @@ impl ScrollBehavior for WirelessModalScroll {
         self.is_dragging = false;
     }
 
-    fn on_mouse_move(
-        &mut self,
-        event: &MouseMoveEvent,
-        window_height: Pixels,
-        list_count: usize,
-    ) {
+    fn on_mouse_move(&mut self, event: &MouseMoveEvent, window_height: Pixels, list_count: usize) {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
 
@@ -123,10 +116,9 @@ impl ScrollBehavior for WirelessModalScroll {
 }
 
 impl SettingsDrawer {
-    pub fn render_wireless_modal(
-        &mut self,
-        cx: &mut gpui::Context<SettingsDrawer>,
-    ) -> AnyElement {
+    pub fn render_wireless_modal(&mut self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let wireless_details = ShellState::global(cx).wireless_details.clone();
         let nm_tx = ShellState::global(cx).nm_tx.clone().unwrap();
         let network_list = wireless_details.networks.clone().unwrap_or_default();
@@ -135,11 +127,11 @@ impl SettingsDrawer {
         div()
             .flex()
             .flex_col()
-            .bg(rgb(DARK_NEUTRAL_900))
+            .bg(colors.background_1000)
             .size_full()
             .border_1()
             .rounded_xl()
-            .border_color(rgb(AMBER_900))
+            .border_color(colors.accent_200.with_alpha(0.4))
             .child(
                 self.render_header_div(cx, "Wireless")
             )
@@ -150,7 +142,7 @@ impl SettingsDrawer {
                     .flex_1()
                     .relative()
                     .overflow_hidden()
-                    .bg(rgb(DARK_NEUTRAL_900))
+                    .bg(colors.background_1000)
                     .on_mouse_down(MouseButton::Left, cx.listener(move |this, event: &MouseDownEvent, _window, cx| {
                         cx.stop_propagation();
                         this.wireless_modal_scroll.on_mouse_down(event);
@@ -180,11 +172,8 @@ impl SettingsDrawer {
                                     let is_active = network.is_active;
                                     let is_known = network.is_known;
 
-                                    let icon_color = if network.is_active {
-                                        rgb(AMBER_600)
-                                    } else {
-                                        rgb(DARK_NEUTRAL_100)
-                                    };
+                                    let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
+
                                     let wireless_icon = get_wireless_strength_icon(
                                         network.is_active,
                                         network.signal_strength,
@@ -194,7 +183,7 @@ impl SettingsDrawer {
                                     let connect_div = div().child(
                                         Icon::new(IconName::ConnectedIcon)
                                             .size((px(24.), px(24.)))
-                                            .text_color(rgb(AMBER_600)),
+                                            .text_color(text_color),
                                     );
 
                                     let mut network_div = if is_active {
@@ -205,9 +194,9 @@ impl SettingsDrawer {
                                             .justify_between()
                                             .h(px(ROW_HEIGHT))
                                             .px_4()
-                                            .bg(rgba(AMBER_600_10))
+                                            .bg(colors.accent_200.with_alpha(0.1))
                                             .border_y_1()
-                                            .border_color(rgb(AMBER_900))
+                                            .border_color(colors.accent_200.with_alpha(0.4))
                                             .child(
                                                 div()
                                                     .flex()
@@ -224,7 +213,7 @@ impl SettingsDrawer {
                                                         div()
                                                             .pl_2()
                                                             .font_weight(FontWeight::NORMAL)
-                                                            .text_color(icon_color)
+                                                            .text_color(text_color)
                                                             .child(network.ssid.clone())
                                                     ),
                                             )
@@ -237,7 +226,7 @@ impl SettingsDrawer {
                                             .justify_between()
                                             .h(px(ROW_HEIGHT))
                                             .px_4()
-                                            .hover(|style| style.bg(rgba(AMBER_600_10)))
+                                            .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
                                             .child(
                                                 div()
                                                     .flex()
@@ -254,7 +243,7 @@ impl SettingsDrawer {
                                                         div()
                                                             .pl_2()
                                                             .font_weight(FontWeight::NORMAL)
-                                                            .text_color(icon_color)
+                                                            .text_color(text_color)
                                                             .child(network.ssid.clone())
                                                     ),
                                             )

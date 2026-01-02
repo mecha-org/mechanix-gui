@@ -4,9 +4,9 @@ mod widgets;
 use commons::widgets::{WingSide, wing};
 use gpui::prelude::FluentBuilder;
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
-use shell_state::{BrightnessMessage, BtMessage, NmMessage, ShellState, VolumeMessage};
+use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
+use theme::prelude::AlphaExt;
 
-use crate::constants::*;
 use crate::helper::get_wireless_strength_icon;
 use crate::ui::icon::Icon;
 use crate::ui::modals::*;
@@ -14,13 +14,11 @@ use crate::ui::{
     icon::IconName,
     widgets::{IconButton, Slider, SliderEvent, SliderState},
 };
-use bluez::interfaces::device::BluetoothDevice;
-use futures::{SinkExt, channel::mpsc};
+use futures::SinkExt;
 use gpui::*;
-use networkmanager::interfaces::wireless::WirelessNetworkInfo;
 use theme::ActiveTheme;
 
-const NAVBAR_SIZE: (f32, f32) = (198.5, 28.29);
+const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
 
 const MIN_MODAL_SIZE_1: (f32, f32) = (133., 110.);
@@ -44,19 +42,6 @@ pub enum PowerMode {
     High,
     Balanced,
     Low,
-}
-
-pub struct WirelessDetails {
-    pub enabled: bool,
-    pub connected_network: Option<WirelessNetworkInfo>,
-    pub networks: Option<Vec<WirelessNetworkInfo>>,
-}
-
-pub struct BluetoothDetails {
-    pub enabled: bool,
-    pub connected_devices: u8,
-    pub connected_device: Option<String>,
-    pub available_devices: Option<Vec<BluetoothDevice>>,
 }
 
 pub struct SettingsDrawer {
@@ -288,6 +273,8 @@ impl SettingsDrawer {
 
 impl Render for SettingsDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         let open_y = 0.;
         let closed_y = Self::closed_pos();
 
@@ -357,20 +344,17 @@ impl Render for SettingsDrawer {
                                             px(NAVBAR_SIZE.1),
                                         ));
                                         w.upper_wing_side(WingSide::Right);
-
-                                        w.border_radius(px(2.));
-                                        w.border_width(px(2.));
-
-                                        w.w(px(NAVBAR_SIZE.0))
-                                            .h(px(NAVBAR_SIZE.1))
-                                            .bg(if (self.is_visible) {
-                                                rgb(0x000000)
+                                        // w.border_width(px(1.));
+                                        w.w(px(NAVBAR_SIZE.0)).h(px(NAVBAR_SIZE.1)).bg(
+                                            if self.is_visible {
+                                                colors.background_1000
                                             } else {
-                                                rgb(0x151515)
-                                            })
-                                            .when(!self.is_visible, |w| {
-                                                w.border_2().border_color(rgba(0xAA640033))
-                                            })
+                                                colors.background_800
+                                            },
+                                        )
+                                        // .when(!self.is_visible, |w| {
+                                        //     w.border_t_2().border_color(colors.background_700)
+                                        // })
                                     })
                                     .on_mouse_down(
                                         MouseButton::Left,
@@ -604,13 +588,11 @@ impl SettingsDrawer {
                                     .left(px(0.))
                                     .w_full()
                                     .h_full()
-                                    .bg(colors.background_1000)
+                                    .bg(colors.background_900)
                                     .opacity(0.6)
-                                    .on_click(cx.listener(
-                                        |this: &mut SettingsDrawer, _, widnow, cx| {
-                                            Self::start_close_animation(this, cx);
-                                        },
-                                    ))
+                                    .on_click(cx.listener(|this: &mut SettingsDrawer, _, _, cx| {
+                                        Self::start_close_animation(this, cx);
+                                    }))
                                     .on_mouse_down(MouseButton::Left, |_, _, cx| {
                                         cx.stop_propagation()
                                     })
@@ -637,7 +619,7 @@ impl SettingsDrawer {
                                             .w(px(self.modal_size.0))
                                             .h(px(self.modal_size.1))
                                             .bg(if self.modal_size.0 == MIN_MODAL_SIZE_1.0 {
-                                                rgba(AMBER_600_10)
+                                                colors.accent_200.with_alpha(0.4)
                                             } else {
                                                 colors.background_900
                                             })
@@ -648,7 +630,7 @@ impl SettingsDrawer {
                                             })
                                             .rounded_xl()
                                             .border_1()
-                                            .border_color(rgb(AMBER_800))
+                                            .border_color(colors.accent_800)
                                             .on_mouse_down(MouseButton::Left, |_, _, cx| {
                                                 cx.stop_propagation()
                                             })
@@ -732,8 +714,8 @@ impl SettingsDrawer {
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon(rotation_icon)
             .active(self.rotation_on)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
@@ -746,13 +728,15 @@ impl SettingsDrawer {
     }
 
     fn render_airplane_mode(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         IconButton::new("id_airplane")
             .icon(IconName::Airplane)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            .icon_color(rgb(DARK_NEUTRAL_100))
+            .icon_color(colors.foreground_600)
             .active(self.airplane_mode)
-            .active_icon_color(rgb(DARK_NEUTRAL_0))
-            .active_bg_color(rgb(AMBER_600))
+            .active_icon_color(colors.foreground_0)
+            .active_bg_color(colors.accent_200)
             .on_click(cx.listener(
                 |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
@@ -766,6 +750,8 @@ impl SettingsDrawer {
     }
 
     fn render_screen_mirroring(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         // TODO: Add extended screen icons when extended screen is detected
         let screen_mirroring_icon = if self.screen_mirroring {
             IconName::ScreenMirroringOn
@@ -777,8 +763,8 @@ impl SettingsDrawer {
             .icon(screen_mirroring_icon)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.screen_mirroring)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
@@ -795,12 +781,14 @@ impl SettingsDrawer {
     }
 
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         IconButton::new("id_terminal")
             .icon(IconName::Terminal)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            .icon_color(rgb(DARK_NEUTRAL_100))
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .icon_color(colors.foreground_600)
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
                     println!("terminal clicked");
@@ -810,12 +798,14 @@ impl SettingsDrawer {
     }
 
     fn render_microphone_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         IconButton::new("id_microphone")
             .icon(IconName::MicroPhoneOff)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.microphone_recording)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
@@ -828,12 +818,14 @@ impl SettingsDrawer {
     }
 
     fn render_screen_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         IconButton::new("id_screen_recording")
             .icon(IconName::ScreenRecordingOff)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.screen_recording)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
@@ -846,11 +838,13 @@ impl SettingsDrawer {
     }
 
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         IconButton::new("id_settings")
             .icon(IconName::Settings)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
                     println!("settigns clicked");
@@ -860,13 +854,14 @@ impl SettingsDrawer {
     }
 
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         IconButton::new("id_camera")
             .icon(IconName::CameraOff)
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            // .icon_color(rgb(AMBER_600)) // on press change ICON CameraON
-            .icon_color(rgb(DARK_NEUTRAL_100))
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .icon_color(colors.foreground_600)
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
                     println!("camera clicked");
@@ -875,8 +870,9 @@ impl SettingsDrawer {
             ))
     }
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let wireless_details = ShellState::global(cx).wireless_details.clone();
+        let colors = cx.theme().colors.clone();
 
+        let wireless_details = ShellState::global(cx).wireless_details.clone();
         let (wireless_icon, network_label) = {
             let mut icon = IconName::WirelessOff;
             let mut label = "Wi-Fi".to_string();
@@ -905,8 +901,8 @@ impl SettingsDrawer {
             .size((px(ICON_W), px(ICON_H)))
             .active(wireless_details.enabled)
             .label(network_label)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
                 cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
@@ -927,6 +923,7 @@ impl SettingsDrawer {
     }
 
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
 
         let (bluetooth_icon, bluetooth_label) = {
@@ -955,8 +952,8 @@ impl SettingsDrawer {
             .size((px(ICON_W), px(ICON_H)))
             .label(bluetooth_label)
             .active(bluetooth_details.enabled)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
                 cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
@@ -976,6 +973,7 @@ impl SettingsDrawer {
     }
 
     fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         let battery_percent = ShellState::global(cx).battery_percent.clone();
 
         let power_mode_icon = match self.power_mode {
@@ -984,17 +982,17 @@ impl SettingsDrawer {
             PowerMode::Low => IconName::PowerModeLow,
         };
         let power_mode_icon_color = match self.power_mode {
-            PowerMode::High => rgb(AMBER_600),
-            PowerMode::Balanced => rgb(DARK_NEUTRAL_100),
-            PowerMode::Low => rgb(AMBER_600),
+            PowerMode::High => colors.accent_200,
+            PowerMode::Balanced => colors.foreground_600,
+            PowerMode::Low => colors.accent_200,
         };
         IconButton::new("id_power_mode")
             .icon(power_mode_icon)
             .size((px(ICON_W), px(ICON_H)))
             .label(format!("{}% ", battery_percent))
             .icon_color(power_mode_icon_color)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 move |this: &mut SettingsDrawer,
                       _event: &ClickEvent,
@@ -1011,13 +1009,14 @@ impl SettingsDrawer {
     }
 
     fn render_cell_signal(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         IconButton::new("id_cell_signal")
             .icon(IconName::CellSignalNone)
             .size((px(ICON_W), px(ICON_H)))
             .label("No SIM")
             .active(self.cell_signal)
-            .active_icon_color(rgb(AMBER_600))
-            .active_bg_color(rgba(AMBER_600_10))
+            .active_icon_color(colors.accent_200)
+            .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
                 |this: &mut SettingsDrawer,
                  _event: &ClickEvent,
@@ -1041,8 +1040,7 @@ impl SettingsDrawer {
             .h_full()
             .text_lg()
             .col_span(2)
-            // .bg(colors.background_900)
-            .bg(rgb(DARK_NEUTRAL_900))
+            .bg(colors.background_900)
             .rounded(px(8.))
             .on_click(cx.listener(|_, _: &ClickEvent, _, _| {}))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
@@ -1072,10 +1070,10 @@ impl SettingsDrawer {
             .child(
                 IconButton::new("id_brightness")
                     .icon(brightness_icon)
-                    .icon_color(rgb(AMBER_600))
+                    .icon_color(colors.accent_200)
                     .size((px(32.), px(32.)))
-                    .bg_color(rgb(DARK_NEUTRAL_900))
-                    .active_bg_color(rgb(DARK_NEUTRAL_900))
+                    .bg_color(colors.background_900)
+                    .active_bg_color(colors.background_900)
                     .border(px(0.)),
             )
             .child(
@@ -1105,7 +1103,7 @@ impl SettingsDrawer {
             .h_full()
             .text_lg()
             .col_span(2)
-            .bg(rgb(DARK_NEUTRAL_900))
+            .bg(colors.background_900)
             .rounded(px(8.))
             .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
@@ -1113,6 +1111,8 @@ impl SettingsDrawer {
     }
 
     fn render_volume_slider(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         let volume_icon = if self.volume_mute {
             IconName::VolumeOff
         } else {
@@ -1125,9 +1125,9 @@ impl SettingsDrawer {
             }
         };
         let volume_icon_color = if self.volume_mute {
-            DARK_NEUTRAL_0
+            colors.foreground_0
         } else {
-            AMBER_600
+            colors.accent_200
         };
 
         let volume_tx = ShellState::global(cx).volume_tx.clone().unwrap();
@@ -1144,10 +1144,10 @@ impl SettingsDrawer {
             .child(
                 div()
                     .id("volume_icon")
-                    .bg(rgb(DARK_NEUTRAL_900))
+                    .bg(colors.background_900)
                     .child(
                         Icon::new(volume_icon)
-                            .text_color(rgb(volume_icon_color))
+                            .text_color(volume_icon_color)
                             .size((px(32.), px(32.))),
                     )
                     .on_click(cx.listener(
