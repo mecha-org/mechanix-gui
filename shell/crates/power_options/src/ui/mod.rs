@@ -1,10 +1,7 @@
-use gpui::{Size, prelude::FluentBuilder, *};
+use gpui::{prelude::FluentBuilder, *};
 
 use crate::ui::icon::{Icon, IconName};
 pub mod icon;
-
-const CARD_WIDTH: f32 = 540.;
-const CARD_HEIGHT: f32 = 620.;
 
 const INIT_ANIMATE_HEIGHT: f32 = 0.0; // Start from top
 
@@ -21,32 +18,32 @@ pub struct PowerOptions {
     is_initial_animation_done: bool,
 
     // Thresholds
-    drag_threshold: f32,
     max_drag_distance: f32,
 
     // For upward swipe detection
     drag_start_y: f32,
     drag_start_mouse_y: f32, // Track actual mouse Y position at start
     is_dragging: bool,
+
+    window_height: f32,
 }
 
 impl PowerOptions {
     pub fn new(cx: &mut Context<Self>) -> Self {
-        let mut this = Self {
+        let this = Self {
             power_off: false,
             drag_offset: None,
             drag_start_pos: 0.0,
             position_y: 0.0,
             initial_height: INIT_ANIMATE_HEIGHT,
             is_initial_animation_done: false,
-            drag_threshold: 200.0,
-            max_drag_distance: CARD_HEIGHT,
+            max_drag_distance: 0.0,
             drag_start_y: 0.0,
             drag_start_mouse_y: 0.0,
             is_dragging: false,
+            window_height: 0.0,
         };
 
-        this.animate_initial_reveal(cx);
         this
     }
 
@@ -55,9 +52,9 @@ impl PowerOptions {
         self.snap_to(0.0, cx);
     }
 
-    fn animate_initial_reveal(&mut self, cx: &mut Context<Self>) {
+    fn animate_initial_reveal(&mut self, window_height: f32, cx: &mut Context<Self>) {
         let start_height = 0.0;
-        let target_height = CARD_HEIGHT / 2.0;
+        let target_height = window_height / 2.0;
         let duration_ms = 1000.0;
         let start_time = std::time::Instant::now();
 
@@ -100,6 +97,7 @@ impl PowerOptions {
         let change = target - start;
         let duration_ms = 250.0;
         let start_time = std::time::Instant::now();
+        let window_height = self.window_height;
 
         cx.spawn(
             async move |this: WeakEntity<PowerOptions>, cx: &mut AsyncApp| {
@@ -111,7 +109,7 @@ impl PowerOptions {
                             this.position_y = target;
 
                             let total_height = this.initial_height + target;
-                            if total_height >= CARD_HEIGHT {
+                            if total_height >= window_height {
                                 this.power_off = true;
                                 println!("Power off triggered!");
                             }
@@ -145,8 +143,14 @@ impl PowerOptions {
 impl Render for PowerOptions {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let size = window.bounds().size;
-        let max_drag = self.max_drag_distance;
-        let threshold = self.drag_threshold;
+        let window_height = f32::from(size.height);
+
+        if self.window_height == 0.0 {
+            self.window_height = window_height;
+            self.max_drag_distance = window_height;
+            self.animate_initial_reveal(window_height, cx);
+        }
+
         let initial_h = self.initial_height;
 
         let amber_card_height = if self.is_initial_animation_done {
@@ -156,7 +160,7 @@ impl Render for PowerOptions {
         };
 
         let arrow_height = if self.is_initial_animation_done {
-            let remaining = CARD_HEIGHT - amber_card_height;
+            let remaining = window_height - amber_card_height;
             remaining.min(60.0).max(0.0)
         } else {
             0.0
@@ -166,13 +170,13 @@ impl Render for PowerOptions {
             .flex()
             .flex_col()
             .relative()
-            .w(px(CARD_WIDTH))
-            .h(px(CARD_HEIGHT))
+            .w(size.width)
+            .h(size.height)
             .bg(rgb(0x1a1a1a))
             .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                 if let Some(offset) = this.drag_offset {
                     let new_y = event.position.y.to_f64() as f32 - offset;
-                    let max_position = CARD_HEIGHT - initial_h;
+                    let max_position = window_height - initial_h;
                     this.position_y = new_y.clamp(0.0, max_position);
                     cx.notify();
                 }
@@ -192,7 +196,7 @@ impl Render for PowerOptions {
                             return;
                         }
 
-                        let remaining_space = CARD_HEIGHT - initial_h;
+                        let remaining_space = window_height - initial_h;
                         let half_remaining = remaining_space / 2.0;
 
                         let target = if this.position_y >= half_remaining {
@@ -207,7 +211,7 @@ impl Render for PowerOptions {
                 }),
             )
             .child(
-                // Upper swipe area
+                // Upper swipe area - AMBER CARD
                 div()
                     .id("power-off-swipe-area")
                     .h(px(amber_card_height))
@@ -255,7 +259,7 @@ impl Render for PowerOptions {
                     }),
             )
             .child(
-                // Swipe indicator
+                // Swipe indicator - arrow
                 div()
                     .h(px(arrow_height))
                     .w_full()
@@ -272,25 +276,9 @@ impl Render for PowerOptions {
                         )
                     }),
             )
-            .child(div().flex_1().w_full().bg(rgb(0x000000)).when(
-                self.is_initial_animation_done,
-                |div| {
-                    div.on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
-                            cx.stop_propagation();
-
-                            this.drag_start_y = this.position_y;
-                            this.drag_start_pos = this.position_y;
-                            this.drag_start_mouse_y = event.position.y.to_f64() as f32;
-                            this.drag_offset =
-                                Some(event.position.y.to_f64() as f32 - this.position_y);
-                            this.is_dragging = true;
-
-                            cx.notify();
-                        }),
-                    )
-                },
-            ))
+            .child(
+                // Lower area - black background
+                div().flex_1().w_full().bg(rgb(0x000000)),
+            )
     }
 }
