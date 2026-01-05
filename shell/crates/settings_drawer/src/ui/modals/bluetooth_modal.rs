@@ -219,7 +219,7 @@ impl SettingsDrawer {
                                                 ),
                                         )
                                         .child(
-                                            Icon::new(IconName::ConnectedIcon)
+                                            Icon::new(IconName::Connected)
                                                 .size((px(24.), px(24.)))
                                                 .text_color(colors.accent_200),
                                         )

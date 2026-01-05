@@ -48,8 +48,7 @@ impl SettingsDrawer {
                 performance_modes.iter().enumerate().map(|(idx, mode)| {
                     let is_active = mode.is_active;
 
-                    let (icon_color, text_color) =
-                        Self::get_icon_and_text_color(is_active, cx);
+                    let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
 
                     let mut icon = IconName::PowerModeBalanced;
 
@@ -60,7 +59,7 @@ impl SettingsDrawer {
                     };
 
                     let connect_div = div().child(
-                        Icon::new(IconName::ConnectedIcon)
+                        Icon::new(IconName::Connected)
                             .size((px(24.), px(24.)))
                             .text_color(icon_color),
                     );
