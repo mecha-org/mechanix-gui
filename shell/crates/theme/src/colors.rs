@@ -50,7 +50,7 @@ impl Default for ColorsSetting {
     fn default() -> Self {
         Self {
             accent_color: Oklcha::new(0.6388, 0.1435, 64.8, 98.0),
-            background_color: Oklcha::new(0.1638, 0.0, 0.0, 100.0),
+            background_color: Oklcha::new(0.0, 0.0, 0.0, 100.0),
             foreground_color: Oklcha::new(1.0, 0.0, 0.0, 100.0),
         }
     }
@@ -92,16 +92,16 @@ impl ThemeColors {
             self.accent_1000 = oklcha_to_rgba(accent_color.lighten_fixed(0.40));
         }
 
-        self.background_0 = oklcha_to_rgba(background_color.lighten_fixed(0.50));
-        self.background_100 = oklcha_to_rgba(background_color.lighten_fixed(0.45));
-        self.background_200 = oklcha_to_rgba(background_color.lighten_fixed(0.40));
-        self.background_300 = oklcha_to_rgba(background_color.lighten_fixed(0.35));
-        self.background_400 = oklcha_to_rgba(background_color.lighten_fixed(0.30));
-        self.background_500 = oklcha_to_rgba(background_color.lighten_fixed(0.25));
-        self.background_600 = oklcha_to_rgba(background_color.lighten_fixed(0.20));
-        self.background_700 = oklcha_to_rgba(background_color.lighten_fixed(0.15));
-        self.background_800 = oklcha_to_rgba(background_color.lighten_fixed(0.1));
-        self.background_900 = oklcha_to_rgba(background_color.lighten_fixed(0.05));
+        self.background_0 = oklcha_to_rgba(background_color.lighten_fixed(0.6));
+        self.background_100 = oklcha_to_rgba(background_color.lighten_fixed(0.55));
+        self.background_200 = oklcha_to_rgba(background_color.lighten_fixed(0.5));
+        self.background_300 = oklcha_to_rgba(background_color.lighten_fixed(0.45));
+        self.background_400 = oklcha_to_rgba(background_color.lighten_fixed(0.4));
+        self.background_500 = oklcha_to_rgba(background_color.lighten_fixed(0.35));
+        self.background_600 = oklcha_to_rgba(background_color.lighten_fixed(0.3));
+        self.background_700 = oklcha_to_rgba(background_color.lighten_fixed(0.25));
+        self.background_800 = oklcha_to_rgba(background_color.lighten_fixed(0.2));
+        self.background_900 = oklcha_to_rgba(background_color.lighten_fixed(0.15));
         self.background_1000 = oklcha_to_rgba(background_color);
 
         self.foreground_0 = oklcha_to_rgba(foreground_color);
@@ -125,5 +125,20 @@ pub fn oklcha_to_rgba(color: Oklcha) -> Rgba {
         g: rgba.green,
         b: rgba.blue,
         a: rgba.alpha,
+    }
+}
+
+pub trait AlphaExt {
+    fn with_alpha(&self, a: f32) -> Self;
+}
+
+impl AlphaExt for Rgba {
+    fn with_alpha(&self, a: f32) -> Self {
+        Rgba {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+            a,
+        }
     }
 }

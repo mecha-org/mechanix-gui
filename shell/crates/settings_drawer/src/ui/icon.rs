@@ -4,7 +4,7 @@ pub const SETTINGS_DRAWER_ICONS_DIR: &str = "icons/settings-drawer/";
 #[derive(IntoElement, Clone)]
 pub enum IconName {
     Settings,
-    Power,
+    PowerOff,
     HighPower,
     SavingPower,
     RotationOn,
@@ -53,7 +53,7 @@ pub enum IconName {
     CellSignalHigh,
     CellSignalWarning,
     Navbar,
-    ConnectedIcon,
+    Connected,
     SystemSpeaker,
     Headphone,
     ExternalSpeaker,
@@ -69,7 +69,7 @@ impl IconName {
     pub fn resolve(self) -> SharedString {
         let icon_path = match self {
             IconName::Settings => "settings.svg",
-            IconName::Power => "power.svg",
+            IconName::PowerOff => "power-off.svg",
             IconName::HighPower => "high-performance.svg",
             IconName::SavingPower => "low-performance.svg",
             IconName::PowerModeHigh => "power-mode-high.svg",
@@ -118,7 +118,7 @@ impl IconName {
             IconName::CellSignalHigh => "cell-signal-high.svg",
             IconName::CellSignalWarning => "cell-signal-warning.svg",
             IconName::Navbar => "navbar-gray.png",
-            IconName::ConnectedIcon => "connected_icon.svg",
+            IconName::Connected => "connected.svg",
             IconName::SystemSpeaker => "system-speaker.svg",
             IconName::Headphone => "headphone.svg",
             IconName::ExternalSpeaker => "external-speaker.svg",

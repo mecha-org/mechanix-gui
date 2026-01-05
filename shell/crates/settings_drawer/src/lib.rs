@@ -1,4 +1,3 @@
-pub mod constants;
 pub mod helper;
 mod ui;
 
@@ -11,7 +10,6 @@ use shell_state::ShellState;
 use ui::*;
 
 pub mod prelude {
-    pub use crate::constants::*;
     pub use crate::run_app;
     pub use crate::ui::SettingsDrawer;
 }

@@ -4,13 +4,18 @@ use crate::helper::{
 };
 use crate::ui::icon::{Icon, IconName};
 
+use crate::widgets::notification::{
+    DbNotification, NotificationId, NotificationUi, UserDismissedEvent,
+};
+use commons::widgets::{WingSide, wing};
+use gpui::rgba;
 use gpui::{
-    div, img, point, prelude::FluentBuilder, px, rgb, size, Animation, AnimationExt,
-    AnyElement, App, AppContext, AsyncApp, Bounds, ClickEvent, Context, DismissEvent,
-    Div, Element, ElementId, Entity, EventEmitter,
-    FontWeight, Img, InteractiveElement as _, IntoElement, MouseButton, MouseDownEvent,
-    MouseMoveEvent, MouseUpEvent, ParentElement as _, Point, Render, SharedString, Stateful,
-    StatefulInteractiveElement, StyleRefinement, Styled, Subscription, WeakEntity, Window,
+    Animation, AnimationExt, AnyElement, App, AppContext, AsyncApp, Bounds, ClickEvent, Context,
+    DismissEvent, Div, Element, ElementId, Entity, EventEmitter, FontWeight, Img,
+    InteractiveElement as _, IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent,
+    MouseUpEvent, ParentElement as _, Point, Render, SharedString, Stateful,
+    StatefulInteractiveElement, StyleRefinement, Styled, Subscription, WeakEntity, Window, div,
+    img, point, prelude::FluentBuilder, px, rgb, size,
 };
 use smol::Timer;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -19,7 +24,8 @@ use std::{
     collections::{HashMap, VecDeque},
     time::Duration,
 };
-use crate::widgets::notification::{DbNotification, NotificationId, NotificationUi, UserDismissedEvent};
+use theme::ActiveTheme;
+use theme::prelude::Theme;
 
 /// A list of notifications.
 pub struct NotificationList {
@@ -284,7 +290,7 @@ impl NotificationCenter {
             clearing: false,
             expanded_groups: HashMap::new(),
             item_states: HashMap::new(),
-            position: 620.0 - 29.0, // Default closed position
+            position: Self::closed_pos(), // Default closed position
             drag_offset: None,
             drag_start_pos: 0.0,
         }
@@ -293,7 +299,7 @@ impl NotificationCenter {
 
 impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
 
-const NAVBAR_SIZE: (f32, f32) = (180., 29.);
+const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
 impl NotificationCenter {
     pub fn set_visible(&mut self, visible: bool) {
@@ -578,20 +584,20 @@ impl NotificationCenter {
     }
 
     pub fn closed_pos() -> f32 {
-        620.0 - 29.0
+        APP_SIZE.1 - NAVBAR_SIZE.1
     }
 
     pub fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let start = self.position;
+        let change = target - start;
+        let duration_ms = 250.0; // Animation speed
+        let start_time = std::time::Instant::now();
+
         if target == 0.0 {
             self.is_visible = true;
         } else if target == Self::closed_pos() {
             self.is_visible = false;
         }
-
-        let start = self.position;
-        let change = target - start;
-        let duration_ms = 250.0; // Animation speed
-        let start_time = std::time::Instant::now();
 
         cx.spawn(
             async move |this: WeakEntity<NotificationCenter>, cx: &mut AsyncApp| {
@@ -640,6 +646,8 @@ impl NotificationCenter {
 
 impl Render for NotificationCenter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         let open_y = 0.;
         let closed_y = Self::closed_pos();
 
@@ -703,8 +711,27 @@ impl Render for NotificationCenter {
                             .justify_start()
                             .h(px(NAVBAR_SIZE.1))
                             .child(
-                                img(IconName::Navbar.resolve())
-                                    .id("notification-navbar")
+                                div()
+                                    .id("left-wing")
+                                    .child({
+                                        let mut w = wing();
+                                        w.upper_wing_size(size(
+                                            px(NAVBAR_SIZE.0),
+                                            px(NAVBAR_SIZE.1),
+                                        ));
+                                        // w.border_width(px(2.));
+                                        w.upper_wing_side(WingSide::Left);
+                                        w.w(px(NAVBAR_SIZE.0)).h(px(NAVBAR_SIZE.1)).bg(
+                                            if self.is_visible {
+                                                colors.background_1000
+                                            } else {
+                                                colors.background_800
+                                            },
+                                        )
+                                        // .when(!self.is_visible, |w| {
+                                        //     w.border_t_2().border_color(colors.background_700)
+                                        // })
+                                    })
                                     .on_mouse_down(
                                         MouseButton::Left,
                                         cx.listener(|this, event: &MouseDownEvent, _window, cx| {
@@ -1475,8 +1502,8 @@ impl NotificationCenter {
             // .left(px(16.0))
             // .right(px(16.0))
             .relative()
-            .w(px(540.))
-            .h(px(620.))
+            .w(px(APP_SIZE.0))
+            .h(px(APP_SIZE.1))
             .bg(rgb(0x0e0e0e))
             .child(
                 div()

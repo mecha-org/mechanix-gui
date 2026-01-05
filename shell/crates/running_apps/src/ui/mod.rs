@@ -1,18 +1,20 @@
 mod icon;
 use gpui::prelude::*;
+use theme::ActiveTheme;
 mod components;
 use crate::prelude::app_manager::AppManagerMessage;
 use crate::prelude::constants::*;
 use crate::prelude::models::*;
 use gpui::*;
 use tokio::sync::mpsc;
-const NAVBAR_SIZE: (f32, f32) = (120.0, 29.0);
+const BAR_SIZE: (f32, f32) = (80.0, 29.0);
 const APP_SIZE: (f32, f32) = (540.0, 620.0);
 
 impl Render for RunningApps {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let bar_fixed_pos = APP_SIZE.1 - NAVBAR_SIZE.1;
+        let bar_fixed_pos = APP_SIZE.1 - BAR_SIZE.1;
         let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
+        let colors = cx.theme().colors.clone();
 
         div()
             .w_full()
@@ -65,7 +67,7 @@ impl Render for RunningApps {
                     .items_center()
                     .absolute()
                     .top(px(current_bar_y))
-                    .h(px(NAVBAR_SIZE.1))
+                    .h(px(BAR_SIZE.1))
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(|this, event: &MouseDownEvent, _, cx| {
@@ -74,9 +76,7 @@ impl Render for RunningApps {
                             cx.notify();
                         }),
                     )
-                    .child(
-                        div().bg(rgb(0x4d4d4d)).w(px(NAVBAR_SIZE.0)).h(px(4.0)), // img(IconName::Navbar.resolve()).id("running-apps-navbar")
-                    ),
+                    .child(div().bg(colors.accent_400).w(px(BAR_SIZE.0)).h(px(4.0))),
             )
     }
 }
@@ -200,7 +200,7 @@ impl RunningApps {
 
 impl RunningApps {
     // fn closed_pos() -> f32 {
-    //     APP_SIZE.1 - NAVBAR_SIZE.1
+    //     APP_SIZE.1 - BAR_SIZE.1
     // }
 
     // fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
@@ -296,10 +296,10 @@ impl RunningApps {
         } else {
             regions.push(Bounds {
                 origin: point(
-                    px((APP_SIZE.0 - NAVBAR_SIZE.0) / 2.0),
-                    px(APP_SIZE.1 - NAVBAR_SIZE.1),
+                    px((APP_SIZE.0 - BAR_SIZE.0) / 2.0),
+                    px(APP_SIZE.1 - BAR_SIZE.1),
                 ),
-                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+                size: size(px(BAR_SIZE.0), px(BAR_SIZE.1)),
             });
         }
         window.set_input_regions(Some(regions));
