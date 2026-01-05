@@ -1,13 +1,14 @@
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
-import 'package:mechanix_music/models/search_info.dart';
+import 'package:mechanix_music/models/search_data.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 
 class SongsState extends Equatable {
   final List<SongInfo> songs;
   final List<SongInfo> playbackQueue;
+  final List<SongInfo> originalQueue;
   final bool isLoading;
   final String? error;
   final SearchResults searchResults;
@@ -37,6 +38,7 @@ class SongsState extends Equatable {
   const SongsState({
     this.songs = const [],
     this.playbackQueue = const [],
+    this.originalQueue = const [],
     this.isLoading = false,
     this.error,
     this.isPlaying = false,
@@ -71,6 +73,7 @@ class SongsState extends Equatable {
   SongsState copyWith({
     List<SongInfo>? songs,
     List<SongInfo>? playbackQueue,
+    List<SongInfo>? originalQueue,
     bool? isLoading,
     String? error,
     SearchResults? searchResults,
@@ -100,6 +103,7 @@ class SongsState extends Equatable {
     return SongsState(
       songs: songs ?? this.songs,
       playbackQueue: playbackQueue ?? this.playbackQueue,
+      originalQueue: originalQueue ?? this.originalQueue,
       isLoading: isLoading ?? this.isLoading,
       error: error ?? this.error,
       searchResults: searchResults ?? this.searchResults,
@@ -132,6 +136,7 @@ class SongsState extends Equatable {
   List<Object?> get props => [
     songs,
     playbackQueue,
+    originalQueue,
     isLoading,
     error,
     searchResults,

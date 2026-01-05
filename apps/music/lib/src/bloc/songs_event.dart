@@ -226,3 +226,31 @@ class ToggleScrolling extends SongsEvent {
 class OnSongComplete extends SongsEvent {
   const OnSongComplete();
 }
+
+class StartDirectoryWatch extends SongsEvent {
+  final String directoryPath;
+  const StartDirectoryWatch(this.directoryPath);
+}
+
+class StopDirectoryWatch extends SongsEvent {}
+
+class AudioFileCreated extends SongsEvent {
+  final String path;
+  const AudioFileCreated(this.path);
+}
+
+class AudioFileModified extends SongsEvent {
+  final String path;
+  const AudioFileModified(this.path);
+}
+
+class AudioFileDeleted extends SongsEvent {
+  final String path;
+  const AudioFileDeleted(this.path);
+}
+
+class PlaylistShuffle extends SongsEvent {
+  final bool isShuffle;
+  final String playlistId;
+  const PlaylistShuffle({required this.isShuffle, required this.playlistId});
+}

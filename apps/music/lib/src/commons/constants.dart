@@ -1,8 +1,8 @@
 class TableName {
   static const String songsInfoTable = "musicSongsTablev4";
   static const String recentlyPlayedTable = "recentlyPlayedTablev2";
-  static const String playlistTable = "playlistTablev2";
-  static const String searchTable = "searchTablev1";
+  static const String playlistTable = "playlistTablev3";
+  static const String searchTable = "searchTablev2";
 }
 
 class Constants {

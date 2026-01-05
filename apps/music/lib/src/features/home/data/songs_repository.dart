@@ -1,6 +1,6 @@
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
-import 'package:mechanix_music/models/search_info.dart';
+import 'package:mechanix_music/models/search_data.dart';
 import 'package:mechanix_music/models/song_info.dart';
 
 abstract class SongsRepository {
@@ -10,7 +10,7 @@ abstract class SongsRepository {
   Future<bool> toggleFavouriteSong(List<String> songInfo, bool isFavourite);
   Future<void> addToRecentlyPlayed(SongInfo songInfo);
   Future<List<SongInfo>> getRecentlyPlayed();
-  Future<bool> createUpdatePlaylist(String playlistName, String?playlistId);
+  Future<bool> createUpdatePlaylist(String playlistName, String? playlistId);
   Future<List<PlaylistInfo>> getPlaylist();
   Future<bool> deletePlaylist(String playlistId);
   Future<List<SongInfo>> addToPlaylist(
@@ -38,4 +38,8 @@ abstract class SongsRepository {
   Future<List<PlaylistInfo>> searchedPlaylist({required String query});
   Future<List<SongInfo>> searchedSong({required String query});
   Future<List<SongInfo>> getFavouriteSongs();
+
+  Future<void> addSongFromPath(String path);
+  Future<void> updateSongFromPath(String path);
+  Future<void> removeSongByPath(String path);
 }

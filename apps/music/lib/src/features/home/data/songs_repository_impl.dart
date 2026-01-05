@@ -7,7 +7,7 @@ import 'package:logger/web.dart';
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/recently_played.dart';
-import 'package:mechanix_music/models/search_info.dart';
+import 'package:mechanix_music/models/search_data.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
@@ -39,7 +39,7 @@ class SongsRepositoryImpl extends SongsRepository {
 
   Future<void> ensureSearchHistoryConnected() async {
     if (!Hive.isBoxOpen(TableName.searchTable)) {
-      await Hive.openBox<SearchInfo>(TableName.searchTable);
+      await Hive.openBox<SearchData>(TableName.searchTable);
     }
   }
 
@@ -429,6 +429,7 @@ class SongsRepositoryImpl extends SongsRepository {
         final song = songsBox.get(songIds[i]);
         if (song != null) {
           final updatedSong = song.copyWith(isFavourite: isFavourite);
+
           await songsBox.put(updatedSong.id, updatedSong);
         }
       }
@@ -610,48 +611,58 @@ class SongsRepositoryImpl extends SongsRepository {
 
       final updatedSongs = <SongInfo>[];
 
-      // Process each song
       for (final songId in songIds) {
         final song = songInfoBox.get(songId);
+        if (song == null) continue;
 
-        if (song != null) {
-          final updatedPlaylistIds = List<String>.from(song.playlistIds);
+        final updatedPlaylistIds = List<String>.from(song.playlistIds);
 
-          // Process each playlist for this song
-          for (final playlistId in playlistIds) {
-            final playlist = playlistBox.get(playlistId);
+        for (final playlistId in playlistIds) {
+          final playlist = playlistBox.get(playlistId);
+          if (playlist == null) continue;
 
-            if (playlist != null) {
-              if (playlist.songIds.length >= Constants.maxSongsPerPlaylist) {
-                // Skip this playlist as it's full
-                continue;
-              }
-              // Check if song is already in this playlist
-              if (!playlist.songIds.contains(songId)) {
-                // Add song to playlist
-                final updatedPlaylist = playlist.copyWith(
-                  songIds: [...playlist.songIds, songId],
-                  coverImagePath: song.artworkPath ?? playlist.coverImagePath,
-                );
-                await playlistBox.put(playlistId, updatedPlaylist);
-              }
-
-              // Add playlist to song's list (if not already there)
-              if (!updatedPlaylistIds.contains(playlistId)) {
-                updatedPlaylistIds.add(playlistId);
-              }
-            }
+          if (playlist.songIds.length >= Constants.maxSongsPerPlaylist) {
+            continue;
           }
 
-          // Update the song with all playlist changes
-          final updatedSong = song.copyWith(playlistIds: updatedPlaylistIds);
-          await songInfoBox.put(songId, updatedSong);
-          updatedSongs.add(updatedSong);
+          // Skip if already exists
+          if (playlist.songIds.contains(songId)) {
+            if (!updatedPlaylistIds.contains(playlistId)) {
+              updatedPlaylistIds.add(playlistId);
+            }
+            continue;
+          }
+
+          //  Updated songIds for playlist
+          final updatedSongIds = [...playlist.songIds, songId];
+
+          //  Recalculate isLiked for playlist
+          final isPlaylistLiked = updatedSongIds.every((id) {
+            final s = songInfoBox.get(id);
+            return s?.isFavourite == true;
+          });
+
+          final updatedPlaylist = playlist.copyWith(
+            songIds: updatedSongIds,
+            coverImagePath: song.artworkPath ?? playlist.coverImagePath,
+            isLiked: isPlaylistLiked,
+          );
+
+          await playlistBox.put(playlistId, updatedPlaylist);
+
+          if (!updatedPlaylistIds.contains(playlistId)) {
+            updatedPlaylistIds.add(playlistId);
+          }
         }
+
+        final updatedSong = song.copyWith(playlistIds: updatedPlaylistIds);
+
+        await songInfoBox.put(songId, updatedSong);
+        updatedSongs.add(updatedSong);
       }
 
       return updatedSongs;
-    } catch (_) {
+    } catch (e) {
       return [];
     }
   }
@@ -818,26 +829,26 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       logger.i("Storing search item");
       await ensureSearchHistoryConnected();
-      final box = Hive.box<SearchInfo>(TableName.searchTable);
+      final box = Hive.box<SearchData>(TableName.searchTable);
 
       if (playlistInfo == null && songInfo == null) {
         return false;
       }
 
       // 1️⃣ Check for existing item (dedupe)
-      SearchInfo? existingItem;
+      SearchData? existingItem;
 
       for (final item in box.values) {
         if (playlistInfo != null &&
             item.isPlaylist &&
-            item.playlistInfo?.id == playlistInfo.id) {
+            item.playlistId == playlistInfo.id) {
           existingItem = item;
           break;
         }
 
         if (songInfo != null &&
             !item.isPlaylist &&
-            item.songInfo?.id == songInfo.id) {
+            item.songId == songInfo.id) {
           existingItem = item;
           break;
         }
@@ -860,12 +871,12 @@ class SongsRepositoryImpl extends SongsRepository {
       }
 
       // 4️⃣ Insert new item
-      final data = SearchInfo(
+      final data = SearchData(
         id: uuid.v4(),
         createdAt: DateTime.now(),
         isPlaylist: playlistInfo != null,
-        playlistInfo: playlistInfo,
-        songInfo: songInfo,
+        playlistId: playlistInfo?.id,
+        songId: songInfo?.id,
       );
 
       await box.put(data.id, data);
@@ -886,7 +897,7 @@ class SongsRepositoryImpl extends SongsRepository {
       await ensurePlaylistConnected();
       await ensureSongsConnected();
 
-      final searchBox = Hive.box<SearchInfo>(TableName.searchTable);
+      final searchBox = Hive.box<SearchData>(TableName.searchTable);
       final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
       final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
 
@@ -895,7 +906,7 @@ class SongsRepositoryImpl extends SongsRepository {
       for (final searchItem in searchBox.values) {
         if (searchItem.isPlaylist) {
           // Fetch latest playlist
-          final playlist = playlistBox.get(searchItem.playlistInfo!.id);
+          final playlist = playlistBox.get(searchItem.playlistId);
 
           if (playlist != null) {
             results.add(
@@ -909,7 +920,7 @@ class SongsRepositoryImpl extends SongsRepository {
           }
         } else {
           // 🔹 Fetch latest song
-          final song = songsBox.get(searchItem.songInfo!.id);
+          final song = songsBox.get(searchItem.songId);
 
           if (song != null) {
             results.add(
@@ -946,7 +957,7 @@ class SongsRepositoryImpl extends SongsRepository {
     try {
       logger.i("Clearing search history");
       await ensureSearchHistoryConnected();
-      final box = Hive.box<SearchInfo>(TableName.searchTable);
+      final box = Hive.box<SearchData>(TableName.searchTable);
       if (searchId != null) {
         await box.delete(searchId);
       } else {
@@ -1032,5 +1043,21 @@ class SongsRepositoryImpl extends SongsRepository {
       logger.e("Error getting favourite songs", error: e, stackTrace: stack);
       return [];
     }
+  }
+
+  @override
+  Future<void> addSongFromPath(String path) async {
+    // TODO: implement addSongFromPath
+    return;
+  }
+
+  @override
+  Future<void> removeSongByPath(String path) async {
+    // TODO: implement removeSongByPath
+  }
+
+  @override
+  Future<void> updateSongFromPath(String path) async {
+    // TODO: implement updateSongFromPath
   }
 }

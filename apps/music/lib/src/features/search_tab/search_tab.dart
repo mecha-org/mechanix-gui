@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/models.dart';
-import 'package:mechanix_music/models/search_info.dart';
+import 'package:mechanix_music/models/search_data.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';

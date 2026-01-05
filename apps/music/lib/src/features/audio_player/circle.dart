@@ -83,10 +83,7 @@ class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
               child: Stack(
                 children: [
                   // Invisible hit area overlay
-                  CustomPaint(
-                    size: size,
-                    painter: HitAreaPainter(),
-                  ),
+                  CustomPaint(size: size, painter: HitAreaPainter()),
                   // Actual progress visualization
                   CustomPaint(
                     size: size,
@@ -129,9 +126,9 @@ class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
     // 🎯 EXPANDED hit test → Larger drag area for easier interaction
     // Allow a 60px band (increased from 50px for better edge detection)
     const hitAreaWidth = 60.0;
-    
+
     // Check if within the hit area band
-    if (distance < trackRadius - hitAreaWidth || 
+    if (distance < trackRadius - hitAreaWidth ||
         distance > trackRadius + hitAreaWidth) {
       return null;
     }
@@ -209,10 +206,11 @@ class SemiCircularProgressPainter extends CustomPainter {
 
     // 🔴 DEBUG: Draw hit area in red (60px band around the track)
     if (showDebugHitArea) {
-      final debugPaint = Paint()
-        ..color = Colors.red.withOpacity(0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 120; // 60px on each side = 120px total width
+      final debugPaint =
+          Paint()
+            ..color = Colors.red.withValues(alpha: 0.3)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 120; // 60px on each side = 120px total width
 
       canvas.drawArc(
         Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),
@@ -345,10 +343,11 @@ class HitAreaPainter extends CustomPainter {
     final strokeWidth = 6.0;
 
     // Draw a wide transparent stroke that creates the hit area
-    final hitAreaPaint = Paint()
-      ..color = Colors.transparent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 120; // 60px on each side (increased from 100)
+    final hitAreaPaint =
+        Paint()
+          ..color = Colors.transparent
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 120; // 60px on each side (increased from 100)
 
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius - strokeWidth / 2),

@@ -7,6 +7,7 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
+import 'package:mechanix_music/src/features/home/home_tab/empty_home_screen.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:mechanix_music/src/features/presentation/song_list_view.dart';
 
@@ -75,6 +76,9 @@ class _MusicTabState extends State<MusicTab> {
               BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
                 selector: (state) => state.songs,
                 builder: (context, songs) {
+                  if (songs.isEmpty) {
+                    return SliverToBoxAdapter(child: EmptyHomeScreen());
+                  }
                   return SongsListView(songs: songs);
                 },
               ),

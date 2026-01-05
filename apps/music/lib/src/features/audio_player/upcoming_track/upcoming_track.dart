@@ -7,10 +7,10 @@ import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:mechanix_music/src/features/audio_player/upcoming_track/upcoming_artwork_circular_progress.dart';
 import 'package:mechanix_music/src/features/audio_player/upcoming_track/upcoming_song_progress_bar.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
-import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 import 'package:tuple/tuple.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
@@ -50,7 +50,10 @@ class UpcomingTrack extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Album Artwork
-                ArtworkIcon(artworkPath: songDetails.artworkPath, size: 108),
+                UpcomingArtworkCircularProgress(
+                  songInfo: songDetails,
+                  player: context.read<SongsBloc>().player,
+                ),
                 SizedBox(width: 28),
 
                 // Song Info and Controls Column
@@ -164,84 +167,6 @@ class UpcomingTrack extends StatelessWidget {
                   BlocSelector<SongsBloc, SongsState, MusicMode>(
                     selector: (state) => state.musicMode,
                     builder: (context, musicMode) {
-                      if (musicMode == MusicMode.favorite) {
-                        return BlocSelector<
-                          SongsBloc,
-                          SongsState,
-                          Tuple2<SongInfo?, List<SongInfo>>
-                        >(
-                          selector:
-                              (state) => Tuple2(
-                                state.currentSong,
-                                state.favouriteSongs,
-                              ),
-                          builder: (context, data) {
-                            final List<SongInfo> queue = data.item2;
-                            final int currentIndex = data.item2.indexWhere(
-                              (song) => song.id == data.item1?.id,
-                            );
-
-                            //  Safety checks
-                            final List<SongInfo> upcomingSongs =
-                                (currentIndex >= 0 &&
-                                        currentIndex + 1 < queue.length)
-                                    ? queue.sublist(currentIndex + 1)
-                                    : [];
-
-                            if (upcomingSongs.isEmpty) {
-                              return const Text("No Upcoming Tracks");
-                            }
-
-                            return Expanded(
-                              child: ListView.builder(
-                                itemCount: upcomingSongs.length,
-                                itemBuilder: (context, index) {
-                                  return SongTile(song: upcomingSongs[index]);
-                                },
-                              ),
-                            );
-                          },
-                        );
-                      }
-                      if (musicMode == MusicMode.playlist) {
-                        return BlocSelector<
-                          SongsBloc,
-                          SongsState,
-                          Tuple2<CurrentPlaylist?, List<SongInfo>>
-                        >(
-                          selector:
-                              (state) => Tuple2(
-                                state.currentPlaylist,
-                                state.playlistSongs,
-                              ),
-                          builder: (context, data) {
-                            final int? currentIndex = data.item1?.currentIndex;
-                            final List<SongInfo> queue = data.item2;
-
-                            //  Safety checks
-                            final List<SongInfo> upcomingSongs =
-                                (currentIndex != null &&
-                                        currentIndex >= 0 &&
-                                        currentIndex + 1 < queue.length)
-                                    ? queue.sublist(currentIndex + 1)
-                                    : [];
-
-                            if (upcomingSongs.isEmpty) {
-                              return const Text("No Upcoming Tracks");
-                            }
-
-                            return Expanded(
-                              child: ListView.builder(
-                                itemCount: upcomingSongs.length,
-                                itemBuilder: (context, index) {
-                                  return SongTile(song: upcomingSongs[index]);
-                                },
-                              ),
-                            );
-                          },
-                        );
-                      }
-
                       return BlocSelector<
                         SongsBloc,
                         SongsState,

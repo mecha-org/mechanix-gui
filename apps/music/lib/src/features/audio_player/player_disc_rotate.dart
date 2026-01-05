@@ -181,23 +181,34 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
               child: SizedBox(
                 width: 300,
                 height: 300,
-                child:
-                    widget.songDetails.artworkPath != null
-                        ? ClipRRect(
-                          borderRadius: BorderRadius.circular(300),
-                          child: Image.asset(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(300),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      /// Base artwork image
+                      widget.songDetails.artworkPath != null
+                          ? Image.asset(
                             widget.songDetails.artworkPath!,
-                            width: 300,
-                            height: 300,
+                            fit: BoxFit.cover,
+                          )
+                          : Image.asset(
+                            MusicIcons.audioImage,
                             fit: BoxFit.cover,
                           ),
-                        )
-                        : Image.asset(
-                          MusicIcons.audioImage,
-                          width: 300,
-                          height: 300,
-                          fit: BoxFit.cover,
+
+                      ///  Transparent overlay image
+                      if (widget.songDetails.artworkPath != null)
+                        Opacity(
+                          opacity: 0.35, // adjust transparency here
+                          child: Image.asset(
+                            MusicIcons.audioImage,
+                            fit: BoxFit.cover,
+                          ),
                         ),
+                    ],
+                  ),
+                ),
               ),
             );
           },

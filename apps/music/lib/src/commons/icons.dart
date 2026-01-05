@@ -41,4 +41,5 @@ class MusicIcons {
   static const shuffleEnableIcon = 'assets/images/shuffle_enable.png';
   static const repeatOnceIcon = 'assets/images/repeat_once.png';
   static const repeatPlaylistIcon = 'assets/images/repeat_playlist.png';
+  static const emptyHomeScreenIcon = 'assets/images/empty_home_screen.png';
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
+import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
@@ -66,7 +67,15 @@ class AudioPlayerBottomBar extends StatelessWidget {
                         context.read<SongsBloc>().add(ToggleRepeat());
                       },
                       iconSize: 44,
-                      icon: Image.asset(icon, width: 24, height: 24),
+                      icon: Image.asset(
+                        icon,
+                        width: 24,
+                        height: 24,
+                        color:
+                            state != RepeatMode.none
+                                ? MusicColors.buttonColor
+                                : null,
+                      ),
                     );
                   },
                 ),
@@ -106,9 +115,7 @@ class AudioPlayerBottomBar extends StatelessWidget {
                   builder: (context, state) {
                     return IconButton(
                       onPressed: () {
-                        context.read<SongsBloc>().add(
-                          ShuffleToggle(!state),
-                        );
+                        context.read<SongsBloc>().add(ShuffleToggle(!state));
                       },
                       iconSize: 44,
                       icon: Image.asset(
@@ -117,6 +124,7 @@ class AudioPlayerBottomBar extends StatelessWidget {
                             : MusicIcons.shuffleIcon,
                         width: 24,
                         height: 24,
+                        color: state ? MusicColors.buttonColor : null,
                       ),
                     );
                   },

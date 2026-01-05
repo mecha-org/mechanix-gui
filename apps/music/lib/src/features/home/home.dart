@@ -14,6 +14,7 @@ import 'package:mechanix_music/src/features/music_tab/music_tab.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_tab.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_view.dart';
 import 'package:mechanix_music/src/features/search_tab/search_tab.dart';
+import 'package:media_kit/media_kit.dart';
 import 'package:tuple/tuple.dart';
 
 class HomePage extends StatefulWidget {
@@ -39,6 +40,12 @@ class _HomePageState extends State<HomePage> {
       default:
         return HomeTab();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    MediaKit.ensureInitialized();
   }
 
   @override

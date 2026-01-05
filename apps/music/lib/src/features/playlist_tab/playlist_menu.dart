@@ -143,8 +143,14 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
               if (widget.isLiked)
                 _menuItem(
                   value: _PlaylistMenuAction.none,
-                  title: 'Add to liked',
-                  icon: MusicIcons.favouritesIcon,
+                  title:
+                      widget.playlistInfo.isLiked
+                          ? 'Remove from Like'
+                          : 'Add to liked',
+                  icon:
+                      widget.playlistInfo.isLiked
+                          ? MusicIcons.filledFavouriteIcon
+                          : MusicIcons.favouritesIcon,
                 ),
               if (widget.isRenamePlaylist)
                 _menuItem(

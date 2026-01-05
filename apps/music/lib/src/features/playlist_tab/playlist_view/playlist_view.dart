@@ -159,41 +159,39 @@ class _PlaylistViewState extends State<PlaylistView> {
                     child: CustomScrollView(
                       controller: scrollController,
                       slivers: [
-                        //Top View
-                        PlaylistTopView(playlistInfo: playlist),
-
-                        SliverToBoxAdapter(child: SizedBox(height: 16)),
-                        // Audio Actions
-                        BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
-                          selector: (state) => state.playlistSongs,
-                          builder: (context, songs) {
-                            return PlaylistActionsView(
+                        if (!isEditMode) ...[
+                          PlaylistTopView(playlistInfo: playlist),
+                          SliverToBoxAdapter(child: SizedBox(height: 16)),
+                          // Audio Actions
+                          BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
+                            selector: (state) => state.playlistSongs,
+                            builder: (context, songs) {
+                              return PlaylistActionsView(
+                                playlistInfo: playlist,
+                                isEditMode: isEditMode,
+                                onEdit: () => toggleEditMode(songs, playlist),
+                              );
+                            },
+                          ),
+                          SliverToBoxAdapter(
+                            child: Container(
+                              height: 1,
+                              color: MusicColors.dividerColor,
+                              margin: EdgeInsets.all(16),
+                            ),
+                          ),
+                          // Add song button
+                          SliverPadding(
+                            padding: EdgeInsets.symmetric(horizontal: 16),
+                            sliver: PlaylistAddSong(
                               playlistInfo: playlist,
                               isEditMode: isEditMode,
-                              onEdit: () => toggleEditMode(songs, playlist),
-                            );
-                          },
-                        ),
-
-                        SliverToBoxAdapter(
-                          child: Container(
-                            height: 1,
-                            color: MusicColors.dividerColor,
-                            margin: EdgeInsets.all(16),
+                            ),
                           ),
-                        ),
+                          SliverToBoxAdapter(child: SizedBox(height: 16)),
+                        ],
 
-                        // Add song button
-                        SliverPadding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
-                          sliver: PlaylistAddSong(
-                            playlistInfo: playlist,
-                            isEditMode: isEditMode,
-                          ),
-                        ),
-
-                        SliverToBoxAdapter(child: SizedBox(height: 16)),
-
+                        //Top View
                         BlocSelector<
                           SongsBloc,
                           SongsState,
@@ -230,25 +228,29 @@ class _PlaylistViewState extends State<PlaylistView> {
                                                         .playlistId ==
                                                     playlist.id,
                                         builder:
-                                            (context, isCurrentSong) =>
-                                                SongTile(
-                                                  song: displaySongs[index],
-                                                  onTap:
-                                                      () => context
-                                                          .read<SongsBloc>()
-                                                          .add(
-                                                            PlayPlaylistSongs(
-                                                              playlistId:
-                                                                  playlist.id,
-                                                              isShuffle: false,
-                                                              songIndex: index,
-                                                            ),
-                                                          ),
-                                                  isCurrentSong:
-                                                      isCurrentSong &&
-                                                      musicMode ==
-                                                          MusicMode.playlist,
-                                                ),
+                                            (
+                                              context,
+                                              isCurrentSong,
+                                            ) => SongTile(
+                                              song: displaySongs[index],
+                                              onTap:
+                                                  () => context
+                                                      .read<SongsBloc>()
+                                                      .add(
+                                                        PlayPlaylistSongs(
+                                                          playlistId:
+                                                              playlist.id,
+                                                          isShuffle:
+                                                              playlist
+                                                                  .isShuffle,
+                                                          songIndex: index,
+                                                        ),
+                                                      ),
+                                              isCurrentSong:
+                                                  isCurrentSong &&
+                                                  musicMode ==
+                                                      MusicMode.playlist,
+                                            ),
                                       );
                                     },
                                     childCount: displaySongs.length,

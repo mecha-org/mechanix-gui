@@ -3,11 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/recently_played.dart';
-import 'package:mechanix_music/models/search_info.dart';
+import 'package:mechanix_music/models/search_data.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository_impl.dart';
-import 'package:media_kit/media_kit.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/features/home/home.dart';
@@ -23,9 +22,8 @@ void main() async {
   Hive.registerAdapter(SongInfoAdapter());
   Hive.registerAdapter(RecentlyPlayedAdapter());
   Hive.registerAdapter(PlaylistInfoAdapter());
-  Hive.registerAdapter(SearchInfoAdapter());
+  Hive.registerAdapter(SearchDataAdapter());
   await initializeHive();
-  MediaKit.ensureInitialized();
   runApp(
     MultiRepositoryProvider(
       providers: [

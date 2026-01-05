@@ -77,9 +77,9 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
                 enabled: !widget.isEditMode && playlistSongs.isNotEmpty,
                 onPressed: () {
                   context.read<SongsBloc>().add(
-                    ShuffleToggle(
-                      // playlistId: widget.playlistInfo.id,
-                      !isShuffle,
+                    PlaylistShuffle(
+                      playlistId: widget.playlistInfo.id,
+                      isShuffle: !isShuffle,
                     ),
                   );
                   setState(() {

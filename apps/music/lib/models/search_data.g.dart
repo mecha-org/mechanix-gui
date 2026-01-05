@@ -1,32 +1,32 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'search_info.dart';
+part of 'search_data.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class SearchInfoAdapter extends TypeAdapter<SearchInfo> {
+class SearchDataAdapter extends TypeAdapter<SearchData> {
   @override
   final int typeId = 3;
 
   @override
-  SearchInfo read(BinaryReader reader) {
+  SearchData read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return SearchInfo(
+    return SearchData(
       id: fields[0] as String,
       isPlaylist: fields[1] as bool,
-      songInfo: fields[2] as SongInfo?,
-      playlistInfo: fields[3] as PlaylistInfo?,
+      songId: fields[2] as String?,
+      playlistId: fields[3] as String?,
       createdAt: fields[4] as DateTime,
     );
   }
 
   @override
-  void write(BinaryWriter writer, SearchInfo obj) {
+  void write(BinaryWriter writer, SearchData obj) {
     writer
       ..writeByte(5)
       ..writeByte(0)
@@ -34,9 +34,9 @@ class SearchInfoAdapter extends TypeAdapter<SearchInfo> {
       ..writeByte(1)
       ..write(obj.isPlaylist)
       ..writeByte(2)
-      ..write(obj.songInfo)
+      ..write(obj.songId)
       ..writeByte(3)
-      ..write(obj.playlistInfo)
+      ..write(obj.playlistId)
       ..writeByte(4)
       ..write(obj.createdAt);
   }
@@ -47,7 +47,7 @@ class SearchInfoAdapter extends TypeAdapter<SearchInfo> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SearchInfoAdapter &&
+      other is SearchDataAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }
