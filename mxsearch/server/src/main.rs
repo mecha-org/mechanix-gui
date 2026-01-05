@@ -27,6 +27,7 @@ pub struct SearchConfig {
     pub app_actions: AppActionsConfig,
 }
 fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
+    info!("Loading config from {}", path.as_ref().display());
     let content = fs::read_to_string(path)?;
     let config: SearchConfig = toml::from_str(&content)?;
     Ok(config)
@@ -84,7 +85,7 @@ async fn main() -> Result<(), ServerError> {
         }
     };
 
-    if config.apps.enable_search_apps {
+    if config.apps.enable_search {
         match app_search_service.run().await {
             Ok(()) => debug!("AppSearchService started"),
             Err(e) => {
@@ -94,7 +95,7 @@ async fn main() -> Result<(), ServerError> {
         }
     }
 
-    if config.files.enable_search_files {
+    if config.files.enable_search {
         match file_search_service.run().await {
             Ok(()) => debug!("FileSearchService started"),
             Err(e) => {
@@ -113,15 +114,12 @@ async fn main() -> Result<(), ServerError> {
             }
         }
     }
-    let arc_app_search_service = Arc::new(app_search_service);
-    let arc_file_search_service = Arc::new(file_search_service);
-    let arc_app_actions_service = Arc::new(app_action_service);
     // Build and register the D-Bus server (blocking until shutdown)
     let config_server = ServerInterface {
         config: config.clone(),
-        app_search_service: arc_app_search_service.clone(),
-        file_search_service: arc_file_search_service.clone(),
-        app_actions_service: arc_app_actions_service.clone(),
+        app_search_service: app_search_service,
+        file_search_service: file_search_service,
+        app_actions_service: app_action_service,
     };
 
     debug!("D-Bus server registered at {}", SERVED_AT);
@@ -134,18 +132,6 @@ async fn main() -> Result<(), ServerError> {
     match tokio::signal::ctrl_c().await {
         Ok(()) => {
             info!("Received SIGINT, shutting down");
-            match arc_app_search_service.shutdown().await {
-                Ok(()) => info!("Shutdown successful"),
-                Err(e) => error!("Failed to shutdown: {}", e),
-            }
-            match arc_file_search_service.shutdown().await {
-                Ok(()) => info!("Shutdown successful"),
-                Err(e) => error!("Failed to shutdown: {}", e),
-            }
-            match arc_app_actions_service.shutdown().await {
-                Ok(()) => info!("Shutdown successful"),
-                Err(e) => error!("Failed to shutdown: {}", e),
-            }
         }
         Err(e) => error!("Failed to receive SIGINT: {}", e),
     }

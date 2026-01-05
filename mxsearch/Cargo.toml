@@ -1,20 +1,15 @@
-[package]
-name = "mxsearch"
-description = "A simple and fast search engine for your apps and files."
-license = "MIT"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+resolver = "3"
+members = ["apps", "files", "server"]
 
-[dependencies]
-env_logger = "0.11.8"
-log = "0.4.27"
-anyhow = "1.0.98"
-serde = { version = "1.0.219", features = ["derive"] }
+[workspace.dependencies]
+notify = "8.1.0"
 tokio = { version = "1.46.1", features = ["full"] }
+log = "0.4.27"
+configparser = "3.1.0"
+tantivy = { git = "https://github.com/quickwit-oss/tantivy.git", branch = "main" }
+anyhow = "1.0.98"
+dirs = "6.0.0"
 zbus = "3.14.1"
-thiserror = "2.0.12"
-toml = "0.9.2"
-apps = { path = "apps" }
-files = { path = "files" }
-app_actions = { path = "app_actions" }
-
+serde = { version = "1.0.219", features = ["derive"] }
+futures = "0.3.31"
