@@ -19,3 +19,4 @@ zbus = { workspace = true }
 hw-buttons = { path = "../../../shared/hw-buttons", package = "mechanix-hw-buttons" }
 power_options = { path = "../power_options" }
 futures-util = "0.3.31"
+settings = { path = "../settings" }

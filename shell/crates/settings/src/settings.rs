@@ -24,6 +24,8 @@ pub struct Settings {
     pub homescreen: HomescreenSettings,
     #[serde(default)]
     pub power_options: PowerOptionsSettings,
+    #[serde(default)]
+    pub volume_slider: VolumeSliderSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -232,6 +234,33 @@ impl Default for PowerOptionsSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
+        }
+    }
+}
+
+/// Volume slider settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct VolumeSliderSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub min_volume_level: f32,
+    #[serde(default)]
+    pub max_volume_level: f32,
+}
+
+impl Default for VolumeSliderSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Overlay,
+                anchor: Anchor::BOTTOM | Anchor::LEFT | Anchor::RIGHT,
+                namespace: "mechanix.hardware_buttons.slider".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(500.0), px(60.0)),
+            },
+            min_volume_level: 0.0,
+            max_volume_level: 100.0,
         }
     }
 }

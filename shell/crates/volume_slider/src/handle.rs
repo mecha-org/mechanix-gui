@@ -1,12 +1,11 @@
 use gpui::*;
 use hw_buttons::{Key, KeyEvent};
 use power_options::run_app as run_power_overlay;
+use settings::prelude::{Settings, VolumeSliderSettings};
 
 use crate::slider::{SliderEvent, SliderState};
 
 const DEFAULT_VOLUME_LEVEL: f32 = 35.0;
-const MIN_VOLUME_LEVEL: f32 = 0.0;
-const MAX_VOLUME_LEVEL: f32 = 100.0;
 const VOLUME_STEP: f32 = 3.0;
 
 #[derive(Debug)]
@@ -17,19 +16,33 @@ pub struct HardwareState {
     last_power: Option<KeyEvent>,
     power_overlay_visible: bool,
     volume_step: f32,
+    min_volume_level: f32,
+    max_volume_level: f32,
 }
 
 impl Global for HardwareState {}
 
 impl Default for HardwareState {
     fn default() -> Self {
+        Self::new(VolumeSliderSettings::default())
+    }
+}
+
+impl HardwareState {
+    fn new(volume_slider_settings: VolumeSliderSettings) -> Self {
+        let min_volume_level = volume_slider_settings.min_volume_level;
+        let max_volume_level = volume_slider_settings.max_volume_level;
+        let initial_volume = DEFAULT_VOLUME_LEVEL.clamp(min_volume_level, max_volume_level);
+
         Self {
             slider: None,
-            volume: DEFAULT_VOLUME_LEVEL,
+            volume: initial_volume,
             last_home: None,
             last_power: None,
             power_overlay_visible: false,
             volume_step: VOLUME_STEP,
+            min_volume_level,
+            max_volume_level,
         }
     }
 }
@@ -39,7 +52,8 @@ pub fn init(cx: &mut App) {
         return;
     }
 
-    cx.set_global(HardwareState::default());
+    let volume_slider_settings = Settings::global(cx).volume_slider.clone();
+    cx.set_global(HardwareState::new(volume_slider_settings));
 }
 
 pub fn handle_event(cx: &mut App, event: KeyEvent) {
@@ -122,7 +136,7 @@ pub fn slider_value(cx: &mut App) -> f32 {
     let slider_reading = latest_slider_value(cx);
     let state = cx.global_mut::<HardwareState>();
     if let Some(value) = slider_reading {
-        state.volume = value.clamp(MIN_VOLUME_LEVEL, MAX_VOLUME_LEVEL);
+        state.volume = value.clamp(state.min_volume_level, state.max_volume_level);
     }
     state.volume
 }
@@ -133,7 +147,7 @@ pub fn sync_slider_value(slider: &Entity<SliderState>, value: f32, cx: &mut App)
     });
 
     let state = cx.global_mut::<HardwareState>();
-    state.volume = value.clamp(MIN_VOLUME_LEVEL, MAX_VOLUME_LEVEL);
+    state.volume = value.clamp(state.min_volume_level, state.max_volume_level);
 }
 
 fn apply_value_to_slider(slider: &Entity<SliderState>, value: f32, cx: &mut App) {
@@ -153,7 +167,7 @@ fn adjust_volume_by(cx: &mut App, delta: f32) -> Option<(Entity<SliderState>, f3
 
     let state = cx.global_mut::<HardwareState>();
     let base = slider_value.unwrap_or(state.volume);
-    state.volume = (base + delta).clamp(MIN_VOLUME_LEVEL, MAX_VOLUME_LEVEL);
+    state.volume = (base + delta).clamp(state.min_volume_level, state.max_volume_level);
     state.slider.clone().map(|entity| (entity, state.volume))
 }
 

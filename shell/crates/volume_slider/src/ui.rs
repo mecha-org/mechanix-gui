@@ -1,13 +1,11 @@
-use gpui::layer_shell::{Anchor, KeyboardInteractivity, Layer, LayerShellOptions};
+use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
 use std::time::Duration;
+use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 
 use crate::handle;
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
 
-const WINDOW_WIDTH: f32 = 500.0;
-const WINDOW_HEIGHT: f32 = 60.0;
-const WINDOW_NAMESPACE: &str = "mechanix.hardware_buttons.slider";
 const OVERLAY_PADDING: f32 = 16.0;
 const OVERLAY_GAP: f32 = 12.0;
 const OVERLAY_RADIUS: f32 = 15.0;
@@ -18,9 +16,26 @@ const SLIDER_WIDTH: f32 = 400.0;
 const SLIDER_HEIGHT: f32 = 30.0;
 
 pub fn init(cx: &mut App) {
+    let VolumeSliderSettings {
+        layer_shell,
+        min_volume_level,
+        max_volume_level,
+    } = Settings::global(cx).volume_slider.clone();
+    let LayerShellSettings {
+        size,
+        layer,
+        anchor,
+        namespace,
+        exclusive_zone,
+    } = layer_shell;
+
     let initial_value = handle::slider_value(cx);
+    let min_volume = min_volume_level;
+    let max_volume = max_volume_level;
     let slider_state = cx.new(|_| {
         SliderState::new()
+            .min(min_volume)
+            .max(max_volume)
             .default_value(initial_value)
             .pattern(SliderPattern::Bars)
     });
@@ -29,7 +44,6 @@ pub fn init(cx: &mut App) {
         handle::sync_slider_value(&entity, value, cx);
     }
 
-    let size = Size::new(px(WINDOW_WIDTH), px(WINDOW_HEIGHT));
     let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
     let slider_state_for_overlay = slider_state.clone();
 
@@ -38,11 +52,11 @@ pub fn init(cx: &mut App) {
             window_bounds: Some(window_bounds),
             window_background: WindowBackgroundAppearance::Transparent,
             kind: WindowKind::LayerShell(LayerShellOptions {
-                namespace: WINDOW_NAMESPACE.into(),
-                layer: Layer::Overlay,
-                anchor: Anchor::BOTTOM | Anchor::LEFT | Anchor::RIGHT,
+                namespace,
+                layer,
+                anchor,
                 keyboard_interactivity: KeyboardInteractivity::None,
-                exclusive_zone: Some(px(0.0)),
+                exclusive_zone: Some(exclusive_zone),
                 margin: Some((px(0.0), px(0.0), px(60.0), px(0.0))),
                 ..Default::default()
             }),
@@ -70,10 +84,9 @@ impl SliderOverlay {
         let subscription = cx.subscribe(
             &slider_state,
             |this, _, event: &SliderEvent, cx| {
-                if let SliderEvent::Change(value) = event {
-                    this.slider_value = *value;
-                    this.show_overlay(cx);
-                }
+                let SliderEvent::Change(value) = *event;
+                this.slider_value = value;
+                this.show_overlay(cx);
             },
         );
 
