@@ -8,7 +8,8 @@ pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) 
     if !cx.has_global::<Dispatcher>() {
         dispatcher::init(cx);
     }
-    let mut dispatcher_rx = Dispatcher::global(cx).0.clone();
+
+    let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
 
     _ = cx
         .background_executor()

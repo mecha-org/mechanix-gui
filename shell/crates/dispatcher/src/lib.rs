@@ -4,7 +4,7 @@ use gpui::*;
 use mxconf_dbus::watch_setting;
 
 #[derive(Clone)]
-pub struct Dispatcher(Sender<Message>, Receiver<Message>);
+pub struct Dispatcher(pub Sender<Message>, pub Receiver<Message>);
 
 impl Dispatcher {
     pub fn channel(&self) -> (Sender<Message>, Receiver<Message>) {
