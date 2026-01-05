@@ -1,5 +1,5 @@
 use gpui::*;
-use mechanix_hw_buttons::{Key, KeyEvent};
+use hw_buttons::{Key, KeyEvent};
 use power_options::run_app as run_power_overlay;
 
 use crate::slider::{SliderEvent, SliderState};

@@ -5,7 +5,7 @@ use futures_timer::Delay;
 use futures_util::stream::FuturesUnordered;
 use gpui::App;
 use log::{error, info, warn};
-use mechanix_hw_buttons::KeyEvent;
+use hw_buttons::KeyEvent;
 use std::time::Duration;
 use zbus::{Connection, proxy};
 

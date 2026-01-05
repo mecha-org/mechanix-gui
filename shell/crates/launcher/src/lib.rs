@@ -27,7 +27,7 @@ pub fn run() {
 
         notifications::run_app(cx);
 
-        hardware_buttons::run_app(cx);
+        volume_slider::run_app(cx);
 
         // power_options::run_app(cx);  // only call when requested
 

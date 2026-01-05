@@ -1,5 +1,5 @@
 [package]
-name = "hardware_buttons"
+name = "volume_slider"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
@@ -13,9 +13,9 @@ keywords.workspace = true
 gpui = { workspace = true }
 anyhow = { workspace = true }
 futures = { workspace = true }
-futures-util = "0.3.31"
 futures-timer = { workspace = true }
 log = { workspace = true }
-mechanix-hw-buttons = { path = "../../../shared/hw-buttons" }
 zbus = { workspace = true }
+hw-buttons = { path = "../../../shared/hw-buttons", package = "mechanix-hw-buttons" }
 power_options = { path = "../power_options" }
+futures-util = "0.3.31"
