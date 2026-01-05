@@ -22,7 +22,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Apps {
-    pub enable_search: bool,
+    pub enable_search_apps: bool,
     pub index_dir: String,
     pub desktop_apps_dir: String,
     pub search_limit: usize,

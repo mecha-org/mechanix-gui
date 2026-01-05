@@ -289,7 +289,7 @@ impl AppActionsService {
             )
             .expect("Failed to create watcher");
 
-            if let Err(e) = watcher.watch(&watch_path_clone, RecursiveMode::NonRecursive) {
+            if let Err(e) = watcher.watch(&watch_path_clone, RecursiveMode::Recursive) {
                 error!("Failed to start watcher: {}", e);
             } else {
                 info!("Watching path: {:?}", watch_path_clone);

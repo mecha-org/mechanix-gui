@@ -1,9 +1,7 @@
 use configparser::ini::Ini;
 use log::debug;
-use std::collections::{HashMap, HashSet};
-use std::fs::File;
+use std::collections::HashMap;
 use std::path::Path;
-use std::time::UNIX_EPOCH;
 
 #[derive(Debug, Default, Clone)]
 pub struct DesktopEntry {
@@ -93,27 +91,4 @@ pub fn parse_desktop_entry(path: &Path) -> Option<DesktopEntry> {
             })
             .collect(),
     })
-}
-
-/// Reads a file and returns its metadata as `FileMetadata`.
-///
-/// The contents of the file are read up to `buffer_size_kb` kilobytes.
-///
-/// # Errors
-///
-/// Returns an `std::io::Error` if the file cannot be read.
-pub fn get_last_modified_timestamp(
-    path: &Path,
-) -> Result<String, std::io::Error> {
-    if let Some(ext) = path.extension() {
-        if path.is_file() {
-            if let Ok(metadata) = std::fs::metadata(path) {
-                //Store last modified as a timestamp
-                if let Ok(duration) = metadata.modified()?.duration_since(UNIX_EPOCH) {
-                    return Ok(duration.as_secs().to_string())
-                }
-            }
-        }
-    }
-    Ok(String::new())
 }

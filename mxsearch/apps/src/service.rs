@@ -8,7 +8,7 @@ use std::{
     time::Duration,
 };
 
-use crate::utils::{get_last_modified_timestamp, parse_desktop_entry, DesktopEntry};
+use crate::utils::{parse_desktop_entry, DesktopEntry};
 use crate::Apps;
 use tantivy::query::TermQuery;
 use tantivy::schema::{Field, IndexRecordOption, Value, STRING};
@@ -60,14 +60,10 @@ impl AppSearchService {
         for entry in existing_desktop_entries {
             let entry = entry.unwrap();
             let path = entry.path();
-            let last_modified = match get_last_modified_timestamp(&path) {
+            let checksum = match generate_checksum(&path) {
                 Ok(c) => c,
                 Err(e) => {
-                    warn!(
-                        "Failed to generate last_modified for {}: {}",
-                        path.display(),
-                        e
-                    );
+                    warn!("Failed to generate checksum for {}: {}", path.display(), e);
                     continue;
                 }
             };
@@ -80,32 +76,28 @@ impl AppSearchService {
             let existing_entry = extract_doc_given_app_path(index_reader, &term).unwrap();
             if let Some(existing_entry) = existing_entry {
                 debug!("Entry already exists for path: {}", path.display());
-                // verify last_modified
-                let last_modified_field = schema.get_field("last_modified").unwrap();
-                let last_modified_indexed_value =
-                    match existing_entry.get_first(last_modified_field) {
-                        Some(v) => v,
-                        None => {
-                            warn!(
-                                "last_modified field not found for entry: {}",
-                                path.display()
-                            );
-                            continue;
-                        }
-                    };
-                let last_modified_indexed_value_str = match last_modified_indexed_value.as_str() {
+                // verify checksum
+                let checksum_field = schema.get_field("checksum").unwrap();
+                let checksum_field_value = match existing_entry.get_first(checksum_field) {
+                    Some(v) => v,
+                    None => {
+                        warn!("Checksum field not found for entry: {}", path.display());
+                        continue;
+                    }
+                };
+                let checksum_field_value_str = match checksum_field_value.as_str() {
                     Some(s) => s,
                     None => {
                         warn!(
-                            "the last_modified field value is not a string for entry: {}",
+                            "Checksum field value is not a string for entry: {}",
                             path.display()
                         );
                         continue;
                     }
                 };
-                if last_modified != last_modified_indexed_value_str {
-                    // If last_modifieds don't match, then delete the entry
-                    warn!("Last modified mismatch for entry: {}", path.display());
+                if checksum != checksum_field_value_str {
+                    // If checksums don't match, then delete the entry
+                    warn!("Checksum mismatch for entry: {}", path.display());
                     if let Ok(writer) = index_writer.lock() {
                         let term = Term::from_field_text(
                             schema.get_field("path").unwrap(),
@@ -122,7 +114,7 @@ impl AppSearchService {
                         }
                     }
                 } else {
-                    debug!("Last modified match for entry: {}", path.display());
+                    debug!("Checksum match for entry: {}", path.display());
                     continue;
                 }
             }
@@ -138,7 +130,7 @@ impl AppSearchService {
                 desktop_entry.name, desktop_entry.comment
             );
 
-            let doc = feed_doc(&schema, &desktop_entry, last_modified, &path);
+            let doc = feed_doc(&schema, &desktop_entry, checksum, &path);
             if let Ok(writer) = index_writer.lock() {
                 match writer.add_document(doc) {
                     Ok(_) => (),
@@ -166,7 +158,7 @@ impl AppSearchService {
         schema_builder.add_text_field("categories", STRING | STORED);
         schema_builder.add_text_field("keywords", TEXT | STORED);
         schema_builder.add_text_field("icon", STORED);
-        schema_builder.add_text_field("last_modified", STORED);
+        schema_builder.add_text_field("checksum", STORED);
         schema_builder.add_text_field("path", STRING);
 
         schema_builder.build()
@@ -232,7 +224,7 @@ impl AppSearchService {
             )
             .expect("Failed to create watcher");
 
-            if let Err(e) = watcher.watch(&watch_path_clone, RecursiveMode::NonRecursive) {
+            if let Err(e) = watcher.watch(&watch_path_clone, RecursiveMode::Recursive) {
                 error!("Failed to start watcher: {}", e);
             } else {
                 info!("Watching path: {:?}", watch_path_clone);
@@ -278,15 +270,15 @@ impl AppSearchService {
                             if kind.is_create() || kind.is_modify() {
                                 if let Some(desktop_entry) = parse_desktop_entry(&path) {
                                 info!("Indexing changed desktop entry: {}", desktop_entry.name);
-                                    let last_modified = match get_last_modified_timestamp(&path) {
+                                    let checksum = match generate_checksum(&path) {
                                         Ok(c) => c,
                                         Err(e) => {
-                                            warn!("Failed to generate last_modified for {}: {}", path.display(), e);
+                                            warn!("Failed to generate checksum for {}: {}", path.display(), e);
                                             String::new()
                                         }
                                     };
-                                    debug!("Last modified while storing: {}",last_modified );
-                                let doc = feed_doc(&schema, &desktop_entry, last_modified, &path);
+                                    debug!("Checksum while storing: {}",checksum );
+                                let doc = feed_doc(&schema, &desktop_entry, checksum, &path);
                                 if let Ok(writer) = writer.lock() {
                                     match writer.add_document(doc) {
                                         Ok(_) => info!("Indexed desktop entry: {}", desktop_entry.name),
@@ -459,7 +451,7 @@ fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
     }
 }
 
-/// Creates a `TantivyDocument` from a `DesktopEntry`, with the given last_modified and path.
+/// Creates a `TantivyDocument` from a `DesktopEntry`, with the given checksum and path.
 ///
 /// This function takes a `DesktopEntry` and creates a new `TantivyDocument` with the fields:
 ///
@@ -471,7 +463,7 @@ fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
 /// - `keywords`: the application keywords, joined with `;`
 /// - `icon`: the application icon
 /// - `path`: the path to the `.desktop` file
-/// - `last_modified`: the last_modified of the `.desktop` file
+/// - `checksum`: the checksum of the `.desktop` file
 ///
 /// If any of the fields are missing in the `DesktopEntry`, they will be filled with default values.
 ///
@@ -479,16 +471,16 @@ fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
 ///
 /// * `schema`: the `Schema` to use for creating the `TantivyDocument`
 /// * `desktop_entry`: the `DesktopEntry` to create the `TantivyDocument` from
-/// * `last_modified`: the last_modified of the `.desktop` file
+/// * `checksum`: the checksum of the `.desktop` file
 /// * `path`: the path to the `.desktop` file
 ///
 /// # Returns
 ///
-/// A `TantivyDocument` with the fields filled in from the `DesktopEntry`, last_modified and path.
+/// A `TantivyDocument` with the fields filled in from the `DesktopEntry`, checksum and path.
 fn feed_doc(
     schema: &Schema,
     desktop_entry: &DesktopEntry,
-    last_modified: String,
+    checksum: String,
     path: &Path,
 ) -> TantivyDocument {
     doc!(
@@ -501,8 +493,38 @@ fn feed_doc(
         schema.get_field("keywords").unwrap() => desktop_entry.keywords.join(";"),
         schema.get_field("icon").unwrap() => desktop_entry.icon.clone().unwrap_or_default(),
         schema.get_field("path").unwrap() => path.to_string_lossy().to_string(),
-        schema.get_field("last_modified").unwrap() => last_modified
+        schema.get_field("checksum").unwrap() => checksum
     )
+}
+
+/// Generates a SHA256 checksum for the file at the given path.
+///
+/// This function reads the contents of the specified file and computes its SHA256 hash,
+/// returning the resulting checksum as a hexadecimal string. If the file cannot be read,
+/// an I/O error is returned.
+///
+/// # Arguments
+///
+/// * `file_path` - A reference to the path of the file for which the checksum is to be generated.
+///
+/// # Returns
+///
+/// A `Result` containing the SHA256 checksum as a `String` if successful, or a `std::io::Error` if an error occurs during file reading.
+
+fn generate_checksum(file_path: &PathBuf) -> Result<String, std::io::Error> {
+    let file_bytes = match std::fs::read(&file_path) {
+        Ok(bytes) => bytes,
+        Err(e) => {
+            error!("Failed to read file: {}", e);
+            return Err(e);
+        }
+    };
+
+    // Generate checksum
+    let mut hasher = crc32fast::Hasher::new();
+    hasher.update(&file_bytes);
+    let checksum = format!("{:x}", hasher.finalize());
+    Ok(checksum)
 }
 
 // A simple helper function to fetch a single document

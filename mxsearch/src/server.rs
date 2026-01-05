@@ -18,12 +18,12 @@ pub const SERVED_AT: &str = "/org/mechanix/MxSearch";
 /// settings are changed.
 ///
 /// The interface is served at the path defined by the SERVED_AT constant.
-#[derive()]
+#[derive(Clone)]
 pub struct ServerInterface {
     pub(crate) config: SearchConfig,
-    pub app_search_service: AppSearchService,
-    pub file_search_service: files::FileSearchService,
-    pub app_actions_service: app_actions::AppActionsService,
+    pub app_search_service: Arc<AppSearchService>,
+    pub file_search_service: Arc<files::FileSearchService>,
+    pub app_actions_service: Arc<app_actions::AppActionsService>,
 }
 
 #[dbus_interface(name = "org.mechanix.MxSearch")]
@@ -45,7 +45,7 @@ impl ServerInterface {
 
     pub async fn search_applications(&self, search: &str) -> zbus::fdo::Result<Vec<AppInfo>> {
         info!("Search Apps: {}", search);
-        if !self.config.apps.enable_search {
+        if !self.config.apps.enable_search_apps {
             warn!("Search Apps is disabled");
             return Err(ZbusError::Failed("Search Apps is disabled".to_string()));
         }
@@ -79,7 +79,7 @@ impl ServerInterface {
     /// A vector of `AppInfo` representing the available applications if successful.
     pub async fn list_applications(&self) -> zbus::fdo::Result<Vec<AppInfo>> {
         info!("List applications");
-        if !self.config.apps.enable_search {
+        if !self.config.apps.enable_search_apps {
             warn!("Search Apps is disabled");
             return Err(ZbusError::Failed("Search Apps is disabled".to_string()));
         }
@@ -113,9 +113,9 @@ impl ServerInterface {
     /// A vector of `FileInfo` representing the matching files if successful.
     pub async fn search_files(&self, search: &str) -> zbus::fdo::Result<Vec<FileInfo>> {
         info!("Search files: {}", search);
-        if !self.config.files.enable_search {
-            warn!("Search Files option is disabled");
-            return Err(ZbusError::Failed("Search Files option is disabled".to_string()));
+        if !self.config.files.enable_search_files {
+            warn!("Search Files is disabled");
+            return Err(ZbusError::Failed("Search Files is disabled".to_string()));
         }
         // At some point later: perform a search
         let results = match self

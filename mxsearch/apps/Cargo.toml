@@ -4,13 +4,14 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-tokio = { workspace = true }
-notify = { workspace = true }
-dirs = { workspace = true }
-anyhow = { workspace = true }
-tantivy = { workspace = true }
-log = { workspace = true }
-futures = { workspace = true }
-serde = { workspace = true }
-zbus = { workspace = true }
+notify = "8.1.0"
+tokio = { version = "1.46.1", features = ["full"] }
+log = "0.4.27"
 configparser = "3.1.0"
+tantivy = { git = "https://github.com/quickwit-oss/tantivy.git", branch = "main" }
+anyhow = "1.0.98"
+dirs = "6.0.0"
+zbus = "3.14.1"
+serde = { version = "1.0.219", features = ["derive"] }
+futures = "0.3.31"
+crc32fast = "1.5.0"
