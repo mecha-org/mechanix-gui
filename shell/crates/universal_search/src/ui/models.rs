@@ -21,6 +21,8 @@ pub struct UniversalSearch {
     pub search_icon: IconName,
     pub x_icon: IconName,
     pub text_input: Entity<TextInput>,
+    pub last_search_query: String,
+    pub is_searching: bool,
     pub position: f32,
     pub drag_offset: Option<f32>,
     pub drag_start_pos: f32,

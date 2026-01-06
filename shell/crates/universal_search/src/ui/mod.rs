@@ -69,18 +69,6 @@ impl UniversalSearch {
         })
         .detach();
 
-        let text_input = cx.new(|cx| {
-            TextInput::new(cx)
-                // .placeholder("Search here...")
-                .on_change(move |input, cx| {
-                    println!("Search query: {}", input.content);
-                    let query = input.content.to_string();
-                    entity.update(cx, |this, cx| {
-                        this.perform_search(query, cx);
-                    });
-                })
-        });
-
         Self {
             app_count: 0,
             file_count: 0,
@@ -96,7 +84,9 @@ impl UniversalSearch {
             folder_icon: IconName::DefaultFolder,
             search_icon: IconName::Search,
             x_icon: IconName::XIcon,
-            text_input : cx.new(|cx| TextInput::new(cx)),
+            text_input: cx.new(|cx| TextInput::new(cx)),
+            last_search_query: "".to_string(),
+            is_searching: false,
             position: Self::closed_pos(),
             drag_offset: None,
             drag_start_pos: 0.0,
@@ -106,23 +96,34 @@ impl UniversalSearch {
         }
     }
 
-  
-
-    pub fn perform_search(&mut self, query: String, cx: &mut Context<Self>) {
+    pub fn perform_search(&mut self, query: SharedString, cx: &mut Context<Self>) {
         println!("Search query: {}", query);
         // If query is empty, clear results
+
         if query.is_empty() {
             self.file_search_results.clear();
+            self.app_search_results.clear();
             self.file_count = 0;
+            self.app_count = 0;
             cx.notify();
             return;
         }
+
+        if query != self.last_search_query {
+            self.scroll_offset = px(0.);
+            self.last_scroll_offset = px(0.);
+            self.drag_start_y = px(0.);
+            self.is_dragging = false;
+            self.last_search_query = query.to_string();
+        }
+        let query_lower = query.to_lowercase();
 
         let Some(search_service) = self.search_service.clone() else {
             eprintln!("Search service not initialized yet");
             return;
         };
 
+        self.is_searching = true;
         let entity = cx.entity();
 
         cx.new(|cx| {
@@ -156,6 +157,8 @@ impl UniversalSearch {
             })
             .detach();
         });
+
+        cx.notify();
     }
 
     fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
@@ -336,36 +339,11 @@ impl UniversalSearch {
         }
         window.set_input_regions(Some(regions));
     }
-
-        fn temp_search_result(&self) -> Vec<SearchResultRow> {
-        // extended screen
-        let result_rows = vec![
-            SearchResultRow { 
-                file_type: FileType::App,
-                file_name: "Ardour".to_string(),
-                link: None,
-            },
-            SearchResultRow { 
-                file_type: FileType::App,
-                file_name: "Chromium".to_string(),
-                link: None,
-            },
-            SearchResultRow { 
-                file_type: FileType::File,
-                file_name: "fire_and_ash".to_string(),
-                link: None,
-            },
-            SearchResultRow { 
-                file_type: FileType::File,
-                file_name: "git_code".to_string(),
-                link: None,
-            },
-             
-        ];
-        result_rows
-    }
-
-    fn universal_search_items(&mut self, cx: &mut Context<Self>, window: &mut Window) -> impl IntoElement {
+    fn universal_search_items(
+        &mut self,
+        cx: &mut Context<Self>,
+        window: &mut Window,
+    ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
 
         let text_input = self.text_input.clone();
@@ -375,14 +353,23 @@ impl UniversalSearch {
 
         let is_active = text_input.read(cx).focus_handle.is_focused(window);
 
-        if(is_active) {
-            println!("search active ---- > {:?}", is_active);
-    
+        if is_active {
+            let query = self.text_input.read(cx).content.clone();
+            let query_len = query.trim().chars().count();
 
+            if query_len >= 3 {
+                Self::perform_search(self, query, cx);
+            } else {
+                // Clear results when query is too short
+                if !self.file_search_results.is_empty() || !self.app_search_results.is_empty() {
+                    self.file_search_results.clear();
+                    self.app_search_results.clear();
+                    self.file_count = 0;
+                    self.app_count = 0;
+                    cx.notify();
+                }
+            }
         }
-
-        let apps = sample_recent_apps();
-        self.app_count = apps.len();
 
         let all_results: Vec<SearchResults> = if self.file_search_results.is_empty() {
             Vec::new()
@@ -435,7 +422,6 @@ impl UniversalSearch {
         };
 
         let row = move |search: &SearchResults| {
-            println!("Row: {}", search.name);
             // Add `move` and take reference
             // let folder_small_icon_clone = folder_small_icon.clone(); // Clone the icon
             // let arrow_up_right_icon_clone = arrow_up_right_icon.clone(); // Clone this too
@@ -525,17 +511,6 @@ impl UniversalSearch {
             file_children.push(divider());
         }
 
-        let mut app_children = Vec::new();
-        for item in apps.iter() {
-            app_children.push(
-                app(Icon::from(item.icon_path.clone())
-                    .size((px(41.74), px(41.74)))
-                    .text_color(rgb(0xa6a6a6)))
-                .row_span(1)
-                .col_span(1),
-            )
-        }
-
         let max_columns: usize = 6;
         let columns: u16 = self.app_count.min(max_columns).try_into().unwrap();
         let rows: u16 = (((self.app_count as f32) / (columns as f32)).ceil() as u32)
@@ -546,14 +521,10 @@ impl UniversalSearch {
 
         let entity = cx.entity();
 
-        // TEMP:
-        let temp_Search_result = self.temp_search_result();
-
         div()
             .h_full()
             .w_full()
             .bg(gpui::black())
-            // .px(px(16.0))
             .flex()
             .flex_col()
             // .on_mouse_up(MouseButton::Left, cx.listener(UniversalSearch::on_mouse_up))
@@ -598,7 +569,6 @@ impl UniversalSearch {
                                             .h_full()
                                             .flex()
                                             .flex_col()
-                                            .pt(px(36.)) // this shall be replaced with status bar height
                                             .child(
                                                 div()
                                                     .flex()
@@ -621,108 +591,19 @@ impl UniversalSearch {
                                             .child(
                                                 // result !
                                                 div().flex().flex_col()
-                                                .h(px(30.))
-                                                .child(
-                                                    div().flex().flex_row().child(
-                                                        div()
-                                                            .text_size(px(16.0))
-                                                            .text_color(colors.background_500)
-                                                            .child("Search an app, a file, a word or anything literally"),
+                                                    .h(px(30.))
+                                                    .child(
+                                                        div().flex().flex_row().child(
+                                                            div()
+                                                                .text_size(px(16.0))
+                                                                .text_color(colors.background_500)
+                                                                .child("Search an app, a file, a word or anything literally"),
+                                                        ),
                                                     ),
-                                                ),
                                             ),
                                     )
-                                    .child(
-                                        div()
-                                        .flex()
-                                        .h_full()
-                                        .flex_col()
-                                        // .bg(rgb(0x181818)) // black 
-                                          .child(div().flex().flex_col().flex_1().relative().children(
-                                              temp_Search_result.iter().enumerate().map(|(idx, ex)| {
-                                                    let icon_color = colors.foreground_400;
-
-
-                                                    div()
-                                                            .id(("row", idx))
-                                                            .flex()
-                                                            .items_center()
-                                                            .justify_between()
-                                                            .h(px(60.))
-                                                            .px_4()
-                                                            .child(
-                                                                div()
-                                                                    .flex()
-                                                                    .flex_row()
-                                                                    .text_align(TextAlign::Left)
-                                                                    .child(
-                                                                        div().pr_2().child(
-                                                                            Icon::new(IconName::DefaultApp)
-                                                                                .size((px(28.), px(28.)))
-                                                                                .text_color(icon_color),
-                                                                        ),
-                                                                    )
-                                                                    .child(
-                                                                        div()
-                                                                            .pl_2()
-                                                                            .font_weight(FontWeight::NORMAL)
-                                                                            .text_color(icon_color)
-                                                                            .child(ex.file_name.clone()),
-                                                                    ),
-                                                            )
-                                                            .child(
-                                                                div()
-                                                                    .flex()
-                                                                    .flex_row()
-                                                                    .items_center()
-                                                                    .child(
-                                                                           div().pr_2().child(
-                                                                            Icon::new(IconName::XIcon)
-                                                                                .size((px(28.), px(28.)))
-                                                                                .text_color(icon_color),
-                                                                    ),
-                                                            )
-                                                        )
-                                                }),
-                                          ))    
-                                        // .child("THIS IS SEARCH RESULT")
-                                    )
-                                    // .children(file_children), // TODO: integrate result from service and use this
+                                    .children(file_children),
                             ),
-                        // .child(
-                        //     div()
-                        //         // .grid()
-                        //         // .child(
-                        //         //     div()
-                        //         //         .my(px(8.0))
-                        //         //         .flex()
-                        //         //         .justify_center()
-                        //         //         .col_span_full()
-                        //         //         .row_span_full()
-                        //         //         .child(
-                        //         //             div()
-                        //         //                 .bg(rgb(0x181818))
-                        //         //                 .flex()
-                        //         //                 .border_1()
-                        //         //                 .border_color(rgb(0x363636))
-                        //         //                 .rounded(px(16.0))
-                        //         //                 .w(grid_size.width)
-                        //         //                 .h(grid_size.height)
-                        //         //                 .content_center()
-                        //         //                 .items_center()
-                        //         //                 .px(px(9.))
-                        //         //                 .child(
-                        //         //                     div()
-                        //         //                         .gap(px(26.0))
-                        //         //                         .grid()
-                        //         //                         .grid_cols(columns)
-                        //         //                         .grid_rows(rows)
-                        //         //                         .children(app_children),
-                        //         //                 ),
-                        //         //         ),
-                        //         // )
-                        //         .children(file_children),
-                        // ),
                     ),
             )
             .child(
@@ -787,52 +668,7 @@ impl UniversalSearch {
                                                         .child(text_input.clone()),
                                                 ),
                                         ),
-                                    ), // .child(
-                                       //     div()
-                                       //         .size_full()
-                                       //         .h(px(40.0))
-                                       //         .w(px(48.0))
-                                       //         .mr(px(8.0))
-                                       //         .flex()
-                                       //         .items_center()
-                                       //         .justify_center()
-                                       //         .id("button")
-                                       //         .on_click(cx.listener(
-                                       //             |this: &mut UniversalSearch, _event, _window, cx| {
-                                       //                 this.text_input.update(cx, |input, cx| {
-                                       //                     input.content = "".into();
-                                       //                     input.selected_range = 0..0;
-                                       //                     input.selection_reversed = false;
-                                       //                     input.marked_range = None;
-                                       //                     input.last_layout = None;
-                                       //                     input.last_bounds = None;
-                                       //                     input.is_selecting = false;
-                                       //                     cx.notify();
-                                       //                 });
-                                       //             },
-                                       //         ))
-                                       //         .border_color(rgb(0x808080))
-                                       //         .child(
-                                       //             div()
-                                       //                 .size_full()
-                                       //                 .flex()
-                                       //                 .items_center()
-                                       //                 .justify_center()
-                                       //                 .child(
-                                       //                     div()
-                                       //                         .h(px(21.5))
-                                       //                         .w(px(21.5))
-                                       //                         .flex()
-                                       //                         .items_center()
-                                       //                         .justify_center()
-                                       //                         .child(
-                                       //                             Icon::from(x_icon.clone())
-                                       //                                 .size((px(24.0), px(24.0)))
-                                       //                                 .text_color(rgb(0xe9e9e9)),
-                                       //                         ),
-                                       //                 ),
-                                       //         ),
-                                       // ),
+                                    )
                             )
                             .child(
                                 div()
@@ -858,7 +694,7 @@ impl UniversalSearch {
                                                 cx.notify();
                                             });
 
-                                              this.text_input.read(cx).blur(_window);
+                                            this.text_input.read(cx).blur(_window);
                                         },
                                     ))
                                     .child(
