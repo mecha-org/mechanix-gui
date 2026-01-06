@@ -10,10 +10,12 @@ const OVERLAY_PADDING: f32 = 16.0;
 const OVERLAY_GAP: f32 = 12.0;
 const OVERLAY_RADIUS: f32 = 15.0;
 const OVERLAY_BACKGROUND: u32 = 0x101010;
-const OVERLAY_LABEL_COLOR: u32 = 0xF4F4F4;
 const OVERLAY_TIMEOUT_MS: u64 = 2_000;
-const SLIDER_WIDTH: f32 = 400.0;
-const SLIDER_HEIGHT: f32 = 30.0;
+// Vertical slider dimensions (bars area)
+const SLIDER_WIDTH: f32 = 20.0;
+const SLIDER_HEIGHT: f32 = 233.0;
+// Volume mode indicator icon space
+const ICON_SIZE: f32 = 20.0;
 
 pub fn init(cx: &mut App) {
     let VolumeSliderSettings {
@@ -147,12 +149,19 @@ impl Render for SliderOverlay {
                     .opacity(if self.visible { 1.0 } else { 0.0 })
                     .shadow_lg()
                     .child(
-                        div().text_sm().text_color(rgb(OVERLAY_LABEL_COLOR)),
-                    )
-                    .child(
                         Slider::new("hardware-buttons-slider", &self.slider_state)
                             .width(SLIDER_WIDTH)
                             .height(SLIDER_HEIGHT),
+                    )
+                    // Volume mode indicator icon space (20x20)
+                    .child(
+                        div()
+                            .id("volume-mode-icon")
+                            .w(px(ICON_SIZE))
+                            .h(px(ICON_SIZE))
+                            .flex()
+                            .items_center()
+                            .justify_center(),
                     ),
             )
     }
