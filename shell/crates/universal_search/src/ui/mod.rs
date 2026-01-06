@@ -1,5 +1,4 @@
 pub mod icon;
-// pub mod input;
 pub mod models;
 
 use std::path::PathBuf;
@@ -11,29 +10,18 @@ use commons::input::TextInput;
 use freedesktop_icons::lookup;
 use gpui::*;
 use icon::IconName;
-use models::DragInfo;
-use models::SearchResults;
-use models::UniversalSearch;
+use models::{DragInfo, SearchResults, UniversalSearch};
 use mxsearch::service::MxSearchService;
 use theme::ActiveTheme;
-use theme::prelude::AlphaExt;
+use theme::prelude::{AlphaExt, Theme};
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
-const FILE_SECTION_HEIGHT: f32 = 56.0;
+const FILE_SECTION_HEIGHT: f32 = 52.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
-
 const NAVBAR_SIZE: (f32, f32) = (199.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
-
-// --------------
-#[derive(Debug)]
-struct SearchResultRow {
-    file_type: FileType,
-    file_name: String,
-    link: Option<String>,
-}
-// --------------
+const MIN_SEARCH_QUERY_LEN: usize = 3;
 
 impl DragInfo {
     fn new() -> Self {
@@ -85,7 +73,7 @@ impl UniversalSearch {
             search_icon: IconName::Search,
             x_icon: IconName::XIcon,
             text_input: cx.new(|cx| TextInput::new(cx)),
-            last_search_query: "".to_string(),
+            last_search_query: String::new(),
             is_searching: false,
             position: Self::closed_pos(),
             drag_offset: None,
@@ -97,27 +85,17 @@ impl UniversalSearch {
     }
 
     pub fn perform_search(&mut self, query: SharedString, cx: &mut Context<Self>) {
-        println!("Search query: {}", query);
-        // If query is empty, clear results
-
         if query.is_empty() {
-            self.file_search_results.clear();
-            self.app_search_results.clear();
-            self.file_count = 0;
-            self.app_count = 0;
-            cx.notify();
+            self.clear_search_results(cx);
             return;
         }
 
         if query != self.last_search_query {
-            self.scroll_offset = px(0.);
-            self.last_scroll_offset = px(0.);
-            self.drag_start_y = px(0.);
-            self.is_dragging = false;
+            self.reset_scroll_state();
             self.last_search_query = query.to_string();
         }
-        let query_lower = query.to_lowercase();
 
+        let query_lowercase = query.to_lowercase();
         let Some(search_service) = self.search_service.clone() else {
             eprintln!("Search service not initialized yet");
             return;
@@ -128,31 +106,23 @@ impl UniversalSearch {
 
         cx.new(|cx| {
             cx.spawn(async move |_, cx| {
-                match search_service.search_files(&query).await {
-                    Ok(results) => {
-                        entity
-                            .update(cx, |this, cx| {
-                                this.file_search_results = results;
-                                cx.notify();
-                            })
-                            .ok();
-                    }
-                    Err(e) => {
-                        eprintln!("Search error: {:?}", e);
-                    }
-                };
-                match search_service.search_applications(&query).await {
-                    Ok(results) => {
-                        entity
-                            .update(cx, |this, cx| {
-                                this.app_search_results = results;
-                                cx.notify();
-                            })
-                            .ok();
-                    }
-                    Err(e) => {
-                        eprintln!("Search error: {:?}", e);
-                    }
+                if let Ok(results) = search_service.search_files(&query_lowercase).await {
+                    entity
+                        .update(cx, |this, cx| {
+                            this.file_search_results = results;
+                            this.file_count = this.file_search_results.len();
+                            cx.notify();
+                        })
+                        .ok();
+                }
+                if let Ok(results) = search_service.search_applications(&query_lowercase).await {
+                    entity
+                        .update(cx, |this, cx| {
+                            this.app_search_results = results;
+                            this.app_count = this.app_search_results.len();
+                            cx.notify();
+                        })
+                        .ok();
                 }
             })
             .detach();
@@ -161,70 +131,64 @@ impl UniversalSearch {
         cx.notify();
     }
 
+    fn clear_search_results(&mut self, cx: &mut Context<Self>) {
+        self.file_search_results.clear();
+        self.app_search_results.clear();
+        self.file_count = 0;
+        self.app_count = 0;
+        cx.notify();
+    }
+
+    fn reset_scroll_state(&mut self) {
+        self.scroll_offset = px(0.);
+        self.last_scroll_offset = px(0.);
+        self.drag_start_y = px(0.);
+        self.is_dragging = false;
+    }
+
     fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
-        // Fixed container height - adjust this value as needed
-        let container_height = px(620.0 - SEARCH_BAR_HEIGHT); // You can change this to whatever height you want
+        let container_height = px(APP_SIZE.1 - SEARCH_BAR_HEIGHT);
 
-        // Max scroll: when content is at the top (no empty space)
-        let max_scroll = px(0.0);
-
-        // Min scroll: when bottom of content reaches container bottom
-        let min_scroll = container_height - content_height;
-
-        // If content is smaller than container, don't allow scrolling
         if content_height <= container_height {
-            (px(0.0), px(0.0))
-        } else {
-            (min_scroll, max_scroll)
+            return (px(0.0), px(0.0));
         }
+
+        let max_scroll = px(0.0);
+        let min_scroll = container_height - content_height;
+        (min_scroll, max_scroll)
     }
 
     fn estimate_content_height(&self) -> Pixels {
-        // Calculate icon grid height
-        let columns = 6;
-        let icon_rows = ((self.app_count as f32) / (columns as f32)).ceil() as f32;
-        let icon_section_height = px(76.0) * icon_rows + px(16.0); // 76px per row + margin
+        let columns = 6.0;
+        let icon_rows = (self.app_count as f32 / columns).ceil();
+        let icon_section_height = px(APP_SECTION_HEIGHT) * icon_rows + px(16.0);
+        let file_section_height =
+            px(FILE_SECTION_HEIGHT + FILE_SECTION_DIVIDER_HEIGHT) * self.file_count as f32;
 
-        // Calculate file list height (56px per row + 1px divider)
-        let file_section_height = px(57.0) * (self.file_count as f32);
-
-        // Total content height with padding
         icon_section_height + file_section_height + px(16.0)
     }
 
-    // fn on_mouse_down(
-    //     &mut self,
-    //     event: &MouseDownEvent,
-    //     _window: &mut Window,
-    //     cx: &mut Context<Self>,
-    // ) {
-    //     self.drag_start_y = event.position.y;
-    //     self.last_scroll_offset = self.scroll_offset;
-    //     self.is_dragging = true;
-    //     cx.stop_propagation();
-    // }
+    fn build_search_results(&self) -> Vec<SearchResults> {
+        if self.app_search_results.is_empty() && self.file_search_results.is_empty() {
+            return Vec::new();
+        }
 
-    // fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
-    //     self.is_dragging = false;
-    //     self.last_scroll_offset = self.scroll_offset;
-    // }
-
-    // fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
-    //     if self.is_dragging {
-    //         let delta_y = event.position.y - self.drag_start_y;
-
-    //         // Calculate new scroll offset
-    //         let new_scroll_offset = self.last_scroll_offset + delta_y;
-
-    //         // Apply bounds based on current content
-    //         let content_height = self.estimate_content_height();
-    //         let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
-
-    //         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
-
-    //         cx.notify();
-    //     }
-    // }
+        self.app_search_results
+            .iter()
+            .map(|result| SearchResults {
+                name: result.name.clone(),
+                file_type: FileType::App,
+                path: result.icon.clone(),
+                extension: String::new(),
+            })
+            .chain(self.file_search_results.iter().map(|result| SearchResults {
+                name: result.name.clone(),
+                file_type: FileType::File,
+                path: String::new(),
+                extension: result.file_type.clone(),
+            }))
+            .collect()
+    }
 
     fn on_drag_move(
         &mut self,
@@ -232,20 +196,17 @@ impl UniversalSearch {
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if self.is_dragging {
-            let delta_y = event.event.position.y - self.drag_start_y;
-
-            // Calculate new scroll offset
-            let new_scroll_offset = self.last_scroll_offset + delta_y;
-
-            // Apply bounds based on current content
-            let content_height = self.estimate_content_height();
-            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
-
-            self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
-
-            cx.notify();
+        if !self.is_dragging {
+            return;
         }
+
+        let delta_y = event.event.position.y - self.drag_start_y;
+        let new_scroll_offset = self.last_scroll_offset + delta_y;
+        let content_height = self.estimate_content_height();
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+
+        self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
+        cx.notify();
     }
 
     fn on_drop(&mut self, _: &DragMoveEvent<DragInfo>, _: &mut Window, _cx: &mut Context<Self>) {
@@ -257,24 +218,37 @@ impl UniversalSearch {
         match app_icon {
             Some(path) => Icon::default()
                 .path(path.to_string_lossy().to_string())
-                .size((px(21.82), px(21.82)))
-                .text_color(rgb(0xFFCC23)),
-            None => Icon::from(IconName::DefaultApp).size((px(21.82), px(21.82))),
+                .size((px(22.26), px(22.26))),
+            None => Icon::from(IconName::DefaultApp).size((px(22.26), px(22.26))),
         }
+    }
+
+    fn handle_text_input_update(&mut self, cx: &mut Context<Self>, _window: &Window) {
+        let query = self.text_input.read(cx).content.clone();
+        let query_len = query.trim().chars().count();
+
+        if query_len >= MIN_SEARCH_QUERY_LEN && query != self.last_search_query {
+            self.perform_search(query, cx);
+        } else if query_len < MIN_SEARCH_QUERY_LEN
+            && (!self.file_search_results.is_empty() || !self.app_search_results.is_empty())
+        {
+            self.clear_search_results(cx);
+        }
+    }
+
+    fn clear_text_input(&mut self, cx: &mut Context<Self>, window: &mut Window) {
+        self.text_input.update(cx, |input, cx| {
+            input.reset_state(cx);
+        });
+        window.blur();
     }
 }
 
 impl Render for UniversalSearch {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let open_y = 0.;
-        let closed_y = Self::closed_pos();
-
-        let threshold_px = 40.;
-
         div()
             .w_full()
             .h_full()
-            // .h(px(584.))
             .child(self.universal_search_items(cx, window))
     }
 }
@@ -323,22 +297,121 @@ impl UniversalSearch {
         )
         .detach();
     }
-    fn update_input_regions(&self, window: &mut Window, open: bool) {
-        let mut regions = Vec::new();
 
-        if open {
-            regions.push(Bounds {
+    fn update_input_regions(&self, window: &mut Window, open: bool) {
+        let regions = if open {
+            vec![Bounds {
                 origin: point(px(0.), px(APP_SIZE.1 - NAVBAR_SIZE.1)),
                 size: size(px(NAVBAR_SIZE.0), px(APP_SIZE.1)),
-            });
+            }]
         } else {
-            regions.push(Bounds {
+            vec![Bounds {
                 origin: point(px(0.), px(0.)),
                 size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
-            });
-        }
+            }]
+        };
+
         window.set_input_regions(Some(regions));
     }
+
+    fn build_search_result_row(
+        &self,
+        search: &SearchResults,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let arrow_up_right_icon = self.arrow_up_right_icon.clone();
+        let colors = Theme::global(cx).colors.clone();
+
+        div().h(px(FILE_SECTION_HEIGHT)).w_full().child(
+            div().size_full().flex().flex_row().items_center().child(
+                div()
+                    .size_full()
+                    .text_color(colors.foreground_400)
+                    .flex()
+                    .flex_row()
+                    .justify_between()
+                    .items_center()
+                    .child(
+                        div()
+                            .flex()
+                            .flex_row()
+                            .items_center()
+                            .child(
+                                div()
+                                    .mr(px(8.0))
+                                    .bg(colors.background_700)
+                                    .w(px(32.0))
+                                    .h(px(32.0))
+                                    .flex()
+                                    .justify_center()
+                                    .items_center()
+                                    .rounded(px(8.0))
+                                    .child(
+                                        div().child(
+                                            match search.file_type {
+                                                FileType::App => {
+                                                    let icon_path = lookup(&search.path).find();
+                                                    Self::resolved_icon(&icon_path)
+                                                }
+                                                FileType::File => Icon::from(
+                                                    get_file_extension_icon(&search.extension),
+                                                )
+                                                .size((px(22.26), px(22.26)))
+                                                .text_color(colors.foreground_400),
+                                            },
+                                        ),
+                                    ),
+                            )
+                            .child(
+                                div()
+                                    .font_weight(FontWeight(500.0))
+                                    .text_size(px(16.0))
+                                    .text_color(colors.foreground_400)
+                                    .child(search.name.to_string()),
+                            ),
+                    )
+                    .child(
+                        div()
+                            .h(px(18.0))
+                            .w(px(18.0))
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .child(match search.file_type {
+                                FileType::App => Icon::from(IconName::ArrowCounterClockWise)
+                                    .size((px(20.), px(20.)))
+                                    .text_color(colors.foreground_800),
+                                FileType::File => Icon::from(arrow_up_right_icon)
+                                    .size((px(18.0), px(18.0)))
+                                    .text_color(colors.foreground_800),
+                            }),
+                    ),
+            ),
+        )
+    }
+
+    fn build_divider() -> impl IntoElement {
+        div()
+            .w(px(508.0))
+            .h(px(FILE_SECTION_DIVIDER_HEIGHT))
+            .bg(rgb(0x202020))
+    }
+
+    fn build_search_content(
+        &self,
+        all_results: &[SearchResults],
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        let mut children = Vec::with_capacity(all_results.len() * 2);
+
+        for result in all_results {
+            children.push(self.build_search_result_row(result, cx).into_any_element());
+            // children.push(Self::build_divider().into_any_element());
+        }
+
+        children
+    }
+
     fn universal_search_items(
         &mut self,
         cx: &mut Context<Self>,
@@ -346,179 +419,32 @@ impl UniversalSearch {
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
 
-        let text_input = self.text_input.clone();
-        text_input.update(cx, |input, _| {
+        // Initialize text input
+        self.text_input.update(cx, |input, _| {
             input.placeholder = "Search here".into();
         });
 
+        let text_input = self.text_input.clone();
         let is_active = text_input.read(cx).focus_handle.is_focused(window);
 
+        // Handle search updates
         if is_active {
-            let query = self.text_input.read(cx).content.clone();
-            let query_len = query.trim().chars().count();
-
-            if query_len >= 3 {
-                Self::perform_search(self, query, cx);
-            } else {
-                // Clear results when query is too short
-                if !self.file_search_results.is_empty() || !self.app_search_results.is_empty() {
-                    self.file_search_results.clear();
-                    self.app_search_results.clear();
-                    self.file_count = 0;
-                    self.app_count = 0;
-                    cx.notify();
-                }
-            }
+            self.handle_text_input_update(cx, window);
         }
 
-        let all_results: Vec<SearchResults> = if self.file_search_results.is_empty() {
-            Vec::new()
-        } else {
-            self.file_search_results
-                .iter()
-                .map(|result| SearchResults {
-                    name: result.name.clone(),
-                    file_type: FileType::File,
-                    path: String::new(),
-                    extension: result.file_type.clone(),
-                })
-                .chain(self.app_search_results.iter().map(|result| SearchResults {
-                    name: result.name.clone(),
-                    file_type: FileType::App,
-                    path: result.icon.clone(),
-                    extension: String::new(),
-                }))
-                .collect()
-        };
+        // Build search results
+        let all_results = self.build_search_results();
 
-        self.file_count = all_results.len();
-
-        // Calculate content height
+        // Calculate scroll bounds
         let content_height = self.estimate_content_height();
         let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
-
-        // Update scroll bounds
         self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
 
-        let arrow_up_right_icon = self.arrow_up_right_icon.clone();
+        // Build content children
+        let content_children = self.build_search_content(&all_results, cx);
+
         let search_icon = self.search_icon.clone();
         let x_icon = self.x_icon.clone();
-
-        let app = |icon: Icon| {
-            let size = gpui::size(px(60.0), px(60.0));
-
-            div()
-                .size_full()
-                .bg(rgb(0x2b2b2b))
-                // .bg(colors.background_1000)
-                .w(size.width)
-                .h(size.height)
-                .rounded(px(10.43))
-                .flex()
-                .justify_center()
-                .items_center()
-                .id("button")
-                .child(icon)
-        };
-
-        let row = move |search: &SearchResults| {
-            // Add `move` and take reference
-            // let folder_small_icon_clone = folder_small_icon.clone(); // Clone the icon
-            // let arrow_up_right_icon_clone = arrow_up_right_icon.clone(); // Clone this too
-
-            div().h(px(FILE_SECTION_HEIGHT)).w_full().child(
-                div().size_full().flex().flex_row().items_center().child(
-                    div()
-                        .size_full()
-                        .text_color(rgb(0xe9e9e9))
-                        .flex()
-                        .flex_row()
-                        .justify_between()
-                        .items_center()
-                        .child(
-                            div().flex().flex_row().child(
-                                div()
-                                    .flex()
-                                    .flex_row()
-                                    .items_center()
-                                    .child(
-                                        div()
-                                            .mr(px(8.0))
-                                            .bg(rgb(0x202020))
-                                            .w(px(36.0))
-                                            .h(px(36.0))
-                                            .flex()
-                                            .justify_center()
-                                            .items_center()
-                                            .rounded(px(8.0))
-                                            .child(
-                                                div().w(px(21.82)).h(px(21.82)).child(match search
-                                                    .file_type
-                                                {
-                                                    FileType::App => {
-                                                        let ab: Option<PathBuf> =
-                                                            lookup(&search.path).find();
-                                                        UniversalSearch::resolved_icon(&ab)
-                                                    }
-                                                    FileType::File => Icon::from(
-                                                        get_file_extension_icon(&search.extension),
-                                                    )
-                                                    .size((px(21.82), px(21.82)))
-                                                    // .text_color(rgb(0xD2D2D2)),
-                                                    .text_color(rgb(0xe9e9e9)),
-                                                }),
-                                            ),
-                                    )
-                                    .child(
-                                        div()
-                                            .font_weight(FontWeight(500.0))
-                                            .text_size(px(16.0))
-                                            .text_color(rgb(0xe9e9e9))
-                                            .child(search.name.to_string()),
-                                    ),
-                            ),
-                        )
-                        .child(
-                            div()
-                                .h(px(18.0))
-                                .w(px(18.0))
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .child(match search.file_type {
-                                    FileType::App => Icon::from(IconName::ArrowCounterClockWise)
-                                        .size((px(21.82), px(21.82)))
-                                        .text_color(rgb(0xa6a6a6)),
-                                    FileType::File => Icon::from(arrow_up_right_icon.clone())
-                                        .size((px(11.0), px(11.0)))
-                                        .text_color(rgb(0xa6a6a6)),
-                                }),
-                        ),
-                ),
-            )
-        };
-
-        let divider = || {
-            div()
-                .w(px(508.0))
-                .h(px(FILE_SECTION_DIVIDER_HEIGHT))
-                .bg(rgb(0x202020))
-        };
-
-        let mut file_children = Vec::new();
-        for file in all_results.iter() {
-            file_children.push(row(file));
-            file_children.push(divider());
-        }
-
-        let max_columns: usize = 6;
-        let columns: u16 = self.app_count.min(max_columns).try_into().unwrap();
-        let rows: u16 = (((self.app_count as f32) / (columns as f32)).ceil() as u32)
-            .try_into()
-            .unwrap();
-
-        let grid_size = gpui::size(px(508.0), px(APP_SECTION_HEIGHT * (rows as f32) + 16.0));
-
         let entity = cx.entity();
 
         div()
@@ -527,17 +453,15 @@ impl UniversalSearch {
             .bg(gpui::black())
             .flex()
             .flex_col()
-            // .on_mouse_up(MouseButton::Left, cx.listener(UniversalSearch::on_mouse_up))
-            .on_drop(cx.listener(UniversalSearch::on_drop))
-            // .on_mouse_move(cx.listener(UniversalSearch::on_mouse_move))
-            .on_drag_move(cx.listener(UniversalSearch::on_drag_move))
+            .on_drop(cx.listener(Self::on_drop))
+            .on_drag_move(cx.listener(Self::on_drag_move))
             .child(
                 div()
                     .id("drag")
                     .flex()
                     .flex_col()
                     .relative()
-                    .h(px(620.0 - SEARCH_BAR_HEIGHT - NAVBAR_SIZE.1))
+                    .h(px(APP_SIZE.1 - SEARCH_BAR_HEIGHT - NAVBAR_SIZE.1))
                     .overflow_hidden()
                     .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
                         entity.update(cx, |this, cx| {
@@ -548,13 +472,8 @@ impl UniversalSearch {
                             cx.notify();
                         });
 
-                        let data = DragInfo::new().position(position);
-                        cx.new(|_| data)
+                        cx.new(|_| DragInfo::new().position(position))
                     })
-                    // .on_mouse_down(
-                    //     MouseButton::Left,
-                    //     cx.listener(UniversalSearch::on_mouse_down),
-                    // )
                     .child(
                         div()
                             .absolute()
@@ -578,31 +497,43 @@ impl UniversalSearch {
                                                     .child(
                                                         div()
                                                             .text_size(px(20.0))
-                                                            .text_color(colors.foreground_200)
+                                                            .text_color(colors.foreground_600)
                                                             .child("Search"),
                                                     )
                                                     .child(
                                                         div()
+                                                            .id("clear-result")
                                                             .text_size(px(16.0))
-                                                            .text_color(colors.background_700)
+                                                            .text_color(
+                                                                if all_results.len() == 0 {
+                                                                    colors.background_800
+                                                                } else {
+                                                                    colors.foreground_100
+                                                                }
+                                                            )
+                                                            .on_click(cx.listener(
+                                                                |this: &mut Self, _event, window, cx| {
+                                                                    this.clear_search_results(cx);
+                                                                    this.clear_text_input(cx, window);
+                                                                },
+                                                            ))
                                                             .child("Clear all"),
                                                     ),
                                             )
                                             .child(
-                                                // result !
-                                                div().flex().flex_col()
+                                                div()
+                                                    .flex()
+                                                    .flex_col()
                                                     .h(px(30.))
                                                     .child(
-                                                        div().flex().flex_row().child(
-                                                            div()
-                                                                .text_size(px(16.0))
-                                                                .text_color(colors.background_500)
-                                                                .child("Search an app, a file, a word or anything literally"),
-                                                        ),
+                                                        div()
+                                                            .text_size(px(16.0))
+                                                            .text_color(colors.background_500)
+                                                            .child("Search an app, a file, a word or anything literally"),
                                                     ),
                                             ),
                                     )
-                                    .children(file_children),
+                                    .children(content_children),
                             ),
                     ),
             )
@@ -617,7 +548,7 @@ impl UniversalSearch {
                             .flex()
                             .flex_row()
                             .items_center()
-                            .bg(colors.accent_400.with_alpha(0.1))
+                            .bg(colors.accent_300.with_alpha(0.1))
                             .border_color(colors.background_700)
                             .border_1()
                             .py(px(6.))
@@ -635,72 +566,53 @@ impl UniversalSearch {
                                     .border_1()
                                     .rounded_sm()
                                     .child(
-                                        div().flex().flex_row().items_center().child(
-                                            div()
-                                                .flex()
-                                                .flex_row()
-                                                .child(
-                                                    div()
-                                                        .flex()
-                                                        .flex_row()
-                                                        .items_center()
-                                                        .justify_center()
-                                                        // .mr(px(8.0))
-                                                        // .ml(px(16.0))
-                                                        .py_2()
-                                                        .ml_3()
-                                                        .mr_2()
-                                                        .w(px(24.0))
-                                                        .h(px(24.0))
-                                                        .rounded(px(8.0))
-                                                        .child(
-                                                            div().child(
-                                                                Icon::from(search_icon.clone())
-                                                                    .size((px(24.0), px(24.0)))
-                                                                    .text_color(colors.accent_300),
-                                                            ),
-                                                        ),
-                                                )
-                                                .child(
-                                                    div()
-                                                        .text_size(px(20.0))
-                                                        .text_color(colors.foreground_300)
-                                                        .child(text_input.clone()),
-                                                ),
-                                        ),
-                                    )
+                                        div()
+                                            .flex()
+                                            .flex_row()
+                                            .items_center()
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .flex_row()
+                                                    .items_center()
+                                                    .justify_center()
+                                                    .py_2()
+                                                    .ml_3()
+                                                    .mr_2()
+                                                    .w(px(24.0))
+                                                    .h(px(24.0))
+                                                    .rounded(px(8.0))
+                                                    .child(
+                                                        Icon::from(search_icon)
+                                                            .size((px(24.0), px(24.0)))
+                                                            .text_color(colors.accent_300),
+                                                    ),
+                                            )
+                                            .child(
+                                                div()
+                                                    .text_size(px(20.0))
+                                                    .text_color(colors.foreground_300)
+                                                    .child(text_input),
+                                            ),
+                                    ),
                             )
                             .child(
                                 div()
                                     .size_full()
-                                    .h(px(40.0))
-                                    .w(px(40.0))
                                     .flex()
                                     .flex_row()
                                     .items_center()
                                     .justify_center()
-                                    // .p_2()
                                     .id("cancel-button")
                                     .on_click(cx.listener(
-                                        |this: &mut UniversalSearch, _event, _window, cx| {
-                                            this.text_input.update(cx, |input, cx| {
-                                                input.content = "".into();
-                                                input.selected_range = 0..0;
-                                                input.selection_reversed = false;
-                                                input.marked_range = None;
-                                                input.last_layout = None;
-                                                input.last_bounds = None;
-                                                input.is_selecting = false;
-                                                cx.notify();
-                                            });
-
-                                            this.text_input.read(cx).blur(_window);
+                                        |this: &mut Self, _event, window, cx| {
+                                            this.clear_text_input(cx, window);
                                         },
                                     ))
                                     .child(
-                                        Icon::from(x_icon.clone())
+                                        Icon::from(x_icon)
                                             .size((px(24.0), px(24.0)))
-                                            .text_color(rgb(0xe9e9e9)),
+                                            .text_color(colors.foreground_400),
                                     ),
                             ),
                     ),

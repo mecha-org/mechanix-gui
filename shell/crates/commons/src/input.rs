@@ -64,6 +64,44 @@ impl TextInput {
         self
     }
 
+    pub fn on_change(mut self, callback: impl Fn(&mut Self, &mut Context<Self>) + 'static) -> Self {
+        self.on_change = Some(Box::new(callback));
+        self
+    }
+
+    /// Blur the text input by clearing focus
+    pub fn blur(&self, window: &mut Window) {
+        window.blur();
+    }
+
+    /// Focus the text input
+    pub fn focus(&self, window: &mut Window) {
+        window.focus(&self.focus_handle);
+    }
+
+    /// Check if the input is currently focused
+    pub fn is_focused(&self, window: &Window) -> bool {
+        self.focus_handle.is_focused(window)
+    }
+
+    /// Reset the input to its initial state
+    pub fn reset_state(&mut self, cx: &mut Context<Self>) {
+        self.content = "".into();
+        self.selected_range = 0..0;
+        self.selection_reversed = false;
+        self.marked_range = None;
+        self.last_layout = None;
+        self.last_bounds = None;
+        self.is_selecting = false;
+        cx.notify();
+    }
+
+    /// Clear content and blur
+    pub fn clear_and_blur(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_state(cx);
+        self.blur(window);
+    }
+
     fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
         if self.selected_range.is_empty() {
             self.move_to(self.previous_boundary(self.cursor_offset()), cx);
@@ -105,25 +143,20 @@ impl TextInput {
         if self.selected_range.is_empty() {
             self.select_to(self.previous_boundary(self.cursor_offset()), cx)
         }
-        self.replace_text_in_range(None, "", window, cx)
+        self.replace_text_in_range(None, "", window, cx);
+        self.trigger_on_change(cx);
     }
 
     fn delete(&mut self, _: &Delete, window: &mut Window, cx: &mut Context<Self>) {
         if self.selected_range.is_empty() {
             self.select_to(self.next_boundary(self.cursor_offset()), cx)
         }
-        self.replace_text_in_range(None, "", window, cx)
+        self.replace_text_in_range(None, "", window, cx);
+        self.trigger_on_change(cx);
     }
 
     fn reset(&mut self, _: &Reset, _: &mut Window, cx: &mut Context<Self>) {
-        self.content = "".into();
-        self.selected_range = 0..0;
-        self.selection_reversed = false;
-        self.marked_range = None;
-        self.last_layout = None;
-        self.last_bounds = None;
-        self.is_selecting = false;
-        cx.notify();
+        self.reset_state(cx);
     }
 
     fn on_mouse_down(
@@ -140,10 +173,6 @@ impl TextInput {
         }
     }
 
-    pub fn on_change(mut self, callback: impl Fn(&mut Self, &mut Context<Self>) + 'static) -> Self {
-        self.on_change = Some(Box::new(callback));
-        self
-    }
     fn on_mouse_up(&mut self, _: &MouseUpEvent, _window: &mut Window, _: &mut Context<Self>) {
         self.is_selecting = false;
     }
@@ -166,6 +195,7 @@ impl TextInput {
     fn paste(&mut self, _: &Paste, window: &mut Window, cx: &mut Context<Self>) {
         if let Some(text) = cx.read_from_clipboard().and_then(|item| item.text()) {
             self.replace_text_in_range(None, &text.replace("\n", " "), window, cx);
+            self.trigger_on_change(cx);
         }
     }
 
@@ -176,12 +206,14 @@ impl TextInput {
             ));
         }
     }
+
     fn cut(&mut self, _: &Cut, window: &mut Window, cx: &mut Context<Self>) {
         if !self.selected_range.is_empty() {
             cx.write_to_clipboard(ClipboardItem::new_string(
                 self.content[self.selected_range.clone()].to_string(),
             ));
-            self.replace_text_in_range(None, "", window, cx)
+            self.replace_text_in_range(None, "", window, cx);
+            self.trigger_on_change(cx);
         }
     }
 
@@ -217,7 +249,6 @@ impl TextInput {
 
         let x_position = position.x - bounds.left();
 
-        // Handle the case where index_for_x returns None (position outside text bounds)
         line.index_for_x(x_position).unwrap_or_else(|| {
             if x_position < 0.0.into() {
                 0
@@ -293,8 +324,11 @@ impl TextInput {
             .unwrap_or(self.content.len())
     }
 
-    pub fn blur(&self, window: &mut Window) {
-        window.blur();
+    fn trigger_on_change(&mut self, cx: &mut Context<Self>) {
+        if let Some(callback) = self.on_change.take() {
+            callback(self, cx);
+            self.on_change = Some(callback);
+        }
     }
 }
 
@@ -517,9 +551,9 @@ impl Element for TextElement {
                     ..run
                 },
             ]
-            .into_iter()
-            .filter(|run| run.len > 0)
-            .collect()
+                .into_iter()
+                .filter(|run| run.len > 0)
+                .collect()
         } else {
             vec![run]
         };
@@ -530,8 +564,6 @@ impl Element for TextElement {
             .shape_line(display_text, font_size, &runs, None);
 
         let cursor_pos = line.x_for_index(cursor);
-
-        // CURSOR HEIGHT, WIDTH AND COLOR
 
         let (selection, cursor) = if selected_range.is_empty() {
             (
@@ -557,7 +589,7 @@ impl Element for TextElement {
                             bounds.bottom(),
                         ),
                     ),
-                    gpui::blue(), //  rgba(0x3311ff30),
+                    gpui::blue(),
                 )),
                 None,
             )
@@ -592,10 +624,10 @@ impl Element for TextElement {
         line.paint(bounds.origin, window.line_height(), window, cx)
             .unwrap();
 
-        if focus_handle.is_focused(window)
-            && let Some(cursor) = prepaint.cursor.take()
-        {
-            window.paint_quad(cursor);
+        if focus_handle.is_focused(window) {
+            if let Some(cursor) = prepaint.cursor.take() {
+                window.paint_quad(cursor);
+            }
         }
 
         self.input.update(cx, |input, _cx| {
@@ -605,7 +637,6 @@ impl Element for TextElement {
     }
 }
 
-// INPUT BOX CHANGES
 impl Render for TextInput {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
@@ -627,7 +658,7 @@ impl Render for TextInput {
             .on_action(cx.listener(Self::paste))
             .on_action(cx.listener(Self::cut))
             .on_action(cx.listener(Self::copy))
-            .on_action(cx.listener(Self::reset)) // Add reset action handler
+            .on_action(cx.listener(Self::reset))
             .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
