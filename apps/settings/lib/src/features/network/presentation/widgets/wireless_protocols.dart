@@ -1,33 +1,72 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_settings/app_route.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols_list.dart';
+import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
+import 'package:widgets/widgets/select/select_type.dart';
 
-class WirelessProtocols extends StatelessWidget {
-  const WirelessProtocols({super.key});
+class WirelessProtocols extends StatefulWidget {
+  const WirelessProtocols({this.accessPoint, super.key});
+
+  final NetworkManagerAccessPoint? accessPoint;
+
+  @override
+  State<WirelessProtocols> createState() => _WirelessProtocolsState();
+}
+
+class _WirelessProtocolsState extends State<WirelessProtocols> {
+  WirelessProtocol? selectedValue;
+
+  void onChange(SelectOption value) {
+    setState(() {
+      selectedValue = value.value;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MechanixSimpleList(listItems: [
-      SimpleListItems(
-          onTap: () {
-            Navigator.pushNamed(context, AppRoutes.security);
-          },
-          title: 'Security',
-          trailing: Row(
-            children: [
-              const CustomTrailingText(
-                title: 'WPA2/WPA3',
-              ).padRight(8),
-              const IconWidget(
-                iconWidth: 9,
-                iconHeight: 18,
-                iconPath: Images.rightIconArrow,
-              )
-            ],
-          ))
-    ]).padTop(40);
+    return BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
+      builder: (context, state) {
+        return MechanixSimpleList(
+          listItems: [
+            SimpleListItems(
+                onTap: () => onTap(context, widget.accessPoint),
+                title: 'Security',
+                trailing: Row(
+                  children: [
+                    const CustomTrailingText(
+                      title: 'WPA2/WPA3',
+                    ).padRight(8),
+                    const IconWidget(
+                      iconWidth: 9,
+                      iconHeight: 18,
+                      iconPath: Images.rightIconArrow,
+                    )
+                  ],
+                ))
+          ],
+        );
+      },
+    ).padTop(40);
   }
+}
+
+void onTap(BuildContext context, NetworkManagerAccessPoint? accessPoint) {
+  final bloc = context.read<ConnectNetworkBloc>();
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => BlocProvider.value(
+        value: bloc, // reuse the existing bloc
+        child: WirelessProtocolsList(accessPoint: accessPoint),
+      ),
+    ),
+  );
 }

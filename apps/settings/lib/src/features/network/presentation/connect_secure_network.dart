@@ -2,19 +2,20 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 class ConnectSecureNetwork extends StatelessWidget {
-  const ConnectSecureNetwork({
-    this.accessPoint,
-    super.key});
+  const ConnectSecureNetwork({this.accessPoint, super.key});
 
   final NetworkManagerAccessPoint? accessPoint;
 
@@ -68,7 +69,7 @@ class ConnectSecureNetwork extends StatelessWidget {
               ),
             );
           } else {
-            // // TODO: check connected network is same as active connection added, 
+            // // TODO: check connected network is same as active connection added,
             // // then navigate to previous screen
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -86,71 +87,84 @@ class ConnectSecureNetwork extends StatelessWidget {
         child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
           builder: (context, state) {
             return Scaffold(
-              appBar: PreferredSize(
-                  preferredSize: const Size.fromHeight(52),
-                  child: MechanixNavigationBar(
-                      title: "Join ${utf8.decode(accessPoint!.ssid)}",
-                      actionWidgets: [
-                        IconButton(
-                          icon: Image.asset(
-                            Images.submit,
-                            width: 20,
-                            height: 20,
-                          ),
-                          onPressed: state.password.isNotEmpty &&
-                                  state.password.length >= 8
-                              ? () {
-                                  context
-                                      .read<ConnectNetworkBloc>()
-                                      .add(ConnectToNetwork(accessPoint!));
-                                }
-                              : null,
-                        ),
-                      ]).padHorizontal(12)),
+              backgroundColor: context.secondary,
               body: ContainerWidget(
                 child: Form(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        children: [
+                          CustomTitle(
+                            title: "Join",
+                            textStyle: TextStyle(
+                              color: context.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 24,
+                            ),
+                          ),
+                          CustomTitle(
+                            title: "'${utf8.decode(accessPoint!.ssid)}'",
+                            textStyle: TextStyle(
+                              color: context.onSurface,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 24,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: MechanixTextInput.password(
-                                label: 'Wireless Credentials',
-                                isFormField: true,
-                                hintText: 'Enter Password',
-                                onChanged: (value) {
+                            child: MechanixTextInput.password(
+                              isFormField: true,
+                              hintText: 'Enter Password',
+                              onChanged: (value) {
+                                context
+                                    .read<ConnectNetworkBloc>()
+                                    .add(PasswordChanged(value));
+                              },
+                              onFieldSubmitted: (_) {
+                                if (state.password.isNotEmpty &&
+                                    state.password.length >= 8) {
                                   context
                                       .read<ConnectNetworkBloc>()
-                                      .add(PasswordChanged(value));
-                                },
-                                onFieldSubmitted: (_) {
-                                  if (state.password.isNotEmpty &&
-                                      state.password.length >= 8) {
-                                    context
-                                        .read<ConnectNetworkBloc>()
-                                        .add(ConnectToNetwork(accessPoint!));
-                                  }
-                                },
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter a password';
-                                  }
-                                  return null;
-                                },
+                                      .add(ConnectToNetwork(accessPoint!));
+                                }
+                              },
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter a password';
+                                }
+                                return null;
+                              },
+                              theme: MechanixTextInputThemeData(
+                                borderRadius: BorderRadius.circular(8),
+                                enabledBorderSide: BorderSide(
+                                  color: context.surfaceContainerLow,
+                                  style: BorderStyle.solid,
+                                  width: 1,
+                                ),
+                                widgetPadding: EdgeInsets.zero,
+                                widgetDecoration: const BoxDecoration(
+                                  color: Colors.transparent,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
+
                       // // NOTE: Not in use currently
                       // WirelessProtocols()
+                      WirelessProtocols(accessPoint: accessPoint),
                     ],
                   ).padTop(8),
                 ),
+              ),
+              bottomNavigationBar: MechanixBottomBar(
+                leadingWidget: [context.backButton],
               ),
             );
           },

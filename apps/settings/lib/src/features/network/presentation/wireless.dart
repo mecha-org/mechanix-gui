@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
@@ -14,6 +13,7 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_b
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/presentation/add_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
@@ -22,7 +22,6 @@ import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
-import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class WirelessSettings extends StatefulWidget {
   const WirelessSettings({super.key});
@@ -54,10 +53,6 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
-                        style: const MechanixSwitchStyle(
-                          inactiveThumbColor: Color(0xFF989898),
-                          inactiveTrackColor: Color(0xFF252525),
-                        ),
                         value: state.wifiOn,
                         onChanged: (val) => context
                             .read<WirelessSettingsBloc>()
@@ -234,8 +229,19 @@ List<SectionListItems> getWifiList(
         titleTextStyle:
             context.textTheme.labelMedium?.copyWith(color: context.primary),
         defaultTrailingIcon: false,
-        onTap: () => Navigator.pushNamed(
-            context, AppRoutes.wirelessConnectHiddenNetwork),
+        onTap: () {
+          final bloc = context.read<ConnectNetworkBloc>();
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BlocProvider.value(
+                value: bloc, // reuse the existing bloc
+                child: const AddNetwork(),
+              ),
+            ),
+          );
+        },
         // leading: const IconWidget(iconPath: Images.wirelessAdd),
         iconPath: Images.wirelessAdd,
         isActive: true,
