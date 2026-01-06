@@ -18,4 +18,5 @@ rust-embed = { workspace = true }
 anyhow = { workspace = true }
 settings = { path = "../settings" }
 theme = { path = "../theme" }
+dispatcher = { path = "../dispatcher" }
 futures = "0.3.31"

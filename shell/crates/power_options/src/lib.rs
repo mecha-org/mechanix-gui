@@ -1,3 +1,4 @@
+use dispatcher::Dispatcher;
 use gpui::{
     layer_shell::{KeyboardInteractivity, LayerShellOptions},
     *,
@@ -5,10 +6,10 @@ use gpui::{
 use settings::prelude::{LayerShellSettings, PowerOptionsSettings, Settings};
 
 mod ui;
-
 use crate::ui::*;
 
 pub mod prelude {
+    pub use crate::listen_dispatcher;
     pub use crate::run_app;
 }
 
@@ -22,6 +23,7 @@ pub fn run_app(cx: &mut App) {
         exclusive_zone,
     } = layer_shell;
     let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+
     cx.open_window(
         WindowOptions {
             window_bounds: Some(window_bounds),
@@ -40,12 +42,46 @@ pub fn run_app(cx: &mut App) {
             let mut regions = Vec::new();
             regions.push(Bounds {
                 origin: point(px(0.0), px(0.0)),
-                size: gpui::size(size.width, size.height),
+                size: gpui::size(px(1.0), px(1.0)),
             });
             window.set_input_regions(Some(regions));
 
-            cx.new(|cx| PowerOptions::new(cx))
+            cx.new(|cx| {
+                listen_dispatcher(cx);
+                PowerOptions::new(cx)
+            })
         },
     )
     .unwrap();
+}
+
+pub fn listen_dispatcher(cx: &mut Context<PowerOptions>) {
+    println!("Power Options listening to dispatcher");
+
+    if !cx.has_global::<Dispatcher>() {
+        dispatcher::init(cx);
+    }
+
+    println!("Power Options dispatcher ready to receive messages");
+
+    let dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
+
+    cx.spawn(async move |this, cx| {
+        println!("Power Options spawn...");
+        while let Ok(message) = dispatcher_rx.try_recv() {
+            println!("while Power Options received message: {:#?}", message);
+            match message {
+                dispatcher::Message::ShowPowerOptions(show) => {
+                    let _ = this.update(cx, |this, cx| {
+                        this.show = show;
+
+                        cx.notify();
+                    });
+                }
+                _ => {}
+            }
+        }
+    })
+    .detach();
+    println!("Power Options dispatcher-------------");
 }

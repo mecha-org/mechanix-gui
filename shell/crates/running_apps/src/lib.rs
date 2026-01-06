@@ -92,7 +92,7 @@ fn root_view(
 pub fn run_app(app: &mut App) -> EntityId {
     let (message_tx, message_rx) = mpsc::channel(120);
     let (app_channel_tx, mut app_channel_rx) = mpsc::channel(120);
-    let dispatcher_rx = Dispatcher::global(app).0.clone();
+    let dispatcher_rx = Dispatcher::global(app).1.clone();
 
     let executor = app.background_executor();
 

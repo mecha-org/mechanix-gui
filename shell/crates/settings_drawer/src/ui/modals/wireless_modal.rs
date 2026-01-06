@@ -181,7 +181,7 @@ impl SettingsDrawer {
                                     );
 
                                     let connect_div = div().child(
-                                        Icon::new(IconName::ConnectedIcon)
+                                        Icon::new(IconName::Connected)
                                             .size((px(24.), px(24.)))
                                             .text_color(text_color),
                                     );

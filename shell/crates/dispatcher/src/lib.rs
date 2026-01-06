@@ -1,10 +1,16 @@
-use crossbeam_channel::{Receiver, bounded};
+use crossbeam_channel::{Receiver, Sender, bounded};
 use futures::StreamExt;
 use gpui::*;
 use mxconf_dbus::watch_setting;
 
 #[derive(Clone)]
-pub struct Dispatcher(pub Receiver<Message>);
+pub struct Dispatcher(pub Sender<Message>, pub Receiver<Message>);
+
+impl Dispatcher {
+    pub fn channel(&self) -> (Sender<Message>, Receiver<Message>) {
+        (self.0.clone(), self.1.clone())
+    }
+}
 
 impl Global for Dispatcher {}
 
@@ -17,11 +23,12 @@ pub enum Message {
         foreground: String,
     },
     SetKeyboardAlwayson(bool),
+    ShowPowerOptions(bool),
 }
 
 pub fn init(cx: &mut App) {
     let (tx, rx) = bounded::<Message>(120);
-    cx.set_global(Dispatcher(rx));
+    cx.set_global(Dispatcher(tx.clone(), rx.clone()));
 
     cx.background_executor()
         .spawn(async move {

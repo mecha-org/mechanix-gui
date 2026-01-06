@@ -7,14 +7,14 @@ import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 
-class RecentSongs extends StatefulWidget {
-  const RecentSongs({super.key});
+class RecentSong extends StatefulWidget {
+  const RecentSong({super.key});
 
   @override
-  State<RecentSongs> createState() => _RecentSongsState();
+  State<RecentSong> createState() => _RecentSongState();
 }
 
-class _RecentSongsState extends State<RecentSongs> {
+class _RecentSongState extends State<RecentSong> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int currentPage = 0;
 
@@ -73,6 +73,7 @@ class _RecentSongsState extends State<RecentSongs> {
                   vertical: 0,
                 ),
                 child: Row(
+                  spacing: 12,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
@@ -85,6 +86,7 @@ class _RecentSongsState extends State<RecentSongs> {
                       ),
                     ),
                     Row(
+                      spacing: 12,
                       children: [
                         IconButton(
                           icon: Image.asset(
@@ -110,7 +112,10 @@ class _RecentSongsState extends State<RecentSongs> {
                                     : MusicColors.disabledColor,
                           ),
                           iconSize: 40,
-                          onPressed: () => _scrollRight(pages.length),
+                          onPressed:
+                              currentPage < pages.length - 1
+                                  ? () => _scrollRight(pages.length)
+                                  : null,
                         ),
                       ],
                     ),

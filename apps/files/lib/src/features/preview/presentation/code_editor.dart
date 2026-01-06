@@ -17,6 +17,7 @@ import 'package:highlight/languages/rust.dart';
 import 'package:highlight/languages/javascript.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -28,6 +29,7 @@ import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
+import 'package:widgets/widgets/notification/notification_type.dart';
 
 final pureBlackTheme = {
   ...monokaiTheme,
@@ -217,23 +219,71 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     }
   }
 
+  String ellipsizeToWidth(
+    String text, {
+    required double maxWidth,
+    required TextStyle style,
+  }) {
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    );
+
+    // Fits already?
+    textPainter.text = TextSpan(text: text, style: style);
+    textPainter.layout();
+    if (textPainter.width <= maxWidth) return text;
+
+    final ext = p.extension(text);
+    final base = p.basenameWithoutExtension(text);
+
+    int left = 0;
+    int right = base.length;
+
+    while (left < right) {
+      final mid = (left + right) ~/ 2;
+
+      final candidate =
+          '${base.substring(0, mid)}...${base.substring(base.length - mid)}$ext';
+
+      textPainter.text = TextSpan(text: candidate, style: style);
+      textPainter.layout();
+
+      if (textPainter.width <= maxWidth) {
+        left = mid + 1;
+      } else {
+        right = mid;
+      }
+    }
+
+    final keep = left.clamp(1, base.length ~/ 2);
+
+    return '${base.substring(0, keep)}...${base.substring(base.length - keep)}$ext';
+  }
+
   Future<void> _save() async {
     final updated = _codeController.text;
     await File(widget.filePath).writeAsString(updated);
+    print(widget.filePath);
 
     setState(() {
       _code = updated;
       _isFileChanged = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Saved successfully",
-            style:
-                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.grey[800],
-      ),
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    //For large file names
+    final maxWidth = screenWidth * 0.5;
+    final displayName = ellipsizeToWidth(
+      p.basename(widget.filePath),
+      maxWidth: maxWidth,
+      style: Theme.of(context).textTheme.bodyMedium!,
+    );
+    MechanixNotification.show(
+      context: context,
+      notificationType: NotificationType.success,
+      message: "Changes saved in '$displayName'",
     );
   }
 
@@ -312,16 +362,43 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       ),
       body: SingleChildScrollView(
         controller: _scrollController,
-        child: CodeTheme(
-          data: CodeThemeData(styles: pureBlackTheme),
-          child: CodeField(
-            controller: _codeController,
-            cursorColor: context.colorScheme.primaryFixed,
-            textStyle: const TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 14,
+        child: Stack(
+          children: [
+            CodeTheme(
+              data: CodeThemeData(styles: pureBlackTheme),
+              child: CodeField(
+                controller: _codeController,
+                cursorColor: context.colorScheme.primaryFixed,
+                textStyle: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  height: 1.4,
+                ),
+              ),
             ),
-          ),
+
+            // Search highlight overlay
+            IgnorePointer(
+              child: AnimatedBuilder(
+                animation: _scrollController,
+                builder: (_, __) {
+                  return CustomPaint(
+                    painter: _SearchHighlightPainter(
+                      code: _codeController.text,
+                      search: _searchQuery,
+                      scrollOffset: _scrollController.offset,
+                      textStyle: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                      padding: const EdgeInsets.only(left: 0, top: 12),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: _buildBottomBar(context),
@@ -352,74 +429,76 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     final state =
         widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
 
-    return Container(
-      color: context.colorScheme.secondary,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MechanixBottomBar(
-            theme: const MechanixBottomBarThemeData(),
-            leadingWidget: [
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
-                iconPath: Images.back,
-                onPressed: () => Navigator.pop(context),
-              ),
-            ],
-            centerWidgetSpacing: 30,
-            centerWidget: [
-              BottomBarButton(
-                iconTheme: MechanixBottomBarIconThemeData(
-                  iconSize: const Size(28, 28),
-                  iconColor: _undoStack.length <= 1
-                      ? context.surfaceContainerHigh
-                      : context.colorScheme.onSurface,
-                ),
-                iconPath: Images.undo,
-                isDisabled: _undoStack.length <= 1,
-                onPressed: _undoStack.length <= 1 ? null : _undo,
-              ),
-              BottomBarButton(
-                iconTheme: MechanixBottomBarIconThemeData(
-                  iconSize: const Size(28, 28),
-                  iconColor: _redoStack.isEmpty
-                      ? context.surfaceContainerHigh // disabled color
-                      : context.colorScheme.onSurface, // enabled color
-                ),
-                iconPath: Images.redo,
-                isDisabled: _redoStack.isEmpty,
-                onPressed: _redoStack.isEmpty ? null : _redo,
-              ),
-            ],
-            anchorWidgetSpacing: 0,
-            anchorWidget: [
-              BottomBarButton.widget(
-                  widget: MechanixFilledButton(
-                theme: buttonThemeData(context,
-                    type: _isFileChanged
-                        ? MechanixButtonType.action
-                        : MechanixButtonType.disable,
-                    size: const Size(94, 40)),
-                label: "Save",
-                onPressed: !_isFileChanged
-                    ? null
-                    : () async {
-                        final confirmed = await _confirmSave(context);
-
-                        if (!confirmed) {
-                          _discardChanges();
-                          return;
-                        }
-
-                        await _save();
-                      },
-              )),
-              BottomBarButton.widget(widget: buildActionsMenu(context)),
-            ],
-          ),
-        ],
+    return MechanixBottomBar(
+      theme: MechanixBottomBarThemeData(
+        decoration: BoxDecoration(
+            color: context.colorScheme.secondary,
+            borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8), topRight: Radius.circular(8))),
       ),
+      leadingWidget: [
+        BottomBarButton.widget(
+            widget: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: DecoratedPressableIcon(
+            iconPath: Images.back,
+            onTap: !_isFileChanged
+                ? () => Navigator.pop(context)
+                : () async {
+                    final confirmed = await _confirmSave(context);
+
+                    if (!confirmed) {
+                      _discardChanges();
+                      return;
+                    }
+
+                    await _save();
+                  },
+          ),
+        )),
+      ],
+      centerWidgetSpacing: 30,
+      centerWidget: [
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.undo,
+            isDisabled: _undoStack.length <= 1,
+            onTap: _undoStack.length <= 1 ? null : _undo,
+          ),
+        ),
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.redo,
+            isDisabled: _redoStack.isEmpty,
+            onTap: _redoStack.isEmpty ? null : _redo,
+          ),
+        ),
+      ],
+      anchorWidgetSpacing: 4,
+      anchorWidget: [
+        BottomBarButton.widget(
+            widget: MechanixFilledButton(
+          theme: buttonThemeData(context,
+              type: _isFileChanged
+                  ? MechanixButtonType.action
+                  : MechanixButtonType.disable,
+              size: const Size(94, 40)),
+          label: "Save",
+          onPressed: !_isFileChanged
+              ? null
+              : () async {
+                  final confirmed = await _confirmSave(context);
+
+                  if (!confirmed) {
+                    _discardChanges();
+                    return;
+                  }
+
+                  await _save();
+                },
+        )),
+        BottomBarButton.widget(widget: buildActionsMenu(context)),
+      ],
     );
   }
 
@@ -706,12 +785,14 @@ class _SearchHighlightPainter extends CustomPainter {
   final String search;
   final TextStyle textStyle;
   final EdgeInsets padding;
+  final double scrollOffset;
 
   _SearchHighlightPainter({
     required this.code,
     required this.search,
     required this.textStyle,
     required this.padding,
+    required this.scrollOffset,
   });
 
   @override
@@ -719,7 +800,6 @@ class _SearchHighlightPainter extends CustomPainter {
     if (search.isEmpty) return;
 
     final paint = Paint()..color = Colors.yellow.withOpacity(0.35);
-
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
       textScaleFactor: 1.0,
@@ -729,7 +809,7 @@ class _SearchHighlightPainter extends CustomPainter {
     final query = search.toLowerCase();
     final lineHeight = textStyle.fontSize! * textStyle.height!;
 
-    double y = padding.top;
+    double y = padding.top - scrollOffset; // ✅ FIX
 
     for (final line in lines) {
       final lower = line.toLowerCase();
@@ -739,15 +819,18 @@ class _SearchHighlightPainter extends CustomPainter {
         final index = lower.indexOf(query, start);
         if (index == -1) break;
 
-        final before = line.substring(0, index);
-        final match = line.substring(index, index + search.length);
-
-        textPainter.text = TextSpan(text: before, style: textStyle);
+        // Measure text before match
+        textPainter.text =
+            TextSpan(text: line.substring(0, index), style: textStyle);
         textPainter.layout();
 
         final x = padding.left + textPainter.width;
 
-        textPainter.text = TextSpan(text: match, style: textStyle);
+        // Measure match width
+        textPainter.text = TextSpan(
+          text: line.substring(index, index + search.length),
+          style: textStyle,
+        );
         textPainter.layout();
 
         canvas.drawRect(
@@ -763,9 +846,78 @@ class _SearchHighlightPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _SearchHighlightPainter old) =>
-      old.search != search || old.code != code;
+  bool shouldRepaint(covariant _SearchHighlightPainter old) {
+    return old.search != search ||
+        old.code != code ||
+        old.scrollOffset != scrollOffset;
+  }
 }
+
+// class _SearchHighlightPainter extends CustomPainter {
+//   final String code;
+//   final String search;
+//   final TextStyle textStyle;
+//   final EdgeInsets padding;
+
+//   _SearchHighlightPainter({
+//     required this.code,
+//     required this.search,
+//     required this.textStyle,
+//     required this.padding,
+//   });
+
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     if (search.isEmpty) return;
+
+//     final paint = Paint()..color = Colors.yellow.withOpacity(0.35);
+
+//     final textPainter = TextPainter(
+//       textDirection: TextDirection.ltr,
+//       textScaleFactor: 1.0,
+//     );
+
+//     final lines = code.split('\n');
+//     final query = search.toLowerCase();
+//     final lineHeight = textStyle.fontSize! * textStyle.height!;
+
+//     double y = padding.top;
+
+//     for (final line in lines) {
+//       final lower = line.toLowerCase();
+//       int start = 0;
+
+//       while (true) {
+//         final index = lower.indexOf(query, start);
+//         if (index == -1) break;
+
+//         final before = line.substring(0, index);
+//         final match = line.substring(index, index + search.length);
+
+//         textPainter.text = TextSpan(text: before, style: textStyle);
+//         textPainter.layout();
+
+//         final x = padding.left + textPainter.width;
+
+//         textPainter.text = TextSpan(text: match, style: textStyle);
+//         textPainter.layout();
+
+//         canvas.drawRect(
+//           Rect.fromLTWH(x, y, textPainter.width, lineHeight),
+//           paint,
+//         );
+
+//         start = index + search.length;
+//       }
+
+//       y += lineHeight;
+//     }
+//   }
+
+//   @override
+//   bool shouldRepaint(covariant _SearchHighlightPainter old) =>
+//       old.search != search || old.code != code;
+// }
 
 class _EditorSnapshot {
   final String text;

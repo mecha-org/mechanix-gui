@@ -7,21 +7,21 @@ class ArtworkIcon extends StatelessWidget {
   const ArtworkIcon({super.key, this.artworkPath, this.size = 44});
   @override
   Widget build(BuildContext context) {
-    if (artworkPath != null) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: Image.asset(artworkPath!, width: size, height: size),
-      );
-    } else {
-      return Container(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(50),
+      child: Image.asset(
+        artworkPath ?? MusicIcons.audioImage,
         width: size,
         height: size,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade200,
-          borderRadius: BorderRadius.circular(50),
-        ),
-        child: Image.asset(MusicIcons.audioImage),
-      );
-    }
+        errorBuilder: (context, error, stackTrace) {
+          return Image.asset(
+            MusicIcons.audioImage,
+            fit: BoxFit.cover,
+            width: size,
+            height: size,
+          );
+        },
+      ),
+    );
   }
 }
