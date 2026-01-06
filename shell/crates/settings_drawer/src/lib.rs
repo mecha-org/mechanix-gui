@@ -1,6 +1,7 @@
 pub mod helper;
 mod ui;
 
+use dispatcher::Dispatcher;
 use gpui::{
     layer_shell::{KeyboardInteractivity, LayerShellOptions},
     *,
@@ -84,9 +85,37 @@ pub fn run_app(cx: &mut App) {
                 })
                 .detach();
 
+                listen_dispatcher(cx);
+
                 SettingsDrawer::new(cx)
             })
         },
     )
     .unwrap();
+}
+
+pub fn listen_dispatcher(cx: &mut Context<SettingsDrawer>) {
+    if !cx.has_global::<Dispatcher>() {
+        dispatcher::init(cx);
+    }
+
+    let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
+
+    cx.spawn(async move |this, cx| {
+        while let Ok(message) = dispatcher_rx.recv().await {
+            match message {
+                dispatcher::Message::ShowPowerOptions(show) => {
+                    if show {
+                        let _ = this.update(cx, |this, cx| {
+                            this.is_visible = false;
+                            this.position = SettingsDrawer::closed_pos();
+                            cx.notify();
+                        });
+                    }
+                }
+                _ => {}
+            }
+        }
+    })
+    .detach();
 }

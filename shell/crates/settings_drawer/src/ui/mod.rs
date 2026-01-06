@@ -85,7 +85,7 @@ pub struct SettingsDrawer {
     pub bluetooth_modal_scroll: BluetoothModalScroll,
 
     _subscriptions: Vec<Subscription>,
-    position: f32,
+    pub position: f32,
     drag_offset: Option<f32>,
     drag_start_pos: f32,
     pub is_visible: bool,
@@ -280,6 +280,7 @@ impl Render for SettingsDrawer {
         let closed_y = Self::closed_pos();
 
         let threshold_px = 40.;
+        self.update_input_regions(self.is_visible, window, cx);
 
         div()
             .w_full()
@@ -303,18 +304,14 @@ impl Render for SettingsDrawer {
                         if started_closed {
                             if this.position < (closed_y - threshold_px) {
                                 target = open_y;
-                                this.update_input_regions(window, false);
                             } else {
                                 target = closed_y;
-                                this.update_input_regions(window, true);
                             }
                         } else {
                             if this.position > (open_y + threshold_px) {
                                 target = closed_y;
-                                this.update_input_regions(window, true);
                             } else {
                                 target = open_y;
-                                this.update_input_regions(window, false);
                             }
                         }
                         this.snap_to(target, cx);
@@ -376,7 +373,7 @@ impl Render for SettingsDrawer {
 }
 
 impl SettingsDrawer {
-    fn closed_pos() -> f32 {
+    pub fn closed_pos() -> f32 {
         APP_SIZE.1 - NAVBAR_SIZE.1
     }
 
@@ -435,21 +432,22 @@ impl SettingsDrawer {
         )
         .detach();
     }
-    fn update_input_regions(&self, window: &mut Window, open: bool) {
+    fn update_input_regions(&self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
         let mut regions = Vec::new();
 
         if open {
             regions.push(Bounds {
-                origin: point(px(APP_SIZE.0 - NAVBAR_SIZE.0), px(Self::closed_pos())),
-                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
-            });
-        } else {
-            regions.push(Bounds {
                 origin: point(px(0.), px(0.)),
                 size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
             });
+        } else {
+            regions.push(Bounds {
+                origin: point(px(APP_SIZE.0 - NAVBAR_SIZE.0), px(Self::closed_pos())),
+                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+            });
         }
         window.set_input_regions(Some(regions));
+        cx.notify();
     }
 
     fn drawer_items(
@@ -703,7 +701,14 @@ impl SettingsDrawer {
                     println!("checking dispatcher {} ", dispatcher_tx.is_empty());
 
                     // here send message to show power options
-                    let _ = dispatcher_tx.try_send(Message::ShowPowerOptions(true));
+                    cx.background_executor()
+                        .spawn(async move {
+                            let _ = dispatcher_tx
+                                .broadcast(Message::ShowPowerOptions(true))
+                                .await;
+                        })
+                        .detach();
+
                     // cx.background_executor()
                     //     .spawn(async move {
                     //         let _ = dispatcher_tx.send(Message::ShowPowerOptions(true));

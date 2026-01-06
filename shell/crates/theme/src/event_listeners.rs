@@ -14,7 +14,7 @@ pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) 
     _ = cx
         .background_executor()
         .spawn(async move {
-            while let Ok(msg) = dispatcher_rx.try_recv() {
+            while let Ok(msg) = dispatcher_rx.recv().await {
                 match msg {
                     dispatcher::Message::SetThemeMode(mode) => {
                         let _ = theme_tx.send(ThemeEvents::SetThemeMode(mode)).await;
