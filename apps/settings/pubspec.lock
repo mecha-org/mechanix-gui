@@ -21,10 +21,10 @@ packages:
     dependency: transitive
     description:
       name: bloc
-      sha256: a2cebb899f91d36eeeaa55c7b20b5915db5a9df1b8fd4a3c9c825e22e474537d
+      sha256: a48653a82055a900b88cd35f92429f068c5a8057ae9b136d197b3d56c57efb81
       url: "https://pub.dev"
     source: hosted
-    version: "9.1.0"
+    version: "9.2.0"
   bluez:
     dependency: "direct main"
     description:
@@ -85,10 +85,10 @@ packages:
     dependency: "direct main"
     description:
       name: equatable
-      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
+      sha256: "3e0141505477fd8ad55d6eb4e7776d3fe8430be8e497ccb1521370c3f21a3e2b"
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.7"
+    version: "2.0.8"
   fake_async:
     dependency: transitive
     description:
@@ -159,10 +159,10 @@ packages:
     dependency: transitive
     description:
       name: http
-      sha256: bb2ce4590bc2667c96f318d68cac1b5a7987ec819351d32b1c987239a815e007
+      sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.0"
+    version: "1.6.0"
   http_parser:
     dependency: transitive
     description:
@@ -267,6 +267,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.0"
+  oklch:
+    dependency: transitive
+    description:
+      name: oklch
+      sha256: "238158812d43a67f1cdaa029de4ffdb9d285d9ef1e3e054c28e3936cfdb2f1d5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.3"
   path:
     dependency: transitive
     description:
@@ -421,7 +429,7 @@ packages:
     description:
       path: "flutter/widgets"
       ref: main
-      resolved-ref: "0a9dd3cb7173bdf151b13f218130573a03d75a7b"
+      resolved-ref: "9dc143139585627fb7c467d3d39f63bb73f92cb5"
       url: "https://github.com/mecha-org/mechanix.dart.git"
     source: git
     version: "0.0.1"
