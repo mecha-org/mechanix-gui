@@ -12,11 +12,8 @@ keywords.workspace = true
 
 [dependencies]
 gpui = { workspace = true }
-rust-embed = { workspace = true }
-anyhow = { workspace = true }
 commons = { path = "../commons" }
 mxsearch = { path = "../../../services/search/server" }
 settings = { path = "../settings" }
 theme = { path = "../theme" }
-unicode-segmentation = "1.12.0"
 freedesktop-icons = "0.4.0"

@@ -39,11 +39,7 @@ pub fn run_app(cx: &mut App) {
             ..Default::default()
         },
         |window, cx| {
-            let mut regions = Vec::new();
-            regions.push(Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size: gpui::size(px(1.0), px(1.0)),
-            });
+            let regions = Vec::new();
             window.set_input_regions(Some(regions));
 
             cx.new(|cx| {
@@ -64,17 +60,16 @@ pub fn listen_dispatcher(cx: &mut Context<PowerOptions>) {
 
     println!("Power Options dispatcher ready to receive messages");
 
-    let dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
+    let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
 
     cx.spawn(async move |this, cx| {
         println!("Power Options spawn...");
-        while let Ok(message) = dispatcher_rx.try_recv() {
+        while let Ok(message) = dispatcher_rx.recv().await {
             println!("while Power Options received message: {:#?}", message);
             match message {
                 dispatcher::Message::ShowPowerOptions(show) => {
                     let _ = this.update(cx, |this, cx| {
                         this.show = show;
-
                         cx.notify();
                     });
                 }
