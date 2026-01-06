@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/features/presentation/swipeable_list.dart';
+import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
+import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 
 class SongsListView extends StatelessWidget {
   final List<SongInfo> songs;
@@ -18,7 +21,12 @@ class SongsListView extends StatelessWidget {
       ) {
         final song = songs[index];
 
-        return SwipeableList(song: song);
+        return BlocSelector<SongsBloc, SongsState, bool>(
+          selector: (state) => state.currentSong?.id == song.id,
+          builder:
+              (context, isCurrentSong) =>
+                  SongTile(song: song, isCurrentSong: isCurrentSong),
+        );
       }),
     );
   }
