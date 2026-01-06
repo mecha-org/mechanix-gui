@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
@@ -119,6 +120,14 @@ class ConnectSecureNetwork extends StatelessWidget {
                           Expanded(
                             child: MechanixTextInput.password(
                               isFormField: true,
+                              prefixIcon: const IconWidget(
+                                iconPath: Images.lockIcon,
+                                iconWidth: 19,
+                                iconHeight: 21,
+                                boxWidth: 24,
+                                boxHeight: 24,
+                              ).padOnly(
+                                  left: 16, top: 16, right: 8, bottom: 16),
                               hintText: 'Enter Password',
                               onChanged: (value) {
                                 context
@@ -151,7 +160,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                                   color: Colors.transparent,
                                 ),
                               ),
-                            ),
+                            ).padBottom(24),
                           ),
                         ],
                       ),
@@ -163,7 +172,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                   ).padTop(8),
                 ),
               ),
-              bottomNavigationBar: MechanixBottomBar(
+              bottomSheet: MechanixBottomBar(
                 leadingWidget: [context.backButton],
               ),
             );

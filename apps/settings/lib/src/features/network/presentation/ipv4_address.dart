@@ -64,7 +64,7 @@ class _Ipv4AddressWidgetState extends State<Ipv4AddressWidget> {
           ).padTop(8),
         ),
       ),
-      bottomNavigationBar: MechanixBottomBar(
+      bottomSheet: MechanixBottomBar(
         leadingWidget: [context.backButton],
       ),
     );

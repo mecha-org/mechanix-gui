@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
-import 'package:nm/nm.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 class AddNetwork extends StatelessWidget {
   const AddNetwork({super.key});
@@ -16,10 +19,6 @@ class AddNetwork extends StatelessWidget {
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
     final wifiRepository = context.read<WifiRepository>();
-
-    // void backNavigation(BuildContext context) {
-    //   Navigator.pop(context);
-    // }
 
     void onAddButtonPressed(BuildContext context, ConnectNetworkState state) {
       if (formKey.currentState!.validate()) {
@@ -33,96 +32,74 @@ class AddNetwork extends StatelessWidget {
     }
 
     return BlocProvider(
-        create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
-        child: BlocListener<ConnectNetworkBloc, ConnectNetworkState>(
-          listener: (context, state) {
-            ScaffoldMessenger.of(context).clearSnackBars();
-
-            final bool hasError =
-                state.deviceState == NetworkManagerDeviceState.needAuth ||
-                    (state.error != null && state.error!.isNotEmpty);
-
-            final bool isAuthenticating =
-                state.deviceState == NetworkManagerDeviceState.ipCheck ||
-                    state.deviceState == NetworkManagerDeviceState.config;
-
-            if (hasError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    state.error ?? "Connection failed",
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: Colors.grey[800],
-                ),
-              );
-              return;
-            } else if (isAuthenticating) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
-                    "Authenticating...",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: Colors.grey[800],
-                ),
-              );
-            } else {
-              // // TODO: check connected network is same as active connection added,
-              // // then navigate to previous screen
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text(
-                    "Connected",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  duration: const Duration(seconds: 2),
-                  backgroundColor: Colors.grey[800],
-                ),
-              );
-              // backNavigation(context);
-            }
-          },
-          child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
-            builder: (context, state) {
-              return Scaffold(
-                appBar: PreferredSize(
-                    preferredSize: const Size.fromHeight(52),
-                    child: MechanixNavigationBar(
-                        title: "New Wireless",
-                        actionWidgets: [
-                          IconButton(
-                            icon: Image.asset(Images.submit,
-                                width: 20, height: 20),
-                            onPressed: state.password.isNotEmpty &&
-                                    state.password.length >= 8
-                                ? () {
-                                    onAddButtonPressed(context, state);
-                                  }
-                                : null,
-                          ),
-                        ]).padHorizontal(12)),
-                body: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  child: ContainerWidget(
-                    child: Form(
+      create: (_) => ConnectNetworkBloc(wifiRepository: wifiRepository),
+      child: BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
+        builder: (context, state) {
+          return Scaffold(
+            backgroundColor: context.secondary,
+            body: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ContainerWidget(
+                child: Column(
+                  spacing: 0,
+                  children: [
+                    Form(
                       key: formKey,
                       child: Column(
                         children: [
+                          CustomTitle(
+                            title: "Add Wireless Network",
+                            textStyle: TextStyle(
+                              color: context.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 24,
+                            ),
+                          ).padOnly(top: 32, bottom: 20),
                           MechanixTextInput.textInput(
                             hintText: 'Name',
                             isFormField: true,
+                            theme: MechanixTextInputThemeData(
+                              borderRadius: BorderRadius.circular(8),
+                              enabledBorderSide: BorderSide(
+                                color: context.surfaceContainerLow,
+                                style: BorderStyle.solid,
+                                width: 1,
+                              ),
+                              contentPadding: const EdgeInsets.only(
+                                  left: 16, top: 16, right: 16, bottom: 16),
+                              widgetPadding: EdgeInsets.zero,
+                              widgetDecoration: const BoxDecoration(
+                                color: Colors.transparent,
+                              ),
+                            ),
                             onChanged: (value) {
                               context
                                   .read<ConnectNetworkBloc>()
                                   .add(UsernameChanged(value));
                             },
-                          ).padBottom(8),
+                          ).padBottom(16),
                           MechanixTextInput.password(
                             hintText: 'Enter Password',
                             isFormField: true,
+                            prefixIcon: const IconWidget(
+                              iconPath: Images.lockIcon,
+                              iconWidth: 19,
+                              iconHeight: 21,
+                              boxWidth: 24,
+                              boxHeight: 24,
+                            ).padOnly(left: 16, top: 16, right: 8, bottom: 16),
+                            theme: MechanixTextInputThemeData(
+                              borderRadius: BorderRadius.circular(8),
+                              enabledBorderSide: BorderSide(
+                                color: context.surfaceContainerLow,
+                                style: BorderStyle.solid,
+                                width: 1,
+                              ),
+                              widgetPadding: EdgeInsets.zero,
+                              widgetDecoration: const BoxDecoration(
+                                color: Colors.transparent,
+                              ),
+                            ),
                             onChanged: (value) {
                               context
                                   .read<ConnectNetworkBloc>()
@@ -134,17 +111,23 @@ class AddNetwork extends StatelessWidget {
                                 onAddButtonPressed(context, state);
                               }
                             },
-                          ),
+                          ).padBottom(32),
                           // // NOTE: Not in use currently
                           // WirelessProtocols()
                         ],
                       ),
                     ),
-                  ).padTop(8),
+                    const WirelessProtocols(),
+                  ],
                 ),
-              );
-            },
-          ),
-        ));
+              ).padTop(8),
+            ),
+            bottomSheet: MechanixBottomBar(
+              leadingWidget: [context.backButton],
+            ),
+          );
+        },
+      ),
+    );
   }
 }

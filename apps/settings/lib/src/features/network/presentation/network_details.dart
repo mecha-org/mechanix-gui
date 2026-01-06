@@ -14,7 +14,6 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_s
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/configure_dns.dart';
 import 'package:mechanix_settings/src/features/network/presentation/configure_proxy.dart';
-import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/ipv4_address.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/connect_network.dart';
 import 'package:widgets/mechanix.dart';
@@ -113,9 +112,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                     ),
 
                   if (state.selectedAccessPoint != null &&
-                          state.selectedNMAccessPoint != null &&
-                          state.selectedAccessPoint!.isActive ||
-                      state.selectedAccessPoint!.isSaved)
+                      state.selectedNMAccessPoint != null)
                     MechanixSectionList(
                       title: 'IPV4 Address',
                       physics: const BouncingScrollPhysics(),
@@ -139,30 +136,33 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                           trailing:
                               const CustomTrailingText(title: 'Automatic'),
                         ),
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'IP Address',
-                          trailing: CustomTrailingText(
-                            title:
-                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['address'] : ''}',
+                        if (state.selectedAccessPoint!.isActive)
+                          SectionListItems(
+                            defaultTrailingIcon: false,
+                            title: 'IP Address',
+                            trailing: CustomTrailingText(
+                              title:
+                                  '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['address'] : ''}',
+                            ),
                           ),
-                        ),
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Subnet Mask',
-                          trailing: CustomTrailingText(
-                            title:
-                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['prefix'] : ''}',
+                        if (state.selectedAccessPoint!.isActive)
+                          SectionListItems(
+                            defaultTrailingIcon: false,
+                            title: 'Subnet Mask',
+                            trailing: CustomTrailingText(
+                              title:
+                                  '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.addressData.first['prefix'] : ''}',
+                            ),
                           ),
-                        ),
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Router',
-                          trailing: CustomTrailingText(
-                            title:
-                                '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.routeData.first['dest'] : ''}',
+                        if (state.selectedAccessPoint!.isActive)
+                          SectionListItems(
+                            defaultTrailingIcon: false,
+                            title: 'Router',
+                            trailing: CustomTrailingText(
+                              title:
+                                  '${state.selectedAccessPoint != null ? state.selectedAccessPoint?.ip4Config?.routeData.first['dest'] : ''}',
+                            ),
                           ),
-                        ),
                       ],
                     ),
 
@@ -191,8 +191,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       ],
                     ),
                   if (state.selectedAccessPoint != null &&
-                      state.selectedNMAccessPoint != null &&
-                      state.selectedAccessPoint!.isActive)
+                      state.selectedNMAccessPoint != null)
                     MechanixSectionList(
                       title: 'DNS',
                       // physics: const BouncingScrollPhysics(),
@@ -220,8 +219,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                     ),
 
                   if (state.selectedAccessPoint != null &&
-                      state.selectedNMAccessPoint != null &&
-                      state.selectedAccessPoint!.isActive)
+                      state.selectedNMAccessPoint != null)
                     MechanixSectionList(
                       title: 'HTTP Proxy',
                       // physics: const BouncingScrollPhysics(),
@@ -276,19 +274,13 @@ class _NetworkDetailsState extends State<NetworkDetails> {
               ).padTop(8),
             ),
           ),
-          bottomNavigationBar: MechanixBottomBar(
+          bottomSheet: MechanixBottomBar(
             leadingWidget: [context.backButton],
             centerWidget: [
               BottomBarButton.widget(
                 widget: TextButton.icon(
                   onPressed: () {
                     onNetworkTap(context, state.selectedAccessPoint);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => ConnectNetwork(
-                              accessPoint: state.selectedNMAccessPoint)),
-                    );
                   },
                   icon: IconWidget(
                     iconPath: Images.addRoundedSquare,
@@ -321,15 +313,19 @@ Future<void> onNetworkTap(
         .add(ConnectSavedNetwork('', selectedAccessPoint.nmAccessPoint));
     Navigator.pop(context);
   } else {
-    final bloc = context.read<ConnectNetworkBloc>();
+    final connectNetworkBloc = context.read<ConnectNetworkBloc>();
+    final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BlocProvider.value(
-          value: bloc,
-          child: ConnectSecureNetwork(
-              accessPoint: selectedAccessPoint?.nmAccessPoint),
+        builder: (context) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: connectNetworkBloc),
+            BlocProvider.value(value: wirelessSettingsBloc),
+          ],
+          child:
+              ConnectNetwork(accessPoint: selectedAccessPoint?.nmAccessPoint),
         ),
       ),
     );

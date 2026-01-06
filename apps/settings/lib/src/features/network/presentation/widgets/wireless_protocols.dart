@@ -1,9 +1,12 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols_list.dart';
 import 'package:nm/nm.dart';
@@ -32,28 +35,37 @@ class _WirelessProtocolsState extends State<WirelessProtocols> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ConnectNetworkBloc, ConnectNetworkState>(
-      builder: (context, state) {
-        return MechanixSimpleList(
-          listItems: [
-            SimpleListItems(
-                onTap: () => onTap(context, widget.accessPoint),
-                title: 'Security',
-                trailing: Row(
-                  children: [
-                    const CustomTrailingText(
-                      title: 'WPA2/WPA3',
-                    ).padRight(8),
-                    const IconWidget(
-                      iconWidth: 9,
-                      iconHeight: 18,
-                      iconPath: Images.rightIconArrow,
-                    )
-                  ],
-                ))
-          ],
+      builder: (context, connectState) {
+        return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
+          builder: (wirelessContext, wirelessState) {
+            final label = wirelessProtocolOptions
+                .firstWhereOrNull((element) =>
+                    element.value == wirelessState.selectedAPWirelessProtocol)
+                ?.label;
+
+            return MechanixSimpleList(
+              listItems: [
+                SimpleListItems(
+                    onTap: () => onTap(context, widget.accessPoint),
+                    title: 'Security',
+                    trailing: Row(
+                      children: [
+                        CustomTrailingText(
+                          title: label ?? '',
+                        ).padRight(8),
+                        const IconWidget(
+                          iconWidth: 9,
+                          iconHeight: 18,
+                          iconPath: Images.rightIconArrow,
+                        )
+                      ],
+                    ))
+              ],
+            );
+          },
         );
       },
-    ).padTop(40);
+    );
   }
 }
 

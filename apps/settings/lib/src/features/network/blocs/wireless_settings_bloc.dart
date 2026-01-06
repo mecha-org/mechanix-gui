@@ -54,6 +54,7 @@ class WirelessSettingsBloc
 
     on<UpdateConnectedNetworkEvent>(_updateConnectedNetwork);
     on<Error>(handleError);
+    on<SelectedWirelessProtocol>(_selectWirelessProtocol);
   }
 
   Future<void> _onInit(
@@ -236,7 +237,7 @@ class WirelessSettingsBloc
   Future<void> _connectSavedNetwork(
       ConnectSavedNetwork event, Emitter<WirelessSettingsState> emit) async {
     try {
-    // TODO: handle active connection
+      // TODO: handle active connection
       await wifiRepository.connectToSavedNetwork(event.nmAccessPoint);
       logger.i('Connected to saved network');
     } catch (e) {
@@ -351,6 +352,11 @@ class WirelessSettingsBloc
     emit(state.copyWith(
       selectedNMAccessPoint: event.selectedAccessPoint,
     ));
+  }
+
+  void _selectWirelessProtocol(
+      SelectedWirelessProtocol event, Emitter<WirelessSettingsState> emit) {
+    emit(state.copyWith(selectedAPWirelessProtocol: event.protocol));
   }
 }
 

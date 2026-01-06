@@ -75,4 +75,5 @@ class Images {
   static const String threeDotIcon = 'assets/images/three_dot_icon.png';
   static const String circularCheckIcon =
       'assets/images/circular_check_icon.png';
+  static const String lockIcon = 'assets/images/lock_icon.png';
 }

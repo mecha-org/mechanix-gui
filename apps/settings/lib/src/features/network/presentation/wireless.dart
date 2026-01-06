@@ -13,6 +13,7 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_b
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/models/security_protocols.dart';
 import 'package:mechanix_settings/src/features/network/presentation/add_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
@@ -128,7 +129,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
             ),
           ).padTop(8),
         ),
-        bottomNavigationBar: MechanixBottomBar(
+        bottomSheet: MechanixBottomBar(
           leadingWidget: [context.backButton],
         ),
       );
@@ -170,6 +171,8 @@ void onInfoTap(AccessPoints item, BuildContext context) {
 
   bloc.add(SelectNetwork(item));
   bloc.add(SelectNetworkPoint(item.nmAccessPoint));
+  final flag = getWirelessProtocol(item.nmAccessPoint.rsnFlags);
+  bloc.add(SelectedWirelessProtocol(flag));
 
   Navigator.push(
     context,
@@ -230,13 +233,17 @@ List<SectionListItems> getWifiList(
             context.textTheme.labelMedium?.copyWith(color: context.primary),
         defaultTrailingIcon: false,
         onTap: () {
-          final bloc = context.read<ConnectNetworkBloc>();
+          final connectNetworkBloc = context.read<ConnectNetworkBloc>();
+          final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BlocProvider.value(
-                value: bloc, // reuse the existing bloc
+              builder: (context) => MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: connectNetworkBloc),
+                  BlocProvider.value(value: wirelessSettingsBloc),
+                ],
                 child: const AddNetwork(),
               ),
             ),
