@@ -69,7 +69,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     add(RecentSongs());
     add(LoadPlaylist());
     add(ScanSongs());
-    add(StartDirectoryWatch('/home/mecha'));
+    add(StartDirectoryWatch(Constants.musicDir));
   }
 
   void _initializePlayerListeners() {

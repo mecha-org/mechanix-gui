@@ -106,3 +106,8 @@ To ensure **high performance on Embedded Linux devices**, the app includes inten
 - Ensures consistent performance on low-resource devices
 
 ---
+
+## TODO
+
+-  Implementation of  search algorithm
+-  Add support for multiple artwork icons

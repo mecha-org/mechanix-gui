@@ -11,6 +11,7 @@ class Constants {
   static const double maxSongsPerPlaylist = 30;
   static const double maxSearchItems = 30;
   static const Duration debounceDuration = Duration(milliseconds: 300);
+  static const String musicDir = '/home/Music';
 }
 
 const audioExt = ['.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg', '.opus'];

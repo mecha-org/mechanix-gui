@@ -62,7 +62,7 @@ class SongsRepositoryImpl extends SongsRepository {
         existingSongsByPath[song.path] = song;
       }
 
-      final home = Directory('/home/mecha');
+      final home = Directory(Constants.musicDir);
 
       final files =
           await home
@@ -1081,6 +1081,7 @@ class SongsRepositoryImpl extends SongsRepository {
 
       // Delete by ID (Hive key)
       await songsBox.delete(songId);
+      await _removeFromRecents([songId]);
 
       logger.i('Song removed: ${song.title} by ${song.artist}');
       return true;
