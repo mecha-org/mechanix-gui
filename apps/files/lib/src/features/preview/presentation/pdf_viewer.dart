@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -14,7 +15,6 @@ import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
@@ -365,51 +365,50 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         children: [
           MechanixBottomBar(
             leadingWidget: [
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
-                iconPath: Images.back,
-                onPressed: () => Navigator.pop(context),
-              ),
+              BottomBarButton.widget(
+                  widget: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: DecoratedPressableIcon(
+                  iconPath: Images.back,
+                  onTap: () => Navigator.pop(context),
+                ),
+              )),
             ],
             centerWidgetSpacing: 30,
             centerWidget: [
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconPath: Images.search,
-                onPressed: () {
-                  showPdfSearchBottomSheet(context);
-                },
-              ),
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconPath: Images.copy,
-                onPressed: () {
-                  state?.selectedPaths = {widget.filePath};
-                  state?.handleCopy();
-                },
-              ),
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconPath: Images.move,
-                onPressed: () {
-                  Navigator.pop(context);
-                  state?.selectedPaths = {widget.filePath};
-                  state?.handleMove();
-                },
-              ),
-              BottomBarButton(
-                iconTheme: const MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28)),
-                iconWidget: IconWidget(
-                  iconPath: Images.share,
-                  iconColor: Colors.grey.shade600,
+              BottomBarButton.widget(
+                widget: DecoratedPressableIcon(
+                  iconPath: Images.search,
+                  onTap: () {
+                    showPdfSearchBottomSheet(context);
+                  },
                 ),
-                onPressed: () {},
-                isDisabled: true, //TODO : add share functionality
+              ),
+              BottomBarButton.widget(
+                widget: DecoratedPressableIcon(
+                  iconPath: Images.copy,
+                  onTap: () {
+                    state?.selectedPaths = {widget.filePath};
+                    state?.handleCopy();
+                  },
+                ),
+              ),
+              BottomBarButton.widget(
+                widget: DecoratedPressableIcon(
+                  iconPath: Images.move,
+                  onTap: () {
+                    Navigator.pop(context);
+                    state?.selectedPaths = {widget.filePath};
+                    state?.handleMove();
+                  },
+                ),
+              ),
+              const BottomBarButton.widget(
+                widget: DecoratedPressableIcon(
+                  iconPath: Images.share,
+                  isDisabled: true, // TODO: add share functionality
+                  onTap: null,
+                ),
               ),
             ],
             anchorWidget: [

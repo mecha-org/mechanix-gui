@@ -23,13 +23,15 @@ class PlaylistInfoAdapter extends TypeAdapter<PlaylistInfo> {
       createdAt: fields[3] as DateTime,
       updatedAt: fields[4] as DateTime,
       coverImagePath: fields[5] as String?,
+      isShuffle: fields[6] as bool,
+      isLiked: fields[7] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlaylistInfo obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +43,11 @@ class PlaylistInfoAdapter extends TypeAdapter<PlaylistInfo> {
       ..writeByte(4)
       ..write(obj.updatedAt)
       ..writeByte(5)
-      ..write(obj.coverImagePath);
+      ..write(obj.coverImagePath)
+      ..writeByte(6)
+      ..write(obj.isShuffle)
+      ..writeByte(7)
+      ..write(obj.isLiked);
   }
 
   @override

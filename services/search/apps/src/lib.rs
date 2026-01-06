@@ -24,8 +24,18 @@ use serde::Deserialize;
 pub struct Apps {
     pub enable_search: bool,
     pub index_dir: String,
-    pub desktop_apps_dir: String,
     pub search_limit: usize,
     pub target_memory_usage_in_bytes: usize,
     searchable_fields: Vec<String>,
+}
+impl Default for Apps {
+    fn default() -> Self {
+        Self {
+            enable_search: true,
+            index_dir: ".config/mxsearch/index/apps".to_string(),
+            search_limit: 5,
+            target_memory_usage_in_bytes: 50_000_000,
+            searchable_fields: vec!["name".to_string()],
+        }
+    }
 }
