@@ -196,6 +196,9 @@ fn main() {
                             match event {
                                 AppEvents::NotificationReceived { id, notification } => {
                                     let title = format!("{}:{}", notification.app_name, notification.summary); // adapt fields to your type
+                                    let time_ago: SharedString =
+                                        time_ago(current_timestamp, notification.received_at.unwrap_or(0)).into();
+                                    let received_at = notification.received_at.unwrap_or(0);
                                     let body = notification.body.clone();
                                     let key_ss: SharedString = id.to_string().into();
                                     let key_id = ElementId::Name(key_ss);
@@ -210,6 +213,7 @@ fn main() {
                                         }
                                     }
                                     println!("ICON PATH: {:?}", icon_path);
+                                    println!("RENDERING NOTIFICATION: received_at={:?}", received_at);
 
                                     let mut hints: std::collections::HashMap<String, String> =
                                         std::collections::HashMap::new();
@@ -250,6 +254,7 @@ fn main() {
                                                     .id1::<NotificationUi>(key_id)
                                                     .db_id(notif_id)
                                                     .title(title.clone())
+                                                    .time_ago(time_ago.clone())
                                                     .on_click(move |event, window, cx| {
                                                         println!("Notification clicked: {}", id);
                                                     })

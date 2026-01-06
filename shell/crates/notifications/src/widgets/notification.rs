@@ -20,6 +20,8 @@ use regex::Regex;
 use crate::ui::icon::{Icon, IconName};
 use commons::widgets::wing;
 use gpui::Size;
+use theme::ActiveTheme;
+use theme::prelude::AlphaExt;
 
 pub struct UserDismissedEvent {
     pub id: u32,
@@ -86,6 +88,8 @@ pub struct NotificationUi {
     style: StyleRefinement,
     type_: Option<NotificationType>,
     title: Option<SharedString>,
+    time_ago: Option<SharedString>,
+    received_at: Option<SharedString>,
     message: Option<SharedString>,
     // Store a path to the raster image; build gpui::img in render.
     icon_img: Option<std::path::PathBuf>,
@@ -153,6 +157,8 @@ impl NotificationUi {
             db_notification: None,
             style: StyleRefinement::default(),
             title: None,
+            time_ago: None,
+            received_at: None,
             message: None,
             type_: None,
             icon: None,
@@ -222,6 +228,22 @@ impl NotificationUi {
     /// If title is None, the notification will not have a title.
     pub fn title(mut self, title: impl Into<SharedString>) -> Self {
         self.title = Some(title.into());
+        self
+    }
+
+    /// Set the time_ago of the notification, default is None.
+    ///
+    /// If time_ago is None, the notification will not have a time_ago.
+    pub fn time_ago(mut self, time_ago: impl Into<SharedString>) -> Self {
+        self.time_ago = Some(time_ago.into());
+        self
+    }
+
+    /// Set the received_at of the notification, default is None.
+    ///
+    /// If received_at is None, the notification will not have a received_at.
+    pub fn received_at(mut self, received_at: impl Into<SharedString>) -> Self {
+        self.received_at = Some(received_at.into());
         self
     }
 
@@ -485,6 +507,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
 
 impl Render for NotificationUi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         let content = self
             .content_builder
             .clone()
@@ -507,6 +530,7 @@ impl Render for NotificationUi {
         // };
         let has_icon = self.icon_img.is_some();
         let icon_path = self.icon_img.clone();
+        println!("Rendering notification: has_icon={}, received_at={:?}", has_icon, self.received_at.clone());
 
     
         let mut w = wing()
@@ -514,8 +538,8 @@ impl Render for NotificationUi {
             .group("")
             .relative()
             .border_1()
-            .border_color(rgb(0xff9500))
-            .bg(rgb(0x1a1a1a))
+            .border_color(colors.accent_200.with_alpha(0.6))
+            .bg(colors.accent_200.with_alpha(0.2))
             .rounded(px(12.0))
             .shadow_md()
             .pt(px(18.0))
@@ -548,26 +572,43 @@ impl Render for NotificationUi {
                         .flex_1()
                         .min_w(px(0.0))
                         .overflow_hidden()
-                        .text_color(rgb(0xe9e9e9))
-                        .when_some(self.title.clone(), |this, title| {
-                            this.child(
-                                div()
-                                    .text_sm()
-                                    .font_weight(FontWeight::SEMIBOLD)
-                                    // Brighter title for emphasis
-                                    .text_color(rgb(0xf4f4f4))
-                                    .whitespace_normal()
-                                    .child(title)
-                                    .text_ellipsis()
-                                    .w(px(120.)),
-                            )
-                        })
+                       // .text_color(rgb(0xe9e9e9))
+                        .child(div()
+                            .flex()
+                            .flex_row()
+                            .when_some(self.title.clone(), |this, title| {
+                                this.child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        // Brighter title for emphasis
+                                        .text_color(colors.foreground_300)
+                                        .whitespace_normal()
+                                        .child(title)
+                                        .text_ellipsis()
+                                        .w(px(120.)),
+                                )
+                            })
+                            .when_some(self.time_ago.clone(), |this, time_ago| {
+                                this.child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        // Brighter title for emphasis
+                                        .text_color(colors.foreground_300)
+                                        .whitespace_normal()
+                                        .child(time_ago)
+                                        .text_ellipsis()
+                                        .w(px(120.)),
+                                )
+                            })
+                        )                        
                         .when_some(self.message.clone(), |this, message| {
                             this.child(
                                 div()
                                     .text_sm()
                                     // Slightly muted body text for hierarchy
-                                    .text_color(rgb(0xd0d0d0))
+                                    .text_color(colors.foreground_100)
                                     .whitespace_normal()
                                     .child(message),
                             )
