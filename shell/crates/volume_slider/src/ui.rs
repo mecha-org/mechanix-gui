@@ -89,6 +89,8 @@ impl SliderOverlay {
                 let SliderEvent::Change(value) = *event;
                 this.slider_value = value;
                 this.show_overlay(cx);
+                // Sync volume to system when slider is changed via touch/drag
+                handle::sync_volume_to_system(value, cx);
             },
         );
 

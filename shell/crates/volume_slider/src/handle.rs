@@ -1,8 +1,8 @@
+use futures::SinkExt;
 use gpui::*;
 use hw_buttons::{Key, KeyEvent};
 use settings::prelude::{Settings, VolumeSliderSettings};
 use shell_state::{ShellState, VolumeMessage};
-use futures::SinkExt;
 
 use crate::slider::{SliderEvent, SliderState};
 
@@ -124,9 +124,10 @@ fn apply_value_to_slider(slider: &Entity<SliderState>, value: f32, cx: &mut App)
     sync_volume_to_system(value, cx);
 }
 
-/// Sends the volume value to the system via PulseAudio using ShellState's volume channel
-fn sync_volume_to_system(value: f32, cx: &mut App) {
+/// Sends the volume value to the system via PulseAudio using ShellState's volume channel.
+pub fn sync_volume_to_system(value: f32, cx: &mut App) {
     // Check if ShellState is initialized (it may not be when running standalone)
+
     if !cx.has_global::<ShellState>() {
         return;
     }
@@ -164,8 +165,5 @@ fn adjust_volume_by(cx: &mut App, delta: f32) -> Option<(Entity<SliderState>, f3
 
 fn latest_slider_value(cx: &App) -> Option<f32> {
     let state = cx.global::<VolumeState>();
-    state
-        .slider
-        .as_ref()
-        .map(|slider| slider.read(cx).value())
+    state.slider.as_ref().map(|slider| slider.read(cx).value())
 }
