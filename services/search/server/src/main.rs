@@ -18,6 +18,7 @@ use tokio::time::{sleep, Duration};
 use zbus::ConnectionBuilder;
 
 const CONNECTION_BUS_NAME: &str = "org.mechanix.MxSearch";
+const CONFIG_DIR: &str = "/usr/share/mechanix/mxsearch/settings.toml";
 
 #[derive(Debug, Deserialize, Clone, Default)]
 pub struct General {}
@@ -59,7 +60,7 @@ fn load_config<P: AsRef<Path>>(path: P) -> SearchConfig {
 #[tokio::main]
 async fn main() -> Result<(), ServerError> {
     env_logger::init();
-    let config_path = std::env::var("MXSEARCH_CONFIG_PATH").unwrap_or("settings.toml".to_string());
+    let config_path = std::env::var("MXSEARCH_CONFIG_PATH").unwrap_or(CONFIG_DIR.to_string());
     debug!("config path from loading: {}", config_path);
     let config = load_config(config_path);
     debug!("Loaded config: {:#?}", config);

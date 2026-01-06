@@ -7,9 +7,6 @@
 # Enable the AppSearchService
 enable_search = false
 
-# Directory containing .desktop files (single path supported by current code)
-desktop_apps_dir = "/usr/share/applications"
-
 # Keep index dirs consistent across services
 index_dir = ".config/mxsearch/index/apps"
 
