@@ -3,26 +3,25 @@ mod server;
 mod service;
 
 use crate::error::ServerError;
-use crate::server::{SERVED_AT, ServerInterface};
-use anyhow::{Context, Result};
+use crate::server::{ServerInterface, SERVED_AT};
+use anyhow::Result;
 use app_actions::{AppActionsConfig, AppActionsService};
 use apps::{AppSearchService, Apps as AppSearchConfig};
-use sources::SourceSearchServiceConfig;
-use sources::service::SourceSearchService;
 use files::{FileSearchService, FilesConfig as FileSearchConfig};
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use serde::Deserialize;
+use sources::service::SourceSearchService;
+use sources::SourceSearchServiceConfig;
 use std::fs;
 use std::path::Path;
-use std::sync::Arc;
-use tokio::time::{Duration, sleep};
+use tokio::time::{sleep, Duration};
 use zbus::ConnectionBuilder;
 
 const CONNECTION_BUS_NAME: &str = "org.mechanix.MxSearch";
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct General {}
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct SearchConfig {
     pub general: General,
     pub apps: AppSearchConfig,
@@ -30,11 +29,25 @@ pub struct SearchConfig {
     pub app_actions: AppActionsConfig,
     pub sources: SourceSearchServiceConfig,
 }
-fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
+fn load_config<P: AsRef<Path>>(path: P) -> SearchConfig {
     info!("Loading config from {}", path.as_ref().display());
-    let content = fs::read_to_string(path)?;
-    let config: SearchConfig = toml::from_str(&content)?;
-    Ok(config)
+
+    let content = match fs::read_to_string(&path) {
+        Ok(content) => content,
+        Err(err) => {
+            warn!(
+                "Failed to read config file ({}), loading default: {:?}",
+                path.as_ref().display(),
+                err
+            );
+            return SearchConfig::default();
+        }
+    };
+
+    toml::from_str(&content).unwrap_or_else(|err| {
+        warn!("Failed to parse config, loading default: {:?}", err);
+        SearchConfig::default()
+    })
 }
 
 /// Main function that sets up a file system watcher and a D-Bus server
@@ -46,9 +59,9 @@ fn load_config<P: AsRef<Path>>(path: P) -> Result<SearchConfig> {
 #[tokio::main]
 async fn main() -> Result<(), ServerError> {
     env_logger::init();
-    let config = load_config("settings.toml")
-        .context("Failed to load config")
-        .unwrap();
+    let config_path = std::env::var("MXSEARCH_CONFIG_PATH").unwrap_or("settings.toml".to_string());
+    debug!("config path from loading: {}", config_path);
+    let config = load_config(config_path);
     debug!("Loaded config: {:#?}", config);
 
     // Build the connection first

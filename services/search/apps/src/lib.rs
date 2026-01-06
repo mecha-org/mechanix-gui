@@ -29,3 +29,15 @@ pub struct Apps {
     pub target_memory_usage_in_bytes: usize,
     searchable_fields: Vec<String>,
 }
+impl Default for Apps {
+    fn default() -> Self {
+        Self {
+            enable_search: true,
+            index_dir: ".config/mxsearch/index/apps".to_string(),
+            desktop_apps_dir: "/usr/share/applications".to_string(),
+            search_limit: 5,
+            target_memory_usage_in_bytes: 50_000_000,
+            searchable_fields: vec!["name".to_string()],
+        }
+    }
+}

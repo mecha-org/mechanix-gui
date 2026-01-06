@@ -601,7 +601,7 @@ fn create_schema() -> Schema {
     schema_builder.add_text_field("keywords", TEXT);
     schema_builder.add_text_field("icon", STORED);
     schema_builder.add_text_field("last_modified", STORED);
-    schema_builder.add_text_field("path", STRING);
+    schema_builder.add_text_field("path", STRING | STORED);
 
     schema_builder.build()
 }

@@ -1,5 +1,5 @@
-use crate::service::{SourceSearchResult, SourceSearchService, UpsertMetadata};
-use log::{error, info};
+use crate::service::{SourceSearchResult, SourceSearchService};
+use log::error;
 use tantivy::schema::document::CompactDocValue;
 use tantivy::schema::{Field, Schema, Value, STORED, STRING, TEXT};
 use tantivy::{doc, Document, TantivyDocument};
@@ -25,7 +25,6 @@ pub struct SchemaBundle {
     pub fields: MetadataFields,
 }
 impl SourceSearchService {
-
     //TODO: Unused code, need to refactor so that we can use same in indexer.rs
 
     // pub fn make_doc(&self, meta: &UpsertMetadata) -> TantivyDocument {
