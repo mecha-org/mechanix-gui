@@ -14,7 +14,7 @@ import 'songs_state.dart';
 class SongsBloc extends Bloc<SongsEvent, SongsState> {
   final Player player = Player();
   StreamSubscription<FileSystemEvent>? _dirSubscription;
-
+  final Map<String, Timer> _pendingEvents = {};
   final logger = Logger();
   final SongsRepository songsRepository;
 
@@ -47,8 +47,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<ClearSerachItems>(clearSearchItem);
     on<BackTabEvent>(onBackTab);
     on<SelectedPlaylist>(selectedPlaylist);
-    _initializePlayerListeners();
-    add(LoadSongsFromHive());
     on<SearchPlaylist>(searchPlaylist);
     on<SearchedSong>(searchedSong);
     on<GetFavouritesSongs>(favouritesSongs);
@@ -61,10 +59,15 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<ShuffleToggle>(_shuffleToggle);
     on<StartDirectoryWatch>(_onStartWatch);
     on<StopDirectoryWatch>(_onStopWatch);
-    on<AudioFileCreated>(_onAudioCreated);
+    // on<AudioFileCreated>(_onAudioCreated);
     on<AudioFileModified>(_onAudioModified);
     on<AudioFileDeleted>(_onAudioDeleted);
     on<PlaylistShuffle>(shufflePlaylist);
+    on<JumpToIndex>(_onJumpToIndex);
+    add(LoadSongsFromHive());
+    _initializePlayerListeners();
+    add(RecentSongs());
+    add(LoadPlaylist());
     add(ScanSongs());
     add(StartDirectoryWatch('/home/mecha'));
   }
@@ -271,8 +274,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
         );
         logger.i("No songs found in Hive");
       }
-      add(RecentSongs());
-      add(LoadPlaylist());
     } catch (e) {
       logger.e("Error loading songs from Hive: $e");
       emit(state.copyWith(isLoading: false, error: "Failed to load songs: $e"));
@@ -898,75 +899,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       emit(state.copyWith(error: "Failed to toggle shuffle: $e"));
     }
   }
-  // Future<void> _onPlayPrevious(
-  //   PlayPrevious event,
-  //   Emitter<SongsState> emit,
-  // ) async {
-  //   if (state.playbackQueue.isEmpty) return;
-
-  //   try {
-  //     final prevIndex =
-  //         state.currentIndex <= 0
-  //             ? state.playbackQueue.length - 1
-  //             : state.currentIndex - 1;
-
-  //     final prevSong = state.playbackQueue[prevIndex];
-
-  //     // If we're at the first song, we need to jump to the last song
-  //     // Otherwise, just go to previous
-  //     if (state.currentIndex <= 0) {
-  //       // We're at the first song, jump to last song
-  //       await player.jump(state.playbackQueue.length - 1);
-  //     } else {
-  //       // Normal previous song
-  //       await player.previous();
-  //     }
-
-  //     // Ensure the song actually starts playing
-  //     await player.play();
-
-  //     // Initialize listeners if needed
-  //     _initializePlayerListeners();
-
-  //     emit(
-  //       state.copyWith(
-  //         currentIndex: prevIndex,
-  //         currentSong: prevSong,
-  //         isPlaying: true,
-  //         error: null,
-  //       ),
-  //     );
-
-  //     logger.i("Playing previous song: ${prevSong.title} at index $prevIndex");
-  //   } catch (e) {
-  //     logger.e("Error playing previous song: $e");
-  //     emit(state.copyWith(error: "Failed to play previous song: $e"));
-  //   }
-  // }
-
-  // Future<void> _onSeekSong(SeekSong event, Emitter<SongsState> emit) async {
-  //   try {
-  //     await player.seek(event.position);
-  //     emit(state.copyWith(position: event.position));
-  //   } catch (e) {
-  //     logger.e("Error seeking to position ${event.position}: $e");
-  //     emit(state.copyWith(error: "Failed to seek: $e"));
-  //   }
-  // }
-
-  // Future<void> _onUpdatePosition(
-  //   UpdatePosition event,
-  //   Emitter<SongsState> emit,
-  // ) async {
-  //   emit(state.copyWith(position: event.position));
-  // }
-
-  // Future<void> _onUpdateDuration(
-  //   UpdateDuration event,
-  //   Emitter<SongsState> emit,
-  // ) async {
-  //   emit(state.copyWith(duration: event.duration));
-  // }
 
   Future<void> _onToggleFavourite(
     FavouriteToggle event,
@@ -1800,6 +1732,108 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     return audioExt.any((ext) => lower.endsWith(ext));
   }
 
+  Future<void> _onJumpToIndex(
+    JumpToIndex event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      final targetIndex = event.index;
+
+      logger.i("Jumping to index: $targetIndex");
+
+      // Validate based on mode
+      if (state.musicMode == MusicMode.playlist ||
+          state.musicMode == MusicMode.favorite) {
+        // Playlist/Favorite mode - use playbackQueue
+        if (state.playbackQueue.isEmpty) {
+          logger.w("Queue is empty");
+          return;
+        }
+
+        if (targetIndex < 0 || targetIndex >= state.playbackQueue.length) {
+          logger.w(
+            "Invalid index: $targetIndex (queue length: ${state.playbackQueue.length})",
+          );
+          return;
+        }
+
+        final songToPlay = state.playbackQueue[targetIndex];
+        final media = Media(songToPlay.path);
+        await player.open(media, play: true);
+
+        await songsRepository.addToRecentlyPlayed(songToPlay);
+        add(RecentSongs());
+
+        emit(
+          state.copyWith(
+            currentIndex: targetIndex,
+            currentSong: songToPlay,
+            isPlaying: true,
+            currentPlaylist:
+                state.musicMode == MusicMode.playlist
+                    ? state.currentPlaylist.copyWith(currentIndex: targetIndex)
+                    : null,
+          ),
+        );
+
+        logger.i("Jumped to: ${songToPlay.title} at index $targetIndex");
+      } else if (state.musicMode == MusicMode.normal) {
+        // Normal mode with queue
+        if (state.playbackQueue.isNotEmpty) {
+          if (targetIndex < 0 || targetIndex >= state.playbackQueue.length) {
+            logger.w(
+              "Invalid index: $targetIndex (queue length: ${state.playbackQueue.length})",
+            );
+            return;
+          }
+
+          final songToPlay = state.playbackQueue[targetIndex];
+          final media = Media(songToPlay.path);
+          await player.open(media, play: true);
+
+          await songsRepository.addToRecentlyPlayed(songToPlay);
+          add(RecentSongs());
+
+          emit(
+            state.copyWith(
+              currentIndex: targetIndex,
+              currentSong: songToPlay,
+              isPlaying: true,
+            ),
+          );
+
+          logger.i(
+            "Jumped to: ${songToPlay.title} at index $targetIndex in queue",
+          );
+        } else {
+          // No queue - jump in main songs list
+          if (targetIndex < 0 || targetIndex >= state.songs.length) {
+            logger.w(
+              "Invalid index: $targetIndex (songs length: ${state.songs.length})",
+            );
+            return;
+          }
+
+          final songToPlay = state.songs[targetIndex];
+          final media = Media(songToPlay.path);
+          await player.open(media, play: true);
+
+          await songsRepository.addToRecentlyPlayed(songToPlay);
+          add(RecentSongs());
+
+          emit(state.copyWith(currentSong: songToPlay, isPlaying: true));
+
+          logger.i(
+            "Jumped to: ${songToPlay.title} at index $targetIndex in main list",
+          );
+        }
+      }
+    } catch (e) {
+      logger.e("Error jumping to index: $e");
+      emit(state.copyWith(error: "Failed to jump to index: $e"));
+    }
+  }
+
   Future<void> _onStartWatch(
     StartDirectoryWatch event,
     Emitter<SongsState> emit,
@@ -1807,20 +1841,28 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     await _dirSubscription?.cancel();
 
     final directory = Directory(event.directoryPath);
+
     if (!directory.existsSync()) return;
 
-    _dirSubscription = directory.watch(recursive: true).listen((fsEvent) {
+    _dirSubscription = directory.watch(recursive: false).listen((fsEvent) {
       final path = fsEvent.path;
 
       if (!isAudioFile(path)) return;
 
-      if (fsEvent is FileSystemCreateEvent) {
-        add(AudioFileCreated(path));
-      } else if (fsEvent is FileSystemModifyEvent) {
-        add(AudioFileModified(path));
-      } else if (fsEvent is FileSystemDeleteEvent) {
-        add(AudioFileDeleted(path));
-      }
+      // Cancel existing timer for this path
+      _pendingEvents[path]?.cancel();
+
+      // Set a new timer - only process after 500ms of no events
+      _pendingEvents[path] = Timer(const Duration(milliseconds: 500), () {
+        _pendingEvents.remove(path);
+
+        if (fsEvent is FileSystemDeleteEvent) {
+          add(AudioFileDeleted(path));
+        } else {
+          // Treat both create and modify as the same after debounce
+          add(AudioFileModified(path));
+        }
+      });
     });
   }
 
@@ -1832,37 +1874,43 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     _dirSubscription = null;
   }
 
-  // ---------------- FILE EVENTS ----------------
+  // For Future Reference
+  // Future<void> _onAudioCreated(
+  //   AudioFileCreated event,
+  //   Emitter<SongsState> emit,
+  // ) async {
+  //   // final isAdded = await songsRepository.addOrUpdateSongFromPath(event.path);
 
-  Future<void> _onAudioCreated(
-    AudioFileCreated event,
-    Emitter<SongsState> emit,
-  ) async {
-    // 👉 Scan metadata + add song
-    print("audio file create path: ${event.path}");
-    await songsRepository.addSongFromPath(event.path);
-  }
+  //   // if (isAdded) add(LoadSongsFromHive());
+  // }
 
   Future<void> _onAudioModified(
     AudioFileModified event,
     Emitter<SongsState> emit,
   ) async {
-    // 👉 Re-read metadata / duration / artwork
-    await songsRepository.updateSongFromPath(event.path);
+    await songsRepository.addOrUpdateSongFromPath(event.path);
+    add(LoadSongsFromHive());
   }
 
   Future<void> _onAudioDeleted(
     AudioFileDeleted event,
     Emitter<SongsState> emit,
   ) async {
-    // 👉 Remove song from DB / Hive / playlists
     await songsRepository.removeSongByPath(event.path);
+    add(LoadSongsFromHive());
+    add(LoadPlaylist());
   }
 
   @override
   Future<void> close() async {
     await _dirSubscription?.cancel();
     player.dispose();
+    // Cancel all pending timers
+    for (var timer in _pendingEvents.values) {
+      timer.cancel();
+    }
+    _pendingEvents.clear();
+
     return super.close();
   }
 }

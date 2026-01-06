@@ -96,7 +96,7 @@ To ensure **high performance on Embedded Linux devices**, the app includes inten
 
 ### 📂 Playlists
 
-- **Maximum Playlists:** `5`
+- **Maximum Playlists:** `10`
 - **Maximum Songs per Playlist:** `30`
 
 **Why these limits?**

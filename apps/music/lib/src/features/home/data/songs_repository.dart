@@ -39,7 +39,6 @@ abstract class SongsRepository {
   Future<List<SongInfo>> searchedSong({required String query});
   Future<List<SongInfo>> getFavouriteSongs();
 
-  Future<void> addSongFromPath(String path);
-  Future<void> updateSongFromPath(String path);
-  Future<void> removeSongByPath(String path);
+  Future<bool> addOrUpdateSongFromPath(String path);
+  Future<bool> removeSongByPath(String path);
 }

@@ -195,7 +195,13 @@ class UpcomingTrack extends StatelessWidget {
                             child: ListView.builder(
                               itemCount: upcomingSongs.length,
                               itemBuilder: (context, index) {
-                                return SongTile(song: upcomingSongs[index]);
+                                return SongTile(
+                                  song: upcomingSongs[index],
+                                  onTap:
+                                      () => context.read<SongsBloc>().add(
+                                        JumpToIndex(currentIndex! + 1 + index),
+                                      ),
+                                );
                               },
                             ),
                           );

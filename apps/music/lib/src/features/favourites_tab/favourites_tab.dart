@@ -107,13 +107,13 @@ class _FavouritesTabState extends State<FavouritesTab> {
                                   state.musicMode == MusicMode.favorite,
                           builder: (context, isCurrentSong) {
                             return SongTile(
+                              song: song,
+                              isCurrentSong: isCurrentSong,
                               onTap: () {
                                 context.read<SongsBloc>().add(
                                   PlayFavoriteSongs(song: song),
                                 );
                               },
-                              song: song,
-                              isCurrentSong: isCurrentSong,
                             );
                           },
                         );
@@ -122,7 +122,6 @@ class _FavouritesTabState extends State<FavouritesTab> {
                   );
                 },
               ),
-
             ],
           ),
         ),

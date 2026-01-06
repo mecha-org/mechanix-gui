@@ -62,7 +62,6 @@ class _HomePageState extends State<HomePage> {
 
               final isAllowedTab = const {
                 MusicTabs.music,
-                MusicTabs.home,
                 MusicTabs.favorites,
                 MusicTabs.playlists,
               }.contains(musicTab);

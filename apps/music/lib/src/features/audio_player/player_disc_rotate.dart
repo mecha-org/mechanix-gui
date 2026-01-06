@@ -191,6 +191,12 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
                           ? Image.asset(
                             widget.songDetails.artworkPath!,
                             fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Image.asset(
+                                MusicIcons.audioImage,
+                                fit: BoxFit.cover,
+                              );
+                            },
                           )
                           : Image.asset(
                             MusicIcons.audioImage,

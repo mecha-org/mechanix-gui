@@ -39,12 +39,18 @@ class PlaylistCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              /// 🎨 COVER IMAGE
+              ///  COVER IMAGE
               Image.asset(
                 hasCover
                     ? playlistInfo.coverImagePath!
                     : MusicIcons.playlistCardIcon,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    MusicIcons.playlistCardIcon,
+                    fit: BoxFit.cover,
+                  );
+                },
               ),
 
               ///  OVERLAY

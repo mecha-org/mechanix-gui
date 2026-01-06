@@ -6,7 +6,7 @@
 *.swp
 .buildlog/
 .history
-
+launch.json
 
 
 # Flutter repo-specific

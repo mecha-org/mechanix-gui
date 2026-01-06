@@ -1019,7 +1019,6 @@ class SongsRepositoryImpl extends SongsRepository {
               return song.title.toLowerCase().contains(query.toLowerCase()) ||
                   song.artist.toLowerCase().contains(query.toLowerCase());
             }).toList();
-        print("searchedSongs: ${searchedSongs.length}");
         return searchedSongs.toList();
       }
       return [];
@@ -1046,18 +1045,194 @@ class SongsRepositoryImpl extends SongsRepository {
   }
 
   @override
-  Future<void> addSongFromPath(String path) async {
-    // TODO: implement addSongFromPath
-    return;
+  Future<bool> removeSongByPath(String path) async {
+    try {
+      await ensureSongsConnected();
+      await ensurePlaylistConnected();
+
+      final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      // Find song by path
+      if (songsBox.values.isEmpty) return false;
+
+      final song = songsBox.values.firstWhere((s) => s.path == path);
+
+      final songId = song.id;
+
+      // Remove song from all playlists
+      if (song.playlistIds.isNotEmpty) {
+        for (final playlistId in song.playlistIds) {
+          await _removeSongFromPlaylist(playlistId, songId);
+        }
+      }
+
+      // Delete artwork file if exists
+      if (song.artworkPath?.isNotEmpty == true) {
+        try {
+          final artworkFile = File(song.artworkPath!);
+          if (await artworkFile.exists()) {
+            await artworkFile.delete();
+            logger.i('Deleted artwork: ${song.artworkPath}');
+          }
+        } catch (e) {
+          logger.i('Warning: Failed to delete artwork file: $e');
+        }
+      }
+
+      // Delete by ID (Hive key)
+      await songsBox.delete(songId);
+
+      logger.i('Song removed: ${song.title} by ${song.artist}');
+      return true;
+    } catch (e, stackTrace) {
+      logger.i('Error removing song from path: $e');
+      logger.i('Stack trace: $stackTrace');
+      return false;
+    }
+  }
+
+  /// Remove song from a specific playlist and update playlist artwork
+  Future<void> _removeSongFromPlaylist(String playlistId, String songId) async {
+    try {
+      final playlistsBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final songsBox = Hive.box<SongInfo>(TableName.songsInfoTable);
+
+      final playlist = playlistsBox.get(playlistId);
+      if (playlist == null) return;
+
+      // Remove song from playlist's song list
+      final updatedSongIds = List<String>.from(playlist.songIds)
+        ..remove(songId);
+
+      // Update playlist artwork (use first song's artwork or null)
+      String? newArtworkPath;
+      if (updatedSongIds.isNotEmpty) {
+        // Find first song with artwork
+        for (final sid in updatedSongIds) {
+          final song = songsBox.values.firstWhere((s) => s.id == sid);
+          if (song.artworkPath != null && song.artworkPath!.isNotEmpty) {
+            newArtworkPath = song.artworkPath;
+            break;
+          }
+        }
+      }
+
+      // Delete old playlist artwork if it's different from the new one
+      if (playlist.coverImagePath != null &&
+          playlist.coverImagePath != newArtworkPath &&
+          playlist.coverImagePath!.isNotEmpty) {
+        try {
+          final oldArtworkFile = File(playlist.coverImagePath!);
+          if (await oldArtworkFile.exists()) {
+            await oldArtworkFile.delete();
+            logger.i(
+              'Deleted old playlist artwork: ${playlist.coverImagePath}',
+            );
+          }
+        } catch (e) {
+          logger.i('Warning: Failed to delete old playlist artwork: $e');
+        }
+      }
+
+      // Create updated playlist
+      final updatedPlaylist = PlaylistInfo(
+        id: playlist.id,
+        name: playlist.name,
+        songIds: updatedSongIds,
+        coverImagePath: newArtworkPath,
+        createdAt: playlist.createdAt,
+        updatedAt: DateTime.now(),
+        isShuffle: playlist.isShuffle,
+      );
+
+      // Update playlist in Hive
+      await playlistsBox.put(playlistId, updatedPlaylist);
+
+      logger.i('Removed song from playlist: ${playlist.name}');
+    } catch (e) {
+      logger.i('Error removing song from playlist $playlistId: $e');
+    }
   }
 
   @override
-  Future<void> removeSongByPath(String path) async {
-    // TODO: implement removeSongByPath
-  }
+  Future<bool> addOrUpdateSongFromPath(String path) async {
+    try {
+      final file = File(path);
+      logger.i("path: $path");
 
-  @override
-  Future<void> updateSongFromPath(String path) async {
-    // TODO: implement updateSongFromPath
+      // Check if file exists
+      if (!await file.exists()) {
+        logger.i('File does not exist: $path');
+        return false;
+      }
+
+      // Open Hive box
+      await ensureSongsConnected();
+      final box = Hive.box<SongInfo>(TableName.songsInfoTable);
+      // Find existing song by path
+      final existingIndex = box.values.toList().indexWhere(
+        (s) => s.path == path,
+      );
+
+      final existingSong =
+          existingIndex != -1 ? box.getAt(existingIndex) : null;
+      final isUpdate = existingSong != null;
+
+      // Read metadata
+      // final metadata = readMetadata(file);
+      final albumArtMetadata = await AudioMetadata.extract(file);
+      final cacheDir = await _getArtworkCacheDirectory();
+
+      // Handle artwork
+      String? artworkCachePath;
+
+      if (albumArtMetadata?.coverData != null) {
+        // Delete old artwork if updating
+        if (isUpdate && existingSong.artworkPath != null) {
+          final oldArtFile = File(existingSong.artworkPath!);
+          if (await oldArtFile.exists()) {
+            await oldArtFile.delete();
+          }
+        }
+
+        // Save new artwork
+        final artworkId = isUpdate ? existingSong.id : uuid.v4();
+        artworkCachePath = await _saveArtworkToCache(
+          albumArtMetadata!.coverData!,
+          artworkId,
+          cacheDir,
+        );
+      } else if (isUpdate) {
+        // Preserve existing artwork if no new one
+        artworkCachePath = existingSong.artworkPath;
+      }
+
+      // Create song object
+      final song = SongInfo(
+        index: 0,
+        id: isUpdate ? existingSong.id : uuid.v4(),
+        path: file.path,
+        title: albumArtMetadata?.trackName ?? file.uri.pathSegments.last,
+        artist: albumArtMetadata?.firstArtists ?? 'Unknown Artist',
+        album: albumArtMetadata?.album,
+        duration: albumArtMetadata?.duration.toString(),
+        artworkPath: artworkCachePath,
+      );
+
+      // Add or update in Hive
+      if (isUpdate) {
+        await box.putAt(existingIndex, song);
+        logger.i('Song updated: ${song.title} by ${song.artist}');
+      } else {
+        await box.put(song.id, song);
+        logger.i('Song added: ${song.title} by ${song.artist}');
+      }
+
+      return true;
+    } catch (e, stackTrace) {
+      logger.e('Error processing song from path: $e');
+      logger.e('Stack trace: $stackTrace');
+      return false;
+    }
   }
 }

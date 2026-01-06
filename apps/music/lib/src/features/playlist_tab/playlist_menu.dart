@@ -81,6 +81,14 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
             //     ),
             //   );
             //   break;
+            case _PlaylistMenuAction.queue:
+              context.read<SongsBloc>().add(
+                AddPlaylistToQueue(
+                  playlistId: widget.playlistInfo.id,
+                  playNext: false,
+                ),
+              );
+              break;
             case _PlaylistMenuAction.playNext:
               context.read<SongsBloc>().add(
                 AddPlaylistToQueue(
@@ -131,7 +139,7 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
               ),
 
               _menuItem(
-                value: _PlaylistMenuAction.none,
+                value: _PlaylistMenuAction.queue,
                 title: 'Add to queue',
                 icon: MusicIcons.queueIcon,
               ),
@@ -199,7 +207,7 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
 
 enum _PlaylistMenuAction {
   playNext,
-  // queue,
+  queue,
   // playlist,
   // liked,
   rename,

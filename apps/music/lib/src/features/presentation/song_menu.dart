@@ -11,14 +11,8 @@ import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 class SongMenu extends StatefulWidget {
   final SongInfo song;
   final VoidCallback? onToggleFavourite;
-  final bool isDeleteMenu;
 
-  const SongMenu({
-    super.key,
-    required this.song,
-    this.onToggleFavourite,
-    required this.isDeleteMenu,
-  });
+  const SongMenu({super.key, required this.song, this.onToggleFavourite});
 
   @override
   State<SongMenu> createState() => _SongMenuState();
@@ -82,10 +76,6 @@ class _SongMenuState extends State<SongMenu> {
             case _SongMenuAction.toggleFavourite:
               widget.onToggleFavourite?.call();
               break;
-
-            case _SongMenuAction.delete:
-              context.read<SongsBloc>().add(DeleteSong(widget.song));
-              break;
           }
         },
 
@@ -138,13 +128,6 @@ class _SongMenuState extends State<SongMenu> {
                         ? MusicColors.borderColor
                         : MusicColors.primaryTextColor,
               ),
-              if (widget.isDeleteMenu)
-                _menuItem(
-                  value: _SongMenuAction.delete,
-                  title: 'Delete',
-                  icon: MusicIcons.deleteIcon,
-                  color: MusicColors.deleteColor,
-                ),
             ],
       ),
     );
@@ -177,10 +160,4 @@ class _SongMenuState extends State<SongMenu> {
   }
 }
 
-enum _SongMenuAction {
-  playNext,
-  addToQueue,
-  addToPlaylist,
-  toggleFavourite,
-  delete,
-}
+enum _SongMenuAction { playNext, addToQueue, addToPlaylist, toggleFavourite }

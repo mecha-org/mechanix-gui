@@ -46,14 +46,14 @@ class PlaylistTopView extends StatelessWidget {
                                 )
                                 : null,
                       ),
-                      child: Center(
-                        child: Image.asset(
-                          MusicIcons.plusIcon,
-                          width: 24,
-                          height: 24,
-                          color: Colors.white,
-                        ),
-                      ),
+                      // child: Center(
+                      //   child: Image.asset(
+                      //     MusicIcons.plusIcon,
+                      //     width: 24,
+                      //     height: 24,
+                      //     color: Colors.white,
+                      //   ),
+                      // ),
                     ),
                   ),
                 ],

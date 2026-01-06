@@ -254,3 +254,9 @@ class PlaylistShuffle extends SongsEvent {
   final String playlistId;
   const PlaylistShuffle({required this.isShuffle, required this.playlistId});
 }
+
+class JumpToIndex extends SongsEvent {
+  final int index;
+
+  const JumpToIndex(this.index);
+}

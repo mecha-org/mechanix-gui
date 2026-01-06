@@ -7,7 +7,7 @@ class TableName {
 
 class Constants {
   static const double recentlyPlayedLimit = 9;
-  static const double playlistLimit = 5;
+  static const double playlistLimit = 10;
   static const double maxSongsPerPlaylist = 30;
   static const double maxSearchItems = 30;
   static const Duration debounceDuration = Duration(milliseconds: 300);

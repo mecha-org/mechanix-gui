@@ -113,20 +113,25 @@ class _PlaylistCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.all(Radius.circular(4)),
 
-        image: DecorationImage(
-          image: AssetImage(
-            hasCover
-                ? playlistInfo.coverImagePath!
-                : MusicIcons.playlistCardIcon,
-          ),
-          fit: BoxFit.cover,
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(MusicIcons.playlistCardIcon, fit: BoxFit.cover),
+
+          //  Cover image overlay (only if exists, auto-fallback on error)
+          if (hasCover)
+            Image.asset(
+              playlistInfo.coverImagePath!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) {
+                return const SizedBox.shrink(); // fallback already below
+              },
+            ),
+        ],
       ),
     );
   }
