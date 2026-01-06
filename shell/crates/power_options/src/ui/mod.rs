@@ -50,26 +50,27 @@ impl PowerOptions {
         this
     }
 
-    fn update_input_regions(window: &mut Window, size: Size<Pixels>, show: bool) {
+    fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
         println!("update------region----{:?}", show);
+        let size = window.bounds().size;
         let regions = if show {
             vec![Bounds {
                 origin: point(px(0.0), px(0.0)),
                 size,
             }]
         } else {
-            vec![Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size: gpui::size(px(0.0), px(0.0)),
-            }]
+            vec![]
         };
 
         window.set_input_regions(Some(regions));
+        cx.notify();
         println!("Input regions updated: show={}", show);
     }
     fn handle_upward_swipe(&mut self, cx: &mut Context<Self>) {
         println!("Go back - close power options");
         self.snap_to(0.0, cx);
+        self.show = false;
+        cx.notify();
     }
 
     fn animate_initial_reveal(&mut self, window_height: f32, cx: &mut Context<Self>) {
@@ -165,6 +166,7 @@ impl Render for PowerOptions {
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
+        self.update_input_regions(window, show, cx);
 
         // Self::update_input_regions(window, size, show);
         println!("RENDERING power-options {:?}", show);
