@@ -1,4 +1,5 @@
 mod handle;
+mod icon;
 mod signal;
 mod slider;
 mod ui;

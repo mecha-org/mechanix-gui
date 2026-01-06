@@ -4,6 +4,7 @@ use std::time::Duration;
 use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 
 use crate::handle;
+use crate::icon::{icon_for_volume, Icon};
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
 
 const OVERLAY_PADDING: f32 = 16.0;
@@ -67,7 +68,9 @@ pub fn init(cx: &mut App) {
         move |_window, cx| {
             let slider_state = slider_state_for_overlay.clone();
             let initial_value = handle::slider_value(cx);
-            cx.new(move |cx| SliderOverlay::new(cx, slider_state.clone(), initial_value))
+            cx.new(move |cx| {
+                SliderOverlay::new(cx, slider_state.clone(), initial_value, min_volume, max_volume)
+            })
         },
     )
     .unwrap();
@@ -76,13 +79,21 @@ pub fn init(cx: &mut App) {
 struct SliderOverlay {
     slider_state: Entity<SliderState>,
     slider_value: f32,
+    min_volume: f32,
+    max_volume: f32,
     visible: bool,
     dismiss_generation: u64,
     _subscription: Subscription,
 }
 
 impl SliderOverlay {
-    fn new(cx: &mut Context<Self>, slider_state: Entity<SliderState>, initial_value: f32) -> Self {
+    fn new(
+        cx: &mut Context<Self>,
+        slider_state: Entity<SliderState>,
+        initial_value: f32,
+        min_volume: f32,
+        max_volume: f32,
+    ) -> Self {
         let subscription = cx.subscribe(
             &slider_state,
             |this, _, event: &SliderEvent, cx| {
@@ -97,6 +108,8 @@ impl SliderOverlay {
         Self {
             slider_state,
             slider_value: initial_value,
+            min_volume,
+            max_volume,
             visible: false,
             dismiss_generation: 0,
             _subscription: subscription,
@@ -132,6 +145,9 @@ impl SliderOverlay {
 
 impl Render for SliderOverlay {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let icon_name =
+            icon_for_volume(self.slider_value, self.min_volume, self.max_volume);
+
         div()
             .flex()
             .items_center()
@@ -155,7 +171,7 @@ impl Render for SliderOverlay {
                             .width(SLIDER_WIDTH)
                             .height(SLIDER_HEIGHT),
                     )
-                    // Volume mode indicator icon space (20x20)
+                    // Volume mode indicator icon
                     .child(
                         div()
                             .id("volume-mode-icon")
@@ -163,7 +179,12 @@ impl Render for SliderOverlay {
                             .h(px(ICON_SIZE))
                             .flex()
                             .items_center()
-                            .justify_center(),
+                            .justify_center()
+                            .child(
+                                Icon::new(icon_name)
+                                    .size((px(ICON_SIZE), px(ICON_SIZE)))
+                                    .text_color(rgb(0xFFFFFF)),
+                            ),
                     ),
             )
     }

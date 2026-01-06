@@ -20,4 +20,5 @@ hw-buttons = { path = "../../../shared/hw-buttons", package = "mechanix-hw-butto
 power_options = { path = "../power_options" }
 shell_state = { path = "../shell_state" }
 settings = { path = "../settings" }
+settings_drawer = { path = "../settings_drawer" }
 futures-util = "0.3.31"
