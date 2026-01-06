@@ -26,6 +26,15 @@ const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const NAVBAR_SIZE: (f32, f32) = (199.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
 
+// --------------
+#[derive(Debug)]
+struct SearchResultRow {
+    file_type: FileType,
+    file_name: String,
+    link: Option<String>,
+}
+// --------------
+
 impl DragInfo {
     fn new() -> Self {
         Self {
@@ -62,8 +71,9 @@ impl UniversalSearch {
 
         let text_input = cx.new(|cx| {
             TextInput::new(cx)
-                .placeholder("Search here...")
+                // .placeholder("Search here...")
                 .on_change(move |input, cx| {
+                    println!("Search query: {}", input.content);
                     let query = input.content.to_string();
                     entity.update(cx, |this, cx| {
                         this.perform_search(query, cx);
@@ -86,7 +96,7 @@ impl UniversalSearch {
             folder_icon: IconName::DefaultFolder,
             search_icon: IconName::Search,
             x_icon: IconName::XIcon,
-            text_input,
+            text_input : cx.new(|cx| TextInput::new(cx)),
             position: Self::closed_pos(),
             drag_offset: None,
             drag_start_pos: 0.0,
@@ -96,7 +106,10 @@ impl UniversalSearch {
         }
     }
 
+  
+
     pub fn perform_search(&mut self, query: String, cx: &mut Context<Self>) {
+        println!("Search query: {}", query);
         // If query is empty, clear results
         if query.is_empty() {
             self.file_search_results.clear();
@@ -249,7 +262,7 @@ impl UniversalSearch {
 }
 
 impl Render for UniversalSearch {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let open_y = 0.;
         let closed_y = Self::closed_pos();
 
@@ -259,7 +272,7 @@ impl Render for UniversalSearch {
             .w_full()
             .h_full()
             // .h(px(584.))
-            .child(self.universal_search_items(cx))
+            .child(self.universal_search_items(cx, window))
     }
 }
 
@@ -324,10 +337,51 @@ impl UniversalSearch {
         window.set_input_regions(Some(regions));
     }
 
-    fn universal_search_items(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
-        let colors = cx.theme().colors.clone();
-        let apps = sample_recent_apps();
+        fn temp_search_result(&self) -> Vec<SearchResultRow> {
+        // extended screen
+        let result_rows = vec![
+            SearchResultRow { 
+                file_type: FileType::App,
+                file_name: "Ardour".to_string(),
+                link: None,
+            },
+            SearchResultRow { 
+                file_type: FileType::App,
+                file_name: "Chromium".to_string(),
+                link: None,
+            },
+            SearchResultRow { 
+                file_type: FileType::File,
+                file_name: "fire_and_ash".to_string(),
+                link: None,
+            },
+            SearchResultRow { 
+                file_type: FileType::File,
+                file_name: "git_code".to_string(),
+                link: None,
+            },
+             
+        ];
+        result_rows
+    }
 
+    fn universal_search_items(&mut self, cx: &mut Context<Self>, window: &mut Window) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
+        let text_input = self.text_input.clone();
+        text_input.update(cx, |input, _| {
+            input.placeholder = "Search here".into();
+        });
+
+        let is_active = text_input.read(cx).focus_handle.is_focused(window);
+
+        if(is_active) {
+            println!("search active ---- > {:?}", is_active);
+    
+
+        }
+
+        let apps = sample_recent_apps();
         self.app_count = apps.len();
 
         let all_results: Vec<SearchResults> = if self.file_search_results.is_empty() {
@@ -362,15 +416,14 @@ impl UniversalSearch {
         let arrow_up_right_icon = self.arrow_up_right_icon.clone();
         let search_icon = self.search_icon.clone();
         let x_icon = self.x_icon.clone();
-        let text_input = self.text_input.clone();
 
         let app = |icon: Icon| {
             let size = gpui::size(px(60.0), px(60.0));
 
             div()
                 .size_full()
-                // .bg(rgb(0x2b2b2b))
-                .bg(colors.background_1000)
+                .bg(rgb(0x2b2b2b))
+                // .bg(colors.background_1000)
                 .w(size.width)
                 .h(size.height)
                 .rounded(px(10.43))
@@ -382,6 +435,7 @@ impl UniversalSearch {
         };
 
         let row = move |search: &SearchResults| {
+            println!("Row: {}", search.name);
             // Add `move` and take reference
             // let folder_small_icon_clone = folder_small_icon.clone(); // Clone the icon
             // let arrow_up_right_icon_clone = arrow_up_right_icon.clone(); // Clone this too
@@ -492,6 +546,9 @@ impl UniversalSearch {
 
         let entity = cx.entity();
 
+        // TEMP:
+        let temp_Search_result = self.temp_search_result();
+
         div()
             .h_full()
             .w_full()
@@ -575,7 +632,62 @@ impl UniversalSearch {
                                                 ),
                                             ),
                                     )
-                                    .children(file_children),
+                                    .child(
+                                        div()
+                                        .flex()
+                                        .h_full()
+                                        .flex_col()
+                                        // .bg(rgb(0x181818)) // black 
+                                          .child(div().flex().flex_col().flex_1().relative().children(
+                                              temp_Search_result.iter().enumerate().map(|(idx, ex)| {
+                                                    let icon_color = colors.foreground_400;
+
+
+                                                    div()
+                                                            .id(("row", idx))
+                                                            .flex()
+                                                            .items_center()
+                                                            .justify_between()
+                                                            .h(px(60.))
+                                                            .px_4()
+                                                            .child(
+                                                                div()
+                                                                    .flex()
+                                                                    .flex_row()
+                                                                    .text_align(TextAlign::Left)
+                                                                    .child(
+                                                                        div().pr_2().child(
+                                                                            Icon::new(IconName::DefaultApp)
+                                                                                .size((px(28.), px(28.)))
+                                                                                .text_color(icon_color),
+                                                                        ),
+                                                                    )
+                                                                    .child(
+                                                                        div()
+                                                                            .pl_2()
+                                                                            .font_weight(FontWeight::NORMAL)
+                                                                            .text_color(icon_color)
+                                                                            .child(ex.file_name.clone()),
+                                                                    ),
+                                                            )
+                                                            .child(
+                                                                div()
+                                                                    .flex()
+                                                                    .flex_row()
+                                                                    .items_center()
+                                                                    .child(
+                                                                           div().pr_2().child(
+                                                                            Icon::new(IconName::XIcon)
+                                                                                .size((px(28.), px(28.)))
+                                                                                .text_color(icon_color),
+                                                                    ),
+                                                            )
+                                                        )
+                                                }),
+                                          ))    
+                                        // .child("THIS IS SEARCH RESULT")
+                                    )
+                                    // .children(file_children), // TODO: integrate result from service and use this
                             ),
                         // .child(
                         //     div()
@@ -671,6 +783,7 @@ impl UniversalSearch {
                                                 .child(
                                                     div()
                                                         .text_size(px(20.0))
+                                                        .text_color(colors.foreground_300)
                                                         .child(text_input.clone()),
                                                 ),
                                         ),
@@ -744,6 +857,8 @@ impl UniversalSearch {
                                                 input.is_selecting = false;
                                                 cx.notify();
                                             });
+
+                                              this.text_input.read(cx).blur(_window);
                                         },
                                     ))
                                     .child(
