@@ -390,10 +390,8 @@ MechanixFilledButtonThemeData buttonThemeData(
 
   return MechanixFilledButtonThemeData(
       buttonSize: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: backgroundColor,
-      ),
+      buttonColor: backgroundColor,
+      pressedButtonColor: Color.lerp(backgroundColor, Colors.white, 0.12)!,
       textStyle: TextStyle(
         color: isDisabled
             ? context.colorScheme.onSurface

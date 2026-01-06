@@ -8,6 +8,7 @@ import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -25,6 +26,7 @@ import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
+import 'package:widgets/widgets/notification/notification_type.dart';
 import 'view_mode_notifier.dart';
 import 'grid_view.dart';
 import 'list_view.dart';
@@ -80,6 +82,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   String currentPath = '';
 
   final ValueNotifier<bool> allSelectedNotifier = ValueNotifier(false);
+
+  //tap states
+  bool isMovePressed = false;
+  bool isCopyPressed = false;
+  bool isSharePressed = false;
+  bool isDeletePressed = false;
 
   @override
   void initState() {
@@ -181,25 +189,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               Navigator.of(context, rootNavigator: true).pop();
 
               if (state.compressionStatus == FileCompressionStatus.failure) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Compression failed: ${state.compressionError}',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
+                MechanixNotification.show(
+                  context: context,
+                  notificationType: NotificationType.error,
+                  message: "Compression failed: ${state.compressionError}",
                 );
               }
 
               if (state.compressionStatus == FileCompressionStatus.success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Compression complete',
-                        style: TextStyle(
-                            color: context.colorScheme.surfaceContainerLowest)),
-                    duration: const Duration(seconds: 2),
-                    backgroundColor: Colors.grey[800],
-                  ),
+                MechanixNotification.show(
+                  context: context,
+                  notificationType: NotificationType.success,
+                  message: "ompression complete",
                 );
               }
             }
@@ -210,13 +211,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           listenWhen: (previous, current) =>
               previous.error != current.error && current.error != null,
           listener: (context, state) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Error: ${state.error}',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
+            MechanixNotification.show(
+              context: context,
+              notificationType: NotificationType.error,
+              message: "Error: ${state.error}",
             );
           },
         ),
@@ -578,51 +576,47 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     topLeft: Radius.circular(8), topRight: Radius.circular(8))),
       ),
       leadingWidget: [
-        BottomBarButton(
-          iconTheme: const MechanixBottomBarIconThemeData(
-            padding: EdgeInsets.only(left: 12),
-            iconSize: Size(28, 28),
+        BottomBarButton.widget(
+          widget: Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: DecoratedPressableIcon(
+              iconPath: Images.back,
+              onTap: selectionMode
+                  ? clearSelection
+                  : () {
+                      if (isHomePageDir) {
+                        homeNavigation();
+                      } else {
+                        handleBack();
+                      }
+                    },
+            ),
           ),
-          iconPath: Images.back,
-          onPressed: () {
-            selectionMode
-                ? clearSelection()
-                : (isHomePageDir ? homeNavigation() : handleBack());
-          },
         ),
       ],
       centerWidgetSpacing: 28,
       centerWidget: [
-        BottomBarButton(
-          iconTheme:
-              const MechanixBottomBarIconThemeData(iconSize: Size(28, 28)),
-          iconWidget: IconWidget(
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
             iconPath: Images.search,
-            iconHeight: 28,
-            iconWidth: 28,
-            iconColor: selectionMode
-                ? context.colorScheme.surfaceContainerHigh
-                : context.colorScheme.surfaceContainerLowest,
+            isDisabled: selectionMode,
+            onTap: selectionMode
+                ? null
+                : () {
+                    setState(() => isSearching = true);
+                    showSearchBottomSheet(context, searchQuery);
+                  },
           ),
-          onPressed: () {
-            setState(() => isSearching = true);
-            showSearchBottomSheet(context, searchQuery);
-          },
-          isDisabled: selectionMode,
         ),
         BottomBarButton.widget(
           widget: ValueListenableBuilder<bool>(
             valueListenable: viewModeNotifier,
             builder: (context, isList, _) {
-              return IconButton(
-                icon: Image.asset(
-                  isList ? Images.list : Images.grid,
-                  height: 28,
-                ),
-                onPressed: () {
-                  viewModeNotifier.value = !viewModeNotifier.value;
+              return DecoratedPressableIcon(
+                iconPath: isList ? Images.list : Images.grid,
+                onTap: () {
+                  viewModeNotifier.value = !isList;
                 },
-                highlightColor: Colors.transparent,
               );
             },
           ),
@@ -643,7 +637,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           floatingActionBarTheme: MechanixFloatingActionBarThemeData(
             barMainAxisAlignment: MainAxisAlignment.center,
             width: double.infinity,
-            barSpacing: 30,
+            barSpacing: 46,
             decoration: BoxDecoration(
               color: context.colorScheme.tertiary,
               borderRadius: const BorderRadius.only(
@@ -675,31 +669,31 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 false; // TODO: Temporary fix - to show inactive menu button color
           },
           extensionWidgets: [
-            BottomBarButton(
-              iconPath: Images.copy,
-              onPressed: () {
-                hasSelection ? handleCopy() : null;
-              },
-            ),
-            BottomBarButton(
-              iconPath: Images.move,
-              onPressed: () {
-                hasSelection ? handleMove() : null;
-              },
-            ),
-            BottomBarButton(
-              iconWidget: IconWidget(
-                iconPath: Images.share,
-                iconColor: Colors.grey.shade600,
+            BottomBarButton.widget(
+              widget: PressableIcon(
+                iconPath: Images.copy,
+                onTap: hasSelection ? handleCopy : null,
               ),
-              onPressed: () {},
-              isDisabled: true, //TODO : add share functionality
             ),
-            BottomBarButton(
-              iconPath: Images.delete,
-              onPressed: () {
-                hasSelection ? handleDelete() : null;
-              },
+            BottomBarButton.widget(
+              widget: PressableIcon(
+                iconPath: Images.move,
+                onTap: hasSelection ? handleMove : null,
+              ),
+            ),
+            const BottomBarButton.widget(
+              isDisabled: true,
+              widget: PressableIcon(
+                iconPath: Images.share,
+                onTap: null,
+                isDisabled: true,
+              ),
+            ),
+            BottomBarButton.widget(
+              widget: PressableIcon(
+                iconPath: Images.delete,
+                onTap: hasSelection ? handleDelete : null,
+              ),
             ),
           ],
         ),
@@ -1085,18 +1079,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 if (rootContext.mounted) {
                   final folderName = p.basename(state.conflictDestinationPath);
 
-                  ScaffoldMessenger.of(rootContext).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        totalMovedCount > 0
-                            ? "Moved $totalMovedCount item${totalMovedCount > 1 ? 's' : ''} to '$folderName'"
-                            : "No items were moved",
-                        style: TextStyle(
-                            color: context.colorScheme.surfaceContainerLowest),
-                      ),
-                      duration: const Duration(seconds: 2),
-                      backgroundColor: Colors.grey[800],
-                    ),
+                  MechanixNotification.show(
+                    context: context,
+                    notificationType: NotificationType.success,
+                    message: totalMovedCount > 0
+                        ? "Moved $totalMovedCount item${totalMovedCount > 1 ? 's' : ''} to '$folderName'"
+                        : "No items were moved",
                   );
 
                   // exit move mode
@@ -1121,16 +1109,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     BlocProvider.of<FilesBloc>(context)
         .add(StartCopyMode(selectedPaths.toList()));
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-            "Copied ${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''}",
-            style:
-                TextStyle(color: context.colorScheme.surfaceContainerLowest)),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.grey[800],
-      ),
+    MechanixNotification.show(
+      context: context,
+      notificationType: NotificationType.success,
+      message:
+          "Copied ${selectedPaths.length} item${selectedPaths.length > 1 ? 's' : ''}",
     );
+
     clearSelection();
   }
 
@@ -1255,26 +1240,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     try {
       await file.copy(newPath);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Duplicated as '$newName'",
-            style: TextStyle(color: context.colorScheme.surfaceContainerLowest),
-          ),
-          backgroundColor: Colors.grey[800],
-          duration: const Duration(seconds: 2),
-        ),
+      MechanixNotification.show(
+        context: context,
+        notificationType: NotificationType.success,
+        message: "Duplicated as '$newName'",
       );
 
       reload(); // refresh list
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Failed to duplicate file",
-            style: TextStyle(color: Colors.red),
-          ),
-        ),
+      MechanixNotification.show(
+        context: context,
+        notificationType: NotificationType.error,
+        message: "Failed to duplicate file",
       );
     } finally {
       clearSelection();
@@ -1381,15 +1358,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               }
 
               // Show final summary
-              ScaffoldMessenger.of(rootContext).showSnackBar(
-                SnackBar(
-                  content: Text(msg,
-                      style: TextStyle(
-                        color: context.colorScheme.surfaceContainerLowest,
-                      )),
-                  backgroundColor: Colors.grey[800],
-                  duration: const Duration(seconds: 2),
-                ),
+              MechanixNotification.show(
+                context: context,
+                notificationType: NotificationType.success,
+                message: msg,
               );
 
               // Exit extract mode
@@ -1410,14 +1382,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       final selectedPath = selectedPaths.first;
       showDetailsDialog(context, selectedPath);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Select a single item to view details",
-              style:
-                  TextStyle(color: context.colorScheme.surfaceContainerLowest)),
-          duration: const Duration(seconds: 1),
-          backgroundColor: Colors.grey[800],
-        ),
+      MechanixNotification.show(
+        context: context,
+        notificationType: NotificationType.standard,
+        message: "Select a single item to view details",
       );
     }
     clearSelection();

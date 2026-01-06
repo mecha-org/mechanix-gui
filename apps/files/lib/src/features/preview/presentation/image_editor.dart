@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/icon_widget.dart';
+import 'package:widgets/widgets/notification/notification_type.dart';
 
 class ImageEditorPage extends StatefulWidget {
   final String imagePath;
@@ -207,15 +208,10 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Saved to ${file.path}',
-          style: TextStyle(color: context.colorScheme.surfaceContainerLowest),
-        ),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.grey[800],
-      ),
+    MechanixNotification.show(
+      context: context,
+      notificationType: NotificationType.success,
+      message: "Saved as '$fileName'",
     );
 
     state?.reload();
@@ -415,24 +411,16 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _iconButton(
-                    IconWidget(
-                      iconPath: Images.undo,
-                      iconColor: _undoStack.isEmpty
-                          ? Colors.grey
-                          : context.colorScheme.onSurface,
-                    ),
-                    _undoStack.isEmpty ? null : undo,
+                  PressableIcon(
+                    iconPath: Images.undo,
+                    isDisabled: _undoStack.isEmpty,
+                    onTap: _undoStack.isEmpty ? null : undo,
                   ),
                   const SizedBox(width: iconGap),
-                  _iconButton(
-                    IconWidget(
-                      iconPath: Images.redo,
-                      iconColor: _redoStack.isEmpty
-                          ? Colors.grey
-                          : context.colorScheme.onSurface,
-                    ),
-                    _redoStack.isEmpty ? null : redo,
+                  PressableIcon(
+                    iconPath: Images.redo,
+                    isDisabled: _redoStack.isEmpty,
+                    onTap: _redoStack.isEmpty ? null : redo,
                   ),
                 ],
               ),
@@ -445,36 +433,24 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _iconButton(
-                    IconWidget(
-                      iconPath: Images.rotateRight,
-                      iconColor: context.colorScheme.onSurface,
-                    ),
-                    rotateRight,
+                  PressableIcon(
+                    iconPath: Images.rotateRight,
+                    onTap: rotateRight,
                   ),
                   const SizedBox(width: iconGap),
-                  _iconButton(
-                    IconWidget(
-                      iconPath: Images.mirrorVertical,
-                      iconColor: context.colorScheme.onSurface,
-                    ),
-                    mirrorVertical,
+                  PressableIcon(
+                    iconPath: Images.mirrorVertical,
+                    onTap: mirrorVertical,
                   ),
                   const SizedBox(width: iconGap),
-                  _iconButton(
-                    IconWidget(
-                      iconPath: Images.mirrorHorizontal,
-                      iconColor: context.colorScheme.onSurface,
-                    ),
-                    mirrorHorizontal,
+                  PressableIcon(
+                    iconPath: Images.mirrorHorizontal,
+                    onTap: mirrorHorizontal,
                   ),
                   const SizedBox(width: iconGap),
-                  _iconButton(
-                    IconWidget(
-                      iconPath: Images.crop,
-                      iconColor: context.colorScheme.onSurface,
-                    ),
-                    onCropPressed,
+                  PressableIcon(
+                    iconPath: Images.crop,
+                    onTap: onCropPressed,
                   ),
                 ],
               ),
@@ -484,12 +460,9 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
             alignment: Alignment.centerRight,
             child: Padding(
               padding: const EdgeInsets.only(right: sidePadding),
-              child: _iconButton(
-                const IconWidget(
-                  iconPath: Images.check,
-                  iconColor: Color(0xFFD2D2D2),
-                ),
-                saveImage,
+              child: PressableIcon(
+                iconPath: Images.check,
+                onTap: saveImage,
               ),
             ),
           ),
@@ -524,16 +497,6 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
       r.top.clamp(safeBounds.top, safeBounds.bottom - minSize),
       r.right.clamp(r.left + minSize, safeBounds.right),
       r.bottom.clamp(r.top + minSize, safeBounds.bottom),
-    );
-  }
-
-  Widget _iconButton(Widget iconWidget, VoidCallback? onTap) {
-    return IconButton(
-      iconSize: 20,
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints(),
-      icon: iconWidget,
-      onPressed: onTap,
     );
   }
 }

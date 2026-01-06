@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
@@ -108,23 +109,25 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
                       topLeft: Radius.circular(8),
                       topRight: Radius.circular(8)))),
       leadingWidget: [
-        BottomBarButton(
-          iconTheme: const MechanixBottomBarIconThemeData(
-              padding: EdgeInsets.only(left: 12), iconSize: Size(28, 28)),
-          iconPath: Images.back,
-          onPressed: () => Navigator.pop(context),
-        ),
+        BottomBarButton.widget(
+            widget: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: DecoratedPressableIcon(
+            iconPath: Images.back,
+            onTap: () => Navigator.pop(context),
+          ),
+        )),
       ],
       centerWidgetSpacing: 20,
       centerWidget: [
-        BottomBarButton(
-          iconTheme:
-              const MechanixBottomBarIconThemeData(iconSize: Size(28, 28)),
-          iconPath: Images.copy,
-          onPressed: () {
-            state?.selectedPaths = {widget.filePath};
-            state?.handleCopy();
-          },
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.copy,
+            onTap: () {
+              state?.selectedPaths = {widget.filePath};
+              state?.handleCopy();
+            },
+          ),
         ),
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(),
@@ -148,25 +151,22 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
                   });
                 },
         ),
-        BottomBarButton(
-          iconPath: Images.move,
-          iconTheme:
-              const MechanixBottomBarIconThemeData(iconSize: Size(28, 28)),
-          onPressed: () {
-            Navigator.pop(context);
-            state?.selectedPaths = {widget.filePath};
-            state?.handleMove();
-          },
-        ),
-        BottomBarButton(
-          iconWidget: IconWidget(
-            iconPath: Images.share,
-            iconColor: Colors.grey.shade600,
-            iconHeight: 28.0,
-            iconWidth: 28.0,
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.move,
+            onTap: () {
+              Navigator.pop(context);
+              state?.selectedPaths = {widget.filePath};
+              state?.handleMove();
+            },
           ),
-          isDisabled: true,
-          onPressed: () {}, // TODO : share functionality
+        ),
+        const BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.share,
+            isDisabled: true, // TODO: add share functionality
+            onTap: null,
+          ),
         ),
       ],
       anchorWidget: [
