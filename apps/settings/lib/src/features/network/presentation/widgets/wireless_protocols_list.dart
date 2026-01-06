@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 

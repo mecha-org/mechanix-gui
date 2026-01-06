@@ -1,5 +1,5 @@
 name: mechanix_settings
-description: "A new Flutter project."
+description: "Mechanix settings application for Mechanix OS."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -133,6 +133,10 @@ flutter:
     - assets/images/wifi_low.png
     - assets/images/wifi_none.png
     - assets/images/tick_icon.png
+    - assets/images/arrow_counter_clock_wise.png
+    - assets/images/connect_icon.png
+    - assets/images/three_dot_icon.png
+    - assets/images/circular_check_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

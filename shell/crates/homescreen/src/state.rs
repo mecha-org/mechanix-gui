@@ -48,7 +48,7 @@ impl HomescreenState {
             pages,
             next_widget_id: 0,
 
-            active_page: 0,
+            active_page: 1,
             page_offset: 0.0,
             is_page_dragging: false,
             dragging_widget: None,

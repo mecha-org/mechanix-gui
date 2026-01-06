@@ -1,4 +1,5 @@
 use gpui::*;
+use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
     prelude::*,
@@ -53,26 +54,23 @@ impl SettingsDrawer {
         &self,
         cx: &mut gpui::Context<SettingsDrawer>,
     ) -> AnyElement {
+        let colors = Theme::global(cx).colors.clone();
         let extend_options = self.extended_screens();
         div()
             .flex()
             .flex_col()
             .w_full()
             .h_full()
-            .bg(rgb(DARK_NEUTRAL_900))
+            .bg(colors.background_1000)
             .rounded_xl()
             .border_1()
-            .border_color(rgb(AMBER_800))
+            .border_color(colors.accent_200.with_alpha(0.4))
             .child(self.render_header_div(cx, "Extended screen"))
             .child(div().flex().flex_col().flex_1().relative().children(
                 extend_options.iter().enumerate().map(|(idx, ex)| {
                     let is_active = ex.is_active;
 
-                    let icon_color = if is_active {
-                        rgb(AMBER_600)
-                    } else {
-                        rgb(DARK_NEUTRAL_0)
-                    };
+                    let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
 
                     let icon = match ex.extend_type {
                         ExtendedType::ExtendedDetected => IconName::ExtendedDetected,
@@ -82,9 +80,9 @@ impl SettingsDrawer {
                     };
 
                     let connect_div = div().child(
-                        Icon::new(IconName::ConnectedIcon)
+                        Icon::new(IconName::Connected)
                             .size((px(24.), px(24.)))
-                            .text_color(rgb(AMBER_600)),
+                            .text_color(icon_color),
                     );
 
                     let main_div = if is_active {
@@ -95,9 +93,9 @@ impl SettingsDrawer {
                             .justify_between()
                             .h(px(60.))
                             .px_4()
-                            .bg(rgba(AMBER_600_10))
+                            .bg(colors.accent_200.with_alpha(0.1))
                             .border_y_1()
-                            .border_color(rgb(AMBER_900))
+                            .border_color(colors.accent_200.with_alpha(0.4))
                             .child(
                                 div()
                                     .flex()
@@ -114,7 +112,7 @@ impl SettingsDrawer {
                                         div()
                                             .pl_2()
                                             .font_weight(FontWeight::NORMAL)
-                                            .text_color(icon_color)
+                                            .text_color(text_color)
                                             .child(ex.text.clone()),
                                     ),
                             )
@@ -127,7 +125,7 @@ impl SettingsDrawer {
                             .justify_between()
                             .h(px(60.))
                             .px_4()
-                            .hover(|style| style.bg(rgba(AMBER_600_10)))
+                            .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
                             .child(
                                 div()
                                     .flex()
@@ -144,7 +142,7 @@ impl SettingsDrawer {
                                         div()
                                             .pl_2()
                                             .font_weight(FontWeight::NORMAL)
-                                            .text_color(icon_color)
+                                            .text_color(text_color)
                                             .child(ex.text.clone()),
                                     ),
                             )

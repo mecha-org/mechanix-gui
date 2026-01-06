@@ -1,8 +1,12 @@
 use futures::SinkExt;
 use gpui::*;
 use shell_state::{BtMessage, ShellState};
+use theme::prelude::{AlphaExt, Theme};
 
-use crate::{helper::get_bluetooth_icon, prelude::*, ui::icon::{Icon, IconName},
+use crate::{
+    helper::get_bluetooth_icon,
+    prelude::*,
+    ui::icon::{Icon, IconName},
 };
 
 const HEADER_HEIGHT: f32 = 60.0;
@@ -97,12 +101,7 @@ impl ScrollBehavior for BluetoothModalScroll {
         self.is_dragging = false;
     }
 
-    fn on_mouse_move(
-        &mut self,
-        event: &MouseMoveEvent,
-        window_height: Pixels,
-        list_count: usize,
-    ) {
+    fn on_mouse_move(&mut self, event: &MouseMoveEvent, window_height: Pixels, list_count: usize) {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
 
@@ -119,19 +118,24 @@ impl ScrollBehavior for BluetoothModalScroll {
 
 impl SettingsDrawer {
     pub fn render_bluetooth_modal(&mut self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
         let bt_tx = ShellState::global(cx).bt_tx.clone().unwrap();
-        let device_list = bluetooth_details.available_devices.clone().unwrap_or_default();
+        let device_list = bluetooth_details
+            .available_devices
+            .clone()
+            .unwrap_or_default();
         let device_count = device_list.len();
 
         div()
             .flex()
             .flex_col()
-            .bg(rgb(DARK_NEUTRAL_900))
+            .bg(colors.background_1000)
             .size_full()
             .border_1()
             .rounded_xl()
-            .border_color(rgb(AMBER_900))
+            .border_color(colors.accent_200.with_alpha(0.4))
             .child(self.render_header_div(cx, "Bluetooth"))
             .child(
                 div()
@@ -175,99 +179,93 @@ impl SettingsDrawer {
                             .flex()
                             .flex_col()
                             .gap_2()
-                            .children(device_list.iter().enumerate().map(
-                                |(idx, bt)| {
-                                    let name = &bt.name;
-                                    let is_connected = bt.connected;
-                                    let is_paired = bt.paired;
+                            .children(device_list.iter().enumerate().map(|(idx, bt)| {
+                                let name = &bt.name;
+                                let is_connected = bt.connected;
+                                let is_paired = bt.paired;
 
-                                    let icon_color = if is_connected {
-                                        rgb(AMBER_600)
-                                    } else {
-                                        rgb(DARK_NEUTRAL_100)
-                                    };
-                                    let bluetooth_icon = get_bluetooth_icon(is_connected.clone());
+                                let (icon_color, text_color) =
+                                    Self::get_icon_and_text_color(is_connected, cx);
 
-                                    let mut bluetooth_div = if is_connected {
-                                        div()
-                                            .id(("bluetooth_item", idx))
-                                            .flex()
-                                            .items_center()
-                                            .justify_between()
-                                            .h(px(ROW_HEIGHT))
-                                            .px_4()
-                                            .bg(rgba(AMBER_600_10))
-                                            .border_y_1()
-                                            .border_color(rgb(AMBER_900))
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .items_center()
-                                                    .child(
-                                                        div().pr_2().child(
-                                                            Icon::new(bluetooth_icon)
-                                                                .size((px(28.), px(28.)))
-                                                                .text_color(icon_color),
-                                                        ),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .text_color(icon_color)
-                                                            .child(name.clone())
+                                let bluetooth_icon = get_bluetooth_icon(is_connected.clone());
+
+                                let mut bluetooth_div = if is_connected {
+                                    div()
+                                        .id(("bluetooth_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .bg(colors.accent_200.with_alpha(0.1))
+                                        .border_y_1()
+                                        .border_color(colors.accent_200.with_alpha(0.4))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .items_center()
+                                                .child(
+                                                    div().pr_2().child(
+                                                        Icon::new(bluetooth_icon)
+                                                            .size((px(28.), px(28.)))
+                                                            .text_color(icon_color),
                                                     ),
-                                            )
-                                            .child(
-                                                Icon::new(IconName::ConnectedIcon)
-                                                    .size((px(24.), px(24.)))
-                                                    .text_color(rgb(AMBER_600))
-                                            )
-                                    } else {
-                                        div()
-                                            .id(("bluetooth_item", idx))
-                                            .flex()
-                                            .items_center()
-                                            .justify_between()
-                                            .h(px(ROW_HEIGHT))
-                                            .px_4()
-                                            .rounded_md()
-                                            .bg(rgb(DARK_NEUTRAL_900))
-                                            .hover(|style| style.bg(rgba(AMBER_600_10)))
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .items_center()
-                                                    .child(
-                                                        div().pr_2().child(
-                                                            Icon::new(bluetooth_icon)
-                                                                .size((px(28.), px(28.)))
-                                                                .text_color(icon_color),
-                                                        ),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .text_color(icon_color)
-                                                            .child(name.clone())
+                                                )
+                                                .child(
+                                                    div()
+                                                        .text_color(text_color)
+                                                        .child(name.clone()),
+                                                ),
+                                        )
+                                        .child(
+                                            Icon::new(IconName::Connected)
+                                                .size((px(24.), px(24.)))
+                                                .text_color(colors.accent_200),
+                                        )
+                                } else {
+                                    div()
+                                        .id(("bluetooth_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .rounded_md()
+                                        .bg(colors.background_1000)
+                                        .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .items_center()
+                                                .child(
+                                                    div().pr_2().child(
+                                                        Icon::new(bluetooth_icon)
+                                                            .size((px(28.), px(28.)))
+                                                            .text_color(icon_color),
                                                     ),
-                                            )
-                                    };
+                                                )
+                                                .child(
+                                                    div()
+                                                        .text_color(text_color)
+                                                        .child(name.clone()),
+                                                ),
+                                        )
+                                };
 
-                                    if !is_connected && !is_paired {
-                                        // TODO: call pair and connect device
-                                        // TODO: check if device need auth - open portal
-                                        bluetooth_div = bluetooth_div.on_click(cx.listener(
-                                            move |_, _, _, _| {
-                                                println!(
-                                                    "TODO: open portal/settings with params:"
-                                                );
-                                            },
-                                        ));
-                                    } else if !is_connected && is_paired {
-                                        let address = bt.address.clone();
-                                        let bt_tx_clone = bt_tx.clone();
+                                if !is_connected && !is_paired {
+                                    // TODO: call pair and connect device
+                                    // TODO: check if device need auth - open portal
+                                    bluetooth_div =
+                                        bluetooth_div.on_click(cx.listener(move |_, _, _, _| {
+                                            println!("TODO: open portal/settings with params:");
+                                        }));
+                                } else if !is_connected && is_paired {
+                                    let address = bt.address.clone();
+                                    let bt_tx_clone = bt_tx.clone();
 
-                                        bluetooth_div =
+                                    bluetooth_div =
                                             bluetooth_div
                                                 .on_click(cx.listener(
                                                     move |this: &mut SettingsDrawer,
@@ -290,11 +288,10 @@ impl SettingsDrawer {
                                                         Self::start_close_animation(this, cx);
                                                     },
                                                 ))
-                                    }
+                                }
 
-                                    bluetooth_div
-                                },
-                            )),
+                                bluetooth_div
+                            })),
                     ),
             )
             .child(self.render_settings_div(cx))

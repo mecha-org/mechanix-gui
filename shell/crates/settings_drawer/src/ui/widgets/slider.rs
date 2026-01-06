@@ -1,14 +1,10 @@
 use gpui::*;
+use theme::prelude::Theme;
 
 const DOT_SIZE: f32 = 3.0;
 const DOT_GAP: f32 = 6.0;
 const BAR_SEGMENT_WIDTH: f32 = 2.2;
 const BAR_GAP_WIDTH: f32 = 5.0;
-const INACTIVE_DOT_COLOR: u32 = 0x797979;
-const INACTIVE_BAR_COLOR: u32 = 0x3A3A3A;
-const ACTIVE_FILL_COLOR: u32 = 0xE9E9E9;
-const ACTIVE_BAR_COLOR: u32 = 0xC67600;
-const BG_COLOR: u32 = 0x151515;
 
 const DOTS_COLUMN_IMAGE_PATH: &str = "icons/settings-drawer/slider-gray-dot-column.png";
 const DOTS_COLUMN_FILLED_IMAGE_PATH: &str = "icons/settings-drawer/slider-orange-dot-column.png";
@@ -150,6 +146,12 @@ impl Slider {
 
 impl RenderOnce for Slider {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
+        let theme_inactive_bar_color = colors.background_600;
+        let theme_active_bar_color = colors.accent_200;
+        let theme_bg_color = colors.background_900;
+
         let state = self.state.read(cx);
 
         let width = self.width.unwrap_or(167.0);
@@ -197,7 +199,7 @@ impl RenderOnce for Slider {
                                 .flex()
                                 .flex_row()
                                 .gap(px(DOT_GAP))
-                                .bg(rgb(BG_COLOR))
+                                .bg(theme_bg_color)
                                 .children(dot_grid)
                                 // .child(
                                 //       img(GRAY_DOT_GRID_IMAGE_PATH)
@@ -293,12 +295,12 @@ impl RenderOnce for Slider {
                                 .gap_0()
                                 .child(div().w(px(BAR_SEGMENT_WIDTH)).h(px(height)).bg(
                                     if is_active {
-                                        rgb(ACTIVE_BAR_COLOR)
+                                        theme_active_bar_color
                                     } else {
-                                        rgb(INACTIVE_BAR_COLOR)
+                                        theme_inactive_bar_color
                                     },
                                 ))
-                                .child(div().w(px(BAR_GAP_WIDTH)).h(px(height)).bg(rgb(BG_COLOR)))
+                                .child(div().w(px(BAR_GAP_WIDTH)).h(px(height)).bg(theme_bg_color))
                         });
 
                     div()
@@ -316,7 +318,7 @@ impl RenderOnce for Slider {
                                 .flex()
                                 .flex_row()
                                 .gap_0()
-                                .bg(rgb(BG_COLOR))
+                                .bg(theme_bg_color)
                                 .children(track_segments)
                                 .on_mouse_down(
                                     MouseButton::Left,

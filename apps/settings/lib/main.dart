@@ -22,6 +22,7 @@ import 'package:mechanix_settings/src/features/bluetooth/presentation/bluetooth.
 import 'package:mechanix_settings/src/features/bluetooth/presentation/bluetooth_device_discoverable.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/device_info/bluetooth_device_info.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/device_types.dart';
+import 'package:mechanix_settings/src/features/bluetooth/presentation/manage_device.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/rename_adapter.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
@@ -64,8 +65,6 @@ import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
-import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -107,30 +106,16 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
         watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
     return MechanixTheme(
-      data: MechanixThemeData(
-          mechanixVariant: mechanixVariant,
-          extensions: const [
-            MechanixNavigationBarThemeData(
-              scrolledUnderElevation: 0,
-              titleStyle: TextStyle(
-                fontSize: 24,
-              ),
-              titleSpacing: 0,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-            ),
-            MechanixSwitchThemeData(
-              style: MechanixSwitchStyle(
-                inactiveThumbColor: Color(0xFF989898),
-                inactiveTrackColor: Color(0xFF252525),
-              ),
-            ),
-          ]),
-      builder: (context, mechanix, child) => MainApp(
-        darkTheme: mechanix.darkTheme,
-        lightTheme: mechanix.lightTheme,
-        themeMode: themeMode,
+      data: const MechanixThemeData(
+        mechanixVariant: MechanixVariant.amber,
       ),
+      builder: (ctx, mechanix, child) {
+        return MainApp(
+          darkTheme: mechanix.darkTheme,
+          lightTheme: mechanix.lightTheme,
+          themeMode: themeMode,
+        );
+      },
     );
   }
 }
@@ -268,6 +253,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.bluetoothDiscoverable: (context) =>
               const BluetoothDeviceDiscoverable(),
           AppRoutes.bluetoothDeviceTypes: (context) => const DeviceTypes(),
+          AppRoutes.manageDevice: (context) => const ManageDevice(),
 
           // Battery Routes
           AppRoutes.battery: (context) => const Battery(),

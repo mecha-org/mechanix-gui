@@ -3,7 +3,7 @@ import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 
 class Ipv4AddressWidget extends StatefulWidget {
@@ -45,7 +45,8 @@ class _Ipv4AddressWidgetState extends State<Ipv4AddressWidget> {
               if (selectedDNS == 'STATIC')
                 MechanixSectionList(title: 'Static', sectionListItems: [
                   SectionListItems(
-                      title: 'IP Settings', trailing: const Text('255.255.255.25')),
+                      title: 'IP Settings',
+                      trailing: const Text('255.255.255.25')),
                   SectionListItems(
                       title: 'Gateway',
                       trailing: Row(

@@ -1,4 +1,4 @@
-use commons::widgets::wing;
+use commons::widgets::{WingSide, wing};
 use gpui::prelude::*;
 use gpui::*;
 
@@ -119,6 +119,32 @@ impl Render for WingExample {
                                     .child({
                                         let mut w = wing();
                                         w.upper_wing_size(size(px(40.0), px(20.0)));
+                                        w.w(px(80.0))
+                                            .h(px(60.0))
+                                            .bg(rgb(0x10b981))
+                                            .when(clicked_wing == Some(5), |wing| {
+                                                wing.border_2().border_color(rgb(0xffffff))
+                                            })
+                                            .when(hovered_wing == Some(5), |wing| {
+                                                wing.bg(rgb(0x34d399))
+                                            })
+                                    }),
+                            )
+                            .child(
+                                div()
+                                    .id("wing-6")
+                                    .on_mouse_move(cx.listener(
+                                        |this, _event: &MouseMoveEvent, _, _cx| {
+                                            this.hovered_wing = Some(5);
+                                        },
+                                    ))
+                                    .on_click(cx.listener(|this, _event: &ClickEvent, _, _cx| {
+                                        this.clicked_wing = Some(5);
+                                    }))
+                                    .child({
+                                        let mut w = wing();
+                                        w.upper_wing_size(size(px(40.0), px(20.0)));
+                                        w.upper_wing_side(WingSide::Right);
                                         w.w(px(80.0))
                                             .h(px(60.0))
                                             .bg(rgb(0x10b981))

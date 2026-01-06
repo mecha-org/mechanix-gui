@@ -27,6 +27,10 @@ pub fn run() {
 
         notifications::run_app(cx);
 
+        volume_slider::run_app(cx);
+
+        // power_options::run_app(cx);  // only call when requested
+
         cx.activate(true);
         cx.refresh_windows();
     });
