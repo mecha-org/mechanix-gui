@@ -2,6 +2,8 @@ use gpui::*;
 use hw_buttons::{Key, KeyEvent};
 use power_options::run_app as run_power_overlay;
 use settings::prelude::{Settings, VolumeSliderSettings};
+use shell_state::{ShellState, VolumeMessage};
+use futures::SinkExt;
 
 use crate::slider::{SliderEvent, SliderState};
 
@@ -160,6 +162,38 @@ fn apply_value_to_slider(slider: &Entity<SliderState>, value: f32, cx: &mut App)
         cx.emit(SliderEvent::Change(state.value));
         cx.notify();
     });
+
+    // Sync volume to system via PulseAudio
+    sync_volume_to_system(value, cx);
+}
+
+/// Sends the volume value to the system via PulseAudio using ShellState's volume channel
+fn sync_volume_to_system(value: f32, cx: &mut App) {
+    // Check if ShellState is initialized (it may not be when running standalone)
+    if !cx.has_global::<ShellState>() {
+        return;
+    }
+
+    let shell_state = ShellState::global(cx);
+    let volume_tx = shell_state.volume_tx.clone();
+    let sink_name = shell_state
+        .sound_device_info
+        .name
+        .clone()
+        .unwrap_or_else(|| "@DEFAULT_SINK@".to_string());
+
+    if let Some(mut tx) = volume_tx {
+        cx.background_executor()
+            .spawn(async move {
+                let _ = tx
+                    .send(VolumeMessage::VolumeChanged {
+                        name: sink_name,
+                        value,
+                    })
+                    .await;
+            })
+            .detach();
+    }
 }
 
 fn adjust_volume_by(cx: &mut App, delta: f32) -> Option<(Entity<SliderState>, f32)> {
