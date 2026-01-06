@@ -3,15 +3,13 @@ mod ui;
 
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
+use commons::input::*;
 use settings::prelude::*;
-use ui::input::*;
 use ui::models::UniversalSearch;
 
 pub mod prelude {
     pub use crate::data::*;
     pub use crate::run_app;
-    pub use crate::ui::input::*;
-    pub use crate::ui::models::TextInput;
     pub use crate::ui::models::UniversalSearch;
 }
 

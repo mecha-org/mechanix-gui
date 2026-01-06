@@ -1,6 +1,7 @@
 [package]
-name = "mechanix-session-services"
+name = "session_service"
 description = "Service for running session services"
+version = "0.0.1"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -8,23 +9,31 @@ repository.workspace = true
 homepage.workspace = true
 categories.workspace = true
 keywords.workspace = true
-version = "0.1.1"
 
 [dependencies]
-zbus = { workspace = true }
 anyhow = { workspace = true }
 log = { workspace = true }
 tokio = { workspace = true }
 env_logger = { workspace = true }
 thiserror = { workspace = true }
-mxconf_dbus = { path = "../../dbus/mechanix/mxconf" }
-system_dbus = { path = "../../dbus/mechanix/system" }
-mechanix-hw-buttons = { path = "../../shared/hw-buttons" }
+serde  = { workspace = true }
+futures = { workspace = true, features = ["thread-pool"] }
+zbus = { version = "5.7.1" }
+gdk-pixbuf = "0.20.10"
+glib = "0.20.12"
+zvariant = "5.5.3"
 futures-util = "0.3.28"
+freedesktop-icons = "0.4.0"
+serde_json = "1.0.145"
+sled = "0.34.7"
+uuid = { version = "1.19.0", features = ["v4"]}
 
+[[bin]]
+name = "mechanix-session-service"
+path = "src/main.rs"
 
 [package.metadata.deb]
-maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+maintainer = "Minesh Purohit <mineshp@mechasystems.com>"
 extended-description = """\
 Service for running session services."""
 depends = "$auto"
@@ -33,8 +42,17 @@ priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
-        "../../target/release/mechanix-session-services",
+        "../../target/release/mechanix-session-service",
         "usr/bin/",
         "755",
     ],
+]
+
+[package.metadata.generate-rpm]
+summary = "Service for running session services"
+license = "MIT" # or workspace override if you have one
+auto-req = "yes"
+assets = [
+    # Binary
+    { source = "../../target/release/mechanix-session-service", dest = "/usr/bin/mechanix-session-service", mode = "755" },
 ]

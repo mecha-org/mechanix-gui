@@ -1,7 +1,7 @@
 [package]
-name = "mechanix-system-services"
+name = "mechanix-system-service"
 description = "Service for running system services"
-version.workspace = true
+version = "0.0.1"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -21,7 +21,7 @@ serde = { workspace = true }
 mechanix-hw-buttons = { path = "../../shared/hw-buttons" }
 
 [package.metadata.deb]
-maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+maintainer = "Minesh Purohit <mineshp@mechasystems.com>"
 extended-description = """\
 Service for running system services."""
 depends = "$auto"
@@ -30,8 +30,17 @@ priority = "optional"
 assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
-        "../../target/release/mechanix-system-services",
+        "../../target/release/mechanix-system-service",
         "usr/bin/",
         "755",
     ],
+]
+
+[package.metadata.generate-rpm]
+summary = "Service for running system services"
+license = "MIT" # or workspace override if you have one
+auto-req = "yes"
+assets = [
+    # Binary
+    { source = "../../target/release/mechanix-system-service", dest = "/usr/bin/mechanix-system-service", mode = "755" },
 ]

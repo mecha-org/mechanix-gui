@@ -69,4 +69,10 @@ class Images {
   static const String wifiMedium = 'assets/images/wifi_medium.png';
   static const String wifiLow = 'assets/images/wifi_low.png';
   static const String wifiNone = 'assets/images/wifi_none.png';
+  static const String arrowCounterClockWise =
+      'assets/images/arrow_counter_clock_wise.png';
+  static const String connectIcon = 'assets/images/connect_icon.png';
+  static const String threeDotIcon = 'assets/images/three_dot_icon.png';
+  static const String circularCheckIcon =
+      'assets/images/circular_check_icon.png';
 }

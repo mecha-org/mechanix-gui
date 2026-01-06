@@ -8,7 +8,7 @@ class ContainerWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: child,
     );
   }

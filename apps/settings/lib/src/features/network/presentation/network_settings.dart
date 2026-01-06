@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_row_item.dart';
-
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
@@ -15,7 +13,7 @@ import 'package:mechanix_settings/src/features/network/presentation/saved_networ
 import 'package:mechanix_settings/src/features/network/presentation/wireless.dart';
 import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 
 class NetworkSettings extends StatefulWidget {
   const NetworkSettings({super.key});
@@ -38,7 +36,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
       context,
       MaterialPageRoute(
         builder: (context) => BlocProvider.value(
-          value: bloc, 
+          value: bloc,
           child: SavedNetworkDetails(network: network),
         ),
       ),

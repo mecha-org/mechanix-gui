@@ -3,6 +3,12 @@ use gpui::{
     Pixels, Point, Size, StyleRefinement, Window, polygon, prelude::*, px, rgba,
 };
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum WingSide {
+    Left,
+    Right,
+}
+
 fn generate_fillet_arc(
     prev: Point<Pixels>,
     current: Point<Pixels>,
@@ -41,12 +47,9 @@ fn generate_fillet_arc(
     let radius_f32 = radius.to_f64() as f32;
     let offset_distance = radius_f32 / half_angle.tan();
 
-    // Clamp offset_distance to not exceed half the length of either edge
-    // This prevents the fillet from extending beyond available space
     let max_offset = (len1.min(len2) * 0.5).min(offset_distance);
     let offset_distance = max_offset;
 
-    // Recalculate the effective radius based on the clamped offset
     let effective_radius = offset_distance * half_angle.tan();
 
     let start_point = Point::new(
@@ -84,7 +87,6 @@ fn generate_fillet_arc(
         .to_f64()
         .atan2((end_point.x - center.x).to_f64()) as f32;
 
-    // Determine sweep direction
     let mut angle_diff = end_angle - start_angle;
     if angle_diff > std::f32::consts::PI {
         angle_diff -= 2.0 * std::f32::consts::PI;
@@ -123,7 +125,6 @@ fn apply_fillet_to_polygon(
         let current = points[i];
         let next = points[(i + 1) % n];
 
-        // Apply fillet arc to both convex and concave corners
         let arc = generate_fillet_arc(prev, current, next, radius, resolution);
         filleted_points.extend(arc);
     }
@@ -138,6 +139,8 @@ pub struct Wing {
     border_resolution: u32,
     upper_wing_size: Size<Pixels>,
     lower_wing_size: Size<Pixels>,
+    upper_wing_side: WingSide,
+    lower_wing_side: WingSide,
     include_upper_wing_in_bounds: bool,
     include_lower_wing_in_bounds: bool,
     children: Vec<AnyElement>,
@@ -151,6 +154,8 @@ pub fn wing() -> Wing {
         border_resolution: 8,
         upper_wing_size: Size::new(px(0.0), px(0.0)),
         lower_wing_size: Size::new(px(0.0), px(0.0)),
+        upper_wing_side: WingSide::Left,
+        lower_wing_side: WingSide::Right,
         include_upper_wing_in_bounds: true,
         include_lower_wing_in_bounds: true,
         children: Vec::new(),
@@ -176,6 +181,14 @@ impl Wing {
 
     pub fn lower_wing_size(&mut self, size: impl Into<Size<Pixels>>) {
         self.lower_wing_size = size.into();
+    }
+
+    pub fn upper_wing_side(&mut self, side: WingSide) {
+        self.upper_wing_side = side;
+    }
+
+    pub fn lower_wing_side(&mut self, side: WingSide) {
+        self.lower_wing_side = side;
     }
 
     pub fn include_upper_wing_in_bounds(&mut self, include: bool) {
@@ -206,7 +219,6 @@ impl Element for Wing {
         window: &mut gpui::Window,
         cx: &mut gpui::App,
     ) -> (gpui::LayoutId, Self::RequestLayoutState) {
-        // Request layout for all children first
         let mut child_layout_ids = Vec::new();
         for child in &mut self.children {
             child_layout_ids.push(child.request_layout(window, cx));
@@ -231,7 +243,6 @@ impl Element for Wing {
         window: &mut Window,
         cx: &mut gpui::App,
     ) -> Option<Hitbox> {
-        // Prepaint all children
         for child in &mut self.children {
             child.prepaint(window, cx);
         }
@@ -257,16 +268,6 @@ impl Element for Wing {
         window: &mut gpui::Window,
         cx: &mut gpui::App,
     ) {
-        // self.interactivity.paint(
-        //     global_id,
-        //     inspector_id,
-        //     bounds,
-        //     hitbox.as_ref(),
-        //     window,
-        //     cx,
-        //     |_style, window, _cx| {},
-        // );
-
         let width = bounds.size.width;
         let height = bounds.size.height;
 
@@ -275,48 +276,96 @@ impl Element for Wing {
         let lower_wing_width = self.lower_wing_size.width;
         let lower_wing_height = self.lower_wing_size.height;
 
+        // Generate upper wing corners based on side
         let upper_corners = if upper_wing_height > px(0.1) && upper_wing_width > px(0.1) {
-            if self.include_upper_wing_in_bounds {
-                vec![
-                    bounds.origin + Point::new(px(0.0), px(0.0)),
-                    bounds.origin + Point::new(upper_wing_width, px(0.0)),
-                    bounds.origin
-                        + Point::new(upper_wing_width + upper_wing_height, upper_wing_height),
-                    bounds.origin + Point::new(width, upper_wing_height),
-                ]
-            } else {
-                vec![
-                    bounds.origin + Point::new(px(0.0), -upper_wing_height),
-                    bounds.origin + Point::new(upper_wing_width, -upper_wing_height),
-                    bounds.origin + Point::new(upper_wing_width + upper_wing_height, px(0.0)),
-                    bounds.origin + Point::new(width, px(0.0)),
-                ]
+            match self.upper_wing_side {
+                WingSide::Left => {
+                    if self.include_upper_wing_in_bounds {
+                        vec![
+                            bounds.origin + Point::new(px(0.0), px(0.0)),
+                            bounds.origin + Point::new(upper_wing_width, px(0.0)),
+                            bounds.origin
+                                + Point::new(upper_wing_width + upper_wing_height, upper_wing_height),
+                            bounds.origin + Point::new(width, upper_wing_height),
+                        ]
+                    } else {
+                        vec![
+                            bounds.origin + Point::new(px(0.0), -upper_wing_height),
+                            bounds.origin + Point::new(upper_wing_width, -upper_wing_height),
+                            bounds.origin + Point::new(upper_wing_width + upper_wing_height, px(0.0)),
+                            bounds.origin + Point::new(width, px(0.0)),
+                        ]
+                    }
+                }
+                WingSide::Right => {
+                    if self.include_upper_wing_in_bounds {
+                        vec![
+                            bounds.origin + Point::new(px(0.0), upper_wing_height),
+                            bounds.origin
+                                + Point::new(width - upper_wing_width - upper_wing_height, upper_wing_height),
+                            bounds.origin + Point::new(width - upper_wing_width, px(0.0)),
+                            bounds.origin + Point::new(width, px(0.0)),
+                        ]
+                    } else {
+                        vec![
+                            bounds.origin + Point::new(px(0.0), px(0.0)),
+                            bounds.origin
+                                + Point::new(width - upper_wing_width - upper_wing_height, px(0.0)),
+                            bounds.origin + Point::new(width - upper_wing_width, -upper_wing_height),
+                            bounds.origin + Point::new(width, -upper_wing_height),
+                        ]
+                    }
+                }
             }
         } else {
             vec![bounds.origin, bounds.origin + Point::new(width, px(0.0))]
         };
 
+        // Generate lower wing corners based on side
         let lower_corners = if lower_wing_height > px(0.1) && lower_wing_width > px(0.1) {
-            if self.include_lower_wing_in_bounds {
-                vec![
-                    bounds.origin + Point::new(width, height),
-                    bounds.origin + Point::new(width - lower_wing_width, height),
-                    bounds.origin
-                        + Point::new(
-                            width - lower_wing_width - lower_wing_height,
-                            height - lower_wing_height,
-                        ),
-                    bounds.origin + Point::new(px(0.0), height - lower_wing_height),
-                ]
-            } else {
-                vec![
-                    bounds.origin + Point::new(width, height + lower_wing_height),
-                    bounds.origin
-                        + Point::new(width - lower_wing_width, height + lower_wing_height),
-                    bounds.origin
-                        + Point::new(width - lower_wing_width - lower_wing_height, height),
-                    bounds.origin + Point::new(px(0.0), height),
-                ]
+            match self.lower_wing_side {
+                WingSide::Right => {
+                    if self.include_lower_wing_in_bounds {
+                        vec![
+                            bounds.origin + Point::new(width, height),
+                            bounds.origin + Point::new(width - lower_wing_width, height),
+                            bounds.origin
+                                + Point::new(
+                                width - lower_wing_width - lower_wing_height,
+                                height - lower_wing_height,
+                            ),
+                            bounds.origin + Point::new(px(0.0), height - lower_wing_height),
+                        ]
+                    } else {
+                        vec![
+                            bounds.origin + Point::new(width, height + lower_wing_height),
+                            bounds.origin
+                                + Point::new(width - lower_wing_width, height + lower_wing_height),
+                            bounds.origin
+                                + Point::new(width - lower_wing_width - lower_wing_height, height),
+                            bounds.origin + Point::new(px(0.0), height),
+                        ]
+                    }
+                }
+                WingSide::Left => {
+                    if self.include_lower_wing_in_bounds {
+                        vec![
+                            bounds.origin + Point::new(width, height - lower_wing_height),
+                            bounds.origin
+                                + Point::new(lower_wing_width + lower_wing_height, height - lower_wing_height),
+                            bounds.origin + Point::new(lower_wing_width, height),
+                            bounds.origin + Point::new(px(0.0), height),
+                        ]
+                    } else {
+                        vec![
+                            bounds.origin + Point::new(width, height),
+                            bounds.origin
+                                + Point::new(lower_wing_width + lower_wing_height, height),
+                            bounds.origin + Point::new(lower_wing_width, height + lower_wing_height),
+                            bounds.origin + Point::new(px(0.0), height + lower_wing_height),
+                        ]
+                    }
+                }
             }
         } else {
             vec![

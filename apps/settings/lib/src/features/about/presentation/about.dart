@@ -4,7 +4,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dar
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 
 class About extends StatefulWidget {
   const About({super.key});

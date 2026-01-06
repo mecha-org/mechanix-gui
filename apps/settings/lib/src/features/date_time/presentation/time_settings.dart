@@ -8,7 +8,7 @@ import 'package:mechanix_settings/src/features/date_time/blocs/date_time_state.d
 import 'package:mechanix_settings/src/features/date_time/models/types.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/widgets/apply_button.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/wheelScroll/mechanix_wheel_scroll_theme.dart';
+import 'package:widgets/widgets/wheel_scroll/mechanix_wheel_scroll_theme.dart';
 
 class TimeSettings extends StatefulWidget {
   const TimeSettings({super.key});

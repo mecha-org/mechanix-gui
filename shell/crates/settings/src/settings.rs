@@ -17,9 +17,15 @@ pub struct Settings {
     #[serde(default)]
     pub universal_search: UniversalSearchSettings,
     #[serde(default)]
+    pub notifications: NotificationSettings,
+    #[serde(default)]
     pub app_drawer: AppDrawerSettings,
     #[serde(default)]
     pub homescreen: HomescreenSettings,
+    #[serde(default)]
+    pub power_options: PowerOptionsSettings,
+    #[serde(default)]
+    pub volume_slider: VolumeSliderSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -88,7 +94,7 @@ impl Default for RunningAppsSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(300.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -112,7 +118,7 @@ impl Default for SettingsDrawerSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -136,7 +142,31 @@ impl Default for UniversalSearchSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(180.0), px(29.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
+        }
+    }
+}
+
+/// Notification settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct NotificationSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub navbar_size: Size<Pixels>,
+}
+
+impl Default for NotificationSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Top,
+                anchor: Anchor::BOTTOM,
+                namespace: "mechanix.notifications".into(),
+                exclusive_zone: px(-1.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+            navbar_size: Size::new(px(199.22), px(28.5)),
         }
     }
 }
@@ -183,6 +213,54 @@ impl Default for HomescreenSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
+        }
+    }
+}
+
+/// Power options settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct PowerOptionsSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for PowerOptionsSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Overlay,
+                anchor: Anchor::TOP,
+                namespace: "mechanix.power.options".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+/// Volume slider settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct VolumeSliderSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub min_volume_level: f32,
+    #[serde(default)]
+    pub max_volume_level: f32,
+}
+
+impl Default for VolumeSliderSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Overlay,
+                anchor: Anchor::BOTTOM | Anchor::LEFT | Anchor::RIGHT,
+                namespace: "mechanix.hardware_buttons.slider".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(500.0), px(60.0)),
+            },
+            min_volume_level: 0.0,
+            max_volume_level: 100.0,
         }
     }
 }
@@ -254,7 +332,7 @@ where
         };
     }
 
-    if merged.as_array().iter().len() > 0 {
+    if merged.as_array().iter().len() >= 0 {
         merged.clone().try_into().unwrap_or_default()
     } else {
         T::default()

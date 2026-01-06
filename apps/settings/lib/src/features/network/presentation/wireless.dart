@@ -16,9 +16,9 @@ import 'package:mechanix_settings/src/features/network/presentation/connect_secu
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/listItems/simple_list_items_type.dart';
-import 'package:widgets/widgets/sectionList/mechanix_section_list_theme.dart';
-import 'package:widgets/widgets/sectionList/section_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
+import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 

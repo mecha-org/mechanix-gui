@@ -15,8 +15,6 @@ pub struct ThemeColors {
     pub accent_800: Rgba,
     pub accent_900: Rgba,
     pub accent_1000: Rgba,
-    pub accent_1100: Rgba,
-    pub accent_1200: Rgba,
     pub background_0: Rgba,
     pub background_100: Rgba,
     pub background_200: Rgba,
@@ -28,8 +26,6 @@ pub struct ThemeColors {
     pub background_800: Rgba,
     pub background_900: Rgba,
     pub background_1000: Rgba,
-    pub background_1100: Rgba,
-    pub background_1200: Rgba,
     pub foreground_0: Rgba,
     pub foreground_100: Rgba,
     pub foreground_200: Rgba,
@@ -41,8 +37,6 @@ pub struct ThemeColors {
     pub foreground_800: Rgba,
     pub foreground_900: Rgba,
     pub foreground_1000: Rgba,
-    pub foreground_1100: Rgba,
-    pub foreground_1200: Rgba,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -56,8 +50,8 @@ impl Default for ColorsSetting {
     fn default() -> Self {
         Self {
             accent_color: Oklcha::new(0.6388, 0.1435, 64.8, 98.0),
-            background_color: Oklcha::new(0.1638, 0.0, 0.0, 100.0),
-            foreground_color: Oklcha::new(0.8638, 0.0, 0.0, 100.0),
+            background_color: Oklcha::new(0.0, 0.0, 0.0, 100.0),
+            foreground_color: Oklcha::new(1.0, 0.0, 0.0, 100.0),
         }
     }
 }
@@ -71,47 +65,56 @@ impl ThemeColors {
             ..
         } = colors;
 
-        self.accent_0 = oklcha_to_rgba(accent_color.lighten_fixed(0.6));
-        self.accent_100 = oklcha_to_rgba(accent_color.lighten_fixed(0.5));
-        self.accent_200 = oklcha_to_rgba(accent_color.lighten_fixed(0.4));
-        self.accent_300 = oklcha_to_rgba(accent_color.lighten_fixed(0.3));
-        self.accent_400 = oklcha_to_rgba(accent_color.lighten_fixed(0.2));
-        self.accent_500 = oklcha_to_rgba(accent_color.lighten_fixed(0.1));
-        self.accent_600 = oklcha_to_rgba(accent_color);
-        self.accent_700 = oklcha_to_rgba(accent_color.darken_fixed(0.1));
-        self.accent_800 = oklcha_to_rgba(accent_color.darken_fixed(0.2));
-        self.accent_900 = oklcha_to_rgba(accent_color.darken_fixed(0.3));
-        self.accent_1000 = oklcha_to_rgba(accent_color.darken_fixed(0.4));
-        self.accent_1100 = oklcha_to_rgba(accent_color.darken_fixed(0.5));
-        self.accent_1200 = oklcha_to_rgba(accent_color.darken_fixed(0.6));
+        //For Dark theme
+        if mode == ThemeMode::Dark {
+            self.accent_0 = oklcha_to_rgba(accent_color.lighten_fixed(0.1));
+            self.accent_100 = oklcha_to_rgba(accent_color.lighten_fixed(0.05));
+            self.accent_200 = oklcha_to_rgba(accent_color);
+            self.accent_300 = oklcha_to_rgba(accent_color.darken_fixed(0.05));
+            self.accent_400 = oklcha_to_rgba(accent_color.darken_fixed(0.1));
+            self.accent_500 = oklcha_to_rgba(accent_color.darken_fixed(0.15));
+            self.accent_600 = oklcha_to_rgba(accent_color.darken_fixed(0.20));
+            self.accent_700 = oklcha_to_rgba(accent_color.darken_fixed(0.25));
+            self.accent_800 = oklcha_to_rgba(accent_color.darken_fixed(0.30));
+            self.accent_900 = oklcha_to_rgba(accent_color.darken_fixed(0.35));
+            self.accent_1000 = oklcha_to_rgba(accent_color.darken_fixed(0.40));
+        } else {
+            self.accent_0 = oklcha_to_rgba(accent_color.darken_fixed(0.1));
+            self.accent_100 = oklcha_to_rgba(accent_color.darken_fixed(0.05));
+            self.accent_200 = oklcha_to_rgba(accent_color);
+            self.accent_300 = oklcha_to_rgba(accent_color.lighten_fixed(0.05));
+            self.accent_400 = oklcha_to_rgba(accent_color.lighten_fixed(0.1));
+            self.accent_500 = oklcha_to_rgba(accent_color.lighten_fixed(0.15));
+            self.accent_600 = oklcha_to_rgba(accent_color.lighten_fixed(0.20));
+            self.accent_700 = oklcha_to_rgba(accent_color.lighten_fixed(0.25));
+            self.accent_800 = oklcha_to_rgba(accent_color.lighten_fixed(0.30));
+            self.accent_900 = oklcha_to_rgba(accent_color.lighten_fixed(0.35));
+            self.accent_1000 = oklcha_to_rgba(accent_color.lighten_fixed(0.40));
+        }
 
         self.background_0 = oklcha_to_rgba(background_color.lighten_fixed(0.6));
-        self.background_100 = oklcha_to_rgba(background_color.lighten_fixed(0.5));
-        self.background_200 = oklcha_to_rgba(background_color.lighten_fixed(0.4));
-        self.background_300 = oklcha_to_rgba(background_color.lighten_fixed(0.3));
-        self.background_400 = oklcha_to_rgba(background_color.lighten_fixed(0.2));
-        self.background_500 = oklcha_to_rgba(background_color.lighten_fixed(0.1));
-        self.background_600 = oklcha_to_rgba(background_color);
-        self.background_700 = oklcha_to_rgba(background_color.darken_fixed(0.1));
-        self.background_800 = oklcha_to_rgba(background_color.darken_fixed(0.2));
-        self.background_900 = oklcha_to_rgba(background_color.darken_fixed(0.3));
-        self.background_1000 = oklcha_to_rgba(background_color.darken_fixed(0.4));
-        self.background_1100 = oklcha_to_rgba(background_color.darken_fixed(0.5));
-        self.background_1200 = oklcha_to_rgba(background_color.darken_fixed(0.6));
+        self.background_100 = oklcha_to_rgba(background_color.lighten_fixed(0.55));
+        self.background_200 = oklcha_to_rgba(background_color.lighten_fixed(0.5));
+        self.background_300 = oklcha_to_rgba(background_color.lighten_fixed(0.45));
+        self.background_400 = oklcha_to_rgba(background_color.lighten_fixed(0.4));
+        self.background_500 = oklcha_to_rgba(background_color.lighten_fixed(0.35));
+        self.background_600 = oklcha_to_rgba(background_color.lighten_fixed(0.3));
+        self.background_700 = oklcha_to_rgba(background_color.lighten_fixed(0.25));
+        self.background_800 = oklcha_to_rgba(background_color.lighten_fixed(0.2));
+        self.background_900 = oklcha_to_rgba(background_color.lighten_fixed(0.15));
+        self.background_1000 = oklcha_to_rgba(background_color);
 
-        self.foreground_0 = oklcha_to_rgba(foreground_color.lighten_fixed(0.6));
-        self.foreground_100 = oklcha_to_rgba(foreground_color.lighten_fixed(0.5));
-        self.foreground_200 = oklcha_to_rgba(foreground_color.lighten_fixed(0.4));
-        self.foreground_300 = oklcha_to_rgba(foreground_color.lighten_fixed(0.3));
-        self.foreground_400 = oklcha_to_rgba(foreground_color.lighten_fixed(0.2));
-        self.foreground_500 = oklcha_to_rgba(foreground_color.lighten_fixed(0.1));
-        self.foreground_600 = oklcha_to_rgba(foreground_color);
-        self.foreground_700 = oklcha_to_rgba(foreground_color.darken_fixed(0.1));
-        self.foreground_800 = oklcha_to_rgba(foreground_color.darken_fixed(0.2));
-        self.foreground_900 = oklcha_to_rgba(foreground_color.darken_fixed(0.3));
-        self.foreground_1000 = oklcha_to_rgba(foreground_color.darken_fixed(0.4));
-        self.foreground_1100 = oklcha_to_rgba(foreground_color.darken_fixed(0.5));
-        self.foreground_1200 = oklcha_to_rgba(foreground_color.darken_fixed(0.6));
+        self.foreground_0 = oklcha_to_rgba(foreground_color);
+        self.foreground_100 = oklcha_to_rgba(foreground_color.darken_fixed(0.05));
+        self.foreground_200 = oklcha_to_rgba(foreground_color.darken_fixed(0.1));
+        self.foreground_300 = oklcha_to_rgba(foreground_color.darken_fixed(0.15));
+        self.foreground_400 = oklcha_to_rgba(foreground_color.darken_fixed(0.20));
+        self.foreground_500 = oklcha_to_rgba(foreground_color.darken_fixed(0.25));
+        self.foreground_600 = oklcha_to_rgba(foreground_color.darken_fixed(0.30));
+        self.foreground_700 = oklcha_to_rgba(foreground_color.darken_fixed(0.35));
+        self.foreground_800 = oklcha_to_rgba(foreground_color.darken_fixed(0.40));
+        self.foreground_900 = oklcha_to_rgba(foreground_color.darken_fixed(0.45));
+        self.foreground_1000 = oklcha_to_rgba(foreground_color.darken_fixed(0.50));
     }
 }
 
@@ -122,5 +125,20 @@ pub fn oklcha_to_rgba(color: Oklcha) -> Rgba {
         g: rgba.green,
         b: rgba.blue,
         a: rgba.alpha,
+    }
+}
+
+pub trait AlphaExt {
+    fn with_alpha(&self, a: f32) -> Self;
+}
+
+impl AlphaExt for Rgba {
+    fn with_alpha(&self, a: f32) -> Self {
+        Rgba {
+            r: self.r,
+            g: self.g,
+            b: self.b,
+            a,
+        }
     }
 }

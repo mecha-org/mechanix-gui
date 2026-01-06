@@ -15,6 +15,8 @@ gpui = { workspace = true }
 networkmanager = { workspace = true }
 bluez = { workspace = true }
 upower = { workspace = true }
+pulseaudio = { workspace = true }
+system_dbus = { workspace = true }
 chrono = { version = "0.4", features = ["clock"] }
 futures = { workspace = true }
 futures-timer = { workspace = true }

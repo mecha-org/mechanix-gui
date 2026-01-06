@@ -14,6 +14,7 @@ class AppRoutes {
   static const adapterRename = '/bluetooth/settings/rename';
   static const bluetoothDeviceTypes = '/bluetooth/device/types';
   static const bluetoothDiscoverable = '/bluetooth/settings/discoverable';
+  static const manageDevice = '/bluetooth/manage_device';
   static const battery = '/battery';
   static const batteryPerformance = '/battery/performance';
   static const display = '/display';
