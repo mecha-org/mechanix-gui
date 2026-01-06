@@ -23,6 +23,8 @@ use tantivy::{
 use tokio::{sync::mpsc, task::JoinHandle, time};
 use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
 
+
+const DESKTOP_APPS_DIR: &str = "/usr/share/applications";
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum FileAction {
     Upsert,
@@ -95,13 +97,12 @@ impl AppSearchService {
         self.cmd_tx.clone()
     }
     fn load_existing_desktop_entries(
-        desktop_app_dir: &str,
         index_reader: &IndexReader,
         writer: &mut IndexWriter,
         schema: &Schema,
     ) {
         info!("Loading existing desktop entries");
-        let existing_desktop_entries = read_dir(&desktop_app_dir).unwrap();
+        let existing_desktop_entries = read_dir(&DESKTOP_APPS_DIR).unwrap();
         for entry in existing_desktop_entries {
             let entry = entry.unwrap();
             let path = entry.path();
@@ -202,12 +203,11 @@ impl AppSearchService {
         let schema = self.schema.clone(); // make sure schema is Arc or Clone
         let index_reader = self.index.reader()?; // Make sure this is thread safe
         Self::load_existing_desktop_entries(
-            &self.config.desktop_apps_dir,
             &index_reader,
             self.writer.as_mut().expect("index writer missing"),
             &schema,
         );
-        let watch_path: PathBuf = self.config.desktop_apps_dir.clone().into();
+        let watch_path: PathBuf = DESKTOP_APPS_DIR.into();
         if !watch_path.exists() {
             anyhow::bail!("Watch path does not exist: {}", watch_path.display());
         }
@@ -601,7 +601,7 @@ fn create_schema() -> Schema {
     schema_builder.add_text_field("keywords", TEXT);
     schema_builder.add_text_field("icon", STORED);
     schema_builder.add_text_field("last_modified", STORED);
-    schema_builder.add_text_field("path", STRING);
+    schema_builder.add_text_field("path", STRING | STORED);
 
     schema_builder.build()
 }
