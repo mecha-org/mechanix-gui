@@ -33,7 +33,7 @@ pub fn init(cx: &mut App) {
     cx.spawn(async move |app| {
         while let Some(event) = rx.next().await {
             let _ = app.update(|cx| {
-                handle::handle_event(cx, event);
+                handle::handle_volume_event(cx, event);
             });
         }
     })

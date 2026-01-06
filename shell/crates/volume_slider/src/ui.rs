@@ -59,7 +59,7 @@ pub fn init(cx: &mut App) {
                 anchor,
                 keyboard_interactivity: KeyboardInteractivity::None,
                 exclusive_zone: Some(exclusive_zone),
-                margin: Some((px(0.0), px(0.0), px(60.0), px(0.0))),
+                margin: Some((px(0.0), px(0.0), px(60.0), px(16.0))),
                 ..Default::default()
             }),
             ..Default::default()
