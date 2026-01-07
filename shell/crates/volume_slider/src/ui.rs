@@ -18,7 +18,14 @@ const SLIDER_HEIGHT: f32 = 233.0;
 // Volume mode indicator icon space
 const ICON_SIZE: f32 = 20.0;
 
-pub fn init(cx: &mut App) {
+/// Slider configuration returned from init for use by signal handlers
+pub struct SliderConfig {
+    pub slider: Entity<SliderState>,
+    pub min_volume: f32,
+    pub max_volume: f32,
+}
+
+pub fn init(cx: &mut App) -> SliderConfig {
     let VolumeSliderSettings {
         layer_shell,
         min_volume_level,
@@ -32,20 +39,14 @@ pub fn init(cx: &mut App) {
         exclusive_zone,
     } = layer_shell;
 
-    let initial_value = handle::slider_value(cx);
-    let min_volume = min_volume_level;
-    let max_volume = max_volume_level;
+    let initial_value = handle::get_volume(cx).clamp(min_volume_level, max_volume_level);
     let slider_state = cx.new(|_| {
         SliderState::new()
-            .min(min_volume)
-            .max(max_volume)
+            .min(min_volume_level)
+            .max(max_volume_level)
             .default_value(initial_value)
             .pattern(SliderPattern::Bars)
     });
-
-    if let Some((entity, value)) = handle::register_slider(cx, &slider_state) {
-        handle::sync_slider_value(&entity, value, cx);
-    }
 
     let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
     let slider_state_for_overlay = slider_state.clone();
@@ -67,13 +68,19 @@ pub fn init(cx: &mut App) {
         },
         move |_window, cx| {
             let slider_state = slider_state_for_overlay.clone();
-            let initial_value = handle::slider_value(cx);
+            let initial_value = handle::get_volume(cx).clamp(min_volume_level, max_volume_level);
             cx.new(move |cx| {
-                SliderOverlay::new(cx, slider_state.clone(), initial_value, min_volume, max_volume)
+                SliderOverlay::new(cx, slider_state.clone(), initial_value, min_volume_level, max_volume_level)
             })
         },
     )
     .unwrap();
+
+    SliderConfig {
+        slider: slider_state,
+        min_volume: min_volume_level,
+        max_volume: max_volume_level,
+    }
 }
 
 struct SliderOverlay {
@@ -100,7 +107,8 @@ impl SliderOverlay {
                 let SliderEvent::Change(value) = *event;
                 this.slider_value = value;
                 this.show_overlay(cx);
-                // Sync volume to system when slider is changed via touch/drag
+                // Sync volume to ShellState and system when slider is changed via touch/drag
+                handle::set_volume(cx, value);
                 handle::sync_volume_to_system(value, cx);
             },
         );
