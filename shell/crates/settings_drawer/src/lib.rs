@@ -1,6 +1,6 @@
 pub mod constants;
 pub mod helper;
-pub mod ui;
+mod ui;
 
 use gpui::{
     layer_shell::{KeyboardInteractivity, LayerShellOptions},

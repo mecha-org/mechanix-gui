@@ -4,7 +4,7 @@ use std::time::Duration;
 use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 
 use crate::handle;
-use crate::icon::{icon_for_volume, Icon};
+use crate::icon::{VolumeIcon, VolumeIconName};
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
 
 const OVERLAY_PADDING: f32 = 16.0;
@@ -146,7 +146,7 @@ impl SliderOverlay {
 impl Render for SliderOverlay {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let icon_name =
-            icon_for_volume(self.slider_value, self.min_volume, self.max_volume);
+            VolumeIconName::from_volume(self.slider_value, self.min_volume, self.max_volume);
 
         div()
             .flex()
@@ -181,7 +181,7 @@ impl Render for SliderOverlay {
                             .items_center()
                             .justify_center()
                             .child(
-                                Icon::new(icon_name)
+                                VolumeIcon::new(icon_name)
                                     .size((px(ICON_SIZE), px(ICON_SIZE)))
                                     .text_color(rgb(0xFFFFFF)),
                             ),
