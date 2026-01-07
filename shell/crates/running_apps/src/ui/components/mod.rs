@@ -1,3 +1,3 @@
-pub mod footer;
+pub mod clear_all;
 pub mod card;
 pub mod scroller;
