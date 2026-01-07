@@ -1,42 +1,41 @@
-use gpui::*;
-use tokio::sync::mpsc;
+use commons::prelude::*;
+use gpui::{foreign_toplevel_management::ForeignToplevelHandle, *};
 
-use crate::prelude::app_manager::AppManagerMessage;
-
-pub struct RunningApps {
-    pub scroll_offset: Pixels,
-    pub is_dragging: bool,
-    pub drag_start_x: Pixels,
-    pub target_scroll_offset: Pixels,
-    pub drag_start_y: Pixels,
-    pub drag_start_offset: Pixels,
-    pub apps: Vec<AppCard>,
-    pub dragging_card: Option<usize>,
-    pub drag_direction: Option<DragDirection>,
-    pub is_animating: bool,
-    pub is_removing: bool,
-    pub removing_card_id: Option<usize>,
-    pub current_center_index: usize,
-    pub is_cleaning_up: bool,
-    pub position: f32,
-    pub bar_drag_offset: f32,
-    pub bar_drag_start_y: Option<f32>,
-    pub show_apps: bool,
-    pub message_tx: mpsc::Sender<AppManagerMessage>,
+pub enum AppCardAnimation {
+    None,
+    SwipingOut {
+        direction: f32,
+        progress: f32,
+        start_offset: f32,
+    },
+    ClearingAll {
+        start_time: std::time::Instant,
+    },
+    Initial {
+        start_time: std::time::Instant,
+        start_offset: f32,
+    },
 }
 
 #[derive(Clone, Copy, PartialEq)]
-pub enum DragDirection {
+pub enum GestureType {
     Horizontal,
     Vertical,
 }
 
-#[derive(Clone)]
-pub struct AppCard {
-    pub id: usize,
-    pub app_id: String,
-    pub offset_y: Pixels,
-    pub target_offset_y: Pixels,
-    pub app_name: Option<String>,
-    pub app_icon_path: Option<String>,
+pub struct RunningApps {
+    pub scroll_offset: f32,
+    pub animation_state: AppCardAnimation,
+    pub dragged_card_index: Option<usize>,
+    pub dragged_parent: bool,
+    pub horizontal_offset: f32,
+    pub drag_start: Option<(Point<Pixels>, f32)>,
+    pub gesture_locked: Option<GestureType>,
+    pub animation_start_time: Option<std::time::Instant>,
+    pub has_dragged: bool, // Track if user has dragged
+    pub apps: Vec<(ForeignToplevelHandle, commons::prelude::App)>,
+    pub bar_drag_offset: f32,
+    pub bar_drag_start_y: Option<f32>,
+    pub show_apps: bool,
+    pub installed_apps: Entity<InstalledApps>,
 }

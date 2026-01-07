@@ -15,11 +15,13 @@ pub fn run() {
         //init shell state
         shell_state::init(cx);
 
+        let installed_apps = cx.new(|cx| InstalledApps::new(cx));
+
         status_bar::run_app(cx);
 
         homescreen::run_app(cx);
 
-        running_apps::run_app(cx);
+        running_apps::run_app(installed_apps, cx);
 
         // universal_search::run_app(cx);
 
@@ -29,7 +31,7 @@ pub fn run() {
 
         volume_slider::run_app(cx);
 
-        // power_options::run_app(cx);  // only call when requested
+        power_options::run_app(cx); // only call when requested
 
         cx.activate(true);
         cx.refresh_windows();
