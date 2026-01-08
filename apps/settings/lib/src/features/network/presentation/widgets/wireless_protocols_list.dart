@@ -62,7 +62,7 @@ class _WirelessProtocolsListState extends State<WirelessProtocolsList> {
           ),
         ),
       ),
-      bottomSheet: MechanixBottomBar(
+      bottomNavigationBar: MechanixBottomBar(
         leadingWidget: [context.backButton],
       ),
     );

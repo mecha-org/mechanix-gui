@@ -44,7 +44,7 @@ class _ConfigureProxyWidgetState extends State<ConfigureProxyWidget> {
           ),
         ),
       ),
-      bottomSheet: MechanixBottomBar(
+      bottomNavigationBar: MechanixBottomBar(
         leadingWidget: [context.backButton],
       ),
     );

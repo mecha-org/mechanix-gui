@@ -19,7 +19,7 @@ class WirelessSettingsState extends Equatable {
   final AccessPoints? selectedAccessPoint;
   final NetworkManagerAccessPoint? selectedNMAccessPoint;
 
-  final String? wifiState;
+  final WifiStatus? wifiState;
   final String? error;
   final AccessPoints? connectedNetwork;
   final NetworkManagerDeviceState? deviceState;
@@ -52,7 +52,7 @@ class WirelessSettingsState extends Equatable {
     bool? availableOtherNetworksLoading,
     bool? availableSavedNetworksLoading,
     AccessPoints? selectedAccessPoint,
-    String? wifiState,
+    WifiStatus? wifiState,
     String? error,
     AccessPoints? connectedNetwork,
     NetworkManagerDeviceState? deviceState,

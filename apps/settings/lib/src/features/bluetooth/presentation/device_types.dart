@@ -52,7 +52,7 @@ class _DeviceTypesState extends State<DeviceTypes> {
           ],
         )),
       ),
-      bottomSheet: MechanixBottomBar(
+      bottomNavigationBar: MechanixBottomBar(
         leadingWidget: [context.backButton],
       ),
     );

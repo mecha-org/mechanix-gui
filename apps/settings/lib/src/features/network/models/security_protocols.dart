@@ -3,21 +3,18 @@ import 'package:nm/nm.dart';
 
 WirelessProtocol getWirelessProtocol(
     List<NetworkManagerWifiAccessPointSecurityFlag> flags) {
-  final Set<NetworkManagerWifiAccessPointSecurityFlag> setFlags = flags
-          .where((flag) => flag is NetworkManagerWifiAccessPointSecurityFlag)
-          .map((flag) => flag as NetworkManagerWifiAccessPointSecurityFlag)
-          .toSet() ??
-      {};
-
-  final securityFlag = _getSecurityType(setFlags);
-
-  return securityFlag;
+  final Set<NetworkManagerWifiAccessPointSecurityFlag> setFlags = flags.toSet();
+  return _getSecurityType(setFlags);
 }
 
 WirelessProtocol _getSecurityType(
     Set<NetworkManagerWifiAccessPointSecurityFlag> flags) {
   // WEP
-  if (flags.any((f) => f.name.contains('Wep'))) {
+  if (flags.any((f) =>
+      f == NetworkManagerWifiAccessPointSecurityFlag.pairWep40 ||
+      f == NetworkManagerWifiAccessPointSecurityFlag.pairWep104 ||
+      f == NetworkManagerWifiAccessPointSecurityFlag.groupWep40 ||
+      f == NetworkManagerWifiAccessPointSecurityFlag.groupWep104)) {
     return WirelessProtocol.wep;
   }
 
@@ -46,9 +43,19 @@ WirelessProtocol _getSecurityType(
     return WirelessProtocol.wpa3;
   }
 
+  // Mixed WPA2 + WPA3 (e.g., PSK + SAE + CCMP)
+  if (flags.contains(
+          NetworkManagerWifiAccessPointSecurityFlag.keyManagementPsk) &&
+      flags.contains(
+          NetworkManagerWifiAccessPointSecurityFlag.keyManagementSae) &&
+      flags.contains(NetworkManagerWifiAccessPointSecurityFlag.pairCcmp)) {
+    return isEnterprise
+        ? WirelessProtocol.wpa3Enterprise
+        : WirelessProtocol.wpa2Wpa3;
+  }
+
   // Enterprise (WPA/WPA2)
   if (isEnterprise) {
-    // Check if CCMP is present (indicates WPA2)
     bool hasCcmp =
         flags.contains(NetworkManagerWifiAccessPointSecurityFlag.pairCcmp) ||
             flags.contains(NetworkManagerWifiAccessPointSecurityFlag.groupCcmp);
@@ -61,8 +68,8 @@ WirelessProtocol _getSecurityType(
     } else if (hasTkip && !hasCcmp) {
       return WirelessProtocol.wpaEnterprise;
     } else {
-      // Both TKIP and CCMP present, or neither
-      return WirelessProtocol.wpa2Enterprise; // Default to WPA2 for mixed mode
+      // Both or neither: Default to WPA2
+      return WirelessProtocol.wpa2Enterprise;
     }
   }
 
@@ -76,9 +83,9 @@ WirelessProtocol _getSecurityType(
         flags.contains(NetworkManagerWifiAccessPointSecurityFlag.pairTkip) ||
             flags.contains(NetworkManagerWifiAccessPointSecurityFlag.groupTkip);
 
-    // Both CCMP and TKIP (mixed mode WPA + WPA2)
+    // Both CCMP and TKIP (mixed WPA + WPA2) - prioritize WPA2
     if (hasCcmp && hasTkip) {
-      return WirelessProtocol.wpa2Wpa3; // Or could be WPA+WPA2
+      return WirelessProtocol.wpa2;
     }
 
     // Only CCMP (WPA2)

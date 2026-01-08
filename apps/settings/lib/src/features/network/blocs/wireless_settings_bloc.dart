@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:nm/nm.dart';
 
 import 'wireless_settings_event.dart';
@@ -55,6 +56,7 @@ class WirelessSettingsBloc
     on<UpdateConnectedNetworkEvent>(_updateConnectedNetwork);
     on<Error>(handleError);
     on<SelectedWirelessProtocol>(_selectWirelessProtocol);
+    on<RefreshWifiList>(_onRefreshWifiList);
   }
 
   Future<void> _onInit(
@@ -128,16 +130,19 @@ class WirelessSettingsBloc
           var state = await wifiRepository.getWifiState();
           switch (state) {
             case NetworkManagerState.connecting:
-              add(WifiStatusChanged(["Connecting..."]));
+              add(WifiStatusChanged(WifiStatus.connecting));
               break;
             case NetworkManagerState.connectedGlobal:
-              add(WifiStatusChanged(["Connected"]));
+              add(WifiStatusChanged(WifiStatus.connected));
               break; // Prevents fallthrough to the default case
             case NetworkManagerState.disconnecting:
-              add(WifiStatusChanged(["Disconnecting..."]));
+              add(WifiStatusChanged(WifiStatus.disconnecting));
+              break;
+            case NetworkManagerState.disconnected:
+              add(WifiStatusChanged(WifiStatus.disconnected));
               break;
             default:
-              add(WifiStatusChanged([""]));
+              add(WifiStatusChanged(WifiStatus.unknown));
               break;
           }
         }
@@ -169,6 +174,7 @@ class WirelessSettingsBloc
 
           if (availAccessPoints.active != null) {
             add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
+            add(WifiStatusChanged(WifiStatus.connected));
           }
         }
       });
@@ -211,9 +217,7 @@ class WirelessSettingsBloc
 
   void _onWifiStatusChanged(
       WifiStatusChanged event, Emitter<WirelessSettingsState> emit) {
-    for (var action in event.wifiStatus) {
-      emit(state.copyWith(wifiState: action));
-    }
+    emit(state.copyWith(wifiState: event.wifiStatus));
   }
 
   Future<void> handleError(
@@ -274,7 +278,7 @@ class WirelessSettingsBloc
         ...state.availableOtherNetworks,
         ...newNetworks
       ]
-          .where((network) => !network.isSaved) // Only include unsaved networks
+          // .where((network) => !network.isSaved) // Only include unsaved networks // For Showing saved and available network
           .toList();
 
       if (newNetworks.isNotEmpty) {
@@ -340,6 +344,57 @@ class WirelessSettingsBloc
     }
   }
 
+  Future<void> _onRefreshWifiList(
+      RefreshWifiList event, Emitter<WirelessSettingsState> emit) async {
+    try {
+      if (!state.wifiOn) {
+        emit(state.copyWith(
+            error: "WiFi is turned off. Please enable WiFi first."));
+        return;
+      }
+
+      logger.i('BLOC:: Refreshing WiFi list...');
+
+      // Show loading state
+      emit(state.copyWith(
+        availableOtherNetworksLoading: true,
+        availableSavedNetworksLoading: true,
+        error: null,
+      ));
+
+      // Get updated access points
+      final savedNetworks =
+          await wifiRepository.savedNetworks(state.availableOtherNetworks);
+      final availAccessPoints =
+          await wifiRepository.availableAccessPoints(savedNetworks);
+
+      if (availAccessPoints.available.isNotEmpty) {
+        add(UpdateAvailableNetworksEvent(availAccessPoints.available));
+      }
+
+      if (availAccessPoints.active != null) {
+        add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
+      }
+
+      // Also update saved networks
+      add(GetSavedNetworksEvent());
+
+      logger.i('BLOC:: WiFi list refreshed successfully');
+
+      emit(state.copyWith(
+        availableOtherNetworksLoading: false,
+        availableSavedNetworksLoading: false,
+      ));
+    } catch (e) {
+      logger.e('Error refreshing WiFi list: $e');
+      emit(state.copyWith(
+        error: 'Failed to refresh WiFi list: ${e.toString()}',
+        availableOtherNetworksLoading: false,
+        availableSavedNetworksLoading: false,
+      ));
+    }
+  }
+
   void _setSelectedNetwork(
       SelectNetwork event, Emitter<WirelessSettingsState> emit) {
     emit(state.copyWith(
@@ -358,11 +413,4 @@ class WirelessSettingsBloc
       SelectedWirelessProtocol event, Emitter<WirelessSettingsState> emit) {
     emit(state.copyWith(selectedAPWirelessProtocol: event.protocol));
   }
-}
-
-// Define the custom event for WiFi status change
-class WifiStatusChanged extends WirelessSettingsEvent {
-  final List<String> wifiStatus; // Or whatever type your stream emits
-
-  WifiStatusChanged(this.wifiStatus);
 }

@@ -14,11 +14,15 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_e
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/models/security_protocols.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:mechanix_settings/src/features/network/presentation/add_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_strength_icon.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
@@ -50,7 +54,8 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   listItems: [
                     SimpleListItems(
                       title: 'Wireless',
-                      titleTextStyle: TextStyle(fontWeight: FontWeight.w700),
+                      titleTextStyle:
+                          const TextStyle(fontWeight: FontWeight.w700),
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
@@ -60,7 +65,9 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             .add(ToggleWifi(val)),
                       ),
                     ),
-                    if (state.wifiOn && state.connectedNetwork != null)
+                    if (state.wifiState == WifiStatus.connected &&
+                        state.wifiOn &&
+                        state.connectedNetwork != null)
                       SimpleListItems(
                         // onTap: () =>
                         //     onInfoTap(state.connectedNetwork!, context),
@@ -68,9 +75,11 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             .decode(state.connectedNetwork!.nmAccessPoint.ssid),
                         titleTextStyle: context.textTheme.labelMedium
                             ?.copyWith(color: context.primary),
-                        leading: IconWidget(
-                          iconPath: Images.wifi,
-                          iconColor: context.primary,
+                        leading: getWirelessStrengthIcon(
+                          strength:
+                              state.connectedNetwork!.nmAccessPoint.strength,
+                          isSecure: state.connectedNetwork!.isSecure,
+                          isActive: state.connectedNetwork!.isActive,
                         ),
                         trailing: Row(
                           children: [
@@ -129,8 +138,22 @@ class _WirelessSettingsState extends State<WirelessSettings> {
             ),
           ).padTop(8),
         ),
-        bottomSheet: MechanixBottomBar(
+        bottomNavigationBar: MechanixBottomBar(
           leadingWidget: [context.backButton],
+          anchorWidget: [
+            BottomBarButton(
+              onPressed: () {
+                context.read<WirelessSettingsBloc>().add(RefreshWifiList());
+              },
+              iconTheme: const MechanixBottomBarIconThemeData(
+                buttonSize: Size(44, 44),
+                iconBoxSize: Size(28, 28),
+                iconSize: Size(21.88, 21.45),
+                buttonMargin: EdgeInsets.only(right: 12),
+              ),
+              iconPath: Images.arrowCounterClockWise,
+            )
+          ],
         ),
       );
     });
@@ -152,33 +175,39 @@ void onNetworkTap(AccessPoints item, BuildContext context) {
         .read<ConnectNetworkBloc>()
         .add(ConnectToNetwork(item.nmAccessPoint));
   } else {
-    final bloc = context.read<ConnectNetworkBloc>();
+    final connectNetworkBloc = context.read<ConnectNetworkBloc>();
+    final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
-    Navigator.push(
+    MechanixBottomSheet.show(
       context,
-      MaterialPageRoute(
-        builder: (context) => BlocProvider.value(
-          value: bloc,
-          child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
-        ),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: connectNetworkBloc),
+          BlocProvider.value(value: wirelessSettingsBloc),
+        ],
+        child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
       ),
     );
   }
 }
 
 void onInfoTap(AccessPoints item, BuildContext context) {
-  final bloc = context.read<WirelessSettingsBloc>();
+  final connectNetworkBloc = context.read<ConnectNetworkBloc>();
+  final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
-  bloc.add(SelectNetwork(item));
-  bloc.add(SelectNetworkPoint(item.nmAccessPoint));
+  wirelessSettingsBloc.add(SelectNetwork(item));
+  wirelessSettingsBloc.add(SelectNetworkPoint(item.nmAccessPoint));
   final flag = getWirelessProtocol(item.nmAccessPoint.rsnFlags);
-  bloc.add(SelectedWirelessProtocol(flag));
+  wirelessSettingsBloc.add(SelectedWirelessProtocol(flag));
 
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (context) => BlocProvider.value(
-        value: bloc, // reuse the existing bloc
+      builder: (context) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: connectNetworkBloc),
+          BlocProvider.value(value: wirelessSettingsBloc),
+        ],
         child: const NetworkDetails(),
       ),
     ),
@@ -208,8 +237,12 @@ List<SectionListItems> getWifiList(
   final wifi = accessPoints.map((ap) {
     return SectionListItems(
       title: utf8.decode(ap.nmAccessPoint.ssid),
-      // onTap: () => onNetworkTap(ap, context),
-      leading: const IconWidget(iconPath: Images.wifi),
+      onTap: () => onNetworkTap(ap, context),
+      leading: getWirelessStrengthIcon(
+        strength: ap.nmAccessPoint.strength,
+        isSecure: ap.isSecure,
+        isActive: ap.isActive,
+      ),
       defaultTrailingIcon: false,
       trailing: IconButton(
         onPressed: () => onInfoTap(ap, context),
@@ -236,16 +269,14 @@ List<SectionListItems> getWifiList(
           final connectNetworkBloc = context.read<ConnectNetworkBloc>();
           final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
-          Navigator.push(
+          MechanixBottomSheet.show(
             context,
-            MaterialPageRoute(
-              builder: (context) => MultiBlocProvider(
-                providers: [
-                  BlocProvider.value(value: connectNetworkBloc),
-                  BlocProvider.value(value: wirelessSettingsBloc),
-                ],
-                child: const AddNetwork(),
-              ),
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider.value(value: connectNetworkBloc),
+                BlocProvider.value(value: wirelessSettingsBloc),
+              ],
+              child: const AddNetwork(),
             ),
           );
         },
@@ -257,17 +288,4 @@ List<SectionListItems> getWifiList(
   }
 
   return wifi;
-}
-
-IconWidget getWirelessStrengthIcon(
-    {required int strength, bool isActive = false}) {
-  if (strength > 75) {
-    return IconWidget(isActive: isActive, iconPath: Images.wifiHigh);
-  } else if (strength > 50) {
-    return IconWidget(isActive: isActive, iconPath: Images.wifiMedium);
-  } else if (strength > 25) {
-    return IconWidget(isActive: isActive, iconPath: Images.wifiLow);
-  } else {
-    return IconWidget(isActive: isActive, iconPath: Images.wifiNone);
-  }
 }

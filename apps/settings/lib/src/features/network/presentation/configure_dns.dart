@@ -52,7 +52,7 @@ class _ConfigureDnsWidgetState extends State<ConfigureDnsWidget> {
           ).padTop(8),
         ),
       ),
-      bottomSheet: MechanixBottomBar(
+      bottomNavigationBar: MechanixBottomBar(
         leadingWidget: [context.backButton],
       ),
     );

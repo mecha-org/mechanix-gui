@@ -87,7 +87,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
               ).padTop(8),
             ),
           ),
-          bottomSheet: MechanixBottomBar(
+          bottomNavigationBar: MechanixBottomBar(
             leadingWidget: [context.backButton],
           ),
         );

@@ -65,10 +65,14 @@ class Images {
   static const String submit = 'assets/images/tick_icon.png';
   static const String addRoundedSquare = 'assets/images/add_rounded_square.png';
   static const String unlinkIcon = 'assets/images/unlink_icon.png';
-  static const String wifiHigh = 'assets/images/wifi_high.png';
-  static const String wifiMedium = 'assets/images/wifi_medium.png';
-  static const String wifiLow = 'assets/images/wifi_low.png';
+  static const String wifiHighLocked = 'assets/images/wifi_high_locked.png';
+  static const String wifiMediumLocked = 'assets/images/wifi_medium_locked.png';
+  static const String wifiLowLocked = 'assets/images/wifi_low_locked.png';
   static const String wifiNone = 'assets/images/wifi_none.png';
+  static const String wifiHighOpen = 'assets/images/wifi_high_open.png';
+  static const String wifiMediumOpen = 'assets/images/wifi_medium_open.png';
+  static const String wifiLowOpen = 'assets/images/wifi_low_open.png';
+  static const String wifiNotFound = 'assets/images/wifi_not_found.png';
   static const String arrowCounterClockWise =
       'assets/images/arrow_counter_clock_wise.png';
   static const String connectIcon = 'assets/images/connect_icon.png';

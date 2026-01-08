@@ -88,3 +88,14 @@ class SelectedWirelessProtocol extends WirelessSettingsEvent {
   @override
   List<Object> get props => [protocol];
 }
+
+class RefreshWifiList extends WirelessSettingsEvent {}
+
+class WifiStatusChanged extends WirelessSettingsEvent {
+  final WifiStatus wifiStatus;
+
+  WifiStatusChanged(this.wifiStatus);
+
+  @override
+  List<Object> get props => [wifiStatus];
+}

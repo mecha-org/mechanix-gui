@@ -14,8 +14,8 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_s
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/presentation/configure_dns.dart';
 import 'package:mechanix_settings/src/features/network/presentation/configure_proxy.dart';
+import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/ipv4_address.dart';
-import 'package:mechanix_settings/src/features/network/presentation/widgets/connect_network.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
@@ -38,6 +38,8 @@ class _NetworkDetailsState extends State<NetworkDetails> {
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
+        final isActive = state.selectedAccessPoint?.isActive;
+
         return Scaffold(
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
@@ -274,29 +276,53 @@ class _NetworkDetailsState extends State<NetworkDetails> {
               ).padTop(8),
             ),
           ),
-          bottomSheet: MechanixBottomBar(
+          bottomNavigationBar: MechanixBottomBar(
             leadingWidget: [context.backButton],
             centerWidget: [
-              BottomBarButton.widget(
-                widget: TextButton.icon(
-                  onPressed: () {
-                    onNetworkTap(context, state.selectedAccessPoint);
-                  },
-                  icon: IconWidget(
-                    iconPath: Images.addRoundedSquare,
-                    iconHeight: 15,
-                    iconWidth: 15,
-                    boxWidth: 20,
-                    boxHeight: 20,
-                    iconColor: Theme.of(context)
-                        .textButtonTheme
-                        .style
-                        ?.iconColor
-                        ?.resolve({}),
-                  ),
-                  label: const Text("Join Network"),
-                ),
-              ),
+              isActive != null && isActive
+                  ? BottomBarButton.widget(
+                      widget: TextButton.icon(
+                        onPressed: () {
+                          context.read<WirelessSettingsBloc>().add(
+                              ForgetNetwork(utf8.decode(
+                                  state.selectedNMAccessPoint?.ssid ?? [])));
+                          Navigator.pop(context);
+                        },
+                        icon: IconWidget(
+                          iconPath: Images.addRoundedSquare,
+                          iconHeight: 15,
+                          iconWidth: 15,
+                          boxWidth: 20,
+                          boxHeight: 20,
+                          iconColor: Theme.of(context)
+                              .textButtonTheme
+                              .style
+                              ?.iconColor
+                              ?.resolve({}),
+                        ),
+                        label: const Text("Forget Network"),
+                      ),
+                    )
+                  : BottomBarButton.widget(
+                      widget: TextButton.icon(
+                        onPressed: () {
+                          onNetworkTap(context, state.selectedAccessPoint);
+                        },
+                        icon: IconWidget(
+                          iconPath: Images.addRoundedSquare,
+                          iconHeight: 15,
+                          iconWidth: 15,
+                          boxWidth: 20,
+                          boxHeight: 20,
+                          iconColor: Theme.of(context)
+                              .textButtonTheme
+                              .style
+                              ?.iconColor
+                              ?.resolve({}),
+                        ),
+                        label: const Text("Join Network"),
+                      ),
+                    ),
             ],
           ),
         );
@@ -316,17 +342,15 @@ Future<void> onNetworkTap(
     final connectNetworkBloc = context.read<ConnectNetworkBloc>();
     final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
-    Navigator.push(
+    MechanixBottomSheet.show(
       context,
-      MaterialPageRoute(
-        builder: (context) => MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: connectNetworkBloc),
-            BlocProvider.value(value: wirelessSettingsBloc),
-          ],
-          child:
-              ConnectNetwork(accessPoint: selectedAccessPoint?.nmAccessPoint),
-        ),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: connectNetworkBloc),
+          BlocProvider.value(value: wirelessSettingsBloc),
+        ],
+        child: ConnectSecureNetwork(
+            accessPoint: selectedAccessPoint?.nmAccessPoint),
       ),
     );
   }

@@ -128,10 +128,14 @@ flutter:
     - assets/images/trash.png
     - assets/images/add_rounded_square.png
     - assets/images/unlink_icon.png
-    - assets/images/wifi_high.png
-    - assets/images/wifi_medium.png
-    - assets/images/wifi_low.png
+    - assets/images/wifi_high_locked.png
+    - assets/images/wifi_medium_locked.png
+    - assets/images/wifi_low_locked.png
     - assets/images/wifi_none.png
+    - assets/images/wifi_high_locked.png
+    - assets/images/wifi_medium_locked.png
+    - assets/images/wifi_low_locked.png
+    - assets/images/wifi_not_found.png
     - assets/images/tick_icon.png
     - assets/images/arrow_counter_clock_wise.png
     - assets/images/connect_icon.png
