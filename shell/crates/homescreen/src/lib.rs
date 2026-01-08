@@ -6,6 +6,7 @@ use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
 use settings::prelude::*;
 use status_bar::prelude::status_bar_components;
+use theme::ActiveTheme;
 
 mod animation_manager;
 mod config;
@@ -37,8 +38,6 @@ impl Homescreen {
         status_bar_size: Size<Pixels>,
     ) -> Self {
         let mut state = HomescreenState::new(config);
-
-        // Add the Universal Search Widget to Page 0
         state.create_widget(
             UniversalSearchWidget::new(_cx),
             0,
@@ -306,17 +305,18 @@ impl Render for Homescreen {
         if is_animating {
             window.request_animation_frame();
         }
+        let colors = cx.theme().colors.clone();
 
         div()
             .size_full()
-            .bg(rgb(0x1a1a1a))
+            .bg(colors.background_1000)
             .flex()
             .flex_col()
             .on_mouse_down(MouseButton::Left, cx.listener(Self::handle_mouse_down))
             .on_mouse_move(cx.listener(Self::handle_mouse_move))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
             .child(status_bar_components(cx, status_bar_size, true))
-            .child(HomescreenUi::render(&self.state))
+            .child(HomescreenUi::render(&self.state, cx))
     }
 }
 
@@ -328,6 +328,7 @@ pub mod prelude {
 
 pub fn run_app(cx: &mut App) {
     let HomescreenSettings {
+        navbar_height,
         status_bar_size,
         layer_shell,
         ..
@@ -340,8 +341,10 @@ pub fn run_app(cx: &mut App) {
         namespace,
         ..
     } = layer_shell;
-    let config = HomescreenConfig::new(size);
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let screen_size = gpui::size(size.width, size.height - navbar_height);
+
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, screen_size, cx));
+    let config = HomescreenConfig::new(screen_size);
 
     // Register key bindings for the text input
     cx.bind_keys([

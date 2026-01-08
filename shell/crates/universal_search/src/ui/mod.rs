@@ -8,6 +8,7 @@ use crate::ui::icon::Icon;
 use crate::ui::models::FileType;
 use commons::input::TextInput;
 use freedesktop_icons::lookup;
+use gpui::prelude::FluentBuilder;
 use gpui::*;
 use icon::IconName;
 use models::{DragInfo, SearchResults, UniversalSearch};
@@ -247,8 +248,7 @@ impl UniversalSearch {
 impl Render for UniversalSearch {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         div()
-            .w_full()
-            .h_full()
+            .size_full()
             .child(self.universal_search_items(cx, window))
     }
 }
@@ -347,19 +347,17 @@ impl UniversalSearch {
                                     .items_center()
                                     .rounded(px(8.0))
                                     .child(
-                                        div().child(
-                                            match search.file_type {
-                                                FileType::App => {
-                                                    let icon_path = lookup(&search.path).find();
-                                                    Self::resolved_icon(&icon_path)
-                                                }
-                                                FileType::File => Icon::from(
-                                                    get_file_extension_icon(&search.extension),
-                                                )
-                                                .size((px(22.26), px(22.26)))
-                                                .text_color(colors.foreground_400),
-                                            },
-                                        ),
+                                        div().child(match search.file_type {
+                                            FileType::App => {
+                                                let icon_path = lookup(&search.path).find();
+                                                Self::resolved_icon(&icon_path)
+                                            }
+                                            FileType::File => Icon::from(get_file_extension_icon(
+                                                &search.extension,
+                                            ))
+                                            .size((px(22.26), px(22.26)))
+                                            .text_color(colors.foreground_400),
+                                        }),
                                     ),
                             )
                             .child(
@@ -448,91 +446,92 @@ impl UniversalSearch {
         let entity = cx.entity();
 
         div()
-            .h_full()
             .w_full()
-            .bg(gpui::black())
+            .h_full()
             .flex()
             .flex_col()
+            .bg(colors.background_1000)
             .on_drop(cx.listener(Self::on_drop))
             .on_drag_move(cx.listener(Self::on_drag_move))
             .child(
                 div()
-                    .id("drag")
+                    .id("content-container")
                     .flex()
                     .flex_col()
                     .relative()
-                    .h(px(APP_SIZE.1 - SEARCH_BAR_HEIGHT - NAVBAR_SIZE.1))
+                    .h_full()
                     .overflow_hidden()
-                    .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
-                        entity.update(cx, |this, cx| {
-                            this.drag_start_y = position.y;
-                            this.last_scroll_offset = this.scroll_offset;
-                            this.is_dragging = true;
-                            cx.stop_propagation();
-                            cx.notify();
-                        });
-
-                        cx.new(|_| DragInfo::new().position(position))
+                    .px_4()
+                    .child(
+                        div().w_full().h(px(44.)).flex().flex_col().child(
+                            div()
+                                .flex()
+                                .flex_row()
+                                .justify_between()
+                                .items_center()
+                                .h_full()
+                                .child(
+                                    div()
+                                        .text_size(px(20.0))
+                                        .text_color(colors.foreground_600)
+                                        .child("Search"),
+                                )
+                                .child(
+                                    div()
+                                        .id("clear-result")
+                                        .text_size(px(16.0))
+                                        .text_color(if all_results.len() == 0 {
+                                            colors.background_800
+                                        } else {
+                                            colors.foreground_100
+                                        })
+                                        .on_click(cx.listener(
+                                            |this: &mut Self, _event, window, cx| {
+                                                this.clear_search_results(cx);
+                                                this.clear_text_input(cx, window);
+                                            },
+                                        ))
+                                        .child("Clear all"),
+                                ),
+                        ),
+                    )
+                    .when(content_children.len() == 0, |content_div| {
+                        content_div.child(
+                            div().flex().flex_col().h(px(39.)).child(
+                                div()
+                                    .text_size(px(16.0))
+                                    .text_color(colors.background_500)
+                                    .child("Search an app, a file, a word or anything literally"),
+                            ),
+                        )
                     })
                     .child(
                         div()
-                            .absolute()
-                            .top(self.scroll_offset)
-                            .w_full()
-                            .px_4()
+                            .id("scrollable-content")
+                            .flex()
+                            .flex_col()
+                            .relative()
+                            .flex_1()
+                            .overflow_hidden()
+                            .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
+                                entity.update(cx, |this, cx| {
+                                    this.drag_start_y = position.y;
+                                    this.last_scroll_offset = this.scroll_offset;
+                                    this.is_dragging = true;
+                                    cx.stop_propagation();
+                                    cx.notify();
+                                });
+
+                                cx.new(|_| DragInfo::new().position(position))
+                            })
                             .child(
                                 div()
-                                    .child(
-                                        div()
-                                            .w_full()
-                                            .h_full()
-                                            .flex()
-                                            .flex_col()
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .justify_between()
-                                                    .items_center()
-                                                    .child(
-                                                        div()
-                                                            .text_size(px(20.0))
-                                                            .text_color(colors.foreground_600)
-                                                            .child("Search"),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .id("clear-result")
-                                                            .text_size(px(16.0))
-                                                            .text_color(
-                                                                if all_results.len() == 0 {
-                                                                    colors.background_800
-                                                                } else {
-                                                                    colors.foreground_100
-                                                                }
-                                                            )
-                                                            .on_click(cx.listener(
-                                                                |this: &mut Self, _event, window, cx| {
-                                                                    this.clear_search_results(cx);
-                                                                    this.clear_text_input(cx, window);
-                                                                },
-                                                            ))
-                                                            .child("Clear all"),
-                                                    ),
-                                            )
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_col()
-                                                    .h(px(30.))
-                                                    .child(
-                                                        div()
-                                                            .text_size(px(16.0))
-                                                            .text_color(colors.background_500)
-                                                            .child("Search an app, a file, a word or anything literally"),
-                                                    ),
-                                            ),
-                                    )
+                                    .absolute()
+                                    .top(self.scroll_offset)
+                                    .w_full()
+                                    .flex()
+                                    .flex_col()
+                                    .my_1()
                                     .children(content_children),
                             ),
                     ),
@@ -598,17 +597,16 @@ impl UniversalSearch {
                             )
                             .child(
                                 div()
-                                    .size_full()
+                                    .w(px(40.))
+                                    .h(px(40.))
                                     .flex()
                                     .flex_row()
                                     .items_center()
                                     .justify_center()
                                     .id("cancel-button")
-                                    .on_click(cx.listener(
-                                        |this: &mut Self, _event, window, cx| {
-                                            this.clear_text_input(cx, window);
-                                        },
-                                    ))
+                                    .on_click(cx.listener(|this: &mut Self, _event, window, cx| {
+                                        this.clear_text_input(cx, window);
+                                    }))
                                     .child(
                                         Icon::from(x_icon)
                                             .size((px(24.0), px(24.0)))
