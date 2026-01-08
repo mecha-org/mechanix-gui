@@ -617,19 +617,6 @@ impl SettingsDrawer {
                                                 - self.modal_size.1 / 2.0))
                                             .w(px(self.modal_size.0))
                                             .h(px(self.modal_size.1))
-                                            .bg(if self.modal_size.0 == MIN_MODAL_SIZE_1.0 {
-                                                colors.accent_200.with_alpha(0.4)
-                                            } else {
-                                                colors.background_900
-                                            })
-                                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                                px(16.)
-                                            } else {
-                                                px(18.)
-                                            })
-                                            .rounded_xl()
-                                            .border_1()
-                                            .border_color(colors.accent_800)
                                             .on_mouse_down(MouseButton::Left, |_, _, cx| {
                                                 cx.stop_propagation()
                                             })

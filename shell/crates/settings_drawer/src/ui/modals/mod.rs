@@ -1,3 +1,4 @@
+use commons::widgets::wing;
 use gpui::*;
 use theme::prelude::{AlphaExt, Theme};
 
@@ -9,13 +10,14 @@ pub mod sound_modal;
 pub mod wireless_modal;
 
 use crate::ui::{
-    SettingsDrawer,
+    FINAL_MODAL_SIZE, SettingsDrawer,
     icon::{Icon, IconName},
 };
 pub use bluetooth_modal::BluetoothModalScroll;
 pub use wireless_modal::WirelessModalScroll;
 
 const ROW_HEIGHT: f32 = 60.0;
+const MODAL_HEADER_HEIGHT: f32 = 56.0;
 
 impl SettingsDrawer {
     pub fn render_header_div(
@@ -28,23 +30,42 @@ impl SettingsDrawer {
         div()
             .flex()
             .flex_row()
-            .items_center()
-            .justify_between()
-            .w_full()
-            .p_4()
-            .h(px(ROW_HEIGHT))
-            .border_b_1()
-            .bg(colors.background_1000)
             .flex_shrink_0()
             .relative()
-            .child(
-                div()
+            .w_full()
+            .h(px(MODAL_HEADER_HEIGHT))
+            .justify_start()
+            .items_start()
+            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                px(16.)
+            } else {
+                px(20.)
+            })
+            .child({
+                let mut w = wing()
+                    .absolute()
+                    .top_0()
+                    .left_0()
+                    .w_full()
+                    .h(px(56.0))
+                    .flex()
+                    .flex_col()
+                    .px_4()
+                    .py_2()
+                    .border_color(colors.accent_200.with_alpha(0.4))
+                    .border_b_0()
                     .font_weight(FontWeight::SEMIBOLD)
                     .text_color(colors.foreground_300)
-                    .child(title),
-            )
+                    .bg(colors.background_1000)
+                    .child(div().text_color(colors.foreground_300).child(title));
+                w.upper_wing_size(Size::new(px(239.0), px(33.0)));
+                w.border_width(px(1.0));
+                w.border_radius(px(8.0));
+                w
+            })
             .into_any()
     }
+
     pub fn render_settings_div(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
 
@@ -55,7 +76,8 @@ impl SettingsDrawer {
             .items_end()
             .justify_start()
             .border_t_1()
-            .border_color(colors.accent_200.with_alpha(0.4))
+            .bg(colors.background_1000)
+            .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
             .p_4()
             .flex_shrink_0()
