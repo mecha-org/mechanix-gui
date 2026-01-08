@@ -4,18 +4,28 @@ use std::time::Duration;
 use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 
 use crate::handle;
+use crate::icon::{VolumeIcon, VolumeIconName};
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
 
 const OVERLAY_PADDING: f32 = 16.0;
 const OVERLAY_GAP: f32 = 12.0;
 const OVERLAY_RADIUS: f32 = 15.0;
 const OVERLAY_BACKGROUND: u32 = 0x101010;
-const OVERLAY_LABEL_COLOR: u32 = 0xF4F4F4;
 const OVERLAY_TIMEOUT_MS: u64 = 2_000;
-const SLIDER_WIDTH: f32 = 400.0;
-const SLIDER_HEIGHT: f32 = 30.0;
+// Vertical slider dimensions (bars area)
+const SLIDER_WIDTH: f32 = 20.0;
+const SLIDER_HEIGHT: f32 = 233.0;
+// Volume mode indicator icon space
+const ICON_SIZE: f32 = 20.0;
 
-pub fn init(cx: &mut App) {
+/// Slider configuration returned from init for use by signal handlers
+pub struct SliderConfig {
+    pub slider: Entity<SliderState>,
+    pub min_volume: f32,
+    pub max_volume: f32,
+}
+
+pub fn init(cx: &mut App) -> SliderConfig {
     let VolumeSliderSettings {
         layer_shell,
         min_volume_level,
@@ -29,20 +39,14 @@ pub fn init(cx: &mut App) {
         exclusive_zone,
     } = layer_shell;
 
-    let initial_value = handle::slider_value(cx);
-    let min_volume = min_volume_level;
-    let max_volume = max_volume_level;
+    let initial_value = handle::get_volume(cx).clamp(min_volume_level, max_volume_level);
     let slider_state = cx.new(|_| {
         SliderState::new()
-            .min(min_volume)
-            .max(max_volume)
+            .min(min_volume_level)
+            .max(max_volume_level)
             .default_value(initial_value)
             .pattern(SliderPattern::Bars)
     });
-
-    if let Some((entity, value)) = handle::register_slider(cx, &slider_state) {
-        handle::sync_slider_value(&entity, value, cx);
-    }
 
     let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
     let slider_state_for_overlay = slider_state.clone();
@@ -57,42 +61,63 @@ pub fn init(cx: &mut App) {
                 anchor,
                 keyboard_interactivity: KeyboardInteractivity::None,
                 exclusive_zone: Some(exclusive_zone),
-                margin: Some((px(0.0), px(0.0), px(60.0), px(0.0))),
+                margin: Some((px(0.0), px(0.0), px(60.0), px(16.0))),
                 ..Default::default()
             }),
             ..Default::default()
         },
         move |_window, cx| {
             let slider_state = slider_state_for_overlay.clone();
-            let initial_value = handle::slider_value(cx);
-            cx.new(move |cx| SliderOverlay::new(cx, slider_state.clone(), initial_value))
+            let initial_value = handle::get_volume(cx).clamp(min_volume_level, max_volume_level);
+            cx.new(move |cx| {
+                SliderOverlay::new(cx, slider_state.clone(), initial_value, min_volume_level, max_volume_level)
+            })
         },
     )
     .unwrap();
+
+    SliderConfig {
+        slider: slider_state,
+        min_volume: min_volume_level,
+        max_volume: max_volume_level,
+    }
 }
 
 struct SliderOverlay {
     slider_state: Entity<SliderState>,
     slider_value: f32,
+    min_volume: f32,
+    max_volume: f32,
     visible: bool,
     dismiss_generation: u64,
     _subscription: Subscription,
 }
 
 impl SliderOverlay {
-    fn new(cx: &mut Context<Self>, slider_state: Entity<SliderState>, initial_value: f32) -> Self {
+    fn new(
+        cx: &mut Context<Self>,
+        slider_state: Entity<SliderState>,
+        initial_value: f32,
+        min_volume: f32,
+        max_volume: f32,
+    ) -> Self {
         let subscription = cx.subscribe(
             &slider_state,
             |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
                 this.slider_value = value;
                 this.show_overlay(cx);
+                // Sync volume to ShellState and system when slider is changed via touch/drag
+                handle::set_volume(cx, value);
+                handle::sync_volume_to_system(value, cx);
             },
         );
 
         Self {
             slider_state,
             slider_value: initial_value,
+            min_volume,
+            max_volume,
             visible: false,
             dismiss_generation: 0,
             _subscription: subscription,
@@ -128,6 +153,9 @@ impl SliderOverlay {
 
 impl Render for SliderOverlay {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        let icon_name =
+            VolumeIconName::from_volume(self.slider_value, self.min_volume, self.max_volume);
+
         div()
             .flex()
             .items_center()
@@ -147,12 +175,24 @@ impl Render for SliderOverlay {
                     .opacity(if self.visible { 1.0 } else { 0.0 })
                     .shadow_lg()
                     .child(
-                        div().text_sm().text_color(rgb(OVERLAY_LABEL_COLOR)),
-                    )
-                    .child(
                         Slider::new("hardware-buttons-slider", &self.slider_state)
                             .width(SLIDER_WIDTH)
                             .height(SLIDER_HEIGHT),
+                    )
+                    // Volume mode indicator icon
+                    .child(
+                        div()
+                            .id("volume-mode-icon")
+                            .w(px(ICON_SIZE))
+                            .h(px(ICON_SIZE))
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .child(
+                                VolumeIcon::new(icon_name)
+                                    .size((px(ICON_SIZE), px(ICON_SIZE)))
+                                    .text_color(rgb(0xFFFFFF)),
+                            ),
                     ),
             )
     }
