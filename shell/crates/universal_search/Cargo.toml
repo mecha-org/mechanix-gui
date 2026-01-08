@@ -14,5 +14,6 @@ keywords.workspace = true
 gpui = { workspace = true }
 commons = { path = "../commons" }
 mxsearch = { path = "../../../services/search/server" }
-freedesktop-icons = "0.4.0"
 settings = { path = "../settings" }
+theme = { path = "../theme" }
+freedesktop-icons = "0.4.0"

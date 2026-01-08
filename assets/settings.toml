@@ -37,6 +37,8 @@ size = { width = 540.0, height = 620.0 }
 
 [homescreen]
 status_bar_size = { width = 540.0, height = 36.0 }
+navbar_size = { width = 199.22, height = 28.5 }
+navbar_height = 40.0
 
 [homescreen.layer_shell]
 layer = "bottom"

@@ -1,27 +1,28 @@
-use gpui::*;
-
 use crate::{state::HomescreenState, widgets::WidgetWrapper};
+use gpui::*;
+use theme::prelude::Theme;
 
 pub struct HomescreenUi;
 impl HomescreenUi {
-    pub fn render(state: &HomescreenState) -> impl IntoElement {
+    pub fn render(state: &HomescreenState, cx: &mut App) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let mut element = div()
             .size_full()
             .overflow_hidden()
-            .bg(rgb(0x1a1a1a))
-            .text_color(rgb(0xe0e0e0));
+            .bg(colors.background_1000)
+            .text_color(colors.foreground_300);
 
         let mut dragged_widgets = Vec::new();
 
-        for (page_number, widgets) in state.pages.iter().enumerate() {
-            let page_location = (page_number as f32 - state.active_page as f32)
-                * state.config.window.width
-                + state.page_offset;
+        let state_width = state.config.window.width;
+        let state_height = state.config.window.height;
 
-            let mut page = div()
-                .relative()
-                .w(px(state.config.window.width))
-                .h(px(state.config.window.height));
+        for (page_number, widgets) in state.pages.iter().enumerate() {
+            let page_location =
+                (page_number as f32 - state.active_page as f32) * state_width + state.page_offset;
+
+            let mut page = div().relative().w(px(state_width)).h(px(state_height));
 
             for widget_id in widgets.iter() {
                 let widget_data = state.widgets.get(widget_id).unwrap();
@@ -34,8 +35,8 @@ impl HomescreenUi {
             element = element.child(
                 div()
                     .absolute()
-                    .w(px(state.config.window.width))
-                    .h(px(state.config.window.height))
+                    .w(px(state_width))
+                    .h(px(state_height))
                     .top(px(0.0))
                     .left(px(page_location))
                     .child(page),
