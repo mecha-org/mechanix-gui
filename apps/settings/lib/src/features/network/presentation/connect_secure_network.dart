@@ -41,7 +41,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                       CustomTitle(
                         title: "Join",
                         textStyle: TextStyle(
-                          color: context.onSurfaceVariant,
+                          color: context.onInverseSurface,
                           fontWeight: FontWeight.w400,
                           fontSize: 20,
                         ),

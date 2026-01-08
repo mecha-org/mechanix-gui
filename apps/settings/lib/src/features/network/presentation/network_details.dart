@@ -93,29 +93,6 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   if (state.selectedAccessPoint != null &&
                       state.selectedNMAccessPoint != null)
                     MechanixSectionList(
-                      sectionListItems: [
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Signal Strength',
-                          trailing: CustomTrailingText(
-                                  title:
-                                      '${state.selectedAccessPoint?.nmAccessPoint.strength} %')
-                              .padRight(8),
-                        ),
-                        SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Supported Frequency',
-                          trailing: CustomTrailingText(
-                                  title:
-                                      '${state.selectedAccessPoint?.nmAccessPoint.frequency} MHz')
-                              .padRight(8),
-                        ),
-                      ],
-                    ),
-
-                  if (state.selectedAccessPoint != null &&
-                      state.selectedNMAccessPoint != null)
-                    MechanixSectionList(
                       title: 'IPV4 Address',
                       physics: const BouncingScrollPhysics(),
                       sectionListItems: [
