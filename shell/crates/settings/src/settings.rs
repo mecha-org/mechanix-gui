@@ -26,6 +26,10 @@ pub struct Settings {
     pub power_options: PowerOptionsSettings,
     #[serde(default)]
     pub volume_slider: VolumeSliderSettings,
+    #[serde(default)]
+    pub keyboard: KeyboardSettings,
+    #[serde(default)]
+    pub launcher: LauncherSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -261,6 +265,48 @@ impl Default for VolumeSliderSettings {
             },
             min_volume_level: 0.0,
             max_volume_level: 100.0,
+        }
+    }
+}
+
+/// Keyboard settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct KeyboardSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for KeyboardSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Top,
+                anchor: Anchor::TOP,
+                namespace: "mechanix.keyboard".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(300.0)),
+            },
+        }
+    }
+}
+
+/// Launcher settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct LauncherSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for LauncherSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Bottom,
+                anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
+                namespace: "mechanix.launcher".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
         }
     }
 }
