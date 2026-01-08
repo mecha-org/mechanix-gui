@@ -62,10 +62,10 @@ size = { width = 540.0, height = 620.0 }
 
 [volume_slider.layer_shell]
 layer = "overlay"
-anchor = ["bottom", "left", "right"]
+anchor = ["bottom", "left"]
 namespace = "mechanix.hardware_buttons.slider"
 exclusive_zone = 0.0
-size = { width = 500.0, height = 60.0 }
+size = { width = 37.0, height = 277.0 }
 
 [volume_slider]
 min_volume_level = 0.0
