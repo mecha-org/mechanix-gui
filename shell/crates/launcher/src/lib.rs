@@ -166,8 +166,6 @@ pub fn run() {
 
         volume_slider::run_app(cx);
 
-        power_options::run_app(cx); // only call when requested
-
         cx.activate(true);
         cx.refresh_windows();
     });

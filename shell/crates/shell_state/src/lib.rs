@@ -45,6 +45,7 @@ pub struct ShellState {
     pub status_bar_entity: Option<EntityId>,
     pub sound_device_info: DeviceInfo,
     pub brightness_value: f32,
+    pub volume: f32,
     pub nm_tx: Option<mpsc:: Sender<NmMessage>>,
     pub bt_tx: Option<mpsc:: Sender<BtMessage>>,
     pub volume_tx: Option<mpsc:: Sender<VolumeMessage>>,
