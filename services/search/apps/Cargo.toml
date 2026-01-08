@@ -14,3 +14,4 @@ zbus = { workspace = true }
 configparser = { version = "3.1.0" }
 dirs = { version = "6.0.0" }
 tantivy = { version = "0.25.0" }
+freedesktop-icons = "0.4.0"

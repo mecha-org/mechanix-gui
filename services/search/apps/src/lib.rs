@@ -1,9 +1,12 @@
 mod service;
 mod utils;
 
-pub use crate::service::AppInfo;
-pub use crate::service::AppSearchService;
 use serde::Deserialize;
+
+pub mod prelude {
+    pub use crate::service::{AppInfo, AppSearchService};
+    pub use crate::Apps;
+}
 
 /// App search service, watch dir for .desktop files and generate app info
 /// Service recognize the events such as add, remove, update and services uses them to update the index
