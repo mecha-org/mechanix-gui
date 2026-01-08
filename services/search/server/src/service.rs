@@ -1,9 +1,9 @@
 use crate::error::ServiceError;
 use app_actions::AppActions;
-use apps::AppInfo;
 use files::SearchResult;
 use log::{debug, info};
 use zbus::{dbus_proxy, Connection};
+use apps::prelude::{AppInfo};
 
 #[derive(Clone)]
 pub struct MxSearchService {
