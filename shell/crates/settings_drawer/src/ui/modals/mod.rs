@@ -34,8 +34,8 @@ impl SettingsDrawer {
             .relative()
             .w_full()
             .h(px(MODAL_HEADER_HEIGHT))
-            .justify_start()
-            .items_start()
+            .justify_center()
+            .items_center()
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
                 px(16.)
             } else {
@@ -44,20 +44,19 @@ impl SettingsDrawer {
             .child({
                 let mut w = wing()
                     .absolute()
-                    .top_0()
-                    .left_0()
-                    .w_full()
-                    .h(px(56.0))
                     .flex()
                     .flex_col()
+                    .w_full()
+                    .h(px(56.0))
                     .px_4()
                     .py_2()
                     .border_color(colors.accent_200.with_alpha(0.4))
                     .border_b_0()
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(colors.foreground_300)
                     .bg(colors.background_1000)
-                    .child(div().text_color(colors.foreground_300).child(title));
+                    .child(div()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(colors.foreground_300)
+                        .child(title));
                 w.upper_wing_size(Size::new(px(239.0), px(33.0)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));
