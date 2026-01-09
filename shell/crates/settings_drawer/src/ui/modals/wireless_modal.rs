@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-const HEADER_HEIGHT: f32 = 60.0;
+const HEADER_HEIGHT: f32 = 56.0;
 const FOOTER_HEIGHT: f32 = 60.0;
 const ROW_HEIGHT: f32 = 60.0;
 
@@ -82,15 +82,7 @@ impl ScrollBehavior for WirelessModalScroll {
     }
 
     fn estimate_content_height(&self, list_count: usize) -> Pixels {
-        let item_height = px(ROW_HEIGHT);
-        let gap = px(8.);
-        let item_count = list_count as f32;
-
-        if item_count == 0.0 {
-            px(0.)
-        } else {
-            item_count * item_height + (item_count - 1.0) * gap
-        }
+        px(list_count as f32 * ROW_HEIGHT) + px(16.)
     }
 
     fn on_mouse_down(&mut self, event: &MouseDownEvent) {
@@ -139,13 +131,12 @@ impl SettingsDrawer {
                     .flex()
                     .flex_col()
                     .flex_1()
-                    .relative()
+                    .relative() 
                     .bg(colors.background_1000)
                     .border_color(colors.accent_200.with_alpha(0.4))
                     .border_1()
                     .border_t_0()
                     .rounded(px(8.))
-                    .overflow_hidden()
                     .text_size(if self.modal_size != FINAL_MODAL_SIZE {
                         px(16.)
                     } else {
@@ -154,8 +145,12 @@ impl SettingsDrawer {
                     .child(
                         div()
                             .flex()
-                            .flex_1()
-                            .relative()
+                            .absolute() 
+                            .top(px(0.)) 
+                            .left(px(0.))
+                            .right(px(0.))
+                            .bottom(px(FOOTER_HEIGHT)) 
+                            .overflow_hidden()  
                             .bg(colors.background_1000)
                             .on_mouse_down(MouseButton::Left, cx.listener(move |this, event: &MouseDownEvent, _window, cx| {
                                 cx.stop_propagation();
@@ -179,7 +174,6 @@ impl SettingsDrawer {
                                     .right(px(0.))
                                     .flex()
                                     .flex_col()
-                                    .gap_2()
                                     .children(network_list.iter().enumerate().map(
                                         |(idx, network)| {
                                             let ssid = network.ssid.clone();
@@ -304,7 +298,13 @@ impl SettingsDrawer {
                             ),
                     )
                     .child(
-                        self.render_settings_div(cx)
+                        div()
+                            .absolute() 
+                            .bottom(px(0.)) 
+                            .left(px(0.))
+                            .right(px(0.))
+                            .h(px(FOOTER_HEIGHT))  
+                            .child(self.render_settings_div(cx))
                     )
             )
             .into_any()
