@@ -1,9 +1,9 @@
-use std::collections::HashMap;
-use std::path::{PathBuf};
+use std::collections::{ HashMap, HashSet };
+use std::path::{ PathBuf };
 
 use crate::prelude::Icon;
 use crate::prelude::IconName;
-use freedesktop_desktop_entry::{Iter, default_paths, get_languages_from_env};
+use freedesktop_desktop_entry::{ Iter, default_paths, get_languages_from_env };
 use freedesktop_icons::lookup;
 use shlex::Shlex;
 
@@ -24,7 +24,7 @@ impl DesktopApp {
         name: impl Into<String>,
         icon_path: Option<PathBuf>,
         exec: impl Into<String>,
-        categories: Vec<String>,
+        categories: Vec<String>
     ) -> Self {
         Self {
             app_id: app_id.into(),
@@ -91,19 +91,23 @@ impl DesktopApps {
     }
 
     pub fn get_apps_by_categories(&self) -> HashMap<String, Vec<DesktopApp>> {
+        // Allowed categories
+        let allowed: HashSet<&str> = HashSet::from([
+            "Development",
+            "TextEditor",
+            "File Manager",
+            "Filesystem",
+            "IDE",
+            "WebBrowser",
+            "Calculator",
+        ]);
+
         let mut map: HashMap<String, Vec<DesktopApp>> = HashMap::new();
 
         for app in &self.apps {
-            // If an app has NO categories, put it in "Uncategorized"
-            if app.categories.is_empty() {
-                map.entry("Uncategorized".to_string())
-                    .or_default()
-                    .push(app.clone());
-            } else {
-                for category in &app.categories {
-                    if !category.is_empty() {
-                        map.entry(category.clone()).or_default().push(app.clone());
-                    }
+            for category in &app.categories {
+                if allowed.contains(category.as_str()) {
+                    map.entry(category.clone()).or_default().push(app.clone());
                 }
             }
         }
@@ -121,10 +125,9 @@ impl DesktopApps {
             Some(e) if !e.contains('=') => e,
             Some(e) => e, // fallback — allow starting with env vars
             None => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidInput,
-                    "Exec string is empty",
-                ));
+                return Err(
+                    std::io::Error::new(std::io::ErrorKind::InvalidInput, "Exec string is empty")
+                );
             }
         };
 
@@ -147,9 +150,7 @@ impl DesktopApps {
 /// Internal helper: find icons and build DesktopApp list.
 fn get_desktop_apps() -> Vec<DesktopApp> {
     let locales = get_languages_from_env();
-    let entries = Iter::new(default_paths())
-        .entries(Some(&locales))
-        .collect::<Vec<_>>();
+    let entries = Iter::new(default_paths()).entries(Some(&locales)).collect::<Vec<_>>();
 
     let mut apps: Vec<DesktopApp> = entries
         .into_iter()
@@ -179,13 +180,7 @@ fn get_desktop_apps() -> Vec<DesktopApp> {
             // exec line (raw from .desktop). We keep it verbatim; run_app_exec will tokenize.
             let exec = entry.exec().unwrap_or_default();
 
-            Some(DesktopApp::new(
-                app_id,
-                name,
-                icon_path,
-                exec.to_string(),
-                categories,
-            ))
+            Some(DesktopApp::new(app_id, name, icon_path, exec.to_string(), categories))
         })
         .collect();
 
