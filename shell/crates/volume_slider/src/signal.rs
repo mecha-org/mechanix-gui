@@ -1,9 +1,10 @@
 use crate::handle;
+use crate::slider::SliderState;
 use anyhow::Result;
 use futures::{SinkExt, StreamExt, channel::mpsc};
 use futures_timer::Delay;
 use futures_util::stream::FuturesUnordered;
-use gpui::App;
+use gpui::{App, Entity};
 use log::{error, info, warn};
 use hw_buttons::KeyEvent;
 use std::time::Duration;
@@ -27,13 +28,13 @@ trait HwButtonDbusInterface {
     fn notification(&self, event: KeyEvent);
 }
 
-pub fn init(cx: &mut App) {
+pub fn init(cx: &mut App, slider: Entity<SliderState>, min_volume: f32, max_volume: f32) {
     let (tx, mut rx) = mpsc::channel::<KeyEvent>(32);
 
     cx.spawn(async move |app| {
         while let Some(event) = rx.next().await {
             let _ = app.update(|cx| {
-                handle::handle_event(cx, event);
+                handle::handle_volume_event(cx, event, &slider, min_volume, max_volume);
             });
         }
     })

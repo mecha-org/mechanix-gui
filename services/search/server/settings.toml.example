@@ -7,9 +7,6 @@
 # Enable the AppSearchService
 enable_search = false
 
-# Directory containing .desktop files (single path supported by current code)
-desktop_apps_dir = "/usr/share/applications"
-
 # Keep index dirs consistent across services
 index_dir = ".config/mxsearch/index/apps"
 
@@ -36,7 +33,7 @@ searchable_fields = [
 enable_search = true
 
 # Be careful watching "/home" recursively; consider narrowing later
-files_dir_to_watch = "/home/minesh/Downloads"
+files_dir_to_watch = "/home/mecha/Downloads"
 
 index_dir = ".config/mxsearch/index/files"
 

@@ -83,6 +83,10 @@ impl Default for Icon {
 }
 
 impl Icon {
+    pub fn new(name: IconName) -> Self {
+        Self::default().path(name.resolve())
+    }
+
     pub fn build(name: IconName) -> Self {
         Self::default().path(name.resolve())
     }

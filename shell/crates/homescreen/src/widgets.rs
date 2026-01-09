@@ -3,9 +3,9 @@ use gpui::*;
 
 use crate::utils::GridBounds;
 
+pub mod app_drawer;
 pub mod demo_widget;
 pub mod universal_search;
-pub mod app_drawer;
 
 #[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
 pub(crate) struct WidgetId(pub usize);
@@ -96,7 +96,6 @@ impl WidgetWrapper {
         let mut element = w
             .absolute()
             .bg(widget.background_color())
-            .p_4()
             .left(widget.get_bounds().origin.x)
             .top(widget.get_bounds().origin.y)
             .w(widget.get_bounds().size.width)

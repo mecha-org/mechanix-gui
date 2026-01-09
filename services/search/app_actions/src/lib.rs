@@ -13,3 +13,15 @@ pub struct AppActionsConfig {
     pub search_limit: usize,
     searchable_fields: Vec<String>,
 }
+
+impl Default for AppActionsConfig {
+    fn default() -> Self {
+        Self {
+            enable_search: false,
+            index_dir: "/usr/share/applications".to_string(),
+            schema_dir: ".config/mxsearch/index/app_actions".to_string(),
+            search_limit: 10,
+            searchable_fields: vec![ "name".to_string() ],
+        }
+    }
+}

@@ -48,7 +48,7 @@ class ConfirmationBottomSheet extends StatelessWidget {
                       ),
                       label: "Cancel",
                       onPressed: () {
-                        Navigator.pop(context, false);
+                        Navigator.pop(context);
                       },
                     ),
                   ),
