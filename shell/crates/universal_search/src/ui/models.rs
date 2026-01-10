@@ -29,6 +29,7 @@ pub struct UniversalSearch {
     pub search_service: Option<MxSearchService>,
     pub file_search_results: Vec<SearchResult>,
     pub app_search_results: Vec<AppInfo>,
+    pub files_app: Option<AppInfo>,
 }
 
 pub struct DragInfo {

@@ -134,6 +134,8 @@ pub struct UniversalSearchSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub system_apps: SystemApps,
 }
 
 impl Default for UniversalSearchSettings {
@@ -147,6 +149,7 @@ impl Default for UniversalSearchSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            system_apps: SystemApps::default(),
         }
     }
 }
@@ -315,6 +318,19 @@ impl Default for LauncherSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct SystemApps {
+    pub files: String,
+}
+
+impl Default for SystemApps {
+    fn default() -> Self {
+        Self {
+            files: "mechanix_files".into(),
         }
     }
 }
