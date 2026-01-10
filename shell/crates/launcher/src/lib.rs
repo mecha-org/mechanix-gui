@@ -160,6 +160,8 @@ pub fn run() {
 
         settings_drawer::run_app(cx);
 
+        power_options::run_app(cx);
+
         notifications::run_app(cx);
 
         volume_slider::run_app(cx);
