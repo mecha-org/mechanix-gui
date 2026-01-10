@@ -3,9 +3,9 @@ use gpui::*;
 use std::time::Duration;
 use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 
-use crate::handle;
 use crate::icon::{VolumeIcon, VolumeIconName};
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
+use crate::{get_volume, set_volume, sync_volume_to_system};
 
 const OVERLAY_PADDING: f32 = 16.0;
 const OVERLAY_GAP: f32 = 12.0;
@@ -39,7 +39,7 @@ pub fn init(cx: &mut App) -> SliderConfig {
         exclusive_zone,
     } = layer_shell;
 
-    let initial_value = handle::get_volume(cx).clamp(min_volume_level, max_volume_level);
+    let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
     let slider_state = cx.new(|_| {
         SliderState::new()
             .min(min_volume_level)
@@ -68,7 +68,7 @@ pub fn init(cx: &mut App) -> SliderConfig {
         },
         move |_window, cx| {
             let slider_state = slider_state_for_overlay.clone();
-            let initial_value = handle::get_volume(cx).clamp(min_volume_level, max_volume_level);
+            let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
             cx.new(move |cx| {
                 SliderOverlay::new(cx, slider_state.clone(), initial_value, min_volume_level, max_volume_level)
             })
@@ -108,8 +108,8 @@ impl SliderOverlay {
                 this.slider_value = value;
                 this.show_overlay(cx);
                 // Sync volume to ShellState and system when slider is changed via touch/drag
-                handle::set_volume(cx, value);
-                handle::sync_volume_to_system(value, cx);
+                set_volume(cx, value);
+                sync_volume_to_system(value, cx);
             },
         );
 

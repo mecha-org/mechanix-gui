@@ -24,6 +24,8 @@ pub enum Message {
     },
     SetKeyboardAlwayson(bool),
     ShowPowerOptions(bool),
+    VolumeUp,
+    VolumeDown,
     LaunchApp {
         app_id: String,
         exec: String,

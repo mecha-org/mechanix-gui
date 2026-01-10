@@ -14,8 +14,8 @@ gpui = { workspace = true }
 anyhow = { workspace = true }
 futures = { workspace = true }
 futures-timer = { workspace = true }
-futures-util = "0.3.31"
 log = { workspace = true }
 zbus = { workspace = true }
 hw-buttons = { path = "../../../shared/hw-buttons", package = "mechanix-hw-buttons" }
 dispatcher = { path = "../dispatcher" }
+futures-util = "0.3.31"

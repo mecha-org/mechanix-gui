@@ -16,8 +16,8 @@ futures = { workspace = true }
 futures-timer = { workspace = true }
 log = { workspace = true }
 zbus = { workspace = true }
-hw-buttons = { path = "../../../shared/hw-buttons", package = "mechanix-hw-buttons" }
 power_options = { path = "../power_options" }
 shell_state = { path = "../shell_state" }
 settings = { path = "../settings" }
+dispatcher = { path = "../dispatcher" }
 futures-util = "0.3.31"
