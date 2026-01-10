@@ -101,7 +101,7 @@ pub fn sync_volume_to_system(value: f32, cx: &mut App) {
     let shell_state = ShellState::global(cx);
     let volume_tx = shell_state.volume_tx.clone();
     let sink_name = shell_state
-        .sound_device_info
+        .default_sound_device
         .name
         .clone()
         .unwrap_or_else(|| "@DEFAULT_SINK@".to_string());
