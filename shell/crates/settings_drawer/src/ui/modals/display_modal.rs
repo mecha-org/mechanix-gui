@@ -15,11 +15,8 @@ impl SettingsDrawer {
     pub fn render_display_modal(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
 
-        let auto_brightness = self.auto_brightness;
-        let dark_mode = self.dark_mode;
-        let is_active = auto_brightness | dark_mode;
-
-        let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
+        let (auto_brightness_icon_color, auto_brightness_text_color) = Self::get_icon_and_text_color(self.auto_brightness, cx);
+        let (dark_mode_icon_color, dark_mode_text_color) = Self::get_icon_and_text_color(self.dark_mode, cx);
 
         div()
             .flex()
@@ -78,13 +75,13 @@ impl SettingsDrawer {
                                             .child(
                                                 Icon::new(IconName::AutoBrightness)
                                                     .size((px(28.), px(28.)))
-                                                    .text_color(icon_color),
+                                                    .text_color(auto_brightness_icon_color),
                                             )
                                             .child(
                                                 div()
                                                     .pl_2()
                                                     .font_weight(FontWeight::NORMAL)
-                                                    .text_color(text_color)
+                                                    .text_color(auto_brightness_text_color)
                                                     .child("Auto brightness"),
                                             ),
                                     )
@@ -118,13 +115,13 @@ impl SettingsDrawer {
                                             .child(
                                                 Icon::new(IconName::DarkMode)
                                                     .size((px(28.), px(28.)))
-                                                    .text_color(icon_color),
+                                                    .text_color(dark_mode_icon_color),
                                             )
                                             .child(
                                                 div()
                                                     .pl_2()
                                                     .font_weight(FontWeight::NORMAL)
-                                                    .text_color(text_color)
+                                                    .text_color(dark_mode_text_color)
                                                     .child("Dark mode"),
                                             ),
                                     )
