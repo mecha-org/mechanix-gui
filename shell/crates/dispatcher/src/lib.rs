@@ -30,6 +30,7 @@ pub enum Message {
         app_id: String,
         exec: String,
     },
+    MinimizeToHome
 }
 
 pub fn init(cx: &mut App) {

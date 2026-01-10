@@ -25,6 +25,7 @@ pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
         }
 
         KeyEvent::Pressed(Key::Home) => {
+            message = Some(Message::MinimizeToHome);
             info!("hardware_buttons: home button pressed");
         }
         KeyEvent::Pressing(Key::Home) => {
