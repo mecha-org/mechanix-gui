@@ -1,5 +1,6 @@
 use dispatcher::Dispatcher;
 use gpui::{prelude::FluentBuilder, *};
+use std::process::Command;
 
 use crate::ui::icon::{Icon, IconName};
 pub mod icon;
@@ -48,6 +49,11 @@ impl PowerOptions {
         };
 
         this
+    }
+
+    fn power_off() -> std::io::Result<()> {
+        Command::new("shutdown").args(["-h", "now"]).status()?;
+        Ok(())
     }
 
     fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
@@ -132,7 +138,7 @@ impl PowerOptions {
                             let total_height = this.initial_height + target;
                             if total_height >= window_height {
                                 this.power_off = true;
-                                println!("Power off triggered!");
+                                Self::power_off();
                             }
 
                             cx.notify();
