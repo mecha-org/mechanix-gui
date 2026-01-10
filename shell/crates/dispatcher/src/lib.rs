@@ -33,7 +33,8 @@ pub enum Message {
 }
 
 pub fn init(cx: &mut App) {
-    let (tx, rx) = broadcast(10);
+    let (mut tx, rx) = broadcast(120);
+    tx.set_overflow(true);
     cx.set_global(Dispatcher(tx.clone(), rx.clone()));
 
     cx.background_executor()
