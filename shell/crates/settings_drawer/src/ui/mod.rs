@@ -464,10 +464,10 @@ impl SettingsDrawer {
         ) {
             match self.animation_state {
                 ModalAnimationState::Opening => {
-                    self.animation_progress += 0.08;
+                    self.animation_progress += 0.10;
                 }
                 ModalAnimationState::Closing => {
-                    self.animation_progress -= 0.08;
+                    self.animation_progress -= 0.10;
                 }
                 _ => {}
             }
@@ -630,6 +630,19 @@ impl SettingsDrawer {
                                                         self.render_extended_screen_options(cx)
                                                     }
                                                     ModalKind::WirelessModal => {
+                                                        // let shell_state =
+                                                        //     ShellState::global(cx).clone();
+
+                                                        // cx.background_executor()
+                                                        //     .spawn(async move {
+                                                        //         shell_state
+                                                        //             .get_available_networks()
+                                                        //             .await;
+                                                        //     })
+                                                        //     .detach();
+
+                                                        // TODO : pass available network list
+
                                                         self.render_wireless_modal(cx)
                                                     }
                                                     ModalKind::BluetoothModal => {

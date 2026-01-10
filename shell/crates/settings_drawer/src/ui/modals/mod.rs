@@ -53,10 +53,12 @@ impl SettingsDrawer {
                     .border_color(colors.accent_200.with_alpha(0.4))
                     .border_b_0()
                     .bg(colors.background_1000)
-                    .child(div()
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(colors.foreground_300)
-                        .child(title));
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(colors.foreground_300)
+                            .child(title),
+                    );
                 w.upper_wing_size(Size::new(px(239.0), px(33.0)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));

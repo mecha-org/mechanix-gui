@@ -5,7 +5,7 @@ use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use futures_timer::Delay;
 use gpui::*;
 use networkmanager::{
-    interfaces::wireless::{NMState, WirelessNetworkInfo},
+    interfaces::wireless::{EventType, NMState, WirelessNetworkInfo},
     service::NetworkManagerService,
 };
 use system_dbus::display_client;
@@ -157,6 +157,37 @@ impl ShellStateManager {
                                 .bluetooth_details
                                 .available_devices = Some(list);
                         }
+                        ShellStateMessage::AddWirelessNetwork { network } => {
+                            let current_networks = ShellState::global_mut(cx)
+                                .wireless_details
+                                .networks
+                                .get_or_insert_with(Vec::new);
+                            
+                                    // Check if network with same SSID already exists
+                                    let exists = current_networks
+                                        .iter()
+                                        .any(|n| n.ssid == network.ssid);
+                                    
+                                    if !exists {
+                                        current_networks.push(network);
+                                    } else {
+                                        // Update existing network (in case signal strength changed)
+                                        if let Some(existing) = current_networks
+                                            .iter_mut()
+                                            .find(|n| n.ssid == network.ssid) 
+                                        {
+                                            *existing = network;
+                                        }
+                                    }
+                        }
+                        ShellStateMessage::RemoveWirelessNetwork { ssid } => {
+                            if let Some(networks) = &mut ShellState::global_mut(cx)
+                                .wireless_details
+                                .networks 
+                            {
+                                networks.retain(|n| n.ssid != ssid);
+                            }
+                        }
                         ShellStateMessage::BluetoothAddedEvent { device } => {
                             let current_devices = ShellState::global_mut(cx)
                                 .bluetooth_details
@@ -219,6 +250,7 @@ impl ShellStateManager {
                     network_manager.stream_wireless_enabled_status().await;
                 let mut device_state_stream = network_manager.stream_device_events().await;
                 let mut strength_stream = network_manager.stream_active_network_strength().await;
+                let mut access_point_stream = network_manager.stream_access_point_events().await;
 
                 let mut bluetooth_status_stream =
                     bluetooth_manager.stream_bluetooth_enabled_status().await;
@@ -293,6 +325,34 @@ impl ShellStateManager {
                             }
                         }
 
+                        ap_event = access_point_stream.next() => {
+                            match ap_event {
+                                Some(Ok(event)) => {
+                                    match event.event_type {
+                                        EventType::Added => {
+                                            if let Some(new_network) = event.wireless_network_info {
+                                                let _ = message_tx.send(
+                                                    ShellStateMessage::AddWirelessNetwork { 
+                                                        network: new_network 
+                                                    }
+                                                ).await;
+                                            }
+                                        }
+                                        EventType::Removed => {
+                                            if let Some(removed_network) = event.wireless_network_info {
+                                                println!("network is removed : {:?}", removed_network.clone()  );
+                                                let _ = message_tx.send(
+                                                    ShellStateMessage::RemoveWirelessNetwork { 
+                                                        ssid: removed_network.ssid 
+                                                    }
+                                                ).await;
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
                   
                         event = nm_rx.next() => {
                             if let Some(event) = event {
@@ -405,7 +465,6 @@ impl ShellStateManager {
                             None => break,
                             }
                         }
-
                         
                         _ = time_event => {
                             let _ = message_tx.send(ShellStateMessage::TimeUpdated).await;
@@ -418,9 +477,6 @@ impl ShellStateManager {
             .detach();
     }
 }
-
-
-
 
 pub fn init(cx: &mut App) {
     let shell_state = ShellState::new();

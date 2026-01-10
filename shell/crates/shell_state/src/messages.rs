@@ -47,6 +47,12 @@ pub enum ShellStateMessage {
     Brightness {
         value: f32,
     },
+    AddWirelessNetwork {
+        network: WirelessNetworkInfo,
+    },
+    RemoveWirelessNetwork {
+        ssid: String,
+    },
 }
 
 pub enum NmMessage {
