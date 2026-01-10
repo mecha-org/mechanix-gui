@@ -1,14 +1,14 @@
 use crate::handle;
-use crate::slider::SliderState;
 use anyhow::Result;
-use futures::{SinkExt, StreamExt, channel::mpsc};
+use futures::{channel::mpsc, SinkExt, StreamExt};
 use futures_timer::Delay;
 use futures_util::stream::FuturesUnordered;
-use gpui::{App, Entity};
-use log::{error, info, warn};
+use dispatcher::Dispatcher;
+use gpui::{App, ReadGlobal};
 use hw_buttons::KeyEvent;
+use log::{error, info, warn};
 use std::time::Duration;
-use zbus::{Connection, proxy};
+use zbus::{proxy, Connection};
 
 const HW_BUTTON_SERVICE: &str = "org.mechanix.services.HwButton";
 const BUTTON_PATHS: &[(&str, &str)] = &[
@@ -28,13 +28,28 @@ trait HwButtonDbusInterface {
     fn notification(&self, event: KeyEvent);
 }
 
-pub fn init(cx: &mut App, slider: Entity<SliderState>, min_volume: f32, max_volume: f32) {
+/// Start DBus listeners for hardware button notifications and forward events to handlers.
+pub fn init(cx: &mut App) {
     let (tx, mut rx) = mpsc::channel::<KeyEvent>(32);
 
     cx.spawn(async move |app| {
         while let Some(event) = rx.next().await {
             let _ = app.update(|cx| {
-                handle::handle_volume_event(cx, event, &slider, min_volume, max_volume);
+                let Some(message) = handle::build_message_for_event(event) else {
+                    return;
+                };
+
+                if !cx.has_global::<Dispatcher>() {
+                    warn!("dispatcher missing; dropping hardware button event");
+                    return;
+                }
+
+                let sender = Dispatcher::global(cx).0.clone();
+                cx.background_executor()
+                    .spawn(async move {
+                        let _ = sender.broadcast(message).await;
+                    })
+                    .detach();
             });
         }
     })
@@ -62,7 +77,9 @@ async fn spawn_button_watchers(tx: mpsc::Sender<KeyEvent>) -> Result<()> {
                 match listen_on_path(&label, &path, sender.clone()).await {
                     Ok(()) => break,
                     Err(err) => {
-                        warn!("listener for {label} at {path} dropped: {err:?}, retrying shortly");
+                        warn!(
+                            "listener for {label} at {path} dropped: {err:?}, retrying shortly"
+                        );
                         Delay::new(Duration::from_millis(750)).await;
                     }
                 }
@@ -91,7 +108,7 @@ async fn listen_on_path(label: &str, path: &str, mut tx: mpsc::Sender<KeyEvent>)
                 "received {label} signal from {path}: {event:?}"
             );
             if tx.send(event).await.is_err() {
-                warn!("volume event channel closed; stopping {label} listener");
+                warn!("event channel closed; stopping {label} listener");
                 break;
             }
         } else {
