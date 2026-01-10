@@ -81,8 +81,6 @@ pub struct SettingsDrawer {
     pub modal_target_center: (f32, f32),
 
     pub current_modal: ModalKind,
-    pub wireless_modal_scroll: WirelessModalScroll,
-    pub bluetooth_modal_scroll: BluetoothModalScroll,
 
     _subscriptions: Vec<Subscription>,
     pub position: f32,
@@ -217,8 +215,6 @@ impl SettingsDrawer {
 
             _subscriptions,
             current_modal: ModalKind::None,
-            wireless_modal_scroll: WirelessModalScroll::new(),
-            bluetooth_modal_scroll: BluetoothModalScroll::new(),
             position: Self::closed_pos(),
             drag_offset: None,
             drag_start_pos: 0.0,
