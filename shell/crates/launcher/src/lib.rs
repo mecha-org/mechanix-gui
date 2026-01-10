@@ -158,8 +158,6 @@ pub fn run() {
 
         running_apps::run_app(installed_apps, cx);
 
-        // universal_search::run_app(cx);
-
         settings_drawer::run_app(cx);
 
         notifications::run_app(cx);

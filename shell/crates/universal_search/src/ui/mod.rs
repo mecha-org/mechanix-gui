@@ -7,7 +7,7 @@ use crate::data::data::*;
 use crate::ui::icon::Icon;
 use crate::ui::models::FileType;
 use commons::input::TextInput;
-use freedesktop_icons::lookup;
+use dispatcher::Dispatcher;
 use gpui::prelude::FluentBuilder;
 use gpui::*;
 use icon::IconName;
@@ -179,14 +179,18 @@ impl UniversalSearch {
             .map(|result| SearchResults {
                 name: result.name.clone(),
                 file_type: FileType::App,
-                path: result.icon.clone(),
+                path: result.icon_path.clone(),
                 extension: String::new(),
+                possible_app_id: result.possible_app_id.clone(),
+                exec: result.exec.clone(),
             })
             .chain(self.file_search_results.iter().map(|result| SearchResults {
                 name: result.name.clone(),
                 file_type: FileType::File,
-                path: String::new(),
+                path: None,
                 extension: result.file_type.clone(),
+                possible_app_id: String::new(),
+                exec: String::new(),
             }))
             .collect()
     }
@@ -213,15 +217,6 @@ impl UniversalSearch {
     fn on_drop(&mut self, _: &DragMoveEvent<DragInfo>, _: &mut Window, _cx: &mut Context<Self>) {
         self.is_dragging = false;
         self.last_scroll_offset = self.scroll_offset;
-    }
-
-    fn resolved_icon(app_icon: &Option<PathBuf>) -> Icon {
-        match app_icon {
-            Some(path) => Icon::default()
-                .path(path.to_string_lossy().to_string())
-                .size((px(22.26), px(22.26))),
-            None => Icon::from(IconName::DefaultApp).size((px(22.26), px(22.26))),
-        }
     }
 
     fn handle_text_input_update(&mut self, cx: &mut Context<Self>, _window: &Window) {
@@ -314,8 +309,23 @@ impl UniversalSearch {
         window.set_input_regions(Some(regions));
     }
 
+    fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
+        let sender = Dispatcher::global(cx).0.clone();
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: possible_app_id,
+                        exec,
+                    })
+                    .await;
+            })
+            .detach();
+    }
+
     fn build_search_result_row(
         &self,
+        index: usize,
         search: &SearchResults,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
@@ -338,6 +348,7 @@ impl UniversalSearch {
                             .items_center()
                             .child(
                                 div()
+                                    .id(("us-app-icon-", index))
                                     .mr(px(8.0))
                                     .bg(colors.background_700)
                                     .w(px(32.0))
@@ -346,26 +357,55 @@ impl UniversalSearch {
                                     .justify_center()
                                     .items_center()
                                     .rounded(px(8.0))
+                                    .on_click({
+                                        let possible_app_id = search.possible_app_id.clone();
+                                        let exec = search.exec.clone();
+                                        cx.listener(move |this, _event, _window, cx| {
+                                            this.on_app_click(
+                                                possible_app_id.clone(),
+                                                exec.clone(),
+                                                cx,
+                                            );
+                                        })
+                                    })
                                     .child(
-                                        div().child(match search.file_type {
-                                            FileType::App => {
-                                                let icon_path = lookup(&search.path).find();
-                                                Self::resolved_icon(&icon_path)
-                                            }
-                                            FileType::File => Icon::from(get_file_extension_icon(
-                                                &search.extension,
-                                            ))
-                                            .size((px(22.26), px(22.26)))
-                                            .text_color(colors.foreground_400),
-                                        }),
+                                        div()
+                                            .when(search.file_type == FileType::App, |this| {
+                                                this.when_none(&search.path, |this| {
+                                                    this.child(
+                                                        Icon::from(IconName::DefaultApp)
+                                                            .size((px(22.26), px(22.26))),
+                                                    )
+                                                })
+                                                .when_some(search.path.clone(), |this, path| {
+                                                    this.child(img(path).w(px(22.26)).h(px(22.26)))
+                                                })
+                                            })
+                                            .when(search.file_type == FileType::File, |this| {
+                                                this.child(
+                                                    Icon::from(get_file_extension_icon(
+                                                        &search.extension,
+                                                    ))
+                                                    .size((px(22.26), px(22.26)))
+                                                    .text_color(colors.foreground_400),
+                                                )
+                                               }),
                                     ),
                             )
                             .child(
                                 div()
+                                    .id(("us-app-name-", index))
                                     .font_weight(FontWeight(500.0))
                                     .text_size(px(16.0))
                                     .text_color(colors.foreground_400)
-                                    .child(search.name.to_string()),
+                                    .child(search.name.to_string())
+                                    .on_click({
+                                        let app_id = search.possible_app_id.clone();
+                                        let exec = search.exec.clone();
+                                        cx.listener(move |this, _event, _window, cx| {
+                                            this.on_app_click(app_id.clone(), exec.clone(), cx);
+                                        })
+                                    }),
                             ),
                     )
                     .child(
@@ -402,8 +442,11 @@ impl UniversalSearch {
     ) -> Vec<AnyElement> {
         let mut children = Vec::with_capacity(all_results.len() * 2);
 
-        for result in all_results {
-            children.push(self.build_search_result_row(result, cx).into_any_element());
+        for (index, result) in all_results.iter().enumerate() {
+            children.push(
+                self.build_search_result_row(index, result, cx)
+                    .into_any_element(),
+            );
             // children.push(Self::build_divider().into_any_element());
         }
 

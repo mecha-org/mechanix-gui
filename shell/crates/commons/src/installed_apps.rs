@@ -39,12 +39,12 @@ impl InstalledApps {
                 this.apps = app_infos
                     .into_iter()
                     .map(|app_info| {
-                        let app_id = std::path::Path::new(&app_info.path)
+                        let app_id = std::path::Path::new(&app_info.app_path)
                             .file_stem()
                             .and_then(|os_str| os_str.to_str())
                             .unwrap_or_default()
                             .to_string();
-                        let icon: Option<PathBuf> = lookup(&app_info.icon.clone())
+                        let icon: Option<PathBuf> = lookup(&app_info.icon_name)
                             .with_size(84)
                             .find()
                             .map(|os_str| os_str.into_os_string().into());
