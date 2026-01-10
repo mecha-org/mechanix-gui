@@ -1,0 +1,24 @@
+[package]
+name = "keyboard"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }
+commons = { path = "../commons" }
+settings = { path = "../settings" }
+shell_state = { path = "../shell_state" }
+serde = { workspace = true }
+serde_yaml = "0.9.21"
+anyhow = "1.0.79"
+xkbcommon = { version = "0.8.0", features = ["wayland"] }
+bitflags = "1.3.*"
+theme = { path = "../theme" }
+serde_json = { version = "1.0.144" }
+dirs = { workspace = true }
