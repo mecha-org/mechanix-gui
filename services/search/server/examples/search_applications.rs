@@ -29,6 +29,3 @@ async fn main() -> Result<()> {
     }
     Ok(())
 }
-
-// Place here the get_setting function as you defined it (as in your code sample),
-// along with the ConfigServerProxy definition, or import them from your module.

@@ -1,3 +1,6 @@
+use crate::utils::{get_last_modified_timestamp, parse_desktop_entry, DesktopEntry};
+use crate::Apps;
+use freedesktop_icons::lookup;
 use log::{debug, error, info, warn};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::fs::read_dir;
@@ -7,9 +10,6 @@ use std::{
     path::{Path, PathBuf},
     time::Duration,
 };
-
-use crate::utils::{get_last_modified_timestamp, parse_desktop_entry, DesktopEntry};
-use crate::Apps;
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
 use tantivy::schema::{Field, FieldType, IndexRecordOption, Value, STRING};
@@ -22,6 +22,21 @@ use tantivy::{
 };
 use tokio::{sync::mpsc, task::JoinHandle, time};
 use zbus::zvariant::{DeserializeDict, SerializeDict, Type};
+
+const DESKTOP_APPS_DIR: &str = "/usr/share/applications";
+
+pub mod fields {
+    pub const TYPE: &str = "type";
+    pub const NAME: &str = "name";
+    pub const EXEC: &str = "exec";
+    pub const COMMENT: &str = "comment";
+    pub const GENERIC_NAME: &str = "generic_name";
+    pub const CATEGORIES: &str = "categories";
+    pub const KEYWORDS: &str = "keywords";
+    pub const ICON_NAME: &str = "icon_name";
+    pub const APP_PATH: &str = "app_path";
+    pub const LAST_MODIFIED: &str = "last_modified";
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum FileAction {
@@ -37,15 +52,17 @@ pub enum IndexCmd {
 #[derive(Type, SerializeDict, DeserializeDict, Debug, Default, Clone)]
 #[zvariant(signature = "dict")]
 pub struct AppInfo {
+    pub possible_app_id: String,
     pub type_: String,
     pub name: String,
     pub generic_name: String,
     pub keywords: Vec<String>,
     pub comment: String,
-    pub icon: String,
+    pub icon_name: String,
+    pub icon_path: Option<String>,
     pub categories: Vec<String>,
     pub exec: String,
-    pub path: String,
+    pub app_path: String,
     pub score: f32,
 }
 /// Public entry point for the app search service.
@@ -95,13 +112,12 @@ impl AppSearchService {
         self.cmd_tx.clone()
     }
     fn load_existing_desktop_entries(
-        desktop_app_dir: &str,
         index_reader: &IndexReader,
         writer: &mut IndexWriter,
         schema: &Schema,
     ) {
         info!("Loading existing desktop entries");
-        let existing_desktop_entries = read_dir(&desktop_app_dir).unwrap();
+        let existing_desktop_entries = read_dir(&DESKTOP_APPS_DIR).unwrap();
         for entry in existing_desktop_entries {
             let entry = entry.unwrap();
             let path = entry.path();
@@ -118,7 +134,7 @@ impl AppSearchService {
             };
 
             let term = Term::from_field_text(
-                schema.get_field("path").unwrap(),
+                schema.get_field(fields::APP_PATH).unwrap(),
                 &path.to_string_lossy().to_string(),
             );
             // check if the entry is already in the index
@@ -126,7 +142,7 @@ impl AppSearchService {
             if let Some(existing_entry) = existing_entry {
                 debug!("Entry already exists for path: {}", path.display());
                 // verify last_modified
-                let last_modified_field = schema.get_field("last_modified").unwrap();
+                let last_modified_field = schema.get_field(fields::LAST_MODIFIED).unwrap();
                 let last_modified_indexed_value =
                     match existing_entry.get_first(last_modified_field) {
                         Some(v) => v,
@@ -152,7 +168,7 @@ impl AppSearchService {
                     // If last_modifieds don't match, then delete the entry
                     warn!("Last modified mismatch for entry: {}", path.display());
                     let term = Term::from_field_text(
-                        schema.get_field("path").unwrap(),
+                        schema.get_field(fields::APP_PATH).unwrap(),
                         &path.to_string_lossy().to_string(),
                     );
                     let doc =
@@ -202,12 +218,11 @@ impl AppSearchService {
         let schema = self.schema.clone(); // make sure schema is Arc or Clone
         let index_reader = self.index.reader()?; // Make sure this is thread safe
         Self::load_existing_desktop_entries(
-            &self.config.desktop_apps_dir,
             &index_reader,
             self.writer.as_mut().expect("index writer missing"),
             &schema,
         );
-        let watch_path: PathBuf = self.config.desktop_apps_dir.clone().into();
+        let watch_path: PathBuf = DESKTOP_APPS_DIR.into();
         if !watch_path.exists() {
             anyhow::bail!("Watch path does not exist: {}", watch_path.display());
         }
@@ -244,10 +259,7 @@ impl AppSearchService {
 
         // ========= Event Debouncing & Indexing =========
         let writer = self.writer.take().expect("writer missing");
-
         let schema = self.schema.clone();
-        let reader = self.reader.clone();
-
         self.index_worker_handle = Some(tokio::spawn(async move {
             let mut writer = writer;
             let mut pending = Vec::new();
@@ -354,7 +366,7 @@ impl AppSearchService {
             } else if kind == FileAction::Remove {
                 info!("Removing indexed app entry: {:?}", path.file_name());
                 let term = Term::from_field_text(
-                    schema.get_field("path").unwrap(),
+                    schema.get_field(fields::APP_PATH).unwrap(),
                     &path.to_string_lossy().to_string(),
                 );
                 let _result = writer.delete_term(term);
@@ -426,6 +438,10 @@ impl AppSearchService {
 
                 set_app_field(&mut app, &field_name, joined_values);
                 app.score = score;
+                let (icon_path, possible_app_id) =
+                    resolve_icon_and_app_id(&app.icon_name, &app.app_path);
+                app.icon_path = icon_path;
+                app.possible_app_id = possible_app_id;
             }
 
             results.push(app);
@@ -435,12 +451,11 @@ impl AppSearchService {
     }
     pub fn list_applications(&self, limit: usize) -> tantivy::Result<Vec<AppInfo>> {
         info!("List applications: limit {}", limit);
-        let field_name = "type";
         let search_term = "Application";
-        let field_to_lookup = match self.schema.get_field(field_name) {
+        let field_to_lookup = match self.schema.get_field(fields::TYPE) {
             Ok(field) => field,
             Err(err) => {
-                error!("Failed to get field {}: {}", field_name, err);
+                error!("Failed to get field {}: {}", fields::TYPE, err);
                 return Err(err);
             }
         };
@@ -467,6 +482,10 @@ impl AppSearchService {
                     .join(";");
 
                 set_app_field(&mut app, &field_name, joined_values);
+                let (icon_path, possible_app_id) =
+                    resolve_icon_and_app_id(&app.icon_name, &app.app_path);
+                app.icon_path = icon_path;
+                app.possible_app_id = possible_app_id;
             }
 
             results.push(app);
@@ -500,19 +519,19 @@ impl AppSearchService {
 }
 fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
     match field_name {
-        "type" => app.type_ = joined_values,
-        "name" => app.name = joined_values,
-        "exec" => app.exec = joined_values,
-        "comment" => app.comment = joined_values,
-        "generic_name" => app.generic_name = joined_values,
-        "categories" => {
+        fields::TYPE => app.type_ = joined_values,
+        fields::NAME => app.name = joined_values,
+        fields::EXEC => app.exec = joined_values,
+        fields::COMMENT => app.comment = joined_values,
+        fields::GENERIC_NAME => app.generic_name = joined_values,
+        fields::CATEGORIES => {
             app.categories = joined_values.split(';').map(|s| s.to_string()).collect();
         }
-        "keywords" => {
+        fields::KEYWORDS => {
             app.keywords = joined_values.split(';').map(|s| s.to_string()).collect();
         }
-        "icon" => app.icon = joined_values,
-        "path" => app.path = joined_values,
+        fields::ICON_NAME => app.icon_name = joined_values,
+        fields::APP_PATH => app.app_path = joined_values,
         _ => {}
     }
 }
@@ -550,17 +569,34 @@ fn feed_doc(
     path: &Path,
 ) -> TantivyDocument {
     doc!(
-        schema.get_field("type").unwrap() => desktop_entry.type_,
-        schema.get_field("name").unwrap() => desktop_entry.name,
-        schema.get_field("exec").unwrap() => desktop_entry.exec.clone().unwrap_or_default(),
-        schema.get_field("comment").unwrap() => desktop_entry.comment.clone().unwrap_or_default(),
-        schema.get_field("generic_name").unwrap() => desktop_entry.generic_name.clone().unwrap_or_default(),
-        schema.get_field("categories").unwrap() => desktop_entry.categories.join(";"),
-        schema.get_field("keywords").unwrap() => desktop_entry.keywords.join(";"),
-        schema.get_field("icon").unwrap() => desktop_entry.icon.clone().unwrap_or_default(),
-        schema.get_field("path").unwrap() => path.to_string_lossy().to_string(),
-        schema.get_field("last_modified").unwrap() => last_modified
+        schema.get_field(fields::TYPE).unwrap() => desktop_entry.type_,
+        schema.get_field(fields::NAME).unwrap() => desktop_entry.name,
+        schema.get_field(fields::EXEC).unwrap() => desktop_entry.exec.clone().unwrap_or_default(),
+        schema.get_field(fields::COMMENT).unwrap() => desktop_entry.comment.clone().unwrap_or_default(),
+        schema.get_field(fields::GENERIC_NAME).unwrap() => desktop_entry.generic_name.clone().unwrap_or_default(),
+        schema.get_field(fields::CATEGORIES).unwrap() => desktop_entry.categories.join(";"),
+        schema.get_field(fields::KEYWORDS).unwrap() => desktop_entry.keywords.join(";"),
+        schema.get_field(fields::ICON_NAME).unwrap() => desktop_entry.icon.clone().unwrap_or_default(),
+        schema.get_field(fields::APP_PATH).unwrap() => path.to_string_lossy().to_string(),
+        schema.get_field(fields::LAST_MODIFIED).unwrap() => last_modified
     )
+}
+
+/// Create the Tantivy schema for `.desktop` fields
+fn create_schema() -> Schema {
+    let mut schema_builder = tantivy::schema::Schema::builder();
+    schema_builder.add_text_field(fields::TYPE, STRING | STORED);
+    schema_builder.add_text_field(fields::NAME, STRING | STORED);
+    schema_builder.add_text_field(fields::EXEC, STORED);
+    schema_builder.add_text_field(fields::COMMENT, TEXT);
+    schema_builder.add_text_field(fields::GENERIC_NAME, STRING | STORED);
+    schema_builder.add_text_field(fields::CATEGORIES, TEXT | STORED);
+    schema_builder.add_text_field(fields::APP_PATH, STRING | STORED);
+    schema_builder.add_text_field(fields::KEYWORDS, TEXT);
+    schema_builder.add_text_field(fields::ICON_NAME, STORED);
+    schema_builder.add_text_field(fields::LAST_MODIFIED, STORED);
+
+    schema_builder.build()
 }
 
 // A simple helper function to fetch a single document
@@ -589,19 +625,19 @@ fn extract_doc_given_app_path(
     }
 }
 
-/// Create the Tantivy schema for `.desktop` fields
-fn create_schema() -> Schema {
-    let mut schema_builder = tantivy::schema::Schema::builder();
-    schema_builder.add_text_field("type", STRING | STORED);
-    schema_builder.add_text_field("name", STRING | STORED);
-    schema_builder.add_text_field("exec", STORED);
-    schema_builder.add_text_field("comment", TEXT);
-    schema_builder.add_text_field("generic_name", STRING | STORED);
-    schema_builder.add_text_field("categories", STRING | STORED);
-    schema_builder.add_text_field("keywords", TEXT);
-    schema_builder.add_text_field("icon", STORED);
-    schema_builder.add_text_field("last_modified", STORED);
-    schema_builder.add_text_field("path", STRING);
+fn resolve_icon_and_app_id(icon_name: &str, app_path: &str) -> (Option<String>, String) {
+    let icon_path = (!icon_name.is_empty()).then(|| {
+        lookup(icon_name)
+            .find()
+            .and_then(|p| p.to_str().map(|p| p.to_owned()))
+            .unwrap_or_default()
+    });
 
-    schema_builder.build()
+    let possible_app_id = Path::new(app_path)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .map(str::to_owned)
+        .unwrap_or_default();
+
+    (icon_path, possible_app_id)
 }
