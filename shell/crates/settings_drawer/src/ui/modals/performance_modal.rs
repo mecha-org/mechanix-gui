@@ -1,9 +1,16 @@
 use commons::widgets::wing;
+use commons::widgets::wing;
 use gpui::*;
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
     prelude::*,
+    ui::{
+        FINAL_MODAL_SIZE,
+        icon::{Icon, IconName},
+        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
+    },
+};
     ui::{
         FINAL_MODAL_SIZE,
         icon::{Icon, IconName},
@@ -44,6 +51,8 @@ impl SettingsDrawer {
             .size_full()
             .child({
                 let mut w = wing()
+            .child({
+                let mut w = wing()
                     .flex()
                     .flex_col()
                     .flex_1()
@@ -72,10 +81,8 @@ impl SettingsDrawer {
                     )
                     .child(
                         div()
-                            .id("scrollable")
                             .flex_1()
                             .relative()
-                            .overflow_y_scroll()
                             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
                                 px(16.)
                             } else {

@@ -10,7 +10,6 @@ use theme::prelude::AlphaExt;
 
 use crate::helper::get_wireless_strength_icon;
 use crate::ui::icon::Icon;
-use crate::ui::modals::*;
 use crate::ui::{
     icon::IconName,
     widgets::{IconButton, Slider, SliderEvent, SliderState},
