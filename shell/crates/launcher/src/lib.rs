@@ -44,6 +44,12 @@ impl Launcher {
             };
         }
     }
+
+    fn minimize_all_top_levels(&self) {
+        for tl in self.top_levels.iter() {
+            tl.set_minimized();
+        }
+    }
 }
 
 pub fn spawn_command(command: String, args: Vec<String>) -> Result<Child> {
@@ -122,6 +128,12 @@ fn listen_dispatcher(cx: &mut gpui::App, entity: Entity<Launcher>) {
                     dispatcher::Message::LaunchApp { app_id, exec } => {
                         _ = entity.update(cx, |this, cx| {
                             this.launch_app(app_id, exec);
+                            cx.notify();
+                        });
+                    }
+                    dispatcher::Message::MinimizeToHome => {
+                        _ = entity.update(cx, |this, cx| {
+                            this.minimize_all_top_levels();
                             cx.notify();
                         });
                     }

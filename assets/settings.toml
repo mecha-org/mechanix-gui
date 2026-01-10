@@ -35,6 +35,9 @@ namespace = "mechanix.universal.search"
 exclusive_zone = -1.0
 size = { width = 540.0, height = 620.0 }
 
+[universal_search.system_apps]
+files = "mechanix_files"
+
 [homescreen]
 status_bar_size = { width = 540.0, height = 36.0 }
 navbar_size = { width = 199.22, height = 28.5 }

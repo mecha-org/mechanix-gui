@@ -12,7 +12,9 @@ use gpui::prelude::FluentBuilder;
 use gpui::*;
 use icon::IconName;
 use models::{DragInfo, SearchResults, UniversalSearch};
+use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
+use settings::prelude::Settings;
 use theme::ActiveTheme;
 use theme::prelude::{AlphaExt, Theme};
 
@@ -45,12 +47,21 @@ impl Render for DragInfo {
 
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
-        let entity = cx.entity();
-
+        let files_app_name = Settings::global(cx)
+            .universal_search
+            .clone()
+            .system_apps
+            .files;
         cx.spawn(async move |this, cx| {
             if let Ok(service) = MxSearchService::new().await {
+                let mut files_app: Option<AppInfo> = None;
+                if let Ok(apps) = service.search_applications(&files_app_name).await {
+                    files_app = apps.first().cloned();
+                }
+
                 this.update(cx, |this, cx| {
                     this.search_service = Some(service);
+                    this.files_app = files_app;
                     cx.notify();
                 })
                 .ok();
@@ -82,6 +93,7 @@ impl UniversalSearch {
             search_service: None,
             file_search_results: Vec::new(),
             app_search_results: Vec::new(),
+            files_app: None,
         }
     }
 
@@ -184,13 +196,21 @@ impl UniversalSearch {
                 possible_app_id: result.possible_app_id.clone(),
                 exec: result.exec.clone(),
             })
-            .chain(self.file_search_results.iter().map(|result| SearchResults {
-                name: result.name.clone(),
-                file_type: FileType::File,
-                path: None,
-                extension: result.file_type.clone(),
-                possible_app_id: String::new(),
-                exec: String::new(),
+            .chain(self.file_search_results.iter().map(|result| {
+                let mut exec = String::new();
+                let mut possible_app_id = String::new();
+                if let Some(files_app) = &self.files_app {
+                    exec = format!("{} --open-path={}", files_app.exec, result.path.clone());
+                    possible_app_id = files_app.possible_app_id.clone();
+                }
+                SearchResults {
+                    name: result.name.clone(),
+                    file_type: FileType::File,
+                    path: Some(result.path.clone()),
+                    extension: result.file_type.clone(),
+                    possible_app_id,
+                    exec,
+                }
             }))
             .collect()
     }
@@ -389,7 +409,7 @@ impl UniversalSearch {
                                                     .size((px(22.26), px(22.26)))
                                                     .text_color(colors.foreground_400),
                                                 )
-                                               }),
+                                            }),
                                     ),
                             )
                             .child(
