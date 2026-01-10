@@ -1,39 +1,32 @@
-use commons::widgets::{ WingSide, wing };
+use commons::widgets::{WingSide, wing};
 use gpui::prelude::*;
 use gpui::*;
-use theme::prelude::{ AlphaExt, Theme };
+use theme::prelude::{AlphaExt, Theme};
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{ Hash, Hasher };
+use std::hash::{Hash, Hasher};
 use commons::prelude::TextInput;
 use crate::models::AppDrawerState;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
-use crate::ui::utils::prelude::{ DesktopApp, DesktopApps };
-use crate::ui::widgets::{ BottomSheetKind, SubWindow };
-use crate::ui::widgets::{ IconButton };
+use crate::ui::utils::prelude::{DesktopApp, DesktopApps};
+use crate::ui::widgets::{BottomSheetKind, SubWindow};
+use crate::ui::widgets::IconButton;
 
 pub mod icon;
 pub mod utils;
 mod widgets;
 
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
-
 const GRID_ROW_HEIGHT: f32 = 126.0;
-const GRID_ROW_WIDTH: f32 = 420.0;
-
+const GRID_ROW_WIDTH: f32 = 508.0;
 const SECTION_SPACING: f32 = 15.0;
-const APP_SIZE: (f32, f32) = (460.0, 300.0);
-
+const APP_SIZE: (f32, f32) = (540.0, 504.0);
 const APP_ROW_HEIGHT: f32 = 60.0;
-
-// V2 Constants
 const FLOATING_BTN_SIZE: f32 = 56.0;
 const FLOATING_BTN_BOTTOM: f32 = 16.0;
 const FLOATING_BTN_RIGHT: f32 = 15.0;
 const SEARCH_BAR_BOTTOM: f32 = 20.0;
-
-// Drag threshold in pixels - movement less than this is considered a click
 const DRAG_THRESHOLD: f32 = 2.0;
 
 pub struct AppDrawer {
@@ -42,9 +35,9 @@ pub struct AppDrawer {
     scroll_offset: Pixels,
     last_scroll_offset: Pixels,
     drag_start_y: Pixels,
-    drag_start_x: Pixels, // Track X position too
+    drag_start_x: Pixels,
     is_dragging: bool,
-    has_moved: bool, // NEW: Track if user has actually moved during drag
+    has_moved: bool,
     pub text_input: Entity<TextInput>,
     filtered: Vec<DesktopApp>,
     is_searching: bool,
@@ -52,6 +45,9 @@ pub struct AppDrawer {
     pub show_bottom_sheet: bool,
     pub sheet_kind: BottomSheetKind,
     pub sheet_app: Option<DesktopApp>,
+    pub show_subwindow_modal: bool,
+    pub subwindow_category: String,
+    pub subwindow: Option<Entity<SubWindow>>,
 }
 
 impl AppDrawer {
@@ -75,6 +71,9 @@ impl AppDrawer {
             show_bottom_sheet: false,
             sheet_kind: BottomSheetKind::MainOptions,
             sheet_app: None,
+            show_subwindow_modal: false,
+            subwindow_category: String::new(),
+            subwindow: None,
         }
     }
 
@@ -125,20 +124,19 @@ impl AppDrawer {
         &mut self,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         self.drag_start_y = event.position.y;
         self.drag_start_x = event.position.x;
         self.last_scroll_offset = self.scroll_offset;
         self.is_dragging = true;
-        self.has_moved = false; // Reset movement flag
+        self.has_moved = false;
         cx.stop_propagation();
     }
 
     fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
         self.is_dragging = false;
         self.last_scroll_offset = self.scroll_offset;
-        // Don't reset has_moved here - let click handlers check it
     }
 
     fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
@@ -146,12 +144,9 @@ impl AppDrawer {
             let delta_y = event.position.y - self.drag_start_y;
             let delta_x = event.position.x - self.drag_start_x;
 
-            // Calculate total distance moved
-            let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64() +
-                delta_x.abs().to_f64() * delta_x.abs().to_f64()) as f32;
-            // let distance = ((delta_y.0 * delta_y.0) + (delta_x.0 * delta_x.0));
+            let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64()
+                + delta_x.abs().to_f64() * delta_x.abs().to_f64()) as f32;
 
-            // If moved more than threshold, mark as actual drag
             if distance > DRAG_THRESHOLD {
                 self.has_moved = true;
             }
@@ -209,17 +204,9 @@ impl AppDrawer {
             .justify_center()
             .shadow_lg()
             .cursor_pointer()
-            .on_click(
-                cx.listener(|this: &mut AppDrawer, _event, window, cx| {
-                    this.is_searching = true;
-                    this.text_input.update(cx, |input, _| {
-                        input.focus_handle.focus(window);
-                    });
-                    this.scroll_offset = px(0.0);
-                    this.last_scroll_offset = px(0.0);
-                    cx.notify();
-                })
-            )
+            .on_mouse_down(MouseButton::Left, cx.listener(Self::on_floating_search_mouse_down))
+            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+            .on_click(cx.listener(Self::on_floating_search_click))
             .child(
                 div()
                     .w(px(32.0))
@@ -231,27 +218,66 @@ impl AppDrawer {
             )
     }
 
+    fn on_floating_search_mouse_down(
+        &mut self,
+        _event: &MouseDownEvent,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        // Stop propagation to prevent triggering category/app clicks behind the button
+        cx.stop_propagation();
+    }
+
+    fn on_floating_search_click(
+        &mut self,
+        _event: &ClickEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        // Close any open modals/sheets first
+        self.show_bottom_sheet = false;
+        self.show_subwindow_modal = false;
+        self.subwindow = None;
+        self.sheet_app = None;
+
+        // Reset drag state to prevent false positives
+        self.has_moved = false;
+        self.is_dragging = false;
+
+        // Open search mode
+        self.is_searching = true;
+        self.text_input.update(cx, |input, _| {
+            input.focus_handle.focus(window);
+        });
+        self.scroll_offset = px(0.0);
+        self.last_scroll_offset = px(0.0);
+        
+        cx.stop_propagation();
+        cx.notify();
+    }
+
     fn render_search_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let text_input = self.text_input.clone();
         let colors = Theme::global(cx).colors.clone();
+        
         div()
             .id("main-search")
-            .absolute()
-            .bottom(px(0.0))
-            .left(px(16.0))
+            .relative()
+            .bottom_0()
+            .left_0()
             .rounded_t(px(8.0))
             .flex()
             .flex_row()
             .items_center()
-            .justify_center()
+            .justify_between()
+            .px_2()
             .h(px(SEARCH_BAR_HEIGHT))
             .w(px(APP_SIZE.0))
-            .left(px(16.0))
             .bg(colors.accent_300.with_alpha(0.1))
             .child(
                 div()
                     .id("search-bar")
-                    .w(px(APP_SIZE.0 - 60.0))
+                    .w(px(APP_SIZE.0 - 10.0))
                     .h(px(44.0))
                     .bg(colors.background_900)
                     .rounded(px(6.0))
@@ -292,9 +318,9 @@ impl AppDrawer {
             )
             .child(
                 div()
-                    .ml(px(5.0))
                     .cursor_pointer()
                     .id("close-search-btn")
+                    .ml_1()
                     .w(px(40.0))
                     .h(px(40.0))
                     .rounded(px(20.0))
@@ -333,7 +359,7 @@ impl AppDrawer {
                             .flex()
                             .items_center()
                             .justify_center()
-                            .child(Icon::build(IconName::Close).text_color(colors.foreground_200))
+                            .child(Icon::build(IconName::Close).text_color(colors.foreground_100))
                     )
             )
     }
@@ -342,17 +368,13 @@ impl AppDrawer {
         self.is_searching = true;
         Self::filter(self, cx);
         let colors = Theme::global(cx).colors.clone();
-
         let searched_apps = self.filtered.clone();
 
         div()
             .id("search-results-list")
-            .absolute()
-            .top(px(16.0))
-            .left(px(16.0))
-            .right(px(16.0))
-            .bottom(px(SEARCH_BAR_HEIGHT + SEARCH_BAR_BOTTOM + 16.0))
             .overflow_hidden()
+            .size_full()
+            .px_4()
             .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
@@ -370,6 +392,7 @@ impl AppDrawer {
                             let name = app.name.clone();
                             let id = hash_id(&app_id);
                             let icon = DesktopApp::resolved_icon(&app.icon_path);
+                            
                             div()
                                 .id(id)
                                 .h(px(APP_ROW_HEIGHT))
@@ -411,22 +434,57 @@ impl AppDrawer {
                                 )
                                 .on_click(
                                     cx.listener(move |this: &mut AppDrawer, _, _, _| {
-                                        // Only execute if user didn't drag
                                         if !this.has_moved {
                                             let _ = DesktopApps::run_app_exec(exec.as_str());
                                         }
-                                        this.has_moved = false; // Reset for next interaction
+                                        this.has_moved = false;
                                     })
                                 )
                         })
                     )
             )
     }
+
+    fn render_subwindow_modal(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
+        // Initialize subwindow entity if not already done
+        if self.subwindow.is_none() {
+            let category = self.subwindow_category.clone();
+            self.subwindow = Some(cx.new(|_cx| SubWindow::scan(category)));
+        }
+
+        let subwindow_entity = self.subwindow.clone().unwrap();
+
+        div()
+            .id("subwindow-modal-overlay")
+            .absolute()
+            .top(px(0.0))
+            .left(px(0.0))
+            .size_full()
+            .child(
+                div()
+                    .id("subwindow-modal-bg")
+                    .absolute()
+                    .size_full()
+                    .bg(colors.background_900)
+                    .opacity(0.6)
+                    .on_click(
+                        cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                            this.show_subwindow_modal = false;
+                            this.subwindow = None;
+                            cx.notify();
+                        })
+                    )
+                    .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+                    .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+            )
+            .child(subwindow_entity)
+    }
 }
 
 impl Render for AppDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let window_bounds = window.bounds();
         let colors = Theme::global(cx).colors.clone();
 
         let text_input = self.text_input.clone();
@@ -446,12 +504,16 @@ impl Render for AppDrawer {
         let grouped = &self.grouped;
 
         div()
-            .bg(colors.background_1000)
-            .size_full()
+            .pt_2()
+            .h(px(APP_SIZE.1))
             .flex()
             .justify_start()
+            .relative()
             .items_center()
-            // GRID MODE (Category View)
+            .flex_col()
+            .size_full()
+            .overflow_hidden()
+            // GRID MODE
             .when(!self.is_searching, |main_page_div| {
                 main_page_div
                     .flex()
@@ -492,49 +554,14 @@ impl Render for AppDrawer {
                                             .when(show_popup, |row| {
                                                 row.on_click(
                                                     cx.listener(
-                                                        move |
-                                                            this: &mut AppDrawer,
-                                                            _event,
-                                                            _window,
-                                                            cx
-                                                        | {
-                                                            // Only open popup if user didn't drag
+                                                        move |this: &mut AppDrawer, _event, _window, cx| {
                                                             if !this.has_moved {
-                                                                let popup_category =
-                                                                    category_for_popup.clone();
-                                                                let popup_origin = point(
-                                                                    window_bounds.origin.x,
-                                                                    window_bounds.origin.y
-                                                                );
-
-                                                                let popup_bounds = Bounds {
-                                                                    origin: popup_origin,
-                                                                    size: window_bounds.size,
-                                                                };
-
-                                                                cx.open_window(
-                                                                    WindowOptions {
-                                                                        window_bounds: Some(
-                                                                            WindowBounds::Windowed(
-                                                                                popup_bounds
-                                                                            )
-                                                                        ),
-                                                                        window_background: WindowBackgroundAppearance::Transparent,
-                                                                        kind: WindowKind::PopUp,
-                                                                        show: true,
-                                                                        is_movable: false,
-                                                                        ..Default::default()
-                                                                    },
-                                                                    move |_, cx| {
-                                                                        cx.new(|_| {
-                                                                            SubWindow::scan(
-                                                                                popup_category.clone()
-                                                                            )
-                                                                        })
-                                                                    }
-                                                                ).unwrap();
+                                                                this.show_subwindow_modal = true;
+                                                                this.subwindow_category = category_for_popup.clone();
+                                                                this.subwindow = None;
+                                                                cx.notify();
                                                             }
-                                                            this.has_moved = false; // Reset for next interaction
+                                                            this.has_moved = false;
                                                         }
                                                     )
                                                 )
@@ -556,33 +583,21 @@ impl Render for AppDrawer {
                                                         shown_apps.into_iter().map(|app| {
                                                             let app_id = app.app_id.clone();
                                                             let id = hash_id(&app_id);
-                                                            let icon = DesktopApp::resolved_icon(
-                                                                &app.icon_path
-                                                            );
+                                                            let icon = DesktopApp::resolved_icon(&app.icon_path);
 
                                                             IconButton::new(id + idx)
                                                                 .icon(icon)
                                                                 .when(!show_popup, |btn| {
                                                                     btn.on_click(
                                                                         cx.listener(
-                                                                            move |
-                                                                                this: &mut AppDrawer,
-                                                                                _event,
-                                                                                _window,
-                                                                                cx
-                                                                            | {
-                                                                                // Only show sheet if user didn't drag
+                                                                            move |this: &mut AppDrawer, _event, _window, cx| {
                                                                                 if !this.has_moved {
                                                                                     this.show_bottom_sheet = true;
-                                                                                    this.sheet_app =
-                                                                                        Some(
-                                                                                            app.clone()
-                                                                                        );
-                                                                                    this.sheet_kind =
-                                                                                        BottomSheetKind::MainOptions;
+                                                                                    this.sheet_app = Some(app.clone());
+                                                                                    this.sheet_kind = BottomSheetKind::MainOptions;
                                                                                     cx.notify();
                                                                                 }
-                                                                                this.has_moved = false; // Reset for next interaction
+                                                                                this.has_moved = false;
                                                                             }
                                                                         )
                                                                     )
@@ -602,9 +617,7 @@ impl Render for AppDrawer {
                                                     .justify_start()
                                                     .items_start()
                                                     .bg(colors.accent_200.with_alpha(0.1))
-                                                    .border_color(
-                                                        colors.accent_200.with_alpha(0.6)
-                                                    );
+                                                    .border_color(colors.accent_200.with_alpha(0.6));
                                                 w.upper_wing_size(Size::new(px(150.0), px(15.0)));
                                                 w.border_width(px(1.0));
                                                 w.border_radius(px(8.0));
@@ -627,11 +640,14 @@ impl Render for AppDrawer {
                             )
                     )
             })
-            // SEARCH MODE (List View)
+            // SEARCH MODE
             .when(self.is_searching, |search_div| {
                 search_div.bg(colors.background_900).child(self.render_search_list(cx))
             })
-
+            // SUBWINDOW MODAL
+            .when(self.show_subwindow_modal, |modal_div| {
+                modal_div.child(self.render_subwindow_modal(cx))
+            })
             // BOTTOM SHEET
             .when(self.show_bottom_sheet, |menu_div| {
                 menu_div
@@ -642,8 +658,6 @@ impl Render for AppDrawer {
                             .top(px(0.0))
                             .left(px(0.0))
                             .size_full()
-                            // .w(px(APP_SIZE.0))
-                            // .h(px(APP_SIZE.1))
                             .bg(rgb(0x000000))
                             .opacity(0.6)
                             .on_click(
@@ -662,7 +676,7 @@ impl Render for AppDrawer {
                             .bg(colors.background_900)
                             .h(px(280.0))
                             .border_color(colors.accent_200.with_alpha(0.6))
-                            .w(px(APP_SIZE.0))
+                            .w(px(APP_SIZE.0-2.0))
                             .flex()
                             .flex_col()
                             .justify_start()
@@ -696,15 +710,13 @@ impl Render for AppDrawer {
                             })
                     )
             })
-
-            // FLOATING SEARCH BUTTON
-            .when(!self.is_searching && !self.show_bottom_sheet, |div| {
-                div.child(self.render_floating_search_button(cx))
-            })
-
             // SEARCH BAR
             .when(self.is_searching && !self.show_bottom_sheet, |div| {
                 div.child(self.render_search_bar(cx))
+            })
+            // FLOATING SEARCH BUTTON (rendered last to be on top)
+            .when(!self.is_searching && !self.show_bottom_sheet, |div| {
+                div.child(self.render_floating_search_button(cx))
             })
     }
 }

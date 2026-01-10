@@ -6,7 +6,7 @@ use crate::ui::widgets::{ IconButton, TextButton };
 use gpui::*;
 use theme::prelude::Theme;
 
-const GRID_ROW_WIDTH: f32 = 420.0;
+const DIVIDER_WIDTH: f32 = 508.0;
 
 use crate::prelude::AppDrawer;
 
@@ -26,7 +26,7 @@ pub fn divider(cx: &mut gpui::Context<AppDrawer>) -> Stateful<Div> {
         .items_center()
         .justify_center()
         .mt(px(10.0))
-        .w(px(GRID_ROW_WIDTH))
+        .w(px(DIVIDER_WIDTH))
         .h(px(1.0))
         .bg(colors.background_700)
         .id("divider")
