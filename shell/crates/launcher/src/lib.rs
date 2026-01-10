@@ -141,6 +141,9 @@ pub fn run() {
         //init dispatcher
         dispatcher::init(cx);
 
+        //init hardware buttons listener (publishes to dispatcher)
+        hardware_buttons::init(cx);
+
         //init global theme
         theme::init(cx);
 
