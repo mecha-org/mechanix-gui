@@ -33,7 +33,7 @@ impl InstalledApps {
     pub fn new(cx: &mut Context<Self>) -> Self {
         cx.spawn(async move |this, cx| {
             let search_service = MxSearchService::new().await.unwrap();
-            let app_infos = search_service.list_applications().await.unwrap();
+            let app_infos = search_service.list_applications().await.unwrap_or_default();
 
             this.update(cx, |this, cx| {
                 this.apps = app_infos
