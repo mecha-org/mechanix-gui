@@ -19,15 +19,14 @@ pub async fn sync_connected_network(
 ) {
     match network_manager_service.list_networks().await {
         Ok(result) => {
-
             let mut sorted_list = result.clone();
             sorted_list.sort_by_key(|n| (!n.is_active, !n.is_known));
             sorted_list.retain(|n| !n.ssid.is_empty());
-            
+
             let _ = message_tx
                 .send(ShellStateMessage::ListWirelessNetworks { list: sorted_list })
                 .await;
-            
+
             let connected_network = result.iter().find(|n| n.is_active).cloned();
             let is_connected = result.iter().any(|n| n.is_active && !n.ssid.is_empty()); // IMP
 
@@ -87,7 +86,7 @@ pub async fn sync_bluetooth_connected_status(
         .await;
 }
 
-pub async fn update_device_info(
+pub async fn get_sound_device_info(
     tx: &mut mpsc::Sender<ShellStateMessage>,
     pulse_service: &PulseAudioService,
 ) {

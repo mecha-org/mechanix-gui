@@ -1,4 +1,8 @@
+use std::char::ToLowercase;
+
+use futures::SinkExt;
 use gpui::*;
+use shell_state::{ShellState, VolumeMessage};
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::ui::FINAL_MODAL_SIZE;
@@ -25,24 +29,14 @@ struct SinkDevice {
 impl SettingsDrawer {
     pub fn render_sound_modal(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
+        let mut sound_list = ShellState::global(cx).sound_devices.clone();
+        let default_sound_device = ShellState::global(cx).default_sound_device.clone();
+        let volume_tx = ShellState::global(cx).volume_tx.clone().unwrap();
 
-        let sink_list = vec![
-            SinkDevice {
-                name: "System speaker".to_string(),
-                device_type: OutputType::SystemSpeaker,
-                is_active: true,
-            },
-            SinkDevice {
-                name: "Headphones".to_string(),
-                device_type: OutputType::Headphone,
-                is_active: false,
-            },
-            SinkDevice {
-                name: "External speaker".to_string(),
-                device_type: OutputType::ExternalSpeaker,
-                is_active: false,
-            },
-        ];
+        let default_description = default_sound_device.description.clone();
+        sound_list.sort_by_key(|device| {
+            device.description != default_description
+        });
 
         div()
             .flex()
@@ -67,29 +61,38 @@ impl SettingsDrawer {
                         px(18.)
                     })
                     .child(div().flex().flex_col().flex_1().relative().children(
-                        sink_list.iter().enumerate().map(|(idx, sink)| {
-                            let is_active = sink.is_active;
+                        sound_list.iter().enumerate().map(|(idx, device)| {
+                            let device_name =
+                                device.name.clone().unwrap_or_else(|| "Unknown".to_string());
+                            let device_desc = device
+                                .description
+                                .clone()
+                                .unwrap_or_else(|| "Unknown".to_string());
+
+                            let default_device_name = default_sound_device
+                                .name
+                                .clone()
+                                .unwrap_or_else(|| "Unknown".to_string());
+
+                            let is_active = device_name == default_device_name;
 
                             let (icon_color, text_color) =
                                 Self::get_icon_and_text_color(is_active, cx);
 
-                            let mut icon = IconName::SystemSpeaker;
-
-                            match sink.device_type {
-                                OutputType::SystemSpeaker => icon = IconName::SystemSpeaker,
-                                OutputType::ExternalSpeaker => icon = IconName::ExternalSpeaker,
-                                OutputType::Headphone => icon = IconName::Headphone,
-                            }
+                            let icon = if device_desc.to_lowercase().contains("built-in") {
+                                IconName::SystemSpeaker
+                            } else {
+                                IconName::ExternalSpeaker
+                            };
 
                             let connect_div = div().child(
                                 Icon::new(IconName::Connected)
                                     .size((px(24.), px(24.)))
                                     .text_color(icon_color),
                             );
-
                             let main_div = if is_active {
                                 div()
-                                    .id(("sink", idx))
+                                    .id(("device", idx))
                                     .flex()
                                     .items_center()
                                     .justify_between()
@@ -115,11 +118,12 @@ impl SettingsDrawer {
                                                     .pl_2()
                                                     .font_weight(FontWeight::NORMAL)
                                                     .text_color(text_color)
-                                                    .child(sink.name.clone()),
+                                                    .child(device_desc.clone()),
                                             ),
                                     )
-                                    .child(if sink.is_active { connect_div } else { div() })
+                                    .child(if is_active { connect_div } else { div() })
                             } else {
+                                 let mut volume_tx = volume_tx.clone();
                                 div()
                                     .id(("mode", idx))
                                     .flex()
@@ -145,18 +149,31 @@ impl SettingsDrawer {
                                                     .pl_2()
                                                     .font_weight(FontWeight::NORMAL)
                                                     .text_color(text_color)
-                                                    .child(sink.name.clone()),
+                                                    .child(device_desc.clone()),
                                             ),
                                     )
-                                    .on_click(cx.listener(move |_, _, _, _| {
-                                        println!("sink device clicked...");
+                                    .on_click(cx.listener(
+                                            move |this: &mut SettingsDrawer,
+                                                          _event: &ClickEvent,
+                                                          _window: &mut Window,
+                                                          cx: &mut Context<Self>| {
+                                        let mut volume_tx_1 = volume_tx.clone();
+                                        let device_name = device_name.clone();
+
+                                        cx.background_executor()
+                                            .spawn(async move {
+                                                let _ = volume_tx_1.send(VolumeMessage::SetDefaultOutputSoundDevice { name: device_name }).await;
+
+                                            })
+                                            .detach();
+                                          Self::start_close_animation(this, cx);
+
+                                        cx.notify();
                                     }))
                             };
-
                             main_div
                         }),
                     ))
-                    // Footer
                     .child(self.render_settings_div(cx)),
             )
             .into_any()

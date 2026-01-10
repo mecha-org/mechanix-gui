@@ -630,25 +630,23 @@ impl SettingsDrawer {
                                                         self.render_extended_screen_options(cx)
                                                     }
                                                     ModalKind::WirelessModal => {
-                                                        // let shell_state =
-                                                        //     ShellState::global(cx).clone();
-
-                                                        // cx.background_executor()
-                                                        //     .spawn(async move {
-                                                        //         shell_state
-                                                        //             .get_available_networks()
-                                                        //             .await;
-                                                        //     })
-                                                        //     .detach();
-
-                                                        // TODO : pass available network list
-
                                                         self.render_wireless_modal(cx)
                                                     }
                                                     ModalKind::BluetoothModal => {
                                                         self.render_bluetooth_modal(cx)
                                                     }
                                                     ModalKind::SoundModal => {
+                                                        let shell_state =
+                                                            ShellState::global(cx).clone();
+
+                                                        cx.background_executor()
+                                                            .spawn(async move {
+                                                                shell_state
+                                                                    .get_output_sound_devices()
+                                                                    .await;
+                                                            })
+                                                            .detach();
+
                                                         self.render_sound_modal(cx)
                                                     }
                                                     ModalKind::PerformanceModal => {
