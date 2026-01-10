@@ -1,6 +1,6 @@
 use commons::widgets::wing;
 use futures::SinkExt;
-use gpui::{prelude::FluentBuilder, *};
+use gpui::*;
 use shell_state::{ShellState, VolumeMessage};
 use theme::prelude::{AlphaExt, Theme};
 

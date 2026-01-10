@@ -1,16 +1,9 @@
 use commons::widgets::wing;
-use commons::widgets::wing;
 use gpui::*;
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
     prelude::*,
-    ui::{
-        FINAL_MODAL_SIZE,
-        icon::{Icon, IconName},
-        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
-    },
-};
     ui::{
         FINAL_MODAL_SIZE,
         icon::{Icon, IconName},
@@ -49,8 +42,6 @@ impl SettingsDrawer {
             .flex()
             .flex_col()
             .size_full()
-            .child({
-                let mut w = wing()
             .child({
                 let mut w = wing()
                     .flex()
@@ -178,7 +169,7 @@ impl SettingsDrawer {
                                               _event: &ClickEvent,
                                               _window: &mut Window,
                                               _cx: &mut Context<Self>| {
-                                            println!("implement battery performance mode change");
+                                            println!("Implement battery performance mode change");
                                         },
                                     ));
                                 }
