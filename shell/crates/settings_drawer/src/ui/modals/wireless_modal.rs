@@ -6,10 +6,13 @@ use theme::prelude::{AlphaExt, Theme};
 use crate::{
     helper::get_wireless_strength_icon,
     prelude::*,
-    ui::icon::{Icon, IconName},
+    ui::{
+        FINAL_MODAL_SIZE,
+        icon::{Icon, IconName},
+    },
 };
 
-const HEADER_HEIGHT: f32 = 60.0;
+const HEADER_HEIGHT: f32 = 56.0;
 const FOOTER_HEIGHT: f32 = 60.0;
 const ROW_HEIGHT: f32 = 60.0;
 
@@ -79,15 +82,7 @@ impl ScrollBehavior for WirelessModalScroll {
     }
 
     fn estimate_content_height(&self, list_count: usize) -> Pixels {
-        let item_height = px(ROW_HEIGHT);
-        let gap = px(8.);
-        let item_count = list_count as f32;
-
-        if item_count == 0.0 {
-            px(0.)
-        } else {
-            item_count * item_height + (item_count - 1.0) * gap
-        }
+        px(list_count as f32 * ROW_HEIGHT) + px(16.)
     }
 
     fn on_mouse_down(&mut self, event: &MouseDownEvent) {
@@ -127,11 +122,7 @@ impl SettingsDrawer {
         div()
             .flex()
             .flex_col()
-            .bg(colors.background_1000)
             .size_full()
-            .border_1()
-            .rounded_xl()
-            .border_color(colors.accent_200.with_alpha(0.4))
             .child(
                 self.render_header_div(cx, "Wireless")
             )
@@ -141,156 +132,180 @@ impl SettingsDrawer {
                     .flex_col()
                     .flex_1()
                     .relative()
-                    .overflow_hidden()
                     .bg(colors.background_1000)
-                    .on_mouse_down(MouseButton::Left, cx.listener(move |this, event: &MouseDownEvent, _window, cx| {
-                        cx.stop_propagation();
-                        this.wireless_modal_scroll.on_mouse_down(event);
-                        cx.notify();
-                    }))
-                    .on_mouse_up(MouseButton::Left, cx.listener(move |this, _event: &MouseUpEvent, _window, cx| {
-                        this.wireless_modal_scroll.on_mouse_up();
-                        cx.notify();
-                    }))
-                    .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
-                        let window_height = window.bounds().size.height;
-                        this.wireless_modal_scroll.on_mouse_move(event, window_height, network_count);
-                        cx.notify();
-                    }))
+                    .border_color(colors.accent_200.with_alpha(0.4))
+                    .border_1()
+                    .border_t_0()
+                    .rounded(px(8.))
+                    .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                        px(16.)
+                    } else {
+                        px(18.)
+                    })
+                    .child(
+                        div()
+                            .flex()
+                            .absolute()
+                            .top(px(0.))
+                            .left(px(0.))
+                            .right(px(0.))
+                            .bottom(px(FOOTER_HEIGHT))
+                            .overflow_hidden()
+                            .bg(colors.background_1000)
+                            .on_mouse_down(MouseButton::Left, cx.listener(move |this, event: &MouseDownEvent, _window, cx| {
+                                cx.stop_propagation();
+                                this.wireless_modal_scroll.on_mouse_down(event);
+                                cx.notify();
+                            }))
+                            .on_mouse_up(MouseButton::Left, cx.listener(move |this, _event: &MouseUpEvent, _window, cx| {
+                                this.wireless_modal_scroll.on_mouse_up();
+                                cx.notify();
+                            }))
+                            .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, window, cx| {
+                                let window_height = window.bounds().size.height;
+                                this.wireless_modal_scroll.on_mouse_move(event, window_height, network_count);
+                                cx.notify();
+                            }))
+                            .child(
+                                div()
+                                    .absolute()
+                                    .top(self.wireless_modal_scroll.scroll_offset())
+                                    .left(px(0.))
+                                    .right(px(0.))
+                                    .flex()
+                                    .flex_col()
+                                    .children(network_list.iter().enumerate().map(
+                                        |(idx, network)| {
+                                            let ssid = network.ssid.clone();
+                                            let is_active = network.is_active;
+                                            let is_known = network.is_known;
+
+                                            let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
+
+                                            let wireless_icon = get_wireless_strength_icon(
+                                                network.is_active,
+                                                network.signal_strength,
+                                                network.security.clone(),
+                                            );
+
+                                            let connect_div = div().child(
+                                                Icon::new(IconName::Connected)
+                                                    .size((px(24.), px(24.)))
+                                                    .text_color(text_color),
+                                            );
+
+                                            let mut network_div = if is_active {
+                                                div()
+                                                    .id(("network_item", idx))
+                                                    .flex()
+                                                    .items_center()
+                                                    .justify_between()
+                                                    .h(px(ROW_HEIGHT))
+                                                    .px_4()
+                                                    .bg(colors.accent_200.with_alpha(0.1))
+                                                    .border_y_1()
+                                                    .border_color(colors.accent_200.with_alpha(0.4))
+                                                    .child(
+                                                        div()
+                                                            .flex()
+                                                            .flex_row()
+                                                            .text_align(TextAlign::Left)
+                                                            .child(
+                                                                div().pr_2().child(
+                                                                    Icon::new(wireless_icon)
+                                                                        .size((px(28.), px(28.)))
+                                                                        .text_color(icon_color),
+                                                                ),
+                                                            )
+                                                            .child(
+                                                                div()
+                                                                    .pl_2()
+                                                                    .font_weight(FontWeight::NORMAL)
+                                                                    .text_color(text_color)
+                                                                    .child(network.ssid.clone())
+                                                            ),
+                                                    )
+                                                    .child(connect_div)
+                                            } else {
+                                                div()
+                                                    .id(("network_item", idx))
+                                                    .flex()
+                                                    .items_center()
+                                                    .justify_between()
+                                                    .h(px(ROW_HEIGHT))
+                                                    .px_4()
+                                                    .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
+                                                    .child(
+                                                        div()
+                                                            .flex()
+                                                            .flex_row()
+                                                            .text_align(TextAlign::Left)
+                                                            .child(
+                                                                div().pr_2().child(
+                                                                    Icon::new(wireless_icon)
+                                                                        .size((px(28.), px(28.)))
+                                                                        .text_color(icon_color),
+                                                                ),
+                                                            )
+                                                            .child(
+                                                                div()
+                                                                    .pl_2()
+                                                                    .font_weight(FontWeight::NORMAL)
+                                                                    .text_color(text_color)
+                                                                    .child(network.ssid.clone())
+                                                            ),
+                                                    )
+                                            };
+
+                                            if !is_active && !is_known {
+                                                network_div = network_div.on_click(cx.listener(
+                                                    move |_, _, _, _| {
+                                                        println!(
+                                                            "TODO: open settings for new network {:?} - {:?}",
+                                                            ssid, is_known
+                                                        );
+                                                    },
+                                                ));
+                                            } else if !is_active && is_known {
+                                                let ssid_clone = ssid.clone();
+                                                let nm_tx_clone = nm_tx.clone();
+
+                                                network_div = network_div.on_click(cx.listener(
+                                                    move |this: &mut SettingsDrawer,
+                                                          _event: &ClickEvent,
+                                                          _window: &mut Window,
+                                                          cx: &mut Context<Self>| {
+                                                        let ssid = ssid_clone.clone();
+                                                        let mut nm_tx = nm_tx_clone.clone();
+
+                                                        cx.background_executor()
+                                                            .spawn(async move {
+                                                                let _ = nm_tx
+                                                                    .send(NmMessage::ConnectKnownNetwork { name: ssid })
+                                                                    .await;
+                                                            })
+                                                            .detach();
+                                                        Self::start_close_animation(this, cx);
+
+                                                        cx.notify();
+                                                    },
+                                                ));
+                                            }
+
+                                            network_div
+                                        },
+                                    )),
+                            ),
+                    )
                     .child(
                         div()
                             .absolute()
-                            .top(self.wireless_modal_scroll.scroll_offset())
+                            .bottom(px(0.))
                             .left(px(0.))
                             .right(px(0.))
-                            .flex()
-                            .flex_col()
-                            .gap_2()
-                            .children(network_list.iter().enumerate().map(
-                                |(idx, network)| {
-                                    let ssid = network.ssid.clone();
-                                    let is_active = network.is_active;
-                                    let is_known = network.is_known;
-
-                                    let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
-
-                                    let wireless_icon = get_wireless_strength_icon(
-                                        network.is_active,
-                                        network.signal_strength,
-                                        network.security.clone(),
-                                    );
-
-                                    let connect_div = div().child(
-                                        Icon::new(IconName::Connected)
-                                            .size((px(24.), px(24.)))
-                                            .text_color(text_color),
-                                    );
-
-                                    let mut network_div = if is_active {
-                                        div()
-                                            .id(("network_item", idx))
-                                            .flex()
-                                            .items_center()
-                                            .justify_between()
-                                            .h(px(ROW_HEIGHT))
-                                            .px_4()
-                                            .bg(colors.accent_200.with_alpha(0.1))
-                                            .border_y_1()
-                                            .border_color(colors.accent_200.with_alpha(0.4))
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .text_align(TextAlign::Left)
-                                                    .child(
-                                                        div().pr_2().child(
-                                                            Icon::new(wireless_icon)
-                                                                .size((px(28.), px(28.)))
-                                                                .text_color(icon_color),
-                                                        ),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .pl_2()
-                                                            .font_weight(FontWeight::NORMAL)
-                                                            .text_color(text_color)
-                                                            .child(network.ssid.clone())
-                                                    ),
-                                            )
-                                            .child(connect_div)
-                                    } else {
-                                        div()
-                                            .id(("network_item", idx))
-                                            .flex()
-                                            .items_center()
-                                            .justify_between()
-                                            .h(px(ROW_HEIGHT))
-                                            .px_4()
-                                            .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .text_align(TextAlign::Left)
-                                                    .child(
-                                                        div().pr_2().child(
-                                                            Icon::new(wireless_icon)
-                                                                .size((px(28.), px(28.)))
-                                                                .text_color(icon_color),
-                                                        ),
-                                                    )
-                                                    .child(
-                                                        div()
-                                                            .pl_2()
-                                                            .font_weight(FontWeight::NORMAL)
-                                                            .text_color(text_color)
-                                                            .child(network.ssid.clone())
-                                                    ),
-                                            )
-                                    };
-
-                                    if !is_active && !is_known {
-                                        network_div = network_div.on_click(cx.listener(
-                                            move |_, _, _, _| {
-                                                println!(
-                                                    "TODO: open settings for new network {:?} - {:?}",
-                                                    ssid, is_known
-                                                );
-                                            },
-                                        ));
-                                    } else if !is_active && is_known {
-                                        let ssid_clone = ssid.clone();
-                                        let nm_tx_clone = nm_tx.clone();
-
-                                        network_div = network_div.on_click(cx.listener(
-                                            move |this: &mut SettingsDrawer,
-                                                  _event: &ClickEvent,
-                                                  _window: &mut Window,
-                                                  cx: &mut Context<Self>| {
-                                                let ssid = ssid_clone.clone();
-                                                let mut nm_tx = nm_tx_clone.clone();
-
-                                                cx.background_executor()
-                                                    .spawn(async move {
-                                                        let _ = nm_tx
-                                                            .send(NmMessage::ConnectKnownNetwork { name: ssid })
-                                                            .await;
-                                                    })
-                                                    .detach();
-                                                Self::start_close_animation(this, cx);
-
-                                                cx.notify();
-                                            },
-                                        ));
-                                    }
-
-                                    network_div
-                                },
-                            )),
-                    ),
-            )
-            .child(
-                self.render_settings_div(cx)
+                            .h(px(FOOTER_HEIGHT))
+                            .child(self.render_settings_div(cx))
+                    )
             )
             .into_any()
     }

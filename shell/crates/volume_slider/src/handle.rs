@@ -12,7 +12,11 @@ const VOLUME_STEP: f32 = 3.0;
 pub fn get_volume(cx: &App) -> f32 {
     if cx.has_global::<ShellState>() {
         let vol = ShellState::global(cx).volume;
-        if vol > 0.0 { vol } else { DEFAULT_VOLUME_LEVEL }
+        if vol > 0.0 {
+            vol
+        } else {
+            DEFAULT_VOLUME_LEVEL
+        }
     } else {
         DEFAULT_VOLUME_LEVEL
     }
@@ -45,7 +49,7 @@ pub fn handle_volume_event(
 
     let current = slider.read(cx).value();
     let new_value = (current + delta).clamp(min_volume, max_volume);
-    
+
     slider.update(cx, |state, cx| {
         if (state.value - new_value).abs() < f32::EPSILON {
             return;
@@ -68,7 +72,7 @@ pub fn sync_volume_to_system(value: f32, cx: &mut App) {
     let shell_state = ShellState::global(cx);
     let volume_tx = shell_state.volume_tx.clone();
     let sink_name = shell_state
-        .sound_device_info
+        .default_sound_device
         .name
         .clone()
         .unwrap_or_else(|| "@DEFAULT_SINK@".to_string());
