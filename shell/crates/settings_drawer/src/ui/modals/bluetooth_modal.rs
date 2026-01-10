@@ -123,10 +123,11 @@ impl SettingsDrawer {
 
         let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
         let bt_tx = ShellState::global(cx).bt_tx.clone().unwrap();
-        let device_list = bluetooth_details
+        let mut device_list = bluetooth_details
             .available_devices
             .clone()
             .unwrap_or_default();
+        device_list.sort_by_key(|d| !d.connected);
         let device_count = device_list.len();
 
         div()
