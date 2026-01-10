@@ -44,8 +44,17 @@ pub enum ShellStateMessage {
     OutputSoundDevice {
         device_info: DeviceInfo,
     },
+    OutputSounds {
+        list: Vec<DeviceInfo>,
+    },
     Brightness {
         value: f32,
+    },
+    AddWirelessNetwork {
+        network: WirelessNetworkInfo,
+    },
+    RemoveWirelessNetwork {
+        ssid: String,
     },
 }
 
@@ -65,6 +74,8 @@ pub enum VolumeMessage {
     VolumeChanged { name: String, value: f32 },
     MuteSink { name: String },
     UnmuteSink { name: String },
+    RequestOutputSounds,
+    SetDefaultOutputSoundDevice { name: String },
 }
 
 #[derive(Debug)]

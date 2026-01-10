@@ -464,10 +464,10 @@ impl SettingsDrawer {
         ) {
             match self.animation_state {
                 ModalAnimationState::Opening => {
-                    self.animation_progress += 0.08;
+                    self.animation_progress += 0.10;
                 }
                 ModalAnimationState::Closing => {
-                    self.animation_progress -= 0.08;
+                    self.animation_progress -= 0.10;
                 }
                 _ => {}
             }
@@ -617,19 +617,6 @@ impl SettingsDrawer {
                                                 - self.modal_size.1 / 2.0))
                                             .w(px(self.modal_size.0))
                                             .h(px(self.modal_size.1))
-                                            .bg(if self.modal_size.0 == MIN_MODAL_SIZE_1.0 {
-                                                colors.accent_200.with_alpha(0.4)
-                                            } else {
-                                                colors.background_900
-                                            })
-                                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                                px(16.)
-                                            } else {
-                                                px(18.)
-                                            })
-                                            .rounded_xl()
-                                            .border_1()
-                                            .border_color(colors.accent_800)
                                             .on_mouse_down(MouseButton::Left, |_, _, cx| {
                                                 cx.stop_propagation()
                                             })
@@ -649,6 +636,17 @@ impl SettingsDrawer {
                                                         self.render_bluetooth_modal(cx)
                                                     }
                                                     ModalKind::SoundModal => {
+                                                        let shell_state =
+                                                            ShellState::global(cx).clone();
+
+                                                        cx.background_executor()
+                                                            .spawn(async move {
+                                                                shell_state
+                                                                    .get_output_sound_devices()
+                                                                    .await;
+                                                            })
+                                                            .detach();
+
                                                         self.render_sound_modal(cx)
                                                     }
                                                     ModalKind::PerformanceModal => {
