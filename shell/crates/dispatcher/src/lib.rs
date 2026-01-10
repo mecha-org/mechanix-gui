@@ -24,6 +24,10 @@ pub enum Message {
     },
     SetKeyboardAlwayson(bool),
     ShowPowerOptions(bool),
+    LaunchApp {
+        app_id: String,
+        exec: String,
+    },
 }
 
 pub fn init(cx: &mut App) {

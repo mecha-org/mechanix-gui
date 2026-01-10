@@ -75,7 +75,7 @@ assets = [
         "../../../assets/icons/power-options/*",
         "usr/share/mechanix/shell/launcher/assets/icons/power-options/",
         "755",
-    ]
+    ],
 ]
 
 [package.metadata.generate-rpm]

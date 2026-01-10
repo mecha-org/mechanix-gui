@@ -16,4 +16,4 @@ commons = { path = "../commons" }
 mxsearch = { path = "../../../services/search/server" }
 settings = { path = "../settings" }
 theme = { path = "../theme" }
-freedesktop-icons = "0.4.0"
+dispatcher = { path = "../dispatcher" }

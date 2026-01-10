@@ -72,3 +72,17 @@ size = { width = 37.0, height = 277.0 }
 [volume_slider]
 min_volume_level = 0.0
 max_volume_level = 100.0
+
+[launcher.layer_shell]
+layer = "bottom"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.launcher"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+[keyboard.layer_shell]
+layer = "overlay"
+anchor = ["bottom"]
+namespace = "mechanix.keyboard"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 262.0 }
