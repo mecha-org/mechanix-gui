@@ -17,6 +17,8 @@ pub struct IconButton {
     width: Option<Pixels>,
     height: Option<Pixels>,
     boxSize: Option<Pixels>,
+    on_mouse_down: Option<Rc<dyn Fn(&MouseDownEvent, &mut Window, &mut App)>>,
+    on_mouse_up: Option<Rc<dyn Fn(&MouseUpEvent, &mut Window, &mut App)>>,
 }
 
 impl IconButton {
@@ -32,6 +34,8 @@ impl IconButton {
             width: None,
             height: None,
             boxSize: None,
+            on_mouse_down: None,
+            on_mouse_up: None,
         }
     }
 
@@ -45,6 +49,21 @@ impl IconButton {
         callback: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static
     ) -> Self {
         self.on_click = Some(Rc::new(callback));
+        self
+    }
+    pub fn on_mouse_down(
+        mut self,
+        callback: impl Fn(&MouseDownEvent, &mut Window, &mut App) + 'static
+    ) -> Self {
+        self.on_mouse_down = Some(Rc::new(callback));
+        self
+    }
+
+    pub fn on_mouse_up(
+        mut self,
+        callback: impl Fn(&MouseUpEvent, &mut Window, &mut App) + 'static
+    ) -> Self {
+        self.on_mouse_up = Some(Rc::new(callback));
         self
     }
 
@@ -82,6 +101,16 @@ impl RenderOnce for IconButton {
             .rounded(px(5.6))
             .when_some(self.boxSize, |this, s| this.w(s).h(s))
             .when_none(&self.boxSize, |this| this.size(px(56.0)))
+            .when_some(self.on_mouse_down, |this, handler| {
+                this.on_mouse_down(MouseButton::Left, move |event, window, cx|
+                    handler(event, window, cx)
+                )
+            })
+            .when_some(self.on_mouse_up, |this, handler| {
+                this.on_mouse_up(MouseButton::Left, move |event, window, cx|
+                    handler(event, window, cx)
+                )
+            })
             .child(
                 self.main
                     .flex()

@@ -1,6 +1,8 @@
-use crate::ui::utils::prelude::{ DesktopApp, DesktopApps };
+use crate::prelude::{ Icon, IconName };
 use commons::widgets::wing;
+use dispatcher::Dispatcher;
 use gpui::*;
+use mxsearch::prelude::AppInfo;
 use theme::prelude::{ AlphaExt, Theme };
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{ Hash, Hasher };
@@ -16,7 +18,7 @@ const APPS_PER_ROW: u16 = 4;
 const DRAG_THRESHOLD: f32 = 2.0;
 
 pub struct SubWindow {
-    pub apps: Vec<DesktopApp>,
+    pub apps: Vec<AppInfo>,
     pub category: String,
     pub scroll_offset: Pixels,
     pub last_scroll_offset: Pixels,
@@ -27,10 +29,7 @@ pub struct SubWindow {
 }
 
 impl SubWindow {
-    pub fn scan(category: String) -> Self {
-        let desktop_apps = DesktopApps::scan();
-        let apps = desktop_apps.get_apps_by_category(&category);
-
+    pub fn new(category: String, apps: Vec<AppInfo>) -> Self {
         Self {
             apps,
             category,
@@ -52,6 +51,12 @@ impl SubWindow {
             (px(0.0), px(0.0))
         } else {
             (min_scroll, max_scroll)
+        }
+    }
+    pub fn resolved_icon(app_icon: &Option<String>) -> Icon {
+        match app_icon {
+            Some(path) => Icon::default().path(path.to_string()),
+            None => Icon::from(IconName::DefaultApp),
         }
     }
 
@@ -89,6 +94,18 @@ impl SubWindow {
         self.is_dragging = false;
     }
 
+    pub fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
+        let sender = Dispatcher::global(cx).0.clone();
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender.broadcast(dispatcher::Message::LaunchApp {
+                    app_id: possible_app_id,
+                    exec,
+                }).await;
+            })
+            .detach();
+    }
+
     pub fn on_mouse_move(
         &mut self,
         event: &MouseMoveEvent,
@@ -115,7 +132,6 @@ impl SubWindow {
 
     /// Render the modal overlay with the SubWindow card
     pub fn render_modal(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
-
         div().child(self.render_card(cx))
     }
 
@@ -182,10 +198,10 @@ impl SubWindow {
                     .iter()
                     .enumerate()
                     .map(|(idx, app)| {
-                        let icon = DesktopApp::resolved_icon(&app.icon_path);
-                        let app_id = app.app_id.clone();
+                        let app_id = app.possible_app_id.clone();
                         let id = hash_id(&app_id);
                         let exec = app.exec.clone();
+                        let icon = Self::resolved_icon(&app.icon_path);
 
                         div()
                             .id(id + idx)
@@ -203,12 +219,18 @@ impl SubWindow {
                                     .justify_center()
                                     .cursor_pointer()
                                     .on_click(
-                                        cx.listener(move |this, _, _, _| {
-                                            if !this.has_moved {
-                                                let _ = DesktopApps::run_app_exec(exec.as_str());
+                                        cx.listener(
+                                            move |this: &mut SubWindow, _event, _window, cx| {
+                                                if !this.has_moved {
+                                                    this.on_app_click(
+                                                        app_id.clone(),
+                                                        exec.clone(),
+                                                        cx
+                                                    );
+                                                }
+                                                this.has_moved = false;
                                             }
-                                            this.has_moved = false;
-                                        })
+                                        )
                                     )
                                     .child(
                                         div()

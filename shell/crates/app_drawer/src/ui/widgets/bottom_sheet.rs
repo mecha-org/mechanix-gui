@@ -1,6 +1,6 @@
 use crate::prelude::Icon;
 use crate::prelude::IconName;
-use crate::ui::utils::prelude::DesktopApp;
+// use crate::ui::utils::prelude::DesktopApp;
 use crate::ui::widgets::{ IconButton, TextButton };
 
 use gpui::*;

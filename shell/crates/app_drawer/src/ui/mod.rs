@@ -1,4 +1,5 @@
 use commons::widgets::{ WingSide, wing };
+use dispatcher::Dispatcher;
 use gpui::prelude::*;
 use gpui::*;
 use mxsearch::prelude::AppInfo;
@@ -7,11 +8,10 @@ use theme::prelude::{ AlphaExt, Theme };
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{ Hash, Hasher };
+use std::time::{ Duration, Instant };
 use commons::prelude::TextInput;
-use crate::models::AppDrawerState;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
-use crate::ui::utils::prelude::{ DesktopApps };
 use crate::ui::widgets::{ BottomSheetKind, SubWindow };
 use crate::ui::widgets::IconButton;
 
@@ -30,9 +30,9 @@ const FLOATING_BTN_BOTTOM: f32 = 16.0;
 const FLOATING_BTN_RIGHT: f32 = 15.0;
 const SEARCH_BAR_BOTTOM: f32 = 20.0;
 const DRAG_THRESHOLD: f32 = 2.0;
+const LONG_PRESS_DURATION: Duration = Duration::from_millis(500);
 
 pub struct AppDrawer {
-    pub state: AppDrawerState,
     pub grouped: HashMap<String, Vec<AppInfo>>,
     scroll_offset: Pixels,
     last_scroll_offset: Pixels,
@@ -54,15 +54,17 @@ pub struct AppDrawer {
     pub subwindow: Option<Entity<SubWindow>>,
     pub search_service: Option<MxSearchService>,
     is_loading: bool,
+    press_start_time: Option<Instant>,
+    press_app_info: Option<AppInfo>,
+    is_long_press: bool,
 }
 
 impl AppDrawer {
-    pub fn new(state: AppDrawerState, cx: &mut Context<Self>) -> Self {
+    pub fn new( cx: &mut Context<Self>) -> Self {
         let grouped = HashMap::new();
         let filtered_apps = Vec::new();
 
         let drawer = Self {
-            state,
             grouped,
             scroll_offset: px(0.0),
             last_scroll_offset: px(0.0),
@@ -83,6 +85,9 @@ impl AppDrawer {
             subwindow: None,
             search_service: None,
             is_loading: true,
+            press_start_time: None,
+            press_app_info: None,
+            is_long_press: false,
         };
 
         cx.spawn(async move |this, cx| {
@@ -139,6 +144,17 @@ impl AppDrawer {
         }
 
         grouped
+    }
+    pub fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
+        let sender = Dispatcher::global(cx).0.clone();
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender.broadcast(dispatcher::Message::LaunchApp {
+                    app_id: possible_app_id,
+                    exec,
+                }).await;
+            })
+            .detach();
     }
 
     fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
@@ -306,8 +322,8 @@ impl AppDrawer {
         self.is_dragging = false;
 
         self.is_searching = true;
-        self.text_input.update(cx, |input, _| {
-            input.focus_handle.focus(window);
+        self.text_input.update(cx, |input, cx| {
+            input.focus_handle.focus(window,cx);
         });
         self.scroll_offset = px(0.0);
         self.last_scroll_offset = px(0.0);
@@ -492,9 +508,9 @@ impl AppDrawer {
                                         )
                                 )
                                 .on_click(
-                                    cx.listener(move |this: &mut AppDrawer, _, _, _| {
+                                    cx.listener(move |this: &mut AppDrawer, _event, _window, cx| {
                                         if !this.has_moved {
-                                            let _ = DesktopApps::run_app_exec(exec.as_str());
+                                            this.on_app_click(app_id.clone(), exec.clone(), cx);
                                         }
                                         this.has_moved = false;
                                     })
@@ -516,7 +532,12 @@ impl AppDrawer {
 
         if self.subwindow.is_none() {
             let category = self.subwindow_category.clone();
-            self.subwindow = Some(cx.new(|_cx| SubWindow::scan(category)));
+
+            if let Some(apps) = self.grouped.get(&category) {
+                let apps = apps.clone();
+
+                self.subwindow = Some(cx.new(|_cx| { SubWindow::new(category.clone(), apps) }));
+            }
         }
 
         let subwindow_entity = self.subwindow.clone().unwrap();
@@ -646,27 +667,27 @@ impl Render for AppDrawer {
                                             .w(px(GRID_ROW_WIDTH))
                                             .h(px(GRID_ROW_HEIGHT))
                                             .cursor_pointer()
-                                            .when(show_popup, |row| {
-                                                row.on_click(
-                                                    cx.listener(
-                                                        move |
-                                                            this: &mut AppDrawer,
-                                                            _event,
-                                                            _window,
-                                                            cx
-                                                        | {
-                                                            if !this.has_moved {
-                                                                this.show_subwindow_modal = true;
-                                                                this.subwindow_category =
-                                                                    category_for_popup.clone();
-                                                                this.subwindow = None;
-                                                                cx.notify();
-                                                            }
-                                                            this.has_moved = false;
+                                            .on_click(
+                                                cx.listener(
+                                                    move |
+                                                        this: &mut AppDrawer,
+                                                        _event,
+                                                        _window,
+                                                        cx
+                                                    | {
+                                                        if !this.has_moved && !this.is_long_press {
+                                                            // Add this condition
+                                                            this.show_subwindow_modal = true;
+                                                            this.subwindow_category =
+                                                                category_for_popup.clone();
+                                                            this.subwindow = None;
+                                                            cx.notify();
                                                         }
-                                                    )
+                                                        this.has_moved = false;
+                                                        this.is_long_press = false; // Add this reset
+                                                    }
                                                 )
-                                            })
+                                            )
                                             .child(
                                                 div()
                                                     .grid()
@@ -681,19 +702,24 @@ impl Render for AppDrawer {
                                                     .h(px(GRID_ROW_HEIGHT))
                                                     .justify_center()
                                                     .children(
-                                                        shown_apps.into_iter().map(|app| {
-                                                            let app_id =
-                                                                app.possible_app_id.clone();
-                                                            let id = hash_id(&app_id);
-                                                            let icon_path = app.icon_path.clone();
-                                                            let icon = Self::resolved_icon(
-                                                                &icon_path
-                                                            );
+                                                        shown_apps
+                                                            .into_iter()
+                                                            .enumerate()
+                                                            .map(|(idx, app)| {
+                                                                let app_id =
+                                                                    app.possible_app_id.clone();
+                                                                let exec = app.exec.clone();
 
-                                                            IconButton::new(id + idx)
-                                                                .icon(icon)
-                                                                .when(!show_popup, |btn| {
-                                                                    btn.on_click(
+                                                                let id = hash_id(&app_id);
+                                                                let icon = Self::resolved_icon(
+                                                                    &app.icon_path
+                                                                );
+                                                                let app_for_sheet = app.clone();
+
+                                                                IconButton::new(id + idx)
+                                                                    .icon(icon)
+
+                                                                    .on_mouse_down(
                                                                         cx.listener(
                                                                             move |
                                                                                 this: &mut AppDrawer,
@@ -701,22 +727,71 @@ impl Render for AppDrawer {
                                                                                 _window,
                                                                                 cx
                                                                             | {
-                                                                                if !this.has_moved {
-                                                                                    this.show_bottom_sheet = true;
-                                                                                    this.sheet_app =
-                                                                                        Some(
-                                                                                            app.clone()
-                                                                                        );
-                                                                                    this.sheet_kind =
-                                                                                        BottomSheetKind::MainOptions;
-                                                                                    cx.notify();
-                                                                                }
-                                                                                this.has_moved = false;
+                                                                                this.press_start_time =
+                                                                                    Some(
+                                                                                        Instant::now()
+                                                                                    );
+                                                                                this.press_app_info =
+                                                                                    Some(
+                                                                                        app_for_sheet.clone()
+                                                                                    );
+                                                                                this.is_long_press = false;
+                                                                                cx.stop_propagation();
                                                                             }
                                                                         )
                                                                     )
-                                                                })
-                                                        })
+                                                                    .on_mouse_up(
+                                                                        cx.listener(
+                                                                            move |
+                                                                                this: &mut AppDrawer,
+                                                                                _event,
+                                                                                _window,
+                                                                                cx
+                                                                            | {
+                                                                                if
+                                                                                    let Some(
+                                                                                        start_time,
+                                                                                    ) = this.press_start_time
+                                                                                {
+                                                                                    let duration =
+                                                                                        start_time.elapsed();
+
+                                                                                    if
+                                                                                        duration >=
+                                                                                            LONG_PRESS_DURATION &&
+                                                                                        !this.has_moved
+                                                                                    {
+                                                                                        // Long press - show bottom sheet
+                                                                                        this.is_long_press = true;
+                                                                                        this.show_bottom_sheet = true;
+                                                                                        this.sheet_app =
+                                                                                            this.press_app_info.clone();
+                                                                                        this.sheet_kind =
+                                                                                            BottomSheetKind::MainOptions;
+                                                                                        cx.notify();
+                                                                                    } else if
+                                                                                        !this.has_moved &&
+                                                                                        !this.is_long_press
+                                                                                    {
+                                                                                        // Short press - launch app
+                                                                                        this.on_app_click(
+                                                                                            app_id.clone(),
+                                                                                            exec.clone(),
+                                                                                            cx
+                                                                                        );
+                                                                                    }
+                                                                                }
+
+                                                                                this.press_start_time =
+                                                                                    None;
+                                                                                this.press_app_info =
+                                                                                    None;
+                                                                                this.has_moved = false;
+                                                                                cx.stop_propagation();
+                                                                            }
+                                                                        )
+                                                                    )
+                                                            })
                                                     )
                                             )
                                             .child({
