@@ -41,9 +41,8 @@ futures = "0.3.31"
 futures-timer = "3.0.3"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "69108c3fd2efcc2e47560774b55f196b68e51cd6", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "5a58535f8eee0537460b82efbea7d6b79b9c2299", features = [
     "wayland",
-    "linux-impeller",
 ] }
 rust-embed = "8.8.0"
 networkmanager = { path = "dbus/freedesktop/networkmanager" }

@@ -58,3 +58,6 @@ Files App lets you organize and manage your files and folders in your Mecha Come
 <img src="./assets/screenshots/other_options.png" alt="Other Options" /> 
 
   
+### To open files with specific path - with exec  `MECHANIX_FILES_OPEN_PATH=/home/mecha/meson_options.txt ./build/elinux/x64/release/bundle/mechanix_files -b .`
+
+### On build time you can pass `--dart-define=OPEN_PATH=<MECHANIX_FILES_OPEN_PATH>`
