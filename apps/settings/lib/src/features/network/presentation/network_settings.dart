@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_icon.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_row_item.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/styles/custom_styles.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
@@ -70,25 +72,23 @@ class _NetworkSettingsState extends State<NetworkSettings> {
       selector: (state) => state.allSavedNetworks,
       builder: (context, state) {
         return Scaffold(
-          appBar: PreferredSize(
-              preferredSize: const Size.fromHeight(52),
-              child: const MechanixNavigationBar(
-                title: "Network Settings",
-              ).padHorizontal(12)),
           body: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const CustomTitle(title: "Network Settings"),
                   MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
                     listItems: getWireless(context, state),
-                  )
+                  ).padTop(12)
                 ],
               ).padTop(8),
             ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
           ),
         );
       },

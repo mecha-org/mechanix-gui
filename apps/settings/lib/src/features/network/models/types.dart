@@ -60,6 +60,7 @@ enum WirelessProtocol {
   wep,
   wpa,
   wpa2Wpa3,
+  wpa2,
   wpa3,
   wpaEnterprise,
   wpa2Enterprise,
@@ -71,8 +72,11 @@ final List<SelectOption<WirelessProtocol>> wirelessProtocolOptions = [
   WirelessProtocol.wep.toSelectOption('WEP'),
   WirelessProtocol.wpa.toSelectOption('WPA'),
   WirelessProtocol.wpa2Wpa3.toSelectOption('WPA2/WPA3'),
+  WirelessProtocol.wpa2.toSelectOption('WPA2'),
   WirelessProtocol.wpa3.toSelectOption('WPA3'),
   WirelessProtocol.wpaEnterprise.toSelectOption('WPA Enterprise'),
   WirelessProtocol.wpa2Enterprise.toSelectOption('WPA2 Enterprise'),
   WirelessProtocol.wpa3Enterprise.toSelectOption('WPA3 Enterprise'),
 ];
+
+enum SignalLevel { high, medium, low, none }

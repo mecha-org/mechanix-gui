@@ -67,6 +67,7 @@ class WifiRepositoryImpl implements WifiRepository {
       (d) => d.deviceType == NetworkManagerDeviceType.wifi,
       orElse: () => throw Exception("No Wi-Fi device found"),
     );
+
     return wifiDevice;
   }
 
@@ -240,8 +241,8 @@ class WifiRepositoryImpl implements WifiRepository {
 
     try {
       // Check if connection already exists to avoid duplicates, if exist remove it
-      final existingConnection =
-          await _findAndRemoveExistingConnection(accessPoint: accessPoint, ssid: null);
+      final existingConnection = await _findAndRemoveExistingConnection(
+          accessPoint: accessPoint, ssid: null);
 
       if (existingConnection != null) {
         logger.i('Found existing connection, activating it');
@@ -417,7 +418,6 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints>? availableAccessPoints) async {
-
     final List<SavedNetworks> savedNetworks = [];
     final connections = _client.settings.connections;
     final seenBssids = <String>{}; // to track unique SSIDs
