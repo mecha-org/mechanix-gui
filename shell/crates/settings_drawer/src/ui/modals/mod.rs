@@ -78,6 +78,7 @@ impl SettingsDrawer {
             .bg(colors.background_1000)
             .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
+            .rounded_md()
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
                 px(16.)
             } else {
