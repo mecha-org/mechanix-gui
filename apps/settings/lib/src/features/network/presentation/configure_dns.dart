@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
@@ -28,12 +30,12 @@ class _ConfigureDnsWidgetState extends State<ConfigureDnsWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MechanixNavigationBar(title: "Configure DNS"),
       body: ContainerWidget(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const CustomTitle(title: "Configure DNS"),
               MechanixSelect(
                 value: selectedValue,
                 onChanged: onChange,
@@ -49,6 +51,9 @@ class _ConfigureDnsWidgetState extends State<ConfigureDnsWidget> {
             ],
           ).padTop(8),
         ),
+      ),
+      bottomNavigationBar: MechanixBottomBar(
+        leadingWidget: [context.backButton],
       ),
     );
   }
