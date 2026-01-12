@@ -104,6 +104,7 @@ impl SettingsDrawer {
                                             .px_4()
                                             .bg(colors.accent_200.with_alpha(0.1))
                                             .border_y_1()
+                                            .border_color(colors.accent_200.with_alpha(0.4))
                                             .child(
                                                 div()
                                                     .flex()
@@ -133,7 +134,6 @@ impl SettingsDrawer {
                                             .justify_between()
                                             .h(px(ROW_HEIGHT))
                                             .px_4()
-                                            .rounded(px(8.))
                                             .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
                                             .child(
                                                 div()
