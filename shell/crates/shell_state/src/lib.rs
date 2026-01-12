@@ -5,7 +5,7 @@ use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use futures_timer::Delay;
 use gpui::*;
 use networkmanager::{
-    interfaces::wireless::{NMState, WirelessNetworkInfo},
+    interfaces::wireless::{EventType, NMState, WirelessNetworkInfo},
     service::NetworkManagerService,
 };
 use system_dbus::display_client;
@@ -43,12 +43,14 @@ pub struct ShellState {
     pub battery_level: BatteryLevel,
     pub battery_percent: u8,
     pub status_bar_entity: Option<EntityId>,
-    pub sound_device_info: DeviceInfo,
+    pub default_sound_device: DeviceInfo,
+    pub sound_devices: Vec<DeviceInfo>,
     pub brightness_value: f32,
-    pub nm_tx: Option<mpsc:: Sender<NmMessage>>,
-    pub bt_tx: Option<mpsc:: Sender<BtMessage>>,
-    pub volume_tx: Option<mpsc:: Sender<VolumeMessage>>,
-    pub brightness_tx: Option<mpsc:: Sender<BrightnessMessage>>,
+    pub volume: f32,
+    pub nm_tx: Option<mpsc::Sender<NmMessage>>,
+    pub bt_tx: Option<mpsc::Sender<BtMessage>>,
+    pub volume_tx: Option<mpsc::Sender<VolumeMessage>>,
+    pub brightness_tx: Option<mpsc::Sender<BrightnessMessage>>,
 }
 
 
@@ -72,17 +74,19 @@ impl ShellState {
     }
 
     pub async fn toggle_wireless(&self, enabled: bool) {
-        let _ =  self.nm_tx
-        .clone()
-        .unwrap()
-        .send(NmMessage::ToggleWireless { enabled: enabled }).await;
+        let _ = self.nm_tx
+            .clone()
+            .unwrap()
+            .send(NmMessage::ToggleWireless { enabled: enabled }).await;
     }
 
     pub async fn toggle_bluetooth(&self, enabled: bool) {
         let _ = self.bt_tx.clone().unwrap().send(BtMessage::ToggleBluetooth { enabled: enabled }).await;
     }
 
-
+    pub async fn get_output_sound_devices(&self) {
+        let _ = self.volume_tx.clone().unwrap().send(VolumeMessage::RequestOutputSounds).await;
+    }
 }
 
 pub struct ShellStateManager {}
@@ -92,7 +96,7 @@ impl ShellStateManager {
         Self {}
     }
 
- 
+
     pub fn run(cx: &mut App) {
         let (mut message_tx, mut message_rx) = mpsc::channel::<ShellStateMessage>(210);
 
@@ -108,12 +112,10 @@ impl ShellStateManager {
         ShellState::global_mut(cx).brightness_tx = Some(brightness_tx.clone());
 
         cx.spawn(async move |app| {
-           
             while let Some(message) = message_rx.next().await {
-                _ = app.update( |cx| {
+                _ = app.update(|cx| {
                     match message {
                         ShellStateMessage::WirelessStatusChanged { enabled } => {
-                            
                             ShellState::global_mut(cx).wireless_details.enabled = enabled;
                             if !enabled {
                                 ShellState::global_mut(cx)
@@ -156,17 +158,48 @@ impl ShellStateManager {
                                 .bluetooth_details
                                 .available_devices = Some(list);
                         }
+                        ShellStateMessage::AddWirelessNetwork { network } => {
+                            let current_networks = ShellState::global_mut(cx)
+                                .wireless_details
+                                .networks
+                                .get_or_insert_with(Vec::new);
+
+                            // Check if network with same SSID already exists
+                            let exists = current_networks
+                                .iter()
+                                .any(|n| n.ssid == network.ssid);
+
+                            if !exists {
+                                current_networks.push(network);
+                            } else {
+                                // Update existing network (in case signal strength changed)
+                                if let Some(existing) = current_networks
+                                    .iter_mut()
+                                    .find(|n| n.ssid == network.ssid)
+                                {
+                                    *existing = network;
+                                }
+                            }
+                        }
+                        ShellStateMessage::RemoveWirelessNetwork { ssid } => {
+                            if let Some(networks) = &mut ShellState::global_mut(cx)
+                                .wireless_details
+                                .networks
+                            {
+                                networks.retain(|n| n.ssid != ssid);
+                            }
+                        }
                         ShellStateMessage::BluetoothAddedEvent { device } => {
                             let current_devices = ShellState::global_mut(cx)
                                 .bluetooth_details
                                 .available_devices.clone();
-                                if let Some(current_devices) = current_devices {
-                                    let mut available_devices = current_devices.clone();
-                                    available_devices.push(device);
-                                    ShellState::global_mut(cx)
-                                        .bluetooth_details
-                                        .available_devices = Some(available_devices);
-                                }
+                            if let Some(current_devices) = current_devices {
+                                let mut available_devices = current_devices.clone();
+                                available_devices.push(device);
+                                ShellState::global_mut(cx)
+                                    .bluetooth_details
+                                    .available_devices = Some(available_devices);
+                            }
                         }
                         ShellStateMessage::BatteryStateChanged { state } => {
                             ShellState::global_mut(cx).battery_state = state;
@@ -185,7 +218,10 @@ impl ShellStateManager {
                             }
                         }
                         ShellStateMessage::OutputSoundDevice { device_info } => {
-                            ShellState::global_mut(cx).sound_device_info = device_info;
+                            ShellState::global_mut(cx).default_sound_device = device_info;
+                        }
+                        ShellStateMessage::OutputSounds { list } => {
+                            ShellState::global_mut(cx).sound_devices = list;
                         }
                         ShellStateMessage::Brightness { value } => {
                             ShellState::global_mut(cx).brightness_value = value;
@@ -195,7 +231,7 @@ impl ShellStateManager {
                 });
             }
         })
-        .detach();
+            .detach();
 
         let executor = cx.background_executor();
         executor
@@ -218,6 +254,7 @@ impl ShellStateManager {
                     network_manager.stream_wireless_enabled_status().await;
                 let mut device_state_stream = network_manager.stream_device_events().await;
                 let mut strength_stream = network_manager.stream_active_network_strength().await;
+                let mut access_point_stream = network_manager.stream_access_point_events().await;
 
                 let mut bluetooth_status_stream =
                     bluetooth_manager.stream_bluetooth_enabled_status().await;
@@ -227,7 +264,7 @@ impl ShellStateManager {
                 let _ = get_available_bluetooth_devices(message_tx.clone(), &bluetooth_manager).await;
 
                 let pulse_manager = PulseAudioService::new().unwrap();
-                let _= update_device_info(&mut message_tx, &pulse_manager).await;
+                let _ = get_sound_device_info(&mut message_tx, &pulse_manager).await;
 
                 let brightness_value = match display_client::get_brightness().await {
                     Ok(value) => value,
@@ -246,7 +283,7 @@ impl ShellStateManager {
 
 
                 loop {
-                    select!{
+                    select! {
 
                         // battery events
                         battery_level = battery_level_stream.next() => {
@@ -292,6 +329,34 @@ impl ShellStateManager {
                             }
                         }
 
+                        ap_event = access_point_stream.next() => {
+                            match ap_event {
+                                Some(Ok(event)) => {
+                                    match event.event_type {
+                                        EventType::Added => {
+                                            if let Some(new_network) = event.wireless_network_info {
+                                                let _ = message_tx.send(
+                                                    ShellStateMessage::AddWirelessNetwork { 
+                                                        network: new_network 
+                                                    }
+                                                ).await;
+                                            }
+                                        }
+                                        EventType::Removed => {
+                                            if let Some(removed_network) = event.wireless_network_info {
+                                                println!("network is removed : {:?}", removed_network.clone()  );
+                                                let _ = message_tx.send(
+                                                    ShellStateMessage::RemoveWirelessNetwork { 
+                                                        ssid: removed_network.ssid 
+                                                    }
+                                                ).await;
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
                   
                         event = nm_rx.next() => {
                             if let Some(event) = event {
@@ -365,7 +430,7 @@ impl ShellStateManager {
                                 Some(VolumeMessage::MuteSink { name }) => {
                                     match pulse_manager.handle.set_sink_mute_by_name(&name).await {
                                         Ok(_) => {
-                                            update_device_info(&mut message_tx, &pulse_manager).await;
+                                            get_sound_device_info(&mut message_tx, &pulse_manager).await;
                                         }
                                         Err(e) => {
                                             eprintln!("Failed to set mute: {}", e);
@@ -375,13 +440,35 @@ impl ShellStateManager {
                                 Some(VolumeMessage::UnmuteSink { name }) => {
                                     match pulse_manager.handle.set_sink_unmute_by_name(&name).await {
                                         Ok(_) => {
-                                        update_device_info(&mut message_tx, &pulse_manager).await; 
+                                        get_sound_device_info(&mut message_tx, &pulse_manager).await; 
                                         }
                                         Err(e) => {
                                             eprintln!("Failed to unset mute: {}", e);
                                         }
                                     }
                                 }
+                                Some(VolumeMessage::RequestOutputSounds) => {
+                                    match pulse_manager.handle.get_sinks().await {
+                                        Ok(list) => {
+                                               let _ = message_tx.send(ShellStateMessage::OutputSounds { list }).await;
+                                        }
+                                        Err(e) => {
+                                            eprintln!("Failed to unset mute: {}", e);
+                                        }
+                                    }
+                                }
+                                 Some(VolumeMessage::SetDefaultOutputSoundDevice { name }) => {
+                                    match pulse_manager.handle.set_default_sink_by_name(&name).await {
+                                        Ok(_) => {
+                                            println!("Default output sound device set to: {}", name);
+                                              let _= get_sound_device_info(&mut message_tx, &pulse_manager).await;
+                                        }
+                                        Err(e) => {
+                                            eprintln!("Failed to unset mute: {}", e);
+                                        }
+                                    }
+                                }
+
                                 None => break,
                             }
                         
@@ -404,7 +491,6 @@ impl ShellStateManager {
                             None => break,
                             }
                         }
-
                         
                         _ = time_event => {
                             let _ = message_tx.send(ShellStateMessage::TimeUpdated).await;
@@ -417,9 +503,6 @@ impl ShellStateManager {
             .detach();
     }
 }
-
-
-
 
 pub fn init(cx: &mut App) {
     let shell_state = ShellState::new();

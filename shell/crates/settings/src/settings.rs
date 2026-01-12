@@ -26,6 +26,10 @@ pub struct Settings {
     pub power_options: PowerOptionsSettings,
     #[serde(default)]
     pub volume_slider: VolumeSliderSettings,
+    #[serde(default)]
+    pub keyboard: KeyboardSettings,
+    #[serde(default)]
+    pub launcher: LauncherSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -130,6 +134,8 @@ pub struct UniversalSearchSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub system_apps: SystemApps,
 }
 
 impl Default for UniversalSearchSettings {
@@ -143,6 +149,7 @@ impl Default for UniversalSearchSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            system_apps: SystemApps::default(),
         }
     }
 }
@@ -199,6 +206,12 @@ pub struct HomescreenSettings {
     pub status_bar_size: Size<Pixels>,
 
     #[serde(default)]
+    pub navbar_size: Size<Pixels>,
+
+    #[serde(default)]
+    pub navbar_height: Pixels,
+
+    #[serde(default)]
     pub layer_shell: LayerShellSettings,
 }
 
@@ -206,6 +219,7 @@ impl Default for HomescreenSettings {
     fn default() -> Self {
         Self {
             status_bar_size: Size::new(px(540.0), px(36.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
             layer_shell: LayerShellSettings {
                 layer: Layer::Bottom,
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
@@ -213,6 +227,7 @@ impl Default for HomescreenSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
+            navbar_height: px(40.),
         }
     }
 }
@@ -261,6 +276,61 @@ impl Default for VolumeSliderSettings {
             },
             min_volume_level: 0.0,
             max_volume_level: 100.0,
+        }
+    }
+}
+
+/// Keyboard settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct KeyboardSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for KeyboardSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Top,
+                anchor: Anchor::TOP,
+                namespace: "mechanix.keyboard".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(300.0)),
+            },
+        }
+    }
+}
+
+/// Launcher settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct LauncherSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for LauncherSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Bottom,
+                anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
+                namespace: "mechanix.launcher".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct SystemApps {
+    pub files: String,
+}
+
+impl Default for SystemApps {
+    fn default() -> Self {
+        Self {
+            files: "mechanix_files".into(),
         }
     }
 }

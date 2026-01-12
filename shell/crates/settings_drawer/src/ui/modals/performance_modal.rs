@@ -1,6 +1,7 @@
 use gpui::*;
 use theme::prelude::{AlphaExt, Theme};
 
+use crate::ui::FINAL_MODAL_SIZE;
 use crate::{
     prelude::*,
     ui::icon::{Icon, IconName},
@@ -38,105 +39,120 @@ impl SettingsDrawer {
         div()
             .flex()
             .flex_col()
-            .bg(colors.background_1000)
             .size_full()
-            .border_1()
-            .rounded_xl()
-            .border_color(colors.accent_200.with_alpha(0.4))
             .child(self.render_header_div(cx, "Battery"))
-            .child(div().flex().flex_col().flex_1().relative().children(
-                performance_modes.iter().enumerate().map(|(idx, mode)| {
-                    let is_active = mode.is_active;
-
-                    let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
-
-                    let mut icon = IconName::PowerModeBalanced;
-
-                    if mode.performance_mode == "high" {
-                        icon = IconName::HighPower;
-                    } else if mode.performance_mode == "saver" {
-                        icon = IconName::SavingPower;
-                    };
-
-                    let connect_div = div().child(
-                        Icon::new(IconName::Connected)
-                            .size((px(24.), px(24.)))
-                            .text_color(icon_color),
-                    );
-
-                    let main_div = if is_active {
-                        div()
-                            .id(("mode", idx))
-                            .flex()
-                            .items_center()
-                            .justify_between()
-                            .h(px(ROW_HEIGHT))
-                            .px_4()
-                            .bg(colors.accent_200.with_alpha(0.1))
-                            .border_y_1()
-                            .border_color(colors.accent_200.with_alpha(0.4))
-                            .child(
-                                div()
-                                    .flex()
-                                    .flex_row()
-                                    .text_align(TextAlign::Left)
-                                    .child(
-                                        div().pr_2().child(
-                                            Icon::new(icon)
-                                                .size((px(28.), px(28.)))
-                                                .text_color(icon_color),
-                                        ),
-                                    )
-                                    .child(
-                                        div()
-                                            .pl_2()
-                                            .font_weight(FontWeight::NORMAL)
-                                            .text_color(text_color)
-                                            .text_size(px(18.))
-                                            .child(mode.text.clone()),
-                                    ),
-                            )
-                            .child(if mode.is_active { connect_div } else { div() })
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .flex_1()
+                    .relative()
+                    .bg(colors.background_1000)
+                    .border_color(colors.accent_200.with_alpha(0.4))
+                    .border_1()
+                    .border_t_0()
+                    .rounded(px(8.))
+                    .overflow_hidden()
+                    .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                        px(16.)
                     } else {
-                        div()
-                            .id(("mode", idx))
-                            .flex()
-                            .items_center()
-                            .justify_between()
-                            .h(px(60.))
-                            .px_4()
-                            .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
-                            .child(
+                        px(18.)
+                    })
+                    .child(div().flex().flex_col().flex_1().relative().children(
+                        performance_modes.iter().enumerate().map(|(idx, mode)| {
+                            let is_active = mode.is_active;
+
+                            let (icon_color, text_color) =
+                                Self::get_icon_and_text_color(is_active, cx);
+
+                            let mut icon = IconName::PowerModeBalanced;
+
+                            if mode.performance_mode == "high" {
+                                icon = IconName::HighPower;
+                            } else if mode.performance_mode == "saver" {
+                                icon = IconName::SavingPower;
+                            };
+
+                            let connect_div = div().child(
+                                Icon::new(IconName::Connected)
+                                    .size((px(24.), px(24.)))
+                                    .text_color(icon_color),
+                            );
+
+                            let main_div = if is_active {
                                 div()
+                                    .id(("mode", idx))
                                     .flex()
-                                    .flex_row()
-                                    .text_align(TextAlign::Left)
-                                    .child(
-                                        div().pr_2().child(
-                                            Icon::new(icon)
-                                                .size((px(28.), px(28.)))
-                                                .text_color(icon_color),
-                                        ),
-                                    )
+                                    .items_center()
+                                    .justify_between()
+                                    .h(px(ROW_HEIGHT))
+                                    .px_4()
+                                    .bg(colors.accent_200.with_alpha(0.1))
+                                    .border_y_1()
+                                    .border_color(colors.accent_200.with_alpha(0.4))
                                     .child(
                                         div()
-                                            .pl_2()
-                                            .font_weight(FontWeight::NORMAL)
-                                            .text_color(text_color)
-                                            .text_size(px(18.))
-                                            .child(mode.text.clone()),
-                                    ),
-                            )
-                            .on_click(cx.listener(move |_, _, _, _| {
-                                println!("mode clicked...");
-                            }))
-                    };
+                                            .flex()
+                                            .flex_row()
+                                            .text_align(TextAlign::Left)
+                                            .child(
+                                                div().pr_2().child(
+                                                    Icon::new(icon)
+                                                        .size((px(28.), px(28.)))
+                                                        .text_color(icon_color),
+                                                ),
+                                            )
+                                            .child(
+                                                div()
+                                                    .pl_2()
+                                                    .font_weight(FontWeight::NORMAL)
+                                                    .text_color(text_color)
+                                                    .text_size(px(18.))
+                                                    .child(mode.text.clone()),
+                                            ),
+                                    )
+                                    .child(if mode.is_active { connect_div } else { div() })
+                            } else {
+                                div()
+                                    .id(("mode", idx))
+                                    .flex()
+                                    .items_center()
+                                    .justify_between()
+                                    .h(px(60.))
+                                    .px_4()
+                                    .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .flex_row()
+                                            .text_align(TextAlign::Left)
+                                            .child(
+                                                div().pr_2().child(
+                                                    Icon::new(icon)
+                                                        .size((px(28.), px(28.)))
+                                                        .text_color(icon_color),
+                                                ),
+                                            )
+                                            .child(
+                                                div()
+                                                    .pl_2()
+                                                    .font_weight(FontWeight::NORMAL)
+                                                    .text_color(text_color)
+                                                    .text_size(px(18.))
+                                                    .child(mode.text.clone()),
+                                            ),
+                                    )
+                                    .on_click(cx.listener(move |_, _, _, _| {
+                                        println!("mode clicked...");
+                                    }))
+                            };
 
-                    main_div
-                }),
-            ))
-            // Footer
-            .child(self.render_settings_div(cx))
+                            main_div
+                        }),
+                    ))
+                    // Footer
+                    .child(self.render_settings_div(cx)),
+            )
             .into_any()
     }
 }

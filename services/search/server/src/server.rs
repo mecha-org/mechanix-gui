@@ -1,7 +1,7 @@
 use crate::SearchConfig;
 use anyhow::Result;
 use app_actions::service::AppActions;
-use apps::AppInfo;
+use apps::prelude::AppInfo;
 use files::SearchResult;
 use log::{debug, error, info, warn};
 use sources::service::{SourceSearchResult, UpsertMetadata};
@@ -22,7 +22,7 @@ pub const SERVED_AT: &str = "/org/mechanix/MxSearch";
 #[derive()]
 pub struct ServerInterface {
     pub(crate) config: SearchConfig,
-    pub app_search_service: Option<apps::AppSearchService>,
+    pub app_search_service: Option<apps::prelude::AppSearchService>,
     pub file_search_service: Option<files::FileSearchService>,
     pub app_actions_service: Option<app_actions::AppActionsService>,
     pub external_search_service: Option<sources::service::SourceSearchService>,
@@ -45,7 +45,10 @@ impl ServerInterface {
     /// * `Ok(())` if the signal was emitted successfully
     /// * `Err(...)` if there was an error during emission
 
-    pub async fn search_applications(&self, search: &str) -> zbus::fdo::Result<Vec<apps::AppInfo>> {
+    pub async fn search_applications(
+        &self,
+        search: &str,
+    ) -> zbus::fdo::Result<Vec<apps::prelude::AppInfo>> {
         info!("Search Apps: {}", search);
 
         if let Some(app_search_service) = &self.app_search_service {
@@ -123,7 +126,9 @@ impl ServerInterface {
             debug!("result: {:?}", results);
             Ok(results)
         } else {
-            Err(ZbusError::Failed("Search Files service is disabled".to_string()))
+            Err(ZbusError::Failed(
+                "Search Files service is disabled".to_string(),
+            ))
         }
     }
 
@@ -164,10 +169,7 @@ impl ServerInterface {
         }
     }
 
-    pub async fn search_sources(
-        &self,
-        search: &str,
-    ) -> zbus::fdo::Result<Vec<SourceSearchResult>> {
+    pub async fn search_sources(&self, search: &str) -> zbus::fdo::Result<Vec<SourceSearchResult>> {
         info!("Search sources: {}", search);
         if let Some(service) = &self.external_search_service {
             // At some point later: perform a search

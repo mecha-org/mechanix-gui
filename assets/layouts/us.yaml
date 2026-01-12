@@ -1,0 +1,175 @@
+---
+outlines:
+  default: { width: 44., height: 44. }
+  altline: { width: 72., height: 44. }
+  change-view: { width: 66., height: 44. }
+  change-view-2: { width: 44., height: 44. }
+  wide: { width: 88., height: 44. }
+  spaceline: { width: 230., height: 44. }
+  special: { width: 38., height: 44. }
+  special-2: { width: 36., height: 44. }
+  large: { width: 36, height: 44. }
+gap:
+  col:
+    default: 8.0
+    custom:
+      Shift_L: 8.
+      m: 8.
+      M: 8.
+      show_symbols: 8.
+      show_letters: 8.
+      ?: 8.
+  row:
+    default: 8.0
+
+views:
+  base:
+    - "q w e r t y u i o p"
+    - "a s d f g h j k l"
+    - "Shift_L   z x c v b n m  BackSpace"
+    - "show_numbers preferences ,         space       .  Return"
+  upper:
+    - "Q W E R T Y U I O P"
+    - "A S D F G H J K L"
+    - "Shift_L   Z X C V B N M  BackSpace"
+    - "show_numbers preferences ,         space       . Return"
+  numbers:
+    - "1 2 3 4 5 6 7 8 9 0"
+    - "! @ # $ % ^ & * ( )"
+    - "show_symbols   - ' \" : ; , ?  BackSpace"
+    - "show_letters preferences ,         space       . Return"
+  symbols:
+    - "↑ ↓ ← → e e \\ | { }"
+    - "+ ` ~ = / _ < > [ ]"
+    - "show_numbers_from_symbols   - ' \" : ; , ?  BackSpace"
+    - "show_letters preferences ,         space       . Return"
+
+buttons:
+  Shift_L:
+    action:
+      locking:
+        lock_view: "upper"
+        unlock_view: "base"
+    outline: "change-view"
+    icon: "key-shift"
+  BackSpace:
+    outline: "altline"
+    icon: "edit-clear-symbolic"
+    keysym: "BackSpace"
+  preferences:
+    action: "show_prefs"
+    outline: "special"
+    icon: "keyboard-mode-symbolic"
+  show_numbers:
+    action:
+      set_view: "numbers"
+    outline: "change-view-2"
+    label: "123"
+  show_numbers_from_symbols:
+    action:
+      set_view: "numbers"
+    outline: "change-view"
+    label: "2/2"
+  show_letters:
+    action:
+      set_view: "base"
+    outline: "change-view-2"
+    label: "ABC"
+  show_symbols:
+    action:
+      set_view: "symbols"
+    outline: "change-view"
+    label: "1/2"
+  .:
+    outline: "special-2"
+  ",":
+    outline: "special-2"
+  space:
+    outline: "spaceline"
+    label: "-"
+    keysym: "space"
+  Return:
+    outline: "wide"
+    icon: "key-enter"
+    label: "Done"
+    keysym: "Return"
+  # "!":
+  #   keysym: "exclam"
+  # "@":
+  #   keysym: "at"
+  # "#":
+  #   keysym: "numbersign"
+  # "$":
+  #   keysym: "dollar"
+  # "%":
+  #   keysym: "percent"
+  # "^":
+  #   keysym: "asciicircum"
+  # "&":
+  #   keysym: "ampersand"
+  # "*":
+  #   keysym: "asterisk"
+  # "(":
+  #   keysym: "parenleft"
+  # ")":
+  #   keysym: "parenright"
+  # "-":
+  #   keysym: "minus"
+  # "'":
+  #   keysym: "apostrophe"
+  # "\"":
+  #   keysym: "quotedbl"
+  # ":":
+  #   keysym: "colon"
+  # ";":
+  #   keysym: "semicolon"
+  # ",":
+  #   keysym: "comma"
+  # "?":
+  #   keysym: "question"
+  # ".":
+  #   keysym: "period"
+  # "+":
+  #   keysym: "plus" 
+  # "`":
+  #   keysym: "grave"
+  # "~":
+  #   keysym: "asciitilde" 
+  # "=":
+  #   keysym: "equal"
+  # "/":
+  #   keysym: "slash"
+  # "_":
+  #   keysym: "underscore"
+  # "<":
+  #   keysym: "less"
+  # ">":
+  #   keysym: "greater"
+  # "[":
+  #   keysym: "bracketleft"
+  # "]":
+  #   keysym: "bracketright"
+  # "↑":
+  #   keysym: "Up"
+  # "↓":
+  #   keysym: "Down"
+  # "←":
+  #   keysym: "Left"
+  # "→":
+  #   keysym: "Right"
+  # "e":
+  #   keysym: "e"
+  # "e":
+  #   keysym: "e"
+  # "\\":
+  #   keysym: "backslash"
+  # "|":
+  #   keysym: "bar"
+  # "{":
+  #   keysym: "braceleft"
+  # "}":
+  #   keysym: "braceright"
+
+  
+
+  

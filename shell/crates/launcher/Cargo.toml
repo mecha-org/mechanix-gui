@@ -26,6 +26,7 @@ homescreen = { path = "../homescreen" }
 dispatcher = { path = "../dispatcher" }
 shell_state = { path = "../shell_state" }
 volume_slider = { path = "../volume_slider" }
+hardware_buttons = { path = "../hardware_buttons" }
 
 [package.metadata.deb]
 maintainer = "Akshay Raina <akshayr@mechasystems.com>"
@@ -75,7 +76,7 @@ assets = [
         "../../../assets/icons/power-options/*",
         "usr/share/mechanix/shell/launcher/assets/icons/power-options/",
         "755",
-    ]
+    ],
 ]
 
 [package.metadata.generate-rpm]

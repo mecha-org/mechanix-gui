@@ -6,7 +6,7 @@ use crate::error::ServerError;
 use crate::server::{ServerInterface, SERVED_AT};
 use anyhow::Result;
 use app_actions::{AppActionsConfig, AppActionsService};
-use apps::{AppSearchService, Apps as AppSearchConfig};
+use apps::prelude::{AppSearchService, Apps as AppSearchConfig};
 use files::{FileSearchService, FilesConfig as FileSearchConfig};
 use log::{debug, error, info, warn};
 use serde::Deserialize;

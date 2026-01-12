@@ -1,7 +1,12 @@
+use commons::input::{
+    Backspace, Copy, Cut, Delete, End, Home, Left, Paste, Right, SelectAll, SelectLeft,
+    SelectRight, ShowCharacterPalette,
+};
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
 use settings::prelude::*;
 use status_bar::prelude::status_bar_components;
+use theme::ActiveTheme;
 
 mod animation_manager;
 mod config;
@@ -33,8 +38,6 @@ impl Homescreen {
         status_bar_size: Size<Pixels>,
     ) -> Self {
         let mut state = HomescreenState::new(config);
-
-        // Add the Universal Search Widget to Page 0
         state.create_widget(
             UniversalSearchWidget::new(_cx),
             0,
@@ -302,17 +305,18 @@ impl Render for Homescreen {
         if is_animating {
             window.request_animation_frame();
         }
+        let colors = cx.theme().colors.clone();
 
         div()
             .size_full()
-            .bg(rgb(0x1a1a1a))
+            .bg(colors.background_1000)
             .flex()
             .flex_col()
             .on_mouse_down(MouseButton::Left, cx.listener(Self::handle_mouse_down))
             .on_mouse_move(cx.listener(Self::handle_mouse_move))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::handle_mouse_up))
             .child(status_bar_components(cx, status_bar_size, true))
-            .child(HomescreenUi::render(&self.state))
+            .child(HomescreenUi::render(&self.state, cx))
     }
 }
 
@@ -324,6 +328,7 @@ pub mod prelude {
 
 pub fn run_app(cx: &mut App) {
     let HomescreenSettings {
+        navbar_height,
         status_bar_size,
         layer_shell,
         ..
@@ -336,8 +341,31 @@ pub fn run_app(cx: &mut App) {
         namespace,
         ..
     } = layer_shell;
-    let config = HomescreenConfig::new(size);
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let screen_size = gpui::size(size.width, size.height - navbar_height);
+
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, screen_size, cx));
+    let config = HomescreenConfig::new(screen_size);
+
+    // Register key bindings for the text input
+    cx.bind_keys([
+        KeyBinding::new("backspace", Backspace, None),
+        KeyBinding::new("delete", Delete, None),
+        KeyBinding::new("left", Left, None),
+        KeyBinding::new("right", Right, None),
+        KeyBinding::new("shift-left", SelectLeft, None),
+        KeyBinding::new("shift-right", SelectRight, None),
+        KeyBinding::new("cmd-a", SelectAll, None),
+        KeyBinding::new("ctrl-a", SelectAll, None), // Add Windows/Linux alternative
+        KeyBinding::new("home", Home, None),
+        KeyBinding::new("end", End, None),
+        KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, None),
+        KeyBinding::new("cmd-v", Paste, None),
+        KeyBinding::new("ctrl-v", Paste, None), // Add Windows/Linux alternative
+        KeyBinding::new("cmd-c", Copy, None),
+        KeyBinding::new("ctrl-c", Copy, None), // Add Windows/Linux alternative
+        KeyBinding::new("cmd-x", Cut, None),
+        KeyBinding::new("ctrl-x", Cut, None), // Add Windows/Linux alternative
+    ]);
 
     cx.open_window(
         WindowOptions {
@@ -361,6 +389,7 @@ pub fn run_app(cx: &mut App) {
                 size: size,
             });
             window.set_input_regions(Some(regions));
+
             cx.new(|cx| Homescreen::new(cx, config, status_bar_size))
         },
     )
