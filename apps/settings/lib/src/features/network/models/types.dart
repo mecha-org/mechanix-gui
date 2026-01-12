@@ -78,3 +78,5 @@ final List<SelectOption<WirelessProtocol>> wirelessProtocolOptions = [
   WirelessProtocol.wpa2Enterprise.toSelectOption('WPA2 Enterprise'),
   WirelessProtocol.wpa3Enterprise.toSelectOption('WPA3 Enterprise'),
 ];
+
+enum SignalLevel { high, medium, low, none }
