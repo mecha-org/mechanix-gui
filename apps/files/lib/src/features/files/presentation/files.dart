@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:io' as io;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -95,9 +96,29 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     _scrollController.addListener(_onScroll);
 
-    // Default to home directory if no startPath is provided
+      // Default to home directory if no startPath is provided
     final initialPath = widget.startPath ?? homeDir;
-    controller.openDirectory(Directory(initialPath));
+    final entity = io.FileSystemEntity.typeSync(initialPath);
+
+    if (entity == io.FileSystemEntityType.file) {
+      final file = io.File(initialPath);
+      controller.openDirectory(file.parent);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          handleFileTap(
+            context,
+            file,
+            initialPath,
+            selectionMode,
+            this,
+            controller,
+          );
+        }
+      });
+    } else {
+      controller.openDirectory(io.Directory(initialPath));
+    }
+
 
     controller.getPathNotifier.addListener(() {
       final newPath = controller.getPathNotifier.value;
@@ -225,12 +246,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           listener: (context, state) async {
             if (state.loading && !isLoadingDialogShown) {
               isLoadingDialogShown = true;
-              await showDialog(
-                context: context,
-                barrierColor: context.colorScheme.surface.withOpacity(0.2),
-                barrierDismissible: false,
-                builder: (_) => buildLoadingDialog(context, "Loading..."),
-              );
+              //TODO: shows always in a load state @yogitah
+              // await showDialog(
+              //   context: context,
+              //   barrierColor: context.colorScheme.surface.withOpacity(0.2),
+              //   barrierDismissible: false,
+              //   builder: (_) => buildLoadingDialog(context, "Loading..."),
+              // );
               isLoadingDialogShown = false;
             } else if (!state.loading && isLoadingDialogShown) {
               Navigator.of(context, rootNavigator: true).pop();
