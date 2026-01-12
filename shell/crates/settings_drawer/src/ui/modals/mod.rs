@@ -15,7 +15,8 @@ use crate::ui::{
 };
 
 pub const ROW_HEIGHT: f32 = 60.0;
-pub const MODAL_HEADER_HEIGHT: f32 = 56.0;
+pub const MODAL_HEADER_HEIGHT: f32 = 60.0;
+// pub use wireless_modal::wireless_modal_scroll;
 
 impl SettingsDrawer {
     pub fn render_header_div(
