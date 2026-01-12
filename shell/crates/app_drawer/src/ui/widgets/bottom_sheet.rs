@@ -42,7 +42,8 @@ impl AppDrawer {
                 return Empty.into_any();
             }
         };
-        let icon = DesktopApp::resolved_icon(&app.icon_path);
+        let icon_path = app.icon_path.clone();
+        let icon = Self::resolved_icon(&icon_path);
 
         div()
             .flex()
@@ -228,7 +229,7 @@ impl AppDrawer {
                 return Empty.into_any();
             }
         };
-        let icon = DesktopApp::resolved_icon(&app.icon_path);
+        let icon = Self::resolved_icon(&app.icon_path);
 
         div()
             .flex_col()
