@@ -24,7 +24,6 @@ class SettingMenu extends StatelessWidget {
               const CustomTitle(title: 'Settings', fontSize: 32),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
-                  title: 'Connectivity',
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
@@ -38,26 +37,19 @@ class SettingMenu extends StatelessWidget {
                       onTap: () => onTap(context, AppRoutes.bluetooth),
                       iconPath: Images.bluetooth,
                     ),
-                  ]).padVertical(8),
-              MechanixSectionList(
-                  physics: const NeverScrollableScrollPhysics(),
-                  title: 'Device',
-                  sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
                       title: 'Battery',
                       onTap: () => onTap(context, AppRoutes.battery),
                       iconPath: Images.battery,
                     ),
+                  ]).padVertical(8),
+              MechanixSectionList(
+                  physics: const NeverScrollableScrollPhysics(),
+                  sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
-                      title: 'Date & Time',
-                      onTap: () => onTap(context, AppRoutes.dateTime),
-                      iconPath: Images.dateTime,
-                    ),
-                    SectionListItems.leadingIcon(
-                      iconColor: context.primary,
-                      title: 'Display',
+                      title: 'Display & Brightness',
                       onTap: () => onTap(context, AppRoutes.display),
                       iconPath: Images.display,
                     ),
@@ -67,14 +59,19 @@ class SettingMenu extends StatelessWidget {
                       onTap: () => onTap(context, AppRoutes.sound),
                       iconPath: Images.sound,
                     ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Date & Time',
+                      onTap: () => onTap(context, AppRoutes.dateTime),
+                      iconPath: Images.dateTime,
+                    ),
                   ]),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
-                  title: 'System',
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
-                      title: 'About',
+                      title: 'System Info',
                       onTap: () => onTap(context, AppRoutes.about),
                       iconPath: Images.cometIcon,
                     ),

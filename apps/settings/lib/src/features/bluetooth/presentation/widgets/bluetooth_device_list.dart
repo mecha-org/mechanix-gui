@@ -56,14 +56,15 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
         isActive: device.connected,
         trailing: Row(
           children: [
-            IconWidget(
-              iconPath: Images.circularCheckIcon,
-              iconColor: context.primary,
-              isActive: device.connected,
-              iconHeight: 19,
-              iconWidth: 19,
-              activeIconColor: context.primary,
-            ).padRight(8),
+            if (device.connected)
+              IconWidget(
+                iconPath: Images.circularCheckIcon,
+                iconColor: context.primary,
+                isActive: device.connected,
+                iconHeight: 19,
+                iconWidth: 19,
+                activeIconColor: context.primary,
+              ).padRight(8),
             IconButton(
               onPressed: () => onSettingsTap(device),
               icon: IconWidget(

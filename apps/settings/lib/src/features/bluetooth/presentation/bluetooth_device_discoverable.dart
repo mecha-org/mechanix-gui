@@ -46,7 +46,7 @@ class _BluetoothDeviceDiscoverableState
               ),
             ),
           ),
-          bottomSheet: MechanixBottomBar(
+          bottomNavigationBar: MechanixBottomBar(
             leadingWidget: [
               context.backButton,
             ],
