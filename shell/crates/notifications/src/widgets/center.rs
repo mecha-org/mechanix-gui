@@ -8,15 +8,8 @@ use crate::widgets::notification::{
     DbNotification, NotificationId, NotificationUi, UserDismissedEvent,
 };
 use commons::widgets::{WingSide, wing};
-use gpui::rgba;
-use gpui::{
-    Animation, AnimationExt, AnyElement, App, AppContext, AsyncApp, Bounds, ClickEvent, Context,
-    DismissEvent, Div, Element, ElementId, Entity, EventEmitter, FontWeight, Img,
-    InteractiveElement as _, IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent,
-    MouseUpEvent, ParentElement as _, Point, Render, SharedString, Stateful,
-    StatefulInteractiveElement, StyleRefinement, Styled, Subscription, WeakEntity, Window, div,
-    img, point, prelude::FluentBuilder, px, rgb, size,
-};
+use gpui::prelude::FluentBuilder;
+use gpui::*;
 use smol::Timer;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{
@@ -25,7 +18,34 @@ use std::{
     time::Duration,
 };
 use theme::ActiveTheme;
+use theme::prelude::AlphaExt;
 use theme::prelude::Theme;
+
+const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
+const APP_SIZE: (f32, f32) = (540., 620.);
+
+pub struct DragInfo {
+    pub position: Point<Pixels>,
+}
+
+impl DragInfo {
+    fn new() -> Self {
+        Self {
+            position: Point::default(),
+        }
+    }
+
+    fn position(mut self, pos: Point<Pixels>) -> Self {
+        self.position = pos;
+        self
+    }
+}
+
+impl Render for DragInfo {
+    fn render(&mut self, _: &mut Window, _: &mut Context<'_, Self>) -> impl IntoElement {
+        Empty
+    }
+}
 
 /// A list of notifications.
 pub struct NotificationList {
@@ -198,6 +218,12 @@ pub struct NotificationCenter {
     pub position: f32,
     pub drag_offset: Option<f32>,
     pub drag_start_pos: f32,
+    pub scroll_offset: Pixels,
+    pub is_dragging: bool,
+    pub drag_start_y: Pixels,
+    pub last_scroll_offset: Pixels,
+    pub content_height: Pixels,
+    pub viewport_height: Pixels,
 }
 
 #[derive(Clone, Copy)]
@@ -268,18 +294,6 @@ impl ItemState {
         }
     }
 }
-// Struct to represent the database notification
-// #[derive(Clone, Debug)]
-// pub struct DbNotification {
-//     pub id: u32,
-//     pub app_name: String,
-//     pub app_icon: String,
-//     pub summary: String,
-//     pub body: String,
-//     pub actions: Vec<String>,
-//     pub hints: HashMap<String, String>,
-//     pub received_at: Option<u64>,
-// }
 
 impl NotificationCenter {
     pub fn new(_window: &mut Window, _cx: &mut Context<Self>) -> Self {
@@ -293,14 +307,65 @@ impl NotificationCenter {
             position: Self::closed_pos(), // Default closed position
             drag_offset: None,
             drag_start_pos: 0.0,
+            scroll_offset: px(0.0),
+            is_dragging: false,
+            drag_start_y: px(0.0),
+            last_scroll_offset: px(0.0),
+            content_height: px(0.0),
+            viewport_height: px(0.0),
         }
+    }
+
+    fn reset_scroll_state(&mut self) {
+        self.scroll_offset = px(0.);
+        self.last_scroll_offset = px(0.);
+        self.drag_start_y = px(0.);
+        self.is_dragging = false;
+    }
+
+    fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
+        let container_height = px(APP_SIZE.1 - NAVBAR_SIZE.1);
+
+        if content_height <= container_height {
+            return (px(0.0), px(0.0));
+        }
+
+        let max_scroll = px(0.0);
+        let min_scroll = container_height - content_height;
+        (min_scroll, max_scroll)
+    }
+
+    fn estimate_content_height(&self) -> Pixels {
+        px(1000.0) // TODO: calculate content height
+    }
+
+    fn on_drag_move(
+        &mut self,
+        event: &DragMoveEvent<DragInfo>,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !self.is_dragging {
+            return;
+        }
+
+        let delta_y = event.event.position.y - self.drag_start_y;
+        let new_scroll_offset = self.last_scroll_offset + delta_y;
+        let content_height = self.estimate_content_height();
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+
+        self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
+        cx.notify();
+    }
+
+    fn on_drop(&mut self, _: &DragMoveEvent<DragInfo>, _: &mut Window, _cx: &mut Context<Self>) {
+        self.is_dragging = false;
+        self.last_scroll_offset = self.scroll_offset;
     }
 }
 
 impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
 
-const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
-const APP_SIZE: (f32, f32) = (540., 620.);
 impl NotificationCenter {
     pub fn set_visible(&mut self, visible: bool) {
         self.is_visible = visible;
@@ -823,6 +888,7 @@ impl Render for NotificationWidget {
 
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
         // Header - updated styling
         let mut header = div()
             .flex()
@@ -836,9 +902,10 @@ impl NotificationCenter {
             .pb_3()
             .child(
                 div()
-                    .text_color(rgb(0xe5e5e5))
+                    .text_color(colors.foreground_300)
                     .text_base()
                     .font_weight(FontWeight::MEDIUM)
+                    .text_size(px(24.0))
                     .child("Notifications"),
             );
 
@@ -846,8 +913,9 @@ impl NotificationCenter {
             header = header.child(
                 div()
                     .id("clear-all")
-                    .text_sm()
-                    .text_color(rgb(0xa0a0a0))
+                    .text_size(px(16.0))
+                    .text_color(colors.foreground_200)
+                    .font_weight(FontWeight::MEDIUM)
                     .cursor_pointer()
                     .child("Clear all")
                     .on_click(cx.listener(|this, _, _window, cx| {
@@ -895,57 +963,58 @@ impl NotificationCenter {
             let is_expanded = self.expanded_groups.get(&g.id).copied().unwrap_or(false);
 
             // Main card with stacked appearance using layered divs
-            let mut row = div().relative().flex().flex_col();
+            let mut row = div().relative().overflow_hidden().flex().flex_col();
 
-            // Build stacked effect from back to front (only show when NOT expanded)
-            if !is_expanded {
-                // Back layer (third card hint) - only if count > 2
-                if g.count > 2 {
-                    row = row.child(
-                        div()
-                            .absolute()
-                            .top(px(0.0))
-                            .left(px(16.0))
-                            .right(px(16.0))
-                            .h(px(9.0))
-                            .rounded_t(px(12.0))
-                            .border_t_1()
-                            .border_l_1()
-                            .border_r_1()
-                            .border_color(rgb(0xb87d00))
-                            .bg(rgb(0x241b12)),
-                    );
-                }
+            // TODO: Show multiple wings (only show when NOT expanded)
+            // if !is_expanded {
+            //     // Back layer (third card hint) - only if count > 2
+            //     if g.count > 2 {
+            //         let mut w = wing();
+            //         w.upper_wing_size(size(px(20.0), px(NAVBAR_SIZE.1)));
+            //         w.upper_wing_side(WingSide::Left);
+            //         // w.include_upper_wing_in_bounds(false);
+            //         let mut w = w
+            //             .absolute()
+            //                 .w(px(20.0))
+            //                 .h(px(NAVBAR_SIZE.1))
+            //                 .left(px(NAVBAR_SIZE.0))
+            //                 .bg(if self.is_visible {
+            //                     colors.accent_200.with_alpha(0.2)
+            //                 } else {
+            //                     colors.accent_200.with_alpha(0.1)
+            //                 });
+            //                 w.border_width(px(1.0));
 
-                // Middle layer (second card hint) - if count > 1
-                if g.count > 1 {
-                    row = row.child(
-                        div()
-                            .absolute()
-                            .top(px(6.0))
-                            .left(px(8.0))
-                            .right(px(8.0))
-                            .h(px(9.0))
-                            .rounded_t(px(12.0))
-                            .border_t_1()
-                            .border_l_1()
-                            .border_r_1()
-                            .border_color(rgb(0xb87d00))
-                            .bg(rgb(0x2a2015)),
-                    );
-                }
-            }
+            //         row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+
+            //     }
+
+            //     // Middle layer (second card hint) - only if count > 1
+            //     if !is_expanded && g.count > 1 {
+            //         let mut w = wing();
+
+            //         w.upper_wing_size(size(px(NAVBAR_SIZE.0 + 20.0), px(NAVBAR_SIZE.1)));
+            //         w.upper_wing_side(WingSide::Left);
+            //         w.include_upper_wing_in_bounds(true);
+            //         let mut w = w
+            //         .absolute()
+            //             .w(px(20.0))
+            //             .h(px(NAVBAR_SIZE.1))
+            //             // .tab_index(1)
+            //             //.left(px(NAVBAR_SIZE.0 - 20.0))
+            //             .bg(if self.is_visible {
+            //                 colors.accent_200.with_alpha(0.2)
+            //             } else {
+            //                 colors.accent_200.with_alpha(0.1)
+            //             });
+            //             w.border_width(px(1.0));
+
+            //         row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+            //     }
+            // }
 
             // Calculate top margin for main card based on stack count (only when not expanded)
-            let card_top_offset = if is_expanded {
-                px(0.0)
-            } else if g.count > 2 {
-                px(12.0)
-            } else if g.count > 1 {
-                px(12.0)
-            } else {
-                px(0.0)
-            };
+            let card_top_offset = px(0.0);
 
             // Helper function to create a notification card
             let mut create_card = |item_preview: SharedString,
@@ -955,26 +1024,17 @@ impl NotificationCenter {
                                    item_idx: usize,
                                    group_id: u64,
                                    item_id: u64| {
-                let mut card = div()
-                    .id(("nc-card", item_id))
-                    .relative()
-                    .border_1()
-                    .border_color(rgb(0xb87d00))
-                    .bg(rgb(0x2f2217))
-                    .rounded(px(12.0))
-                    .px_4()
-                    .py_3()
-                    .flex()
-                    .flex_col()
-                    .gap_2();
+                let mut content = div().flex().flex_col().gap_2();
 
                 // Top line: icon + name · time (only for first card or when collapsed)
                 if show_header {
                     let top = div()
+                        .relative()
                         .flex()
                         .flex_row()
                         .items_center()
                         .justify_between()
+                        .pt(px(-10.0))
                         .child(
                             div()
                                 .flex()
@@ -1007,34 +1067,74 @@ impl NotificationCenter {
                                             },
                                         ),
                                 )
-                                .child(div().text_sm().text_color(rgb(0xe0e0e0)).child(format!(
-                                    "{} {}",
-                                    g.app_summary,
-                                    g.time_ago.clone()
-                                ))),
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .text_color(colors.foreground_500)
+                                        .whitespace_normal()
+                                        .child(format!("{}", g.app_summary,))
+                                        .text_ellipsis()
+                                        .w(if item_icon_path.is_none() {
+                                            px(100.)
+                                        } else {
+                                            px(80.)
+                                        }),
+                                )
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .text_color(colors.foreground_900)
+                                        .whitespace_normal()
+                                        .child(format!(" {}", g.time_ago.clone())),
+                                ),
                         )
-                        .when(g.count > 0 && !is_expanded, |this| {
-                            this.child(
-                                div()
-                                    .rounded(px(10.0))
-                                    .border_1()
-                                    .border_color(rgb(0xff9500))
-                                    .bg(rgb(0x1a1a1a))
-                                    .text_color(rgb(0xff9500))
-                                    .text_xs()
-                                    .px_2()
-                                    .py_0p5()
-                                    .font_weight(FontWeight::MEDIUM)
-                                    .child(format!("{}", g.count)),
-                            )
+                        .when(g.count > 0, |this| {
+                            if is_expanded {
+                                this.child(
+                                    div()
+                                        .mt(px(-12.0))
+                                        .left(px(10.0))
+                                        .rounded(px(4.0))
+                                        .bg(colors.accent_200.with_alpha(0.2))
+                                        .text_color(colors.accent_200)
+                                        .text_size(px(14.0))
+                                        .px_2()
+                                        .h(px(24.0))
+                                        .flex()
+                                        .items_center()
+                                        .justify_center()
+                                        .font_weight(FontWeight::MEDIUM)
+                                        .child("︿"),
+                                )
+                            } else {
+                                this.child(
+                                    div()
+                                        .mt(px(-12.0))
+                                        .left(px(10.0))
+                                        .rounded(px(4.0))
+                                        .bg(colors.accent_200.with_alpha(0.2))
+                                        .text_color(colors.accent_200)
+                                        .text_size(px(16.0))
+                                        .px_2()
+                                        // .py_0p3()
+                                        .font_weight(FontWeight::MEDIUM)
+                                        .child(if g.count > 10 {
+                                            SharedString::from("10+")
+                                        } else {
+                                            g.count.to_string().into()
+                                        }),
+                                )
+                            }
                         });
-                    card = card.child(top);
+                    content = content.child(top);
                 }
 
                 // Body with preview text and optional thumbnail
                 let mut body = div()
-                    .text_sm()
-                    .text_color(rgb(0xc0c0c0))
+                    .text_size(px(16.0))
+                    .text_color(colors.foreground_300)
                     .flex()
                     .flex_row()
                     .items_start()
@@ -1056,21 +1156,63 @@ impl NotificationCenter {
                 //         .child(render_markup(&parsed, cx))
                 // );
 
-                if item_has_thumbnail {
-                    body = body.child(
-                        div()
-                            .w(px(44.0))
-                            .h(px(44.0))
-                            .rounded(px(8.0))
-                            .bg(rgb(0x404040))
-                            .when_some(
-                                item_icon_path.clone().or_else(|| g.icon_path.clone()),
-                                |this, path| this.child(img(path).size_full().rounded(px(8.0))),
-                            ),
-                    );
-                }
+                // if item_has_thumbnail {
+                //     body = body.child(
+                //         div()
+                //             .w(px(44.0))
+                //             .h(px(44.0))
+                //             .rounded(px(8.0))
+                //             .bg(rgb(0x404040))
+                //             .when_some(
+                //                 item_icon_path.clone().or_else(|| g.icon_path.clone()),
+                //                 |this, path| this.child(img(path).size_full().rounded(px(8.0))),
+                //             ),
+                //     );
+                // }
 
-                card = card.child(body);
+                content = content.child(body);
+
+                let card_inner: AnyElement = if show_header {
+                    let mut wing = wing()
+                        .w_128()
+                        .group("")
+                        .relative()
+                        .overflow_hidden()
+                        .relative()
+                        .border_1()
+                        .border_color(colors.accent_200.with_alpha(0.6))
+                        .bg(colors.accent_200.with_alpha(0.1))
+                        .rounded(px(12.0))
+                        .shadow_md()
+                        .pt(px(2.0))
+                        .px_4()
+                        .py_3p5();
+
+                    wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    wing.include_upper_wing_in_bounds(true);
+                    wing.border_radius(px(12.0));
+                    wing.border_width(px(1.0));
+
+                    wing.child(content).into_any()
+                } else {
+                    div()
+                        .w_128()
+                        .relative()
+                        .rounded(px(12.0))
+                        .border_1()
+                        .border_color(colors.accent_200.with_alpha(0.1))
+                        .bg(colors.accent_200.with_alpha(0.1))
+                        .px_4()
+                        .py_3p5()
+                        .child(content)
+                        .into_any()
+                };
+
+                let mut card = div()
+                    .id(("nc-card", item_id))
+                    .overflow_hidden()
+                    // .z_index(2)
+                    .child(card_inner);
 
                 // Make clickable to expand/collapse (only for first card with count > 1 and not expanded)
                 if show_header && g.count > 1 && !is_expanded {
@@ -1495,25 +1637,55 @@ impl NotificationCenter {
             );
         }
 
+        let entity = cx.entity();
+        let entity2 = cx.entity();
+        let viewport_entity = entity.clone();
+        let content_entity = entity.clone();
+
         // Main container
         div()
-            // .absolute()
-            // .top(px(60.0))
-            // .left(px(16.0))
-            // .right(px(16.0))
             .relative()
             .w(px(APP_SIZE.0))
             .h(px(APP_SIZE.1))
-            .bg(rgb(0x0e0e0e))
+            .bg(colors.background_1000)
             .child(
                 div()
+                    .id("nc-center-container")
                     .rounded(px(14.0))
-                    .bg(rgb(0x1a1a1a))
-                    .border_1()
-                    .border_color(rgb(0x2a2a2a))
                     .shadow_lg()
+                    .flex()
+                    .flex_col()
                     .child(header)
-                    .child(list),
+                    .on_drop(cx.listener(NotificationCenter::on_drop))
+                    .on_drag_move(cx.listener(NotificationCenter::on_drag_move))
+                    .child(
+                        div()
+                            .id("nc-center-viewport")
+                            .flex_1()
+                            .relative()
+                            .overflow_hidden()
+                            .child(
+                                div()
+                                    .id("nc-center-list")
+                                    .relative()
+                                    .top(self.scroll_offset)
+                                    .on_drag(
+                                        DragInfo::new(),
+                                        move |_: &DragInfo, position, _, cx| {
+                                            entity.update(cx, |this, cx| {
+                                                this.drag_start_y = position.y;
+                                                this.last_scroll_offset = this.scroll_offset;
+                                                this.is_dragging = true;
+                                                cx.stop_propagation();
+                                                cx.notify();
+                                            });
+
+                                            cx.new(|_| DragInfo::new().position(position))
+                                        },
+                                    )
+                                    .child(list),
+                            ),
+                    ),
             )
     }
 }

@@ -1,5 +1,5 @@
-use std::time::{SystemTime, UNIX_EPOCH};
 use gpui::SharedString;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 // Helper function to format notification preview
 pub fn format_notification_name(app_name: &str) -> SharedString {
@@ -35,11 +35,11 @@ pub fn format_notification_summary(summary: &str) -> SharedString {
     summary
         .split('(')
         .next()
-        .unwrap_or(summary)  // fallback (very defensive)
+        .unwrap_or(summary) // fallback (very defensive)
         .trim()
-        .to_string().into()
+        .to_string()
+        .into()
 }
-
 
 /// returns a "time ago" string for a given epoch timestamp
 pub fn time_ago(crn_time: u64, ts: u64) -> String {
@@ -74,8 +74,8 @@ pub fn cubic_bezier(x1: f32, y1: f32, x2: f32, y2: f32) -> impl Fn(f32) -> f32 {
 
 pub fn should_auto_hide(timeout: i32) -> bool {
     match timeout {
-        0 => false,   // never auto-hide
-        _ => true,    // -1 or any positive value
+        0 => false, // never auto-hide
+        _ => true,  // -1 or any positive value
     }
 }
 
