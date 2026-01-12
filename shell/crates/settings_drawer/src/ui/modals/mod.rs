@@ -13,11 +13,9 @@ use crate::ui::{
     FINAL_MODAL_SIZE, SettingsDrawer,
     icon::{Icon, IconName},
 };
-pub use bluetooth_modal::BluetoothModalScroll;
-pub use wireless_modal::WirelessModalScroll;
 
-const ROW_HEIGHT: f32 = 60.0;
-const MODAL_HEADER_HEIGHT: f32 = 56.0;
+pub const ROW_HEIGHT: f32 = 60.0;
+pub const MODAL_HEADER_HEIGHT: f32 = 56.0;
 
 impl SettingsDrawer {
     pub fn render_header_div(
@@ -80,6 +78,11 @@ impl SettingsDrawer {
             .bg(colors.background_1000)
             .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
+            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                px(16.)
+            } else {
+                px(20.)
+            })
             .p_4()
             .flex_shrink_0()
             .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))

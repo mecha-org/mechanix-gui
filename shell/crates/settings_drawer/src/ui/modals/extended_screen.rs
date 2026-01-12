@@ -1,10 +1,14 @@
+use commons::widgets::wing;
 use gpui::*;
 use theme::prelude::{AlphaExt, Theme};
 
-use crate::ui::FINAL_MODAL_SIZE;
 use crate::{
     prelude::*,
-    ui::icon::{Icon, IconName},
+    ui::{
+        FINAL_MODAL_SIZE,
+        icon::{Icon, IconName},
+        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
+    },
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -25,8 +29,7 @@ struct ExtendOption {
 
 impl SettingsDrawer {
     fn extended_screens(&self) -> Vec<ExtendOption> {
-        // extended screen
-        let extend_options = vec![
+        vec![
             ExtendOption {
                 text: "Extended detected".to_string(),
                 extend_type: ExtendedType::ExtendedDetected,
@@ -47,8 +50,7 @@ impl SettingsDrawer {
                 extend_type: ExtendedType::SecondScreen,
                 is_active: false,
             },
-        ];
-        extend_options
+        ]
     }
 
     pub fn render_extended_screen_options(
@@ -57,13 +59,13 @@ impl SettingsDrawer {
     ) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
         let extend_options = self.extended_screens();
+
         div()
             .flex()
             .flex_col()
             .size_full()
-            .child(self.render_header_div(cx, "Extended screen"))
-            .child(
-                div()
+            .child({
+                let mut w = wing()
                     .flex()
                     .flex_col()
                     .flex_1()
@@ -74,102 +76,134 @@ impl SettingsDrawer {
                     .border_t_0()
                     .rounded(px(8.))
                     .overflow_hidden()
-                    .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                        px(16.)
-                    } else {
-                        px(18.)
-                    })
-                    .child(div().flex().flex_col().flex_1().relative().children(
-                        extend_options.iter().enumerate().map(|(idx, ex)| {
-                            let is_active = ex.is_active;
-
-                            let (icon_color, text_color) =
-                                Self::get_icon_and_text_color(is_active, cx);
-
-                            let icon = match ex.extend_type {
-                                ExtendedType::ExtendedDetected => IconName::ExtendedDetected,
-                                ExtendedType::MirrorScreen => IconName::MirrorScreen,
-                                ExtendedType::ExtendedOnly => IconName::ExtendedOnly,
-                                ExtendedType::SecondScreen => IconName::SecondScreen,
-                            };
-
-                            let connect_div = div().child(
-                                Icon::new(IconName::Connected)
-                                    .size((px(24.), px(24.)))
-                                    .text_color(icon_color),
-                            );
-
-                            let main_div = if is_active {
-                                div()
-                                    .id(("sink", idx))
-                                    .flex()
-                                    .items_center()
-                                    .justify_between()
-                                    .h(px(60.))
-                                    .px_4()
-                                    .bg(colors.accent_200.with_alpha(0.1))
-                                    .border_y_1()
-                                    .border_color(colors.accent_200.with_alpha(0.4))
-                                    .child(
-                                        div()
-                                            .flex()
-                                            .flex_row()
-                                            .text_align(TextAlign::Left)
-                                            .child(
-                                                div().pr_2().child(
-                                                    Icon::new(icon)
-                                                        .size((px(28.), px(28.)))
-                                                        .text_color(icon_color),
-                                                ),
-                                            )
-                                            .child(
-                                                div()
-                                                    .pl_2()
-                                                    .font_weight(FontWeight::NORMAL)
-                                                    .text_color(text_color)
-                                                    .child(ex.text.clone()),
-                                            ),
-                                    )
-                                    .child(connect_div)
+                    .child(
+                        div()
+                            .child("Extended screen")
+                            .flex()
+                            .w_full()
+                            .justify_start()
+                            .text_color(colors.foreground_400)
+                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                                px(18.)
                             } else {
-                                div()
-                                    .id(("mode", idx))
-                                    .flex()
-                                    .items_center()
-                                    .justify_between()
-                                    .h(px(60.))
-                                    .px_4()
-                                    .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
-                                    .child(
-                                        div()
-                                            .flex()
-                                            .flex_row()
-                                            .text_align(TextAlign::Left)
-                                            .child(
-                                                div().pr_2().child(
-                                                    Icon::new(icon)
-                                                        .size((px(28.), px(28.)))
-                                                        .text_color(icon_color),
-                                                ),
-                                            )
-                                            .child(
-                                                div()
-                                                    .pl_2()
-                                                    .font_weight(FontWeight::NORMAL)
-                                                    .text_color(text_color)
-                                                    .child(ex.text.clone()),
-                                            ),
-                                    )
-                                    .on_click(cx.listener(move |_, _, _, _| {
-                                        println!("option clicked...");
-                                    }))
-                            };
+                                px(24.)
+                            })
+                            .pl(px(16.))
+                            .pt(px(8.))
+                            .h(px(MODAL_HEADER_HEIGHT)),
+                    )
+                    .child(
+                        div()
+                            .flex_1()
+                            .relative()
+                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                                px(16.)
+                            } else {
+                                px(18.)
+                            })
+                            .children(extend_options.iter().enumerate().map(|(idx, ex)| {
+                                let is_active = ex.is_active;
 
-                            main_div
-                        }),
-                    ))
-                    .child(self.render_settings_div(cx)),
-            )
+                                let (icon_color, text_color) =
+                                    Self::get_icon_and_text_color(is_active, cx);
+
+                                let icon = match ex.extend_type {
+                                    ExtendedType::ExtendedDetected => IconName::ExtendedDetected,
+                                    ExtendedType::MirrorScreen => IconName::MirrorScreen,
+                                    ExtendedType::ExtendedOnly => IconName::ExtendedOnly,
+                                    ExtendedType::SecondScreen => IconName::SecondScreen,
+                                };
+
+                                let connect_div = div().child(
+                                    Icon::new(IconName::Connected)
+                                        .size((px(24.), px(24.)))
+                                        .text_color(text_color),
+                                );
+
+                                let mut option_div = if is_active {
+                                    div()
+                                        .id(("option_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .bg(colors.accent_200.with_alpha(0.1))
+                                        .border_y_1()
+                                        .border_color(colors.accent_200.with_alpha(0.4))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .text_align(TextAlign::Left)
+                                                .child(
+                                                    div().pr_2().child(
+                                                        Icon::new(icon)
+                                                            .size((px(28.), px(28.)))
+                                                            .text_color(icon_color),
+                                                    ),
+                                                )
+                                                .child(
+                                                    div()
+                                                        .pl_2()
+                                                        .font_weight(FontWeight::NORMAL)
+                                                        .text_color(text_color)
+                                                        .child(ex.text.clone()),
+                                                ),
+                                        )
+                                        .child(connect_div)
+                                } else {
+                                    div()
+                                        .id(("option_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .rounded(px(8.))
+                                        .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .text_align(TextAlign::Left)
+                                                .child(
+                                                    div().pr_2().child(
+                                                        Icon::new(icon)
+                                                            .size((px(28.), px(28.)))
+                                                            .text_color(icon_color),
+                                                    ),
+                                                )
+                                                .child(
+                                                    div()
+                                                        .pl_2()
+                                                        .font_weight(FontWeight::NORMAL)
+                                                        .text_color(text_color)
+                                                        .child(ex.text.clone()),
+                                                ),
+                                        )
+                                };
+
+                                if !is_active {
+                                    option_div = option_div.on_click(cx.listener(
+                                        move |_this: &mut SettingsDrawer,
+                                              _event: &ClickEvent,
+                                              _window: &mut Window,
+                                              _cx: &mut Context<Self>| {
+                                            println!("implement extended screen option change");
+                                        },
+                                    ));
+                                }
+
+                                option_div
+                            })),
+                    )
+                    .child(self.render_settings_div(cx));
+                w.upper_wing_size(Size::new(px(237.0), px(36.0)));
+                w.border_width(px(1.0));
+                w.border_radius(px(8.0));
+                w
+            })
             .into_any()
     }
 }

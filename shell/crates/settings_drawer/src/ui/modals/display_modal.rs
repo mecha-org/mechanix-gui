@@ -1,7 +1,9 @@
+use commons::widgets::wing;
 use gpui::*;
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::ui::FINAL_MODAL_SIZE;
+use crate::ui::modals::MODAL_HEADER_HEIGHT;
 use crate::{
     prelude::*,
     ui::{
@@ -9,22 +11,21 @@ use crate::{
         widgets::{Switch, SwitchSize},
     },
 };
-// TODO: when auto brightness is enabled, hightlight the row
-
 impl SettingsDrawer {
     pub fn render_display_modal(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
 
-        let (auto_brightness_icon_color, auto_brightness_text_color) = Self::get_icon_and_text_color(self.auto_brightness, cx);
-        let (dark_mode_icon_color, dark_mode_text_color) = Self::get_icon_and_text_color(self.dark_mode, cx);
+        let (auto_brightness_icon_color, auto_brightness_text_color) =
+            Self::get_icon_and_text_color(self.auto_brightness, cx);
+        let (dark_mode_icon_color, dark_mode_text_color) =
+            Self::get_icon_and_text_color(self.dark_mode, cx);
 
         div()
             .flex()
             .flex_col()
             .size_full()
-            .child(self.render_header_div(cx, "Display brightness"))
-            .child(
-                div()
+            .child({
+                let mut w = wing()
                     .flex()
                     .flex_col()
                     .flex_1()
@@ -35,11 +36,24 @@ impl SettingsDrawer {
                     .border_t_0()
                     .rounded(px(8.))
                     .overflow_hidden()
-                    .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                        px(16.)
-                    } else {
-                        px(18.)
-                    })
+                    .child(
+                        div()
+                            .child("Display brightness")
+                            .flex()
+                            .w_full()
+                            .justify_start()
+                            .text_color(colors.foreground_400)
+                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                                px(18.)
+                            } else {
+                                px(24.)
+                            })
+                            .pl(px(16.))
+                            .pt(px(8.))
+                            .border_b_1()
+                            .border_color(colors.accent_200.with_alpha(0.4))
+                            .h(px(MODAL_HEADER_HEIGHT)),
+                    )
                     .child(
                         div()
                             .flex()
@@ -65,8 +79,6 @@ impl SettingsDrawer {
                                     .justify_between()
                                     .p_4()
                                     .flex_shrink_0()
-                                    .border_y_1()
-                                    .border_color(colors.accent_200.with_alpha(0.4))
                                     .child(
                                         div()
                                             .flex()
@@ -139,9 +151,13 @@ impl SettingsDrawer {
                                         ),
                                     ),
                             ),
-                    ) 
-                    .child(self.render_settings_div(cx)),
-            )
+                    )
+                    .child(self.render_settings_div(cx));
+                w.upper_wing_size(Size::new(px(237.0), px(36.0)));
+                w.border_width(px(1.0));
+                w.border_radius(px(8.0));
+                w
+            })
             .into_any()
     }
 }
