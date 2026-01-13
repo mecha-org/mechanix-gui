@@ -1,18 +1,33 @@
 use std::process::{Child, Command};
 
 use commons::prelude::*;
-use dispatcher::{Dispatcher, prelude::*};
+use dispatcher::Dispatcher;
 use gpui::{foreign_toplevel_management::ForeignToplevelHandle, *};
 use settings::prelude::*;
 
 struct Launcher {
     top_levels: Vec<ForeignToplevelHandle>,
+    _poll_task: Task<()>,
 }
 
 impl Launcher {
-    fn new() -> Self {
+    fn new(cx: &mut Context<Self>) -> Self {
+        let _poll_task = cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
+            loop {
+                let executor = cx.background_executor().clone();
+                cx.background_spawn(async move {
+                    executor.timer(std::time::Duration::from_millis(100)).await;
+                })
+                .await;
+
+                let _ = this.update(cx, |_this, cx| {
+                    cx.notify();
+                });
+            }
+        });
         Self {
             top_levels: Vec::new(),
+            _poll_task,
         }
     }
 
@@ -112,7 +127,7 @@ pub fn run_app(cx: &mut gpui::App) {
         |window, cx| {
             let regions = Vec::new();
             window.set_input_regions(Some(regions));
-            cx.new(|_cx| Launcher::new())
+            cx.new(|cx| Launcher::new(cx))
         },
     );
     let entity = window.unwrap().entity(cx).unwrap();

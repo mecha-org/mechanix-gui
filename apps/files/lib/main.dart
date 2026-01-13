@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
@@ -8,15 +10,27 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository_impl.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
+import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
 
-Future<void> main() async {
+Future<void> main(List<String> args) async {
   di.registerSingleton(ThemeToggle());
 
   WidgetsFlutterBinding.ensureInitialized();
   final configResult = await connectToMxconf(); // Await the Future properly
+
+    // Parse command-line arguments
+    // Support both compile-time (--dart-define) and runtime (env var)
+  const compileTimeOpenPath = String.fromEnvironment('MECHANIX_FILES_OPEN_PATH');
+  final runtimeOpenPath = Platform.environment['MECHANIX_FILES_OPEN_PATH'];
+  final openPath = compileTimeOpenPath.isNotEmpty 
+      ? compileTimeOpenPath 
+      : runtimeOpenPath;
+  
+  print('Open path: $openPath');
+  
   AppConfig().loadFromMap(configResult); // Load into singleton instance
 
   runApp(
@@ -29,13 +43,14 @@ Future<void> main() async {
           create: (_) => FileRepositoryImpl(),
         ),
       ],
-      child: MechanixFilesApp(),
+      child: MechanixFilesApp(openPath: openPath ?? ''),
     ),
   );
 }
 
 class MechanixFilesApp extends StatelessWidget with WatchItMixin {
-  MechanixFilesApp({super.key});
+  MechanixFilesApp({super.key, required String this.openPath,});
+  final String openPath;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +64,7 @@ class MechanixFilesApp extends StatelessWidget with WatchItMixin {
         darkTheme: mechanix.darkTheme,
         lightTheme: mechanix.lightTheme,
         themeMode: themeMode,
+        openPath: openPath,
       ),
     );
   }
@@ -60,11 +76,13 @@ class MainApp extends StatelessWidget {
     required this.lightTheme,
     required this.darkTheme,
     required this.themeMode,
+    required this.openPath,
   });
 
   final ThemeData lightTheme;
   final ThemeData darkTheme;
   final ThemeMode themeMode;
+  final String openPath;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +115,9 @@ class MainApp extends StatelessWidget {
           ),
         ),
         themeMode: themeMode,
-        home: const FileHomePage(),
+        home: openPath.isNotEmpty
+            ? FileExplorerPage(startPath: openPath)
+            : const FileHomePage(),
         routes: {
           AppRoutes.files: (context) => const FileHomePage(),
         },

@@ -1,6 +1,5 @@
 use crate::widgets::HomescreenWidget;
 use app_drawer::prelude::*;
-use app_drawer::ui::utils::prelude::DesktopApps;
 use gpui::*;
 use crate::Homescreen;
 
@@ -11,11 +10,7 @@ pub struct AppDrawerWidget {
 
 impl AppDrawerWidget {
     pub fn new(cx: &mut Context<Homescreen>) -> Self {
-        let desktop_apps = DesktopApps::scan();
-        let state = AppDrawerState {
-            apps: desktop_apps,
-        };
-        let drawer_handle = cx.new(|cx| AppDrawer::new(state, cx));
+        let drawer_handle = cx.new(|cx| AppDrawer::new(cx));
         Self {
             bounds: Bounds::default(),
             drawer_handle,
@@ -25,10 +20,7 @@ impl AppDrawerWidget {
 
 impl HomescreenWidget for AppDrawerWidget {
     fn render(&self) -> AnyElement {
-        div()
-            .size_full()
-            .child(self.drawer_handle.clone())
-            .into_any_element()
+        div().size_full().child(self.drawer_handle.clone()).into_any_element()
     }
 
     fn set_bounds(&mut self, bounds: Bounds<Pixels>) {

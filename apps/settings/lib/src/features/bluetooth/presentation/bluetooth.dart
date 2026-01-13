@@ -69,6 +69,7 @@ class _BluetoothState extends State<Bluetooth> {
                           inactiveText: 'ON',
                           style: MechanixSwitchStyle(
                             activeTrackColor: context.secondary,
+                            inactiveTrackColor: context.secondary,
                           ),
                           value: state.isPowered,
                           onChanged: (val) => context
@@ -159,7 +160,7 @@ class _BluetoothState extends State<Bluetooth> {
             ),
           ),
         ),
-        bottomSheet: MechanixBottomBar(
+        bottomNavigationBar: MechanixBottomBar(
           leadingWidget: [
             context.backButton,
           ],

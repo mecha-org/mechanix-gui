@@ -73,7 +73,7 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
               ).padTop(8),
             ),
           ),
-          bottomSheet: MechanixBottomBar(
+          bottomNavigationBar: MechanixBottomBar(
             leadingWidget: [context.backButton],
             centerWidget: [
               if (state.selectedDevice != null)
