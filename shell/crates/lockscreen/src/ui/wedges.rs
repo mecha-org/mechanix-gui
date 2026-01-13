@@ -4,8 +4,8 @@ use upower::interfaces::device::BatteryState;
 
 pub const STATUS_ICON_GAP: f32 = 15.0;
 pub const STATUS_ICON_PADDING_RIGHT: f32 = 20.0;
-pub const STATUS_ICON_PADDING_BOTTOM: f32 = 30.0;
-pub const STATUS_ICON_COLOR: u32 = 0xFFFFFFFF; 
+pub const STATUS_ICON_PADDING_BOTTOM: f32 = 28.0;
+pub const STATUS_ICON_COLOR: u32 = 0xFFFFFFFF;
 
 // Individual icon sizes - customize each independently
 pub const WIFI_ICON_SIZE: f32 = 25.0;
@@ -13,22 +13,39 @@ pub const BLUETOOTH_ICON_SIZE: f32 = 25.0;
 pub const BATTERY_ICON_SIZE: f32 = 30.0;
 
 // Bell icon configuration (left wedge)
-pub const BELL_ICON_SIZE: f32 = 24.0;
+pub const BELL_ICON_SIZE: f32 = 22.0;
 pub const BELL_ICON_COLOR: u32 = 0xFFFFFFFF; // White
 pub const BELL_CIRCLE_SIZE: f32 = 40.0;
-pub const BELL_CIRCLE_COLOR: u32 = 0xC6760033; // Dark orange/brown
+pub const BELL_CIRCLE_COLOR: u32 = 0x38200099; // Dark orange/brown
 pub const BELL_PADDING_LEFT: f32 = 12.0;
 pub const BELL_PADDING_BOTTOM: f32 = 56.0;
+
+// Lock icon configuration (center, above panel)
+pub const LOCK_ICON_SIZE: f32 = 24.0;
+pub const LOCK_CIRCLE_SIZE: f32 = 40.0;
+// Lock state colors (icon colors)
+pub const LOCK_ICON_COLOR_LOCKED: u32 = 0xFFFFFFFF; // White when locked
+pub const LOCK_ICON_COLOR_HALF: u32 = 0xFFFFFFFF; // White when half open
+pub const LOCK_ICON_COLOR_OPEN: u32 = 0xFFFFFFFF; // White when fully open
+// Lock state background circle colors
+pub const LOCK_BG_COLOR_LOCKED: u32 = 0x38200099; // Dark brown, semi-transparent
+pub const LOCK_BG_COLOR_HALF: u32 = 0x5C3A0099; // Medium brown, semi-transparent  
+pub const LOCK_BG_COLOR_OPEN: u32 = 0xF4920099; // Orange, semi-transparent
 
 const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
 // Left wedge dimensions: 540 x 106 (from wedge_left.svg )
 pub const LEFT_WEDGE_WIDTH: f32 = 540.0;
 pub const LEFT_WEDGE_HEIGHT: f32 = 106.0;
+pub const LEFT_WEDGE_COLOR: u32 = 0x1F1200FF; // Dark brown
 
 // Right wedge dimensions: 540 x 67 (from wedge_right.svg)
 pub const RIGHT_WEDGE_WIDTH: f32 = 540.0;
 pub const RIGHT_WEDGE_HEIGHT: f32 = 67.0;
+pub const RIGHT_WEDGE_COLOR: u32 = 0x382000FF; // Darker brown
+
+// Gap between bell and lock icons in left wedge
+pub const LEFT_WEDGE_ICON_GAP: f32 = 12.0;
 
 // Icon name enum for status icons
 #[derive(Clone, Debug)]
@@ -209,9 +226,9 @@ fn status_icons(cx: &mut App) -> impl IntoElement {
         .child(render_battery_icon(battery_icon, icon_color))
 }
 
-// Left wedge - size 540 x 106, color #382000, with bell icon
-pub fn left_wedge() -> impl IntoElement {
-    let svg_color = rgba(0x382000FF);
+// Left wedge - size 540 x 106, with bell icon and lock icon
+pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
+    let svg_color = rgba(LEFT_WEDGE_COLOR);
     let bell_icon_color = rgba(BELL_ICON_COLOR);
     let bell_circle_color = rgba(BELL_CIRCLE_COLOR);
 
@@ -236,9 +253,11 @@ pub fn left_wedge() -> impl IntoElement {
                 .bottom(px(BELL_PADDING_BOTTOM))
                 .left(px(BELL_PADDING_LEFT))
                 .flex()
+                .flex_row()
                 .items_center()
+                .gap(px(LEFT_WEDGE_ICON_GAP))
+                // Bell icon in circle
                 .child(
-                    // Circle background with bell icon
                     div()
                         .w(px(BELL_CIRCLE_SIZE))
                         .h(px(BELL_CIRCLE_SIZE))
@@ -254,13 +273,15 @@ pub fn left_wedge() -> impl IntoElement {
                                 .h(px(BELL_ICON_SIZE))
                                 .text_color(bell_icon_color),
                         ),
-                ),
+                )
+                // Lock icon in circle (state-based)
+                .child(lock_icon(lock_state)),
         )
 }
 
-// Right wedge - size 540 x 67, color #1F1200, with status icons
+// Right wedge - size 540 x 67, with status icons
 pub fn right_wedge(cx: &mut App) -> impl IntoElement {
-    let svg_color = rgba(0x1F1200FF);
+    let svg_color = rgba(RIGHT_WEDGE_COLOR);
 
     div()
         .absolute()
@@ -285,5 +306,72 @@ pub fn right_wedge(cx: &mut App) -> impl IntoElement {
                 .flex()
                 .items_center()
                 .child(status_icons(cx)),
+        )
+}
+
+/// Lock icon state based on slider position
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum LockState {
+    Locked,    // At rest (position_y = 0)
+    HalfOpen,  // Dragging but below threshold
+    FullyOpen, // Beyond unlock threshold
+}
+
+impl LockState {
+    /// Determine lock state from position_y and threshold
+    pub fn from_position(position_y: f32, threshold: f32) -> Self {
+        if position_y >= 0.0 {
+            LockState::Locked
+        } else if position_y > -threshold {
+            LockState::HalfOpen
+        } else {
+            LockState::FullyOpen
+        }
+    }
+
+    fn icon_path(&self) -> &'static str {
+        match self {
+            LockState::Locked => "icons/lockscreen/lock.svg",
+            LockState::HalfOpen => "icons/lockscreen/lock-open-half.svg",
+            LockState::FullyOpen => "icons/lockscreen/lock-open-full.svg",
+        }
+    }
+
+    fn icon_color(&self) -> Rgba {
+        match self {
+            LockState::Locked => rgba(LOCK_ICON_COLOR_LOCKED),
+            LockState::HalfOpen => rgba(LOCK_ICON_COLOR_HALF),
+            LockState::FullyOpen => rgba(LOCK_ICON_COLOR_OPEN),
+        }
+    }
+
+    fn bg_color(&self) -> Rgba {
+        match self {
+            LockState::Locked => rgba(LOCK_BG_COLOR_LOCKED),
+            LockState::HalfOpen => rgba(LOCK_BG_COLOR_HALF),
+            LockState::FullyOpen => rgba(LOCK_BG_COLOR_OPEN),
+        }
+    }
+}
+
+/// Lock icon that changes based on slider position
+/// - Locked: at rest (position_y = 0)
+/// - HalfOpen: dragging but below threshold
+/// - FullyOpen: beyond unlock threshold
+pub fn lock_icon(lock_state: LockState) -> impl IntoElement {
+    div()
+        .w(px(LOCK_CIRCLE_SIZE))
+        .h(px(LOCK_CIRCLE_SIZE))
+        .rounded_full()
+        .bg(lock_state.bg_color())
+        .flex()
+        .items_center()
+        .justify_center()
+        .child(
+            svg()
+                .path(lock_state.icon_path())
+                .w(px(LOCK_ICON_SIZE))
+                .h(px(LOCK_ICON_SIZE))
+                .text_color(lock_state.icon_color()),
         )
 }

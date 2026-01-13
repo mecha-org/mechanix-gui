@@ -3,7 +3,7 @@ use shell_state::ShellState;
 mod wallpaper;
 mod wedges;
 use wallpaper::wallpaper;
-use wedges::{left_wedge, right_wedge};
+use wedges::{left_wedge, right_wedge, LockState};
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
 const UNLOCK_THRESHOLD: f32 = 80.0;
@@ -168,18 +168,19 @@ impl Render for Lockscreen {
                         ),
                 )
                 // Wedges container - fixed at bottom, both wedges overlap
-                .child(
+                .child({
+                    let lock_state = LockState::from_position(self.position_y, UNLOCK_THRESHOLD);
                     div()
                         .absolute()
                         .bottom_0()
                         .left_0()
                         .w(size.width)
                         .h(px(WEDGES_AREA_HEIGHT))
-                        // Left wedge (below right wedge in z-order, with bell icon)
-                        .child(left_wedge())
+                        // Left wedge (below right wedge in z-order, with bell and lock icons)
+                        .child(left_wedge(lock_state))
                         // Right wedge (overlaps left wedge, rendered on top, with status icons)
-                        .child(right_wedge(cx)),
-                )
+                        .child(right_wedge(cx))
+                })
         })
     }
 }
