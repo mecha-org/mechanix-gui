@@ -6,14 +6,21 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
+import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/data/wifi_repository.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_protocols.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
-class AddNetwork extends StatelessWidget {
+class AddNetwork extends StatefulWidget {
   const AddNetwork({super.key});
 
+  @override
+  State<AddNetwork> createState() => _AddNetworkState();
+}
+
+class _AddNetworkState extends State<AddNetwork> {
   @override
   Widget build(BuildContext context) {
     final formKey = GlobalKey<FormState>();
@@ -76,38 +83,42 @@ class AddNetwork extends StatelessWidget {
                               .add(UsernameChanged(value));
                         },
                       ).padBottom(24),
-                      MechanixTextInput.password(
-                        hintText: 'Enter Password',
-                        isFormField: true,
-                        prefixIcon: const IconWidget(
-                          iconPath: Images.lockIcon,
-                          iconWidth: 19,
-                          iconHeight: 21,
-                          boxWidth: 24,
-                          boxHeight: 24,
-                        ).padOnly(left: 16, top: 16, right: 8, bottom: 16),
-                        theme: MechanixTextInputThemeData(
-                          borderRadius: BorderRadius.circular(8),
-                          enabledBorderSide: BorderSide(
-                            color: context.outlineVariant,
-                            style: BorderStyle.solid,
-                            width: 1,
-                          ),
-                          widgetPadding: EdgeInsets.zero,
-                          widgetDecoration: const BoxDecoration(
-                            color: Colors.transparent,
-                          ),
-                        ),
-                        onChanged: (value) {
-                          context
-                              .read<ConnectNetworkBloc>()
-                              .add(PasswordChanged(value));
-                        },
-                        onFieldSubmitted: (_) {
-                          if (state.password.isNotEmpty &&
-                              state.password.length >= 8) {
-                            onAddButtonPressed(context, state);
-                          }
+                      BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
+                        builder: (context, wirelessState) {
+                          return MechanixTextInput.password(
+                            hintText: 'Enter Password',
+                            isFormField: true,
+                            prefixIcon: const IconWidget(
+                              iconPath: Images.lockIcon,
+                              iconWidth: 19,
+                              iconHeight: 21,
+                              boxWidth: 24,
+                              boxHeight: 24,
+                            ).padOnly(left: 16, top: 16, right: 8, bottom: 16),
+                            theme: MechanixTextInputThemeData(
+                              borderRadius: BorderRadius.circular(8),
+                              enabledBorderSide: BorderSide(
+                                color: context.outlineVariant,
+                                style: BorderStyle.solid,
+                                width: 1,
+                              ),
+                              widgetPadding: EdgeInsets.zero,
+                              widgetDecoration: const BoxDecoration(
+                                color: Colors.transparent,
+                              ),
+                            ),
+                            onChanged: (value) {
+                              context
+                                  .read<ConnectNetworkBloc>()
+                                  .add(PasswordChanged(value));
+                            },
+                            onFieldSubmitted: (_) {
+                              if (state.password.isNotEmpty &&
+                                  state.password.length >= 8) {
+                                onAddButtonPressed(context, state);
+                              }
+                            },
+                          );
                         },
                       ).padBottom(32),
                       // // NOTE: Not in use currently

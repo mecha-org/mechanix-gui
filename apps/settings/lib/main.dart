@@ -201,7 +201,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.vibrationLevel: (context) => const VibrationLevel(),
           AppRoutes.soundOutputDevices: (context) => const OutputDevices(),
           AppRoutes.soundInputDevices: (context) => const InputDevices(),
-          AppRoutes.notificationSound: (context) => const NotificationSound(),
+          AppRoutes.notificationSound: (context) => const NotificationSounds(),
 
           // Wireless Routes
           AppRoutes.wireless: (context) => BlocProvider(

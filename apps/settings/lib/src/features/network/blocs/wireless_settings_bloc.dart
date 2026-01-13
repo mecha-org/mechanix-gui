@@ -25,6 +25,7 @@ class WirelessSettingsBloc
   WirelessSettingsBloc({required this.wifiRepository})
       : super(const WirelessSettingsState(
           wifiOn: false,
+          availableNetworks: [],
           availableOtherNetworks: [],
           availableSavedNetworks: [],
           allSavedNetworks: [],
@@ -46,6 +47,7 @@ class WirelessSettingsBloc
     on<WifiStatusChanged>(_onWifiStatusChanged); // connecting, connected, etc
     on<SelectNetwork>(_setSelectedNetwork);
     on<SelectNetworkPoint>(_setSelectedNetworkPoint);
+    on<LoadNetworks>(_loadNetworks);
 
     on<ConnectSavedNetwork>(_connectSavedNetwork);
     on<ForgetNetwork>(onForgetNetwork);
@@ -57,6 +59,7 @@ class WirelessSettingsBloc
     on<Error>(handleError);
     on<SelectedWirelessProtocol>(_selectWirelessProtocol);
     on<RefreshWifiList>(_onRefreshWifiList);
+    on<UpdateNMDeviceState>(_onNetworkManagerDeviceStatusChanged);
   }
 
   Future<void> _onInit(
@@ -78,6 +81,8 @@ class WirelessSettingsBloc
     final enabled = await wifiRepository.isWirelessEnabled();
     if (enabled) {
       add(WifiEnabledChanged(enabled));
+      add(GetSavedNetworksEvent());
+      add(LoadNetworks());
     }
 
     /// Get wired device
@@ -91,6 +96,24 @@ class WirelessSettingsBloc
     var info = WiredDevice(speed: wiredDevice!.speed, enabled: ethernetEnabled);
 
     emit(state.copyWith(wiredDevice: info));
+  }
+
+  Future<void> _loadNetworks(
+      LoadNetworks event, Emitter<WirelessSettingsState> emit) async {
+    try {
+      final savedNetworks = await wifiRepository.getSavedNetworks();
+
+      final result = await wifiRepository.availableAccessPoints(savedNetworks);
+
+      emit(state.copyWith(
+        availableOtherNetworks: result.available,
+        connectedNetwork: result.active,
+        wifiState:
+            result.active == null ? WifiStatus.unknown : WifiStatus.connected,
+      ));
+    } catch (e) {
+      logger.e('Error initializing wifi load networks $e, ');
+    }
   }
 
   void _onWifiEnabledChanged(
@@ -127,8 +150,14 @@ class WirelessSettingsBloc
       final stream = await wifiRepository.streamWifiEvents();
       _wifiEventsSubscription = stream.listen((prop) async {
         if (prop.contains("State")) {
-          var state = await wifiRepository.getWifiState();
-          switch (state) {
+          final wifiState = await wifiRepository.getWifiState();
+          final wifiDevice = await wifiRepository.getWifiDevice();
+
+          if (wifiDevice.state != state.deviceState) {
+            add(UpdateNMDeviceState(wifiDevice.state));
+          }
+
+          switch (wifiState) {
             case NetworkManagerState.connecting:
               add(WifiStatusChanged(WifiStatus.connecting));
               break;
@@ -162,8 +191,7 @@ class WirelessSettingsBloc
             (prop.contains("LastScan") ||
                 prop.contains("AccessPoints") ||
                 prop.contains("ActiveAccessPoint"))) {
-          final savedNetworks =
-              await wifiRepository.savedNetworks(state.availableOtherNetworks);
+          final savedNetworks = await wifiRepository.getSavedNetworks();
 
           final availAccessPoints =
               await wifiRepository.availableAccessPoints(savedNetworks);
@@ -174,13 +202,31 @@ class WirelessSettingsBloc
 
           if (availAccessPoints.active != null) {
             add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
-            add(WifiStatusChanged(WifiStatus.connected));
           }
+          // final savedNetworks =
+          //     await wifiRepository.savedNetworks(state.availableOtherNetworks);
+
+          // final availAccessPoints =
+          //     await wifiRepository.availableAccessPoints(savedNetworks);
+
+          // if (availAccessPoints.available.isNotEmpty) {
+          //   add(UpdateAvailableNetworksEvent(availAccessPoints.available));
+          // }
+
+          // if (availAccessPoints.active != null) {
+          //   add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
+          //   add(WifiStatusChanged(WifiStatus.connected));
+          // }
         }
       });
     } catch (e, stackTrace) {
       logger.e('Error initializing wifi stream $e, $stackTrace');
     }
+  }
+
+  void _onNetworkManagerDeviceStatusChanged(
+      UpdateNMDeviceState event, Emitter<WirelessSettingsState> emit) {
+    emit(state.copyWith(deviceState: event.deviceState));
   }
 
   // Always cancel your subscriptions when Bloc is closed
@@ -297,10 +343,11 @@ class WirelessSettingsBloc
             event.accessPoints.where((ap) => (ap.isSaved)).toList();
 
         emit(state.copyWith(
-            availableOtherNetworks: updatedNetworks,
-            availableSavedNetworks: availableSavedNetworks,
-            availableOtherNetworksLoading: false,
-            availableSavedNetworksLoading: false));
+          availableOtherNetworks: updatedNetworks,
+          availableSavedNetworks: availableSavedNetworks,
+          availableOtherNetworksLoading: false,
+          availableSavedNetworksLoading: false,
+        ));
       }
     } catch (e) {
       logger.e('error in update available networks $e');
@@ -363,8 +410,7 @@ class WirelessSettingsBloc
       ));
 
       // Get updated access points
-      final savedNetworks =
-          await wifiRepository.savedNetworks(state.availableOtherNetworks);
+      final savedNetworks = await wifiRepository.getSavedNetworks();
       final availAccessPoints =
           await wifiRepository.availableAccessPoints(savedNetworks);
 

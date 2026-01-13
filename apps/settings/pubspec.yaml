@@ -142,6 +142,12 @@ flutter:
     - assets/images/three_dot_icon.png
     - assets/images/circular_check_icon.png
     - assets/images/lock_icon.png
+    - assets/images/all_apps_icon.png
+    - assets/images/cellular_icon.png
+    - assets/images/extension_icon.png
+    - assets/images/launcher_icon.png
+    - assets/images/security_icon.png
+    - assets/images/update_icon.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

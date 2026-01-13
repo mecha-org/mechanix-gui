@@ -4,6 +4,7 @@ import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class SettingMenu extends StatelessWidget {
@@ -33,6 +34,18 @@ class SettingMenu extends StatelessWidget {
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'Cellular',
+                      onTap: () {},
+                      iconPath: Images.cellularIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Airplane Mode',
+                      onTap: () {},
+                      iconPath: Images.wifi,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Bluetooth',
                       onTap: () => onTap(context, AppRoutes.bluetooth),
                       iconPath: Images.bluetooth,
@@ -43,15 +56,27 @@ class SettingMenu extends StatelessWidget {
                       onTap: () => onTap(context, AppRoutes.battery),
                       iconPath: Images.battery,
                     ),
-                  ]).padVertical(8),
+                  ]),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'Extensions',
+                      onTap: () {},
+                      iconPath: Images.extensionIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Display & Brightness',
                       onTap: () => onTap(context, AppRoutes.display),
                       iconPath: Images.display,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Appearance',
+                      onTap: () {},
+                      iconPath: Images.appearance,
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
@@ -61,23 +86,80 @@ class SettingMenu extends StatelessWidget {
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'Notification',
+                      onTap: () {},
+                      iconPath: Images.notificationIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Language',
+                      onTap: () {},
+                      iconPath: Images.languageIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Date & Time',
                       onTap: () => onTap(context, AppRoutes.dateTime),
                       iconPath: Images.dateTime,
                     ),
-                  ]),
-              MechanixSectionList(
-                  physics: const NeverScrollableScrollPhysics(),
-                  sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
-                      title: 'System Info',
-                      onTap: () => onTap(context, AppRoutes.about),
-                      iconPath: Images.cometIcon,
+                      title: 'Launcher',
+                      onTap: () {},
+                      iconPath: Images.languageIcon,
                     ),
                   ]),
+              MechanixSectionList(
+                physics: const NeverScrollableScrollPhysics(),
+                theme: const MechanixSectionListThemeData(
+                  widgetPadding: EdgeInsets.only(bottom: 0),
+                ),
+                sectionListItems: [
+                  SectionListItems.leadingIcon(
+                    iconColor: context.primary,
+                    title: 'All Apps',
+                    onTap: () {},
+                    iconPath: Images.allAppsIcon,
+                  ),
+                  SectionListItems.leadingIcon(
+                    iconColor: context.primary,
+                    title: 'Security',
+                    onTap: () {},
+                    iconPath: Images.searchIcon,
+                  ),
+                  SectionListItems.leadingIcon(
+                    iconColor: context.primary,
+                    title: 'System Update',
+                    onTap: () {},
+                    iconPath: Images.updateIcon,
+                  ),
+                  SectionListItems.leadingIcon(
+                    iconColor: context.primary,
+                    title: 'System Info',
+                    onTap: () => onTap(context, AppRoutes.about),
+                    iconPath: Images.cometIcon,
+                  ),
+                ],
+              ).padBottom(0),
             ],
-          ).padTop(8),
+          ).padOnly(top: 8, bottom: 0),
+        ),
+      ),
+      floatingActionButton: IconButton.filled(
+        onPressed: () {},
+        constraints: const BoxConstraints(
+          maxHeight: 44,
+          maxWidth: 44,
+        ),
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(context.surfaceContainer),
+        ),
+        icon: const IconWidget(
+          iconPath: Images.searchIcon,
+          boxWidth: 24,
+          boxHeight: 24,
+          iconWidth: 17,
+          iconHeight: 17,
         ),
       ),
     );

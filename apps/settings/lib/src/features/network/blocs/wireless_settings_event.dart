@@ -99,3 +99,12 @@ class WifiStatusChanged extends WirelessSettingsEvent {
   @override
   List<Object> get props => [wifiStatus];
 }
+
+class UpdateNMDeviceState extends WirelessSettingsEvent {
+  final NetworkManagerDeviceState deviceState;
+
+  UpdateNMDeviceState(this.deviceState);
+
+  @override
+  List<Object?> get props => [deviceState];
+}

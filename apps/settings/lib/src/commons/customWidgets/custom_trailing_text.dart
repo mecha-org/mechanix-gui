@@ -9,10 +9,13 @@ class CustomTrailingText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseStyle = context.textTheme.labelLarge ?? const TextStyle();
+    final baseStyle =
+        context.textTheme.bodyMedium?.copyWith(color: context.outlineVariant) ??
+            const TextStyle();
 
     return Text(
       title,
+      textAlign: TextAlign.right,
       style: baseStyle.merge(titleStyle),
     );
   }
