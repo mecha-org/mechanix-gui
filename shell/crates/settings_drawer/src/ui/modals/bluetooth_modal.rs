@@ -79,7 +79,7 @@ impl ScrollBehavior for BluetoothModalScroll {
     }
 
     fn estimate_content_height(&self, list_count: usize) -> Pixels {
-        px(list_count as f32 * ROW_HEIGHT) + px(16.)
+        px(list_count as f32 * ROW_HEIGHT) + px(ROW_HEIGHT)
     }
 
     fn on_mouse_down(&mut self, event: &MouseDownEvent) {
