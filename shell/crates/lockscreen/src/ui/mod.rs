@@ -1,4 +1,5 @@
 use gpui::{prelude::FluentBuilder, *};
+mod wedges;
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
 const UNLOCK_THRESHOLD: f32 = 80.0;

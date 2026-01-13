@@ -267,7 +267,7 @@ impl Default for LockscreenSettings {
         Self {
             layer_shell: LayerShellSettings {
                 layer: Layer::Overlay,
-                anchor: Anchor::TOP,
+                anchor: Anchor::TOP | Anchor::BOTTOM | Anchor::LEFT | Anchor::RIGHT,
                 namespace: "mechanix.lockscreen".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
