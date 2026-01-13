@@ -10,13 +10,16 @@ abstract class WifiRepository {
   Future<NetworkManagerState> getWifiState();
   Future<StreamAndDevice> getWifiStateAndReason();
   Future<void> setWifiEnabled(bool enable);
-  Future<Stream<List<String>>> streamWifiEvents();      // client
-  Future<Stream<List<String>>> streamWirelessDeviceStream();    // device
-
+  Future<Stream<List<String>>> streamWifiEvents(); // client
+  Future<Stream<List<String>>> streamWirelessDeviceStream(); // device
   Future<NetworkManagerDevice> getWiredDevice();
+  Future<NetworkManagerDevice> getWifiDevice();
 
   Future<({AccessPoints? active, List<AccessPoints> available})>
-      availableAccessPoints(List<SavedNetworks>? savedNetworks);
+      availableAccessPoints(List<SavedWirelessNetwork>? allSavedNetworks);
+
+  // Future<({AccessPoints? active, List<AccessPoints> available})>
+  //     scanAvailableAccessPoints(List<SavedWirelessNetwork>? savedNetworks);
 
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints> availableAccessPoints);
@@ -24,9 +27,9 @@ abstract class WifiRepository {
   Future<List<SavedWirelessNetwork>> getSavedNetworks();
 
   Future<void> connectToNetwork(
-      NetworkManagerAccessPoint accessPoint, String password);    
-  Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);   
-  Future<void> connectToHiddenNetwork(String ssid, String password);  
+      NetworkManagerAccessPoint accessPoint, String password);
+  Future<void> connectToSavedNetwork(NetworkManagerAccessPoint accessPoint);
+  Future<void> connectToHiddenNetwork(String ssid, String password);
   Future<void> forgetNetwork(String ssid);
   Future<NetworkManagerDeviceState?> getNetworkState();
   Future<void> close();

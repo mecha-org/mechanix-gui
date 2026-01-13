@@ -10,6 +10,7 @@ class WirelessSettingsState extends Equatable {
   final bool wifiOn;
 
   final List<AccessPoints> availableOtherNetworks;
+  final List<AccessPoints> availableNetworks;
   final List<AccessPoints> availableSavedNetworks;
   final List<SavedWirelessNetwork> allSavedNetworks;
 
@@ -29,6 +30,7 @@ class WirelessSettingsState extends Equatable {
 
   const WirelessSettingsState({
     required this.wifiOn,
+    required this.availableNetworks,
     required this.availableOtherNetworks,
     required this.availableSavedNetworks,
     required this.allSavedNetworks,
@@ -46,6 +48,7 @@ class WirelessSettingsState extends Equatable {
 
   WirelessSettingsState copyWith({
     bool? wifiOn,
+    List<AccessPoints>? availableNetworks,
     List<AccessPoints>? availableOtherNetworks,
     List<AccessPoints>? availableSavedNetworks,
     List<SavedWirelessNetwork>? allSavedNetworks,
@@ -62,6 +65,7 @@ class WirelessSettingsState extends Equatable {
   }) {
     return WirelessSettingsState(
       wifiOn: wifiOn ?? this.wifiOn,
+      availableNetworks: availableNetworks ?? this.availableNetworks,
       availableOtherNetworks:
           availableOtherNetworks ?? this.availableOtherNetworks,
       availableSavedNetworks:
@@ -87,6 +91,7 @@ class WirelessSettingsState extends Equatable {
   @override
   List<Object?> get props => [
         wifiOn,
+        availableNetworks,
         availableOtherNetworks,
         availableSavedNetworks,
         allSavedNetworks,

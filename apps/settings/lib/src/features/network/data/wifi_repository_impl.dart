@@ -61,6 +61,7 @@ class WifiRepositoryImpl implements WifiRepository {
     }
   }
 
+  @override
   Future<NetworkManagerDevice> getWifiDevice() async {
     final devices = _client.devices;
     NetworkManagerDevice wifiDevice = devices.firstWhere(
@@ -99,8 +100,15 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
+  Future<Stream<List<String>>> streamWirelessDeviceStream() async {
+    final NetworkManagerDevice device = await getWifiDevice();
+    return device.wireless!.propertiesChanged;
+  }
+
+  @override
   Future<({AccessPoints? active, List<AccessPoints> available})>
-      availableAccessPoints(List<SavedNetworks>? savedNetworks) async {
+      availableAccessPoints(
+          List<SavedWirelessNetwork>? allSavedNetworks) async {
     try {
       NetworkManagerDevice? wifiDevice = await getWifiDevice();
 
@@ -123,11 +131,12 @@ class WifiRepositoryImpl implements WifiRepository {
       for (var nmAccessPoint in nmAccessPoints!) {
         final ssid =
             utf8.decode(nmAccessPoint.ssid); // Convert List<int> to String
+
         if (ssid.isNotEmpty && !seenSsids.contains(ssid)) {
           seenSsids.add(ssid); // mark this SSID as seen
           var isActive =
               listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
-          var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
+          var isSaved = allSavedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
           var isSecure = nmAccessPoint.wpaFlags.isNotEmpty ||
               nmAccessPoint.rsnFlags.isNotEmpty;
 
@@ -247,7 +256,6 @@ class WifiRepositoryImpl implements WifiRepository {
       if (existingConnection != null) {
         logger.i('Found existing connection, activating it');
         existingConnection.delete();
-        return;
       }
 
       // Network requires password (WPA/WPA2)
@@ -593,12 +601,6 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
-  Future<Stream<List<String>>> streamWirelessDeviceStream() async {
-    final NetworkManagerDevice device = await getWifiDevice();
-    return device.wireless!.propertiesChanged;
-  }
-
-  @override
   Future<NetworkManagerDeviceState?> getNetworkState() async {
     logger.i('getActivateNetworks state - ${_client.activeConnections.length}');
 
@@ -668,3 +670,70 @@ Future<String?> getSavedWifiPsk(
   }
   return null;
 }
+
+  // @override
+  // Future<({AccessPoints? active, List<AccessPoints> available})>
+  //     scanAvailableAccessPoints(
+  //         List<SavedWirelessNetwork>? allSavedNetworks) async {
+  //   try {
+  //     // logger.i('Subscribing to availableAccessPoints WiFi events');
+  //     NetworkManagerDevice? wifiDevice = await getWifiDevice();
+
+  //     if (wifiDevice == null ||
+  //         wifiDevice.state == NetworkManagerDeviceState.unavailable) {
+  //       logger.e('No WiFi device found');
+  //       return (active: null, available: <AccessPoints>[]);
+  //     }
+
+  //     await wifiDevice.wireless!.requestScan();
+  //     List<AccessPoints> accessPoints = [];
+  //     final seenSsids = <String>{}; // to track unique SSIDs
+  //     var activeAccessPoint = wifiDevice.wireless?.activeAccessPoint;
+  //     var nmAccessPoints = wifiDevice.wireless?.accessPoints;
+  //     AccessPoints? connectedAccessPoint;
+
+  //     var ip4Config = wifiDevice.ip4Config;
+  //     var ip6Config = wifiDevice.ip6Config;
+
+  //     for (var nmAccessPoint in nmAccessPoints!) {
+  //       final ssid =
+  //           utf8.decode(nmAccessPoint.ssid); // Convert List<int> to String
+
+  //       if (ssid.isNotEmpty && !seenSsids.contains(ssid)) {
+  //         seenSsids.add(ssid); // mark this SSID as seen
+  //         var isActive =
+  //             listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
+  //         var isSaved = allSavedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
+  //         var isSecure = nmAccessPoint.wpaFlags.isNotEmpty ||
+  //             nmAccessPoint.rsnFlags.isNotEmpty;
+
+  //         if (isActive) {
+  //           // connected
+  //           connectedAccessPoint = AccessPoints(
+  //             isActive: isActive,
+  //             isSaved: isSaved,
+  //             isSecure: isSecure,
+  //             nmAccessPoint: nmAccessPoint,
+  //             ip4Config: ip4Config,
+  //             ip6Config: ip6Config,
+  //           );
+  //         } else {
+  //           // active + saved
+  //           var accessPoint = AccessPoints(
+  //             nmAccessPoint: nmAccessPoint,
+  //             isActive: isActive,
+  //             isSaved: isSaved,
+  //             isSecure: isSecure,
+  //             ip4Config: ip4Config,
+  //             ip6Config: ip6Config,
+  //           );
+  //           accessPoints.add(accessPoint);
+  //         }
+  //       }
+  //     }
+  //     return (active: connectedAccessPoint, available: accessPoints);
+  //   } catch (e) {
+  //     logger.e('Error in availableAccessPoints: $e');
+  //     return (active: null, available: <AccessPoints>[]);
+  //   }
+  // }
