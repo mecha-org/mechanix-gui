@@ -24,6 +24,14 @@ use theme::prelude::Theme;
 const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
 const APP_SIZE: (f32, f32) = (540., 620.);
 
+const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
+const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
+const EXPANDED_ITEM_HEIGHT: f32 = 72.0; // body-only cards
+const CARD_GAP: f32 = 8.0; // mt_2()
+const GROUP_GAP: f32 = 10.0; // gap_2p5()
+const LIST_PADDING_TOP: f32 = 12.0; 
+const LIST_PADDING_BOTTOM: f32 = 12.0;
+
 pub struct DragInfo {
     pub position: Point<Pixels>,
 }
@@ -222,8 +230,6 @@ pub struct NotificationCenter {
     pub is_dragging: bool,
     pub drag_start_y: Pixels,
     pub last_scroll_offset: Pixels,
-    pub content_height: Pixels,
-    pub viewport_height: Pixels,
 }
 
 #[derive(Clone, Copy)]
@@ -311,8 +317,6 @@ impl NotificationCenter {
             is_dragging: false,
             drag_start_y: px(0.0),
             last_scroll_offset: px(0.0),
-            content_height: px(0.0),
-            viewport_height: px(0.0),
         }
     }
 
@@ -335,8 +339,49 @@ impl NotificationCenter {
         (min_scroll, max_scroll)
     }
 
-    fn estimate_content_height(&self) -> Pixels {
-        px(1000.0) // TODO: calculate content height
+    fn estimated_group_height(&self, g: &NotificationGroupItem) -> Pixels {
+        let is_expanded = self.expanded_groups.get(&g.id).copied().unwrap_or(false);
+
+        let mut total = px(0.0);
+
+        if is_expanded && g.items.len() > 1 {
+            // first card
+            total += px(EXPANDED_FIRST_HEIGHT);
+
+            // rest
+            let extra = g.items.len() - 1;
+            total += px(extra as f32 * EXPANDED_ITEM_HEIGHT);
+            total += px(extra as f32 * CARD_GAP);
+        } else {
+            // collapsed
+            total += px(COLLAPSED_CARD_HEIGHT);
+        }
+        total
+    }
+
+    pub fn estimated_content_height(&self) -> Pixels {
+        if self.groups.is_empty() {
+            return px(0.0);
+        }
+
+        let mut total = px(LIST_PADDING_TOP + LIST_PADDING_BOTTOM);
+
+        for (i, g) in self.groups.iter().enumerate() {
+            total += self.estimated_group_height(g);
+
+            if i + 1 < self.groups.len() {
+                total += px(GROUP_GAP);
+            }
+        }
+        total
+    }
+
+    fn reclamp_scroll(&mut self) {
+        let content_height = self.estimated_content_height();
+        let (min, max) = self.calculate_scroll_bounds(content_height);
+
+        self.scroll_offset = self.scroll_offset.clamp(min, max);
+        self.last_scroll_offset = self.scroll_offset;
     }
 
     fn on_drag_move(
@@ -351,7 +396,7 @@ impl NotificationCenter {
 
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
-        let content_height = self.estimate_content_height();
+        let content_height = self.estimated_content_height();
         let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
@@ -492,6 +537,7 @@ impl NotificationCenter {
             }
         }
 
+        self.reclamp_scroll();
         cx.notify();
     }
 
@@ -613,6 +659,7 @@ impl NotificationCenter {
             .copied()
             .unwrap_or(false);
         self.expanded_groups.insert(group_id, !is_expanded);
+        self.reclamp_scroll();
         cx.notify();
     }
 
@@ -852,6 +899,9 @@ impl Render for NotificationWidget {
                     for notif in notifications_to_move {
                         center.add_db_notification(notif, cx);
                     }
+
+                    center.reclamp_scroll();
+                    cx.notify();
                 });
                 self.notification_list.update(cx, |list, cx| {
                     list.notifications.clear();
@@ -1046,7 +1096,7 @@ impl NotificationCenter {
                                         .w(px(24.0))
                                         .h(px(24.0))
                                         .rounded(px(6.0))
-                                        .bg(rgb(0xff9500))
+                                        .bg(colors.accent_200)
                                         .flex()
                                         .items_center()
                                         .justify_center()
@@ -1062,7 +1112,7 @@ impl NotificationCenter {
                                                 this.child(
                                                     Icon::new(IconName::Application)
                                                         .size((px(16.), px(16.)))
-                                                        .text_color(rgb(0xffffff)),
+                                                        .text_color(colors.foreground_0),
                                                 )
                                             },
                                         ),
