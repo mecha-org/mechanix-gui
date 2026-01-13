@@ -15,7 +15,7 @@ use crate::ui::{
 };
 
 pub const ROW_HEIGHT: f32 = 60.0;
-pub const MODAL_HEADER_HEIGHT: f32 = 56.0;
+pub const MODAL_HEADER_HEIGHT: f32 = 60.0;
 
 impl SettingsDrawer {
     pub fn render_header_div(
@@ -78,6 +78,7 @@ impl SettingsDrawer {
             .bg(colors.background_1000)
             .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
+            .rounded_md()
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
                 px(16.)
             } else {

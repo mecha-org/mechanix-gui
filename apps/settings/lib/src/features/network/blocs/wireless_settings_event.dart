@@ -2,6 +2,7 @@
 
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:nm/nm.dart';
 
 abstract class WirelessSettingsEvent extends Equatable {
@@ -77,4 +78,24 @@ class UpdateConnectedNetworkEvent extends WirelessSettingsEvent {
 
   @override
   List<Object> get props => [accessPoint];
+}
+
+class SelectedWirelessProtocol extends WirelessSettingsEvent {
+  final WirelessProtocol protocol;
+
+  SelectedWirelessProtocol(this.protocol);
+
+  @override
+  List<Object> get props => [protocol];
+}
+
+class RefreshWifiList extends WirelessSettingsEvent {}
+
+class WifiStatusChanged extends WirelessSettingsEvent {
+  final WifiStatus wifiStatus;
+
+  WifiStatusChanged(this.wifiStatus);
+
+  @override
+  List<Object> get props => [wifiStatus];
 }

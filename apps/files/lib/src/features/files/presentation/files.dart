@@ -19,6 +19,7 @@ import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/conflict_resolution_bottomsheet.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
+import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
@@ -96,15 +97,28 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     _scrollController.addListener(_onScroll);
 
-      // Default to home directory if no startPath is provided
-    final initialPath = widget.startPath ?? homeDir;
-    final entity = io.FileSystemEntity.typeSync(initialPath);
+    // Default to home directory if no startPath is provided
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
 
-    if (entity == io.FileSystemEntityType.file) {
-      final file = io.File(initialPath);
-      controller.openDirectory(file.parent);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+      // Start from home
+      await controller.openDirectory(Directory(homeDir));
+      if (!mounted) return;
+
+      final initialPath = widget.startPath;
+      if (initialPath == null) return;
+
+      final type = io.FileSystemEntity.typeSync(initialPath);
+
+      if (type == FileSystemEntityType.file) {
+        final file = File(initialPath);
+
+        // Navigate into parent AFTER home exists
+        await controller.openDirectory(file.parent);
+        if (!mounted) return;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
           handleFileTap(
             context,
             file,
@@ -113,12 +127,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             this,
             controller,
           );
-        }
-      });
-    } else {
-      controller.openDirectory(io.Directory(initialPath));
-    }
-
+        });
+      } else {
+        await controller.openDirectory(Directory(initialPath));
+      }
+    });
 
     controller.getPathNotifier.addListener(() {
       final newPath = controller.getPathNotifier.value;
@@ -401,12 +414,31 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     );
   }
 
-  void handleBack() {
-    controller.goToParentDirectory();
+  Future<void> handleBack() async {
+    if (controller.getCurrentPath.isEmpty) {
+      return;
+    }
+
+    final current = Directory(controller.getCurrentPath);
+    final parent = current.parent;
+
+    // If we are at root, go to FileHomePage
+    if (parent.path == current.path || await controller.isRootDirectory()) {
+      homeNavigation();
+      return;
+    }
+
+    // Otherwise go up one directory
+    await controller.goToParentDirectory();
   }
 
   void homeNavigation() {
-    Navigator.pop(context);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const FileHomePage(),
+      ),
+    );
   }
 
   OverlayEntry? _searchOverlayEntry;

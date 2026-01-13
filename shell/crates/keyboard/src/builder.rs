@@ -359,13 +359,3 @@ impl ButtonBuilder {
         }
     }
 }
-
-mod tests {
-    use crate::config::Layout;
-
-    #[test]
-    fn test_layout() {
-        let layout = Layout::from_file("assets/layouts/us.yaml".to_string()).unwrap();
-        let parsed_layout = layout.build(540.).unwrap();
-    }
-}

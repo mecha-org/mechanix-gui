@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/select/select_type.dart';
@@ -27,12 +29,12 @@ class _ConfigureProxyWidgetState extends State<ConfigureProxyWidget> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MechanixNavigationBar(title: "Configure DNS"),
       body: ContainerWidget(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const CustomTitle(title: "Configure Proxy"),
               MechanixSelect<DnsProxyConfiguration>(
                 value: selectedProxyDNS,
                 onChanged: _handleProxyDNSChange,
@@ -41,7 +43,10 @@ class _ConfigureProxyWidgetState extends State<ConfigureProxyWidget> {
             ],
           ),
         ),
-      ).padOnly(left: 16, right: 16, top: 8),
+      ),
+      bottomNavigationBar: MechanixBottomBar(
+        leadingWidget: [context.backButton],
+      ),
     );
   }
 }
