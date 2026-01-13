@@ -4085,6 +4085,7 @@ dependencies = [
  "gpui",
  "hardware_buttons",
  "homescreen",
+ "lockscreen",
  "notifications",
  "power_options",
  "running_apps",
