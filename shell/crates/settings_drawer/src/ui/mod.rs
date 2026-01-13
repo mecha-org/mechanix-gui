@@ -4,6 +4,7 @@ mod widgets;
 use commons::widgets::{WingSide, wing};
 use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
+use settings::prelude::{Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
 use theme::prelude::AlphaExt;
@@ -21,9 +22,6 @@ use futures::SinkExt;
 use gpui::*;
 use theme::ActiveTheme;
 
-const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
-const APP_SIZE: (f32, f32) = (540., 620.);
-
 const MIN_MODAL_SIZE_1: (f32, f32) = (133., 110.);
 const MIN_MODAL_SIZE_2: (f32, f32) = (203., 168.);
 pub const FINAL_MODAL_SIZE: (f32, f32) = (478., 392.);
@@ -33,6 +31,9 @@ const GRID_ROWS: usize = 4;
 const ICON_W: f32 = 104.0;
 const ICON_H: f32 = 104.0;
 const ROW_12_ICON_H: f32 = 88.0;
+
+const ANIMATION_DURATION_MS: f32 = 250.0;
+const ANIMATION_FRAME_MS: u64 = 16;
 
 #[derive(PartialEq)]
 pub enum ModalAnimationState {
@@ -107,6 +108,8 @@ pub enum ModalKind {
 
 impl SettingsDrawer {
     pub fn new(cx: &mut Context<Self>) -> Self {
+        let settings = Settings::global(cx).settings_drawer.clone();
+
         let ShellState {
             volume_tx,
             brightness_tx,
@@ -120,74 +123,13 @@ impl SettingsDrawer {
                 .pattern(widgets::SliderPattern::Bars)
         });
 
-        let b_subscription = cx.subscribe(
-            &brightness_slider,
-            move |this, _, event: &SliderEvent, cx| {
-                let SliderEvent::Change(value) = event;
-                this.brightness_slider_value = *value;
+        let b_subscription =
+            Self::create_brightness_subscription(&brightness_slider, brightness_tx, cx);
+        let v_subscription = Self::create_volume_subscription(&volume_slider, volume_tx, cx);
 
-                let mut brightness_tx = brightness_tx.clone().unwrap();
-                let brightness_value = *value;
-                cx.background_executor()
-                    .spawn(async move {
-                        let _ = brightness_tx
-                            .send(BrightnessMessage::BrightnessChanged {
-                                value: brightness_value,
-                            })
-                            .await;
-                    })
-                    .detach();
+        let mut _subscriptions = vec![b_subscription, v_subscription];
 
-                // Update the slider state
-                let value = if *value <= DEFAULT_MIN_BRIGHTNESS {
-                    DEFAULT_MIN_BRIGHTNESS
-                } else {
-                    *value
-                };
-                this.brightness_slider_state.update(cx, |state, _cx| {
-                    state.value = value.clamp(state.min, state.max);
-                });
-
-                cx.notify();
-            },
-        );
-
-        let c_subscription =
-            cx.subscribe(&volume_slider, move |this, _, event: &SliderEvent, cx| {
-                let SliderEvent::Change(value) = event;
-                this.volume_slider_value = *value;
-
-                let sink_name = this
-                    .volume_device_name
-                    .clone()
-                    .unwrap_or_else(|| "default".to_string());
-                let volume = *value;
-                let mut volume_tx_1 = volume_tx.clone().unwrap();
-
-                let _ = cx
-                    .background_executor()
-                    .spawn(async move {
-                        let _ = volume_tx_1
-                            .send(VolumeMessage::VolumeChanged {
-                                name: sink_name,
-                                value: volume,
-                            })
-                            .await;
-                    })
-                    .detach();
-
-                // Update the slider state
-                this.volume_mute = *value <= 0.0;
-                this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
-                this.volume_slider_state.update(cx, |state, _cx| {
-                    state.value = value.clamp(state.min, state.max);
-                });
-
-                cx.notify();
-            });
-
-        let mut _subscriptions = vec![b_subscription, c_subscription];
-
+        let closed_pos = Self::calculate_closed_position(&settings);
         Self {
             settings_active: false,
             open_power_options: false,
@@ -220,7 +162,7 @@ impl SettingsDrawer {
 
             _subscriptions,
             current_modal: ModalKind::None,
-            position: Self::closed_pos(),
+            position: closed_pos,
             drag_offset: None,
             drag_start_pos: 0.0,
             is_visible: false,
@@ -230,17 +172,101 @@ impl SettingsDrawer {
         }
     }
 
+    pub fn calculate_closed_position(settings: &SettingsDrawerSettings) -> f32 {
+        let closed_pos_px = Self::closed_pos(settings.layer_shell.size, settings.navbar_size);
+        closed_pos_px.into()
+    }
+
+    fn create_brightness_subscription(
+        brightness_slider: &Entity<SliderState>,
+        brightness_tx: Option<futures::channel::mpsc::Sender<BrightnessMessage>>,
+        cx: &mut Context<Self>,
+    ) -> Subscription {
+        cx.subscribe(
+            brightness_slider,
+            move |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = event;
+                this.brightness_slider_value = *value;
+
+                if let Some(mut tx) = brightness_tx.clone() {
+                    let brightness_value = *value;
+                    cx.background_executor()
+                        .spawn(async move {
+                            let _ = tx
+                                .send(BrightnessMessage::BrightnessChanged {
+                                    value: brightness_value,
+                                })
+                                .await;
+                        })
+                        .detach();
+                }
+
+                let clamped_value = value.max(DEFAULT_MIN_BRIGHTNESS);
+                this.brightness_slider_state.update(cx, |state, _cx| {
+                    state.value = clamped_value.clamp(state.min, state.max);
+                });
+
+                cx.notify();
+            },
+        )
+    }
+
+    fn create_volume_subscription(
+        volume_slider: &Entity<SliderState>,
+        volume_tx: Option<futures::channel::mpsc::Sender<VolumeMessage>>,
+        cx: &mut Context<Self>,
+    ) -> Subscription {
+        cx.subscribe(volume_slider, move |this, _, event: &SliderEvent, cx| {
+            let SliderEvent::Change(value) = event;
+            this.volume_slider_value = *value;
+
+            if let Some(mut tx) = volume_tx.clone() {
+                let sink_name = this
+                    .volume_device_name
+                    .clone()
+                    .unwrap_or_else(|| "default".to_string());
+                let volume = *value;
+
+                cx.background_executor()
+                    .spawn(async move {
+                        let _ = tx
+                            .send(VolumeMessage::VolumeChanged {
+                                name: sink_name,
+                                value: volume,
+                            })
+                            .await;
+                    })
+                    .detach();
+            }
+
+            this.volume_mute = *value <= 0.0;
+            this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
+            this.volume_slider_state.update(cx, |state, _cx| {
+                state.value = value.clamp(state.min, state.max);
+            });
+
+            cx.notify();
+        })
+    }
+
     fn start_animation(&mut self, event: &LongPressEvent, _: &mut Window, cx: &mut Context<Self>) {
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let settings_drawer_size = settings.layer_shell.size;
+
         let position = event.current_position;
 
         // Start from clicked icon center
-        self.modal_start_center = Self::clicked_item_center(position.x.into(), position.y.into());
+        self.modal_start_center =
+            Self::clicked_item_center(position.x.into(), position.y.into(), cx);
         self.modal_origin_center = self.modal_start_center;
 
         self.modal_current_center = self.modal_start_center;
 
         // End at APP center
-        self.modal_target_center = (APP_SIZE.0 / 2.0, APP_SIZE.1 / 2.0);
+        self.modal_target_center = (
+            settings_drawer_size.width / px(2.0),
+            settings_drawer_size.height / px(2.0),
+        );
 
         self.modal_size = MIN_MODAL_SIZE_1;
         self.animation_progress = 0.0;
@@ -256,12 +282,15 @@ impl SettingsDrawer {
         cx.notify();
     }
 
-    fn clicked_item_center(mouse_x: f32, mouse_y: f32) -> (f32, f32) {
+    fn clicked_item_center(mouse_x: f32, mouse_y: f32, cx: &mut Context<Self>) -> (f32, f32) {
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let settings_drawer_size = settings.layer_shell.size;
+
         let grid_w = GRID_COLS as f32 * ICON_W;
         let grid_h = GRID_ROWS as f32 * ICON_H;
 
-        let origin_x = (APP_SIZE.0 - grid_w) / 2.0;
-        let origin_y = (APP_SIZE.1 - grid_h) / 2.0;
+        let origin_x = (settings_drawer_size.width - px(grid_w)) / px(2.0);
+        let origin_y = (settings_drawer_size.height - px(grid_h)) / px(2.0);
 
         let local_x = (mouse_x - origin_x).clamp(0.0, grid_w - 1.0);
         let local_y = (mouse_y - origin_y).clamp(0.0, grid_h - 1.0);
@@ -278,10 +307,14 @@ impl SettingsDrawer {
 
 impl Render for SettingsDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let navbar_size = settings.navbar_size;
+        let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
+
         let colors = cx.theme().colors.clone();
 
         let open_y = 0.;
-        let closed_y = Self::closed_pos();
+        let closed_y = closed_pos_f32;
 
         let threshold_px = 40.;
         self.update_input_regions(self.is_visible, window, cx);
@@ -335,28 +368,24 @@ impl Render for SettingsDrawer {
                             .flex()
                             .flex_row()
                             .justify_end()
-                            .h(px(NAVBAR_SIZE.1))
+                            .h(navbar_size.height)
                             .child(
                                 div()
                                     .id("right-wing")
                                     .child({
                                         let mut w = wing();
                                         w.upper_wing_size(size(
-                                            px(NAVBAR_SIZE.0),
-                                            px(NAVBAR_SIZE.1),
+                                            navbar_size.width,
+                                            navbar_size.height,
                                         ));
                                         w.upper_wing_side(WingSide::Right);
-                                        // w.border_width(px(1.));
-                                        w.w(px(NAVBAR_SIZE.0)).h(px(NAVBAR_SIZE.1)).bg(
+                                        w.w(navbar_size.width).h(navbar_size.height).bg(
                                             if self.is_visible {
                                                 colors.background_1000
                                             } else {
                                                 colors.background_800
                                             },
                                         )
-                                        // .when(!self.is_visible, |w| {
-                                        //     w.border_t_2().border_color(colors.background_700)
-                                        // })
                                     })
                                     .on_mouse_down(
                                         MouseButton::Left,
@@ -377,19 +406,21 @@ impl Render for SettingsDrawer {
 }
 
 impl SettingsDrawer {
-    pub fn closed_pos() -> f32 {
-        APP_SIZE.1 - NAVBAR_SIZE.1
+    pub fn closed_pos(app_size: Size<Pixels>, navbar_size: Size<Pixels>) -> Pixels {
+        app_size.height - navbar_size.height
     }
 
     fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let closed_pos = Self::calculate_closed_position(&settings);
+
         let start = self.position;
         let change = target - start;
-        let duration_ms = 250.0; // Animation speed
         let start_time = std::time::Instant::now();
 
         if target == 0.0 {
             self.is_visible = true;
-        } else if target == Self::closed_pos() {
+        } else if target == closed_pos {
             self.is_visible = false;
         }
 
@@ -399,12 +430,12 @@ impl SettingsDrawer {
                     let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
 
                     // Check if animation is done
-                    if elapsed >= duration_ms {
+                    if elapsed >= ANIMATION_DURATION_MS {
                         this.update(cx, |this, cx| {
                             this.position = target;
                             if target == 0.0 {
                                 this.is_visible = true;
-                            } else if target == Self::closed_pos() {
+                            } else if target == closed_pos {
                                 this.is_visible = false;
                             }
                             cx.notify();
@@ -413,13 +444,13 @@ impl SettingsDrawer {
                         break;
                     }
 
-                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let t = (elapsed / ANIMATION_DURATION_MS).clamp(0.0, 1.0);
                     let ease = 1.0 - (1.0 - t).powi(3);
                     let current = start + (change * ease);
 
                     this.update(cx, |this, cx| {
                         this.position = current;
-                        if current < (Self::closed_pos() / 2.0) {
+                        if current < (closed_pos / 2.0) {
                             this.is_visible = true;
                         } else {
                             this.is_visible = false;
@@ -429,7 +460,7 @@ impl SettingsDrawer {
                     .ok();
 
                     cx.background_executor()
-                        .timer(std::time::Duration::from_millis(16))
+                        .timer(std::time::Duration::from_millis(ANIMATION_FRAME_MS))
                         .await;
                 }
             },
@@ -439,15 +470,23 @@ impl SettingsDrawer {
     fn update_input_regions(&self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
         let mut regions = Vec::new();
 
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let navbar_size = settings.navbar_size;
+        let settings_drawer_size = settings.layer_shell.size;
+        let closed_pos_px = Self::closed_pos(settings_drawer_size, navbar_size);
+
         if open {
             regions.push(Bounds {
                 origin: point(px(0.), px(0.)),
-                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                size: settings_drawer_size,
             });
         } else {
             regions.push(Bounds {
-                origin: point(px(APP_SIZE.0 - NAVBAR_SIZE.0), px(Self::closed_pos())),
-                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+                origin: point(
+                    settings_drawer_size.width - navbar_size.width,
+                    closed_pos_px,
+                ),
+                size: navbar_size,
             });
         }
         window.set_input_regions(Some(regions));
@@ -461,6 +500,10 @@ impl SettingsDrawer {
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let current_time_date = ShellState::global(cx).current_time_date.clone();
+
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let navbar_size = settings.navbar_size;
+        let settings_drawer_size = settings.layer_shell.size;
 
         if matches!(
             self.animation_state,
@@ -512,8 +555,8 @@ impl SettingsDrawer {
         div()
             .id("root")
             .relative()
-            .w(px(APP_SIZE.0))
-            .h(px(APP_SIZE.1))
+            .w(settings_drawer_size.width)
+            .h(settings_drawer_size.height)
             .child(
                 div()
                     .id("main_container")
