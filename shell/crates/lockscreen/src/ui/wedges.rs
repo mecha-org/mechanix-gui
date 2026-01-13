@@ -2,18 +2,23 @@ use gpui::*;
 use shell_state::ShellState;
 use upower::interfaces::device::BatteryState;
 
-// Status icon configuration - customize these values as needed
-pub const STATUS_ICON_SIZE: f32 = 28.0;
-pub const STATUS_ICON_GAP: f32 = 20.0;
+pub const STATUS_ICON_GAP: f32 = 15.0;
 pub const STATUS_ICON_PADDING_RIGHT: f32 = 20.0;
+pub const STATUS_ICON_PADDING_BOTTOM: f32 = 30.0;
+pub const STATUS_ICON_COLOR: u32 = 0xFFFFFFFF; 
+
+// Individual icon sizes - customize each independently
+pub const WIFI_ICON_SIZE: f32 = 25.0;
+pub const BLUETOOTH_ICON_SIZE: f32 = 25.0;
+pub const BATTERY_ICON_SIZE: f32 = 30.0;
 
 const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
-// Left wedge dimensions: 540 x 106 (from wedge_left.svg viewBox)
+// Left wedge dimensions: 540 x 106 (from wedge_left.svg )
 pub const LEFT_WEDGE_WIDTH: f32 = 540.0;
 pub const LEFT_WEDGE_HEIGHT: f32 = 106.0;
 
-// Right wedge dimensions: 540 x 67 (from wedge_right.svg viewBox)
+// Right wedge dimensions: 540 x 67 (from wedge_right.svg)
 pub const RIGHT_WEDGE_WIDTH: f32 = 540.0;
 pub const RIGHT_WEDGE_HEIGHT: f32 = 67.0;
 
@@ -88,11 +93,27 @@ impl StatusIconName {
     }
 }
 
-fn status_icon(icon: StatusIconName, color: Hsla) -> impl IntoElement {
+fn render_wifi_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
     svg()
         .path(icon.resolve())
-        .w(px(STATUS_ICON_SIZE))
-        .h(px(STATUS_ICON_SIZE))
+        .w(px(WIFI_ICON_SIZE))
+        .h(px(WIFI_ICON_SIZE))
+        .text_color(color)
+}
+
+fn render_bluetooth_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
+    svg()
+        .path(icon.resolve())
+        .w(px(BLUETOOTH_ICON_SIZE))
+        .h(px(BLUETOOTH_ICON_SIZE))
+        .text_color(color)
+}
+
+fn render_battery_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
+    svg()
+        .path(icon.resolve())
+        .w(px(BATTERY_ICON_SIZE))
+        .h(px(BATTERY_ICON_SIZE))
         .text_color(color)
 }
 
@@ -168,16 +189,16 @@ fn status_icons(cx: &mut App) -> impl IntoElement {
         _ => StatusIconName::BatteryEmpty,
     };
 
-    // White color for icons
-    let icon_color = hsla(0.0, 0.0, 1.0, 1.0);
+    // Icon color from constant
+    let icon_color = rgba(STATUS_ICON_COLOR);
 
     div()
         .flex()
         .flex_row()
         .gap(px(STATUS_ICON_GAP))
-        .child(status_icon(wireless_icon, icon_color))
-        .child(status_icon(bluetooth_icon, icon_color))
-        .child(status_icon(battery_icon, icon_color))
+        .child(render_wifi_icon(wireless_icon, icon_color))
+        .child(render_bluetooth_icon(bluetooth_icon, icon_color))
+        .child(render_battery_icon(battery_icon, icon_color))
 }
 
 // Left wedge - size 540 x 106, color #382000
@@ -232,9 +253,8 @@ pub fn right_wedge(cx: &mut App) -> impl IntoElement {
         .child(
             div()
                 .absolute()
-                .top_0()
+                .bottom(px(STATUS_ICON_PADDING_BOTTOM))
                 .right(px(STATUS_ICON_PADDING_RIGHT))
-                .h(px(RIGHT_WEDGE_HEIGHT))
                 .flex()
                 .items_center()
                 .child(status_icons(cx)),
