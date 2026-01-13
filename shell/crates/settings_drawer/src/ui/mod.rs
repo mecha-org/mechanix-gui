@@ -400,6 +400,9 @@ impl Render for SettingsDrawer {
                                     ),
                             ),
                     )
+                    .when(self.is_visible, |content_div| {
+                        content_div.size_full().bg(colors.background_1000)
+                    })
                     .child(self.drawer_items(window, cx)),
             )
     }
