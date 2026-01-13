@@ -46,11 +46,6 @@ assets = [
         "usr/bin/",
         "755",
     ],
-    [
-        "../desktop/schemas/org.mechanix.desktop.toml",
-        "usr/share/mxconf/schemas/org.mechanix.desktop.toml",
-        "644",
-    ],
 ]
 
 [package.metadata.generate-rpm]
