@@ -1,7 +1,8 @@
 use dispatcher::Dispatcher;
 use gpui::{prelude::FluentBuilder, *};
 use std::process::Command;
-
+use theme::ActiveTheme;
+use theme::prelude::AlphaExt;
 use crate::ui::icon::{Icon, IconName};
 pub mod icon;
 
@@ -172,6 +173,8 @@ impl Render for PowerOptions {
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
+        let colors = cx.theme().colors.clone();
+
         self.update_input_regions(window, show, cx);
 
         // Self::update_input_regions(window, size, show);
@@ -208,7 +211,7 @@ impl Render for PowerOptions {
                         .relative()
                         .w(size.width)
                         .h(size.height)
-                        .bg(rgb(0x1a1a1a))
+                        .bg(colors.background_900)
                         .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                             if let Some(offset) = this.drag_offset {
                                 let new_y = event.position.y.to_f64() as f32 - offset;
@@ -252,7 +255,7 @@ impl Render for PowerOptions {
                                 .id("power-off-swipe-area")
                                 .h(px(amber_card_height))
                                 .w_full()
-                                .bg(rgb(0x2d1f0f))
+                                .bg(colors.accent_400.with_alpha(0.4))
                                 .rounded_b(px(20.0))
                                 .flex()
                                 .items_center()
@@ -284,13 +287,13 @@ impl Render for PowerOptions {
                                             .gap_3()
                                             .child(
                                                 Icon::new(IconName::PowerOff)
-                                                    .text_color(rgb(0xC67600))
+                                                    .text_color(colors.accent_200)
                                                     .size((px(32.), px(32.))),
                                             )
                                             .child(
                                                 div()
                                                     .text_xl()
-                                                    .text_color(rgb(0xd4a574))
+                                                    .text_color(colors.foreground_200)
                                                     .child("Swipe to power off"),
                                             ),
                                     )
@@ -301,7 +304,7 @@ impl Render for PowerOptions {
                             div()
                                 .h(px(arrow_height))
                                 .w_full()
-                                .bg(rgb(0x000000))
+                                .bg(colors.background_1000)
                                 .flex()
                                 .flex_row()
                                 .items_center()
@@ -309,14 +312,14 @@ impl Render for PowerOptions {
                                 .when(arrow_height > 20.0, |div| {
                                     div.child(
                                         Icon::new(IconName::DownArrow)
-                                            .text_color(rgb(0xC67600))
+                                            .text_color(colors.accent_200)
                                             .size((px(26.), px(26.))),
                                     )
                                 }),
                         )
                         .child(
                             // Lower area - black background
-                            div().flex_1().w_full().bg(rgb(0x000000)),
+                            div().flex_1().w_full().bg(colors.background_1000),
                         ),
                 )
             })

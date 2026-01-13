@@ -1,4 +1,5 @@
-use gpui::{prelude::FluentBuilder, *};
+use gpui::{input_method::KeyState, prelude::FluentBuilder, *};
+use settings::prelude::Settings;
 use theme::ActiveTheme;
 
 use crate::{
@@ -13,9 +14,40 @@ pub struct OnScreenKeyboard {
     pub suggestions: Vec<String>,
     pub suggested_for: String,
     pub trie: Trie,
+    pub _poll_task: Task<()>,
+    pub prev_surrounding_text: Option<(String, u32, u32)>,
+    pub was_active: bool,
 }
 
 impl OnScreenKeyboard {
+    pub fn new(parsed_layout: ParsedLayout, trie: Trie, cx: &mut Context<Self>) -> Self {
+        let _poll_task = cx.spawn(
+            async move |this: WeakEntity<Self>, cx: &mut AsyncApp| loop {
+                let executor = cx.background_executor().clone();
+                cx.background_spawn(async move {
+                    executor.timer(std::time::Duration::from_millis(100)).await;
+                })
+                .await;
+
+                let _ = this.update(cx, |_this, cx| {
+                    cx.notify();
+                });
+            },
+        );
+
+        Self {
+            current_view: "base".to_string(),
+            current_layout: parsed_layout,
+            key_pressed: None,
+            suggestions: Vec::from([]),
+            suggested_for: String::new(),
+            trie,
+            _poll_task,
+            prev_surrounding_text: None,
+            was_active: false,
+        }
+    }
+
     fn handle_key_press(
         &mut self,
         key: Option<KeyButton>,
@@ -26,10 +58,45 @@ impl OnScreenKeyboard {
             if let Some(key) = key {
                 match key.action {
                     ActionParsed::Submit { text, keysym } => {
-                        println!("committing {:?}", text);
-                        im.commit_string(&text.unwrap());
-                        im.commit();
+                        if let Some(text) = text {
+                            im.commit_string(&text);
+                            im.commit();
+                        }
+                        if let Some(keysym) = keysym {
+                            match keysym.as_str() {
+                                "space" => {
+                                    im.commit_string(" ");
+                                    im.commit();
+                                }
+                                "Return" => {
+                                    if let Some(vk) = window.get_virtual_keyboard() {
+                                        let timestamp = std::time::SystemTime::now()
+                                            .duration_since(std::time::UNIX_EPOCH)
+                                            .unwrap()
+                                            .as_millis()
+                                            as u32;
+                                        vk.send_key(timestamp, 28, KeyState::Pressed);
+                                        vk.send_key(timestamp, 28, KeyState::Released);
+                                    }
+                                }
+                                "BackSpace" => {
+                                    // im.delete_surrounding_text(1, 0);
+                                    // im.commit();
+                                    if let Some(vk) = window.get_virtual_keyboard() {
+                                        let timestamp = std::time::SystemTime::now()
+                                            .duration_since(std::time::UNIX_EPOCH)
+                                            .unwrap()
+                                            .as_millis()
+                                            as u32;
+                                        vk.send_key(timestamp, 14, KeyState::Pressed);
+                                        vk.send_key(timestamp, 14, KeyState::Released);
+                                    }
+                                }
+                                _ => (),
+                            }
+                        }
                     }
+
                     _ => (),
                 }
             }
@@ -40,21 +107,50 @@ impl OnScreenKeyboard {
         &mut self,
         suggestion: &str,
         window: &mut Window,
-        _cx: &mut Context<Self>,
+        cx: &mut Context<Self>,
     ) {
-        println!("suggestion: {}", suggestion);
         if let Some(im) = window.get_input_method() {
             im.delete_surrounding_text(self.suggested_for.len() as u32, 0);
             im.commit_string(suggestion);
             im.commit();
+            cx.notify();
         }
     }
 }
 
 impl Render for OnScreenKeyboard {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let is_active = window.get_input_method().map_or(false, |im| im.is_active());
-        println!("Keyboard is active: {}", is_active);
+        // Show keyboard when input method is active (text field has focus)
+        let is_active = window.is_input_method_active();
+        let settings = Settings::global(cx).keyboard.clone().layer_shell.size;
+
+        if is_active != self.was_active {
+            self.was_active = is_active;
+            if is_active {
+                window.resize(size(settings.width, settings.height));
+            } else {
+                window.resize(size(px(1.), px(1.)));
+            }
+
+            cx.notify();
+        }
+
+        if let Some(im) = window.get_input_method() {
+            if self.prev_surrounding_text != im.get_surrounding_text() {
+                self.prev_surrounding_text = im.get_surrounding_text();
+                if let Some((text, cursor, _anchor)) = im.get_surrounding_text() {
+                    let words = &text.as_str()[0..cursor as usize].split(" ");
+                    if let Some(last) = words.clone().last() {
+                        let suggestions = self.trie.search(last);
+                        // let next_char_prob = self.trie.next_char_probabilities(last);
+                        self.suggestions = suggestions;
+                        self.suggested_for = last.to_ascii_lowercase();
+                        // Self::get().next_char_prob.set(next_char_prob);
+                    }
+                };
+                cx.notify();
+            };
+        }
 
         let view = self
             .current_layout
@@ -71,26 +167,46 @@ impl Render for OnScreenKeyboard {
             .child(
                 div()
                     .w_full()
-                    .h(px(36.))
+                    .h(px(48.))
                     .pl(px(12.))
                     .pr(px(12.))
-                    .bg(colors.background_600)
+                    .pt(px(8.))
+                    .pb(px(5.))
+                    .bg(colors.background_900)
                     .flex()
                     .flex_row()
                     .items_center()
                     .justify_between()
-                    .text_color(colors.foreground_100)
-                    .text_size(px(18.))
-                    .font_weight(FontWeight(400.))
-                    .children(suggestions.into_iter().map(|s| s)),
+                    .children(suggestions.iter().enumerate().map(|(i, s)| {
+                        div()
+                            .id(("suggestion", i))
+                            .size_full()
+                            .flex()
+                            .flex_row()
+                            .items_center()
+                            .justify_center()
+                            .text_color(colors.foreground_800)
+                            .text_size(px(18.))
+                            .font_weight(FontWeight(400.))
+                            .when(i != &suggestions.iter().len() - 1, |this| {
+                                this.border_r_1().border_color(colors.background_600)
+                            })
+                            .child(s.clone())
+                            .on_click({
+                                let s = s.clone();
+                                cx.listener(move |this, _event, window, cx| {
+                                    this.handle_suggestion_press(&s, window, cx);
+                                })
+                            })
+                    })),
             )
             .child(
                 div()
                     .id("click-area")
                     .w_full()
-                    .h(px(226.))
-                    .pt(px(1.))
-                    .bg(colors.background_600)
+                    .h(settings.height - px(48.))
+                    .pt(px(6.))
+                    .bg(colors.background_900)
                     .relative()
                     .flex()
                     .flex_col()
@@ -102,9 +218,8 @@ impl Render for OnScreenKeyboard {
                             let button = this.current_layout.find_button_at_position(
                                 &this.current_view,
                                 event.position.x.to_f64(),
-                                event.position.y.to_f64() - 36.,
+                                event.position.y.to_f64() - 48.,
                             );
-                            println!("Clicked button: {:#?}", button);
                             if let Some(button) = button {
                                 match &button.action {
                                     ActionParsed::SetView(view) => this.current_view = view.clone(),
@@ -123,7 +238,7 @@ impl Render for OnScreenKeyboard {
                                     ActionParsed::ApplyModifier(modifier_parsed) => todo!(),
                                     ActionParsed::Submit { text, keysym } => {
                                         if let Some(txt) = text {
-                                            println!("txt {:?}", txt);
+
                                             // let keysym = xkbcommon::xkb::keysym_from_name(
                                             //     txt,
                                             //     KEYSYM_NO_FLAGS,
@@ -140,7 +255,7 @@ impl Render for OnScreenKeyboard {
                                             // );
                                         };
                                         if let Some(txt) = keysym {
-                                            println!("txt {:?}", txt);
+
                                             // let keysym = xkbcommon::xkb::keysym_from_name(
                                             //     txt,
                                             //     KEYSYM_NO_FLAGS,
@@ -164,13 +279,13 @@ impl Render for OnScreenKeyboard {
                                 }
                             }
                             this.key_pressed = button.cloned();
-                            this.handle_key_press(button.cloned(), window, cx);
                             cx.notify();
                         }),
                     )
                     .on_mouse_up(
                         MouseButton::Left,
-                        cx.listener(|this, _event, _window, cx| {
+                        cx.listener(|this, _event, window, cx| {
+                            this.handle_key_press(this.key_pressed.clone(), window, cx);
                             this.key_pressed = None;
                             cx.notify();
                         }),
@@ -208,17 +323,20 @@ impl Render for OnScreenKeyboard {
                                         .top(px(0.0))
                                         .w(px(button.size.0 as f32))
                                         .h(px(button.size.1 as f32))
-                                        .bg(colors.background_400)
+                                        .bg(colors.background_600)
                                         .border(px(1.))
-                                        .border_color(colors.background_400)
+                                        .border_color(colors.background_600)
                                         .rounded(px(4.))
                                         .when_some(self.key_pressed.clone(), |this, key_button| {
+                                            let is_text_key = match key_button.action {
+                                                ActionParsed::Submit { text, keysym } => {
+                                                    text.is_some()
+                                                }
+                                                _ => false,
+                                            };
                                             if key_button.name == button.name {
                                                 return this.bg(colors.background_300).when(
-                                                    match key_button.label {
-                                                        Label::Text(_) => true,
-                                                        _ => false,
-                                                    },
+                                                    is_text_key,
                                                     |this| {
                                                         this.child(
                                                             div()
@@ -226,7 +344,7 @@ impl Render for OnScreenKeyboard {
                                                                 .items_center()
                                                                 .justify_center()
                                                                 .absolute()
-                                                                .top(px(-button.size.1 as f32 - 8.))
+                                                                .top(px(-button.size.1 as f32 - 1.))
                                                                 .left(px(0 as f32))
                                                                 .w(px(button.size.0 as f32))
                                                                 .h(px(button.size.1 as f32))
@@ -250,10 +368,16 @@ impl Render for OnScreenKeyboard {
                                         .justify_center()
                                         .flex()
                                         .text_center()
-                                        .text_size(px(22.))
+                                        .text_size(
+                                            if matches!(button.action, ActionParsed::SetView(..)) {
+                                                px(18.)
+                                            } else {
+                                                px(22.)
+                                            },
+                                        )
                                         .line_height(px(24.))
                                         .font_weight(FontWeight(500.))
-                                        .text_color(colors.foreground_0)
+                                        .text_color(colors.foreground_100)
                                         .when_some(text, |this, text| this.child(text))
                                         .when_some(icon, |this, path| this.child(img(path)))
                                 },

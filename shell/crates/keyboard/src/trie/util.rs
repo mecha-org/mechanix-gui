@@ -91,12 +91,3 @@ fn read_from_file(path: &str) -> String {
     let content = fs::read_to_string(path).unwrap();
     content
 }
-
-mod tests {
-    use super::*;
-    #[test]
-    fn test_trie() {
-        let trie = get_trie();
-        println!("trie: {:#?}", trie);
-    }
-}

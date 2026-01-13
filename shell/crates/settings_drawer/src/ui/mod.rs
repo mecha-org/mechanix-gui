@@ -10,6 +10,9 @@ use theme::prelude::AlphaExt;
 
 use crate::helper::get_wireless_strength_icon;
 use crate::ui::icon::Icon;
+use crate::ui::modals::{
+    bluetooth_modal::BluetoothModalScroll, wireless_modal::WirelessModalScroll,
+};
 use crate::ui::{
     icon::IconName,
     widgets::{IconButton, Slider, SliderEvent, SliderState},
@@ -86,6 +89,9 @@ pub struct SettingsDrawer {
     drag_offset: Option<f32>,
     drag_start_pos: f32,
     pub is_visible: bool,
+
+    pub wireless_modal_scroll: WirelessModalScroll,
+    pub bluetooth_modal_scroll: BluetoothModalScroll,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -218,6 +224,9 @@ impl SettingsDrawer {
             drag_offset: None,
             drag_start_pos: 0.0,
             is_visible: false,
+
+            wireless_modal_scroll: WirelessModalScroll::new(),
+            bluetooth_modal_scroll: BluetoothModalScroll::new(),
         }
     }
 
