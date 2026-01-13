@@ -3873,6 +3873,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "lockscreen"
+version = "0.0.1"
+dependencies = [
+ "anyhow",
+ "commons",
+ "dispatcher",
+ "futures",
+ "gpui",
+ "rust-embed",
+ "settings",
+ "system_dbus",
+]
+
+[[package]]
 name = "log"
 version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"

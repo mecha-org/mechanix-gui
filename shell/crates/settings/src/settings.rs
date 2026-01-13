@@ -25,6 +25,8 @@ pub struct Settings {
     #[serde(default)]
     pub power_options: PowerOptionsSettings,
     #[serde(default)]
+    pub lockscreen: LockscreenSettings,
+    #[serde(default)]
     pub volume_slider: VolumeSliderSettings,
     #[serde(default)]
     pub keyboard: KeyboardSettings,
@@ -246,6 +248,27 @@ impl Default for PowerOptionsSettings {
                 layer: Layer::Overlay,
                 anchor: Anchor::TOP,
                 namespace: "mechanix.power.options".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+/// Lockscreen settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct LockscreenSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for LockscreenSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Overlay,
+                anchor: Anchor::TOP,
+                namespace: "mechanix.lockscreen".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
