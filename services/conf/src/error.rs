@@ -4,6 +4,8 @@ use thiserror::Error;
 pub enum ServerError {
     #[error("Cli Error: {0}")]
     CliError(CliError),
+    #[error("File system error: {0}")]
+    FsError(String),
     #[error("Failed to watch schema directory: {0}")]
     DirWatcherFailed(String),
     #[error("Failed to load profile: {0}")]
