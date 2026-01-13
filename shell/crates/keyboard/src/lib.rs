@@ -43,8 +43,8 @@ pub fn run_app(cx: &mut App) {
     let window_bounds = WindowBounds::Windowed(Bounds::centered(
         None,
         Size {
-            width: size.width,
-            height: size.height,
+            width: px(1.),
+            height: px(1.),
         },
         cx,
     ));
@@ -58,6 +58,8 @@ pub fn run_app(cx: &mut App) {
             WindowOptions {
                 window_bounds: Some(window_bounds),
                 window_background: WindowBackgroundAppearance::Transparent,
+                is_movable: false,
+                is_resizable: false,
                 kind: WindowKind::LayerShell(layer_shell::LayerShellOptions {
                     namespace,
                     layer,
@@ -81,14 +83,7 @@ pub fn run_app(cx: &mut App) {
                     cx.observe_global::<ShellState>(|this: &mut OnScreenKeyboard, cx| {})
                         .detach();
 
-                    OnScreenKeyboard {
-                        current_view: "base".to_string(),
-                        current_layout: parsed_layout,
-                        key_pressed: None,
-                        suggestions: Vec::new(),
-                        suggested_for: String::new(),
-                        trie,
-                    }
+                    OnScreenKeyboard::new(parsed_layout, trie, cx)
                 })
             },
         )
