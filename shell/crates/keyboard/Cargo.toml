@@ -1,5 +1,5 @@
 [package]
-name = "keyboard"
+name = "mechanix-keyboard"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
