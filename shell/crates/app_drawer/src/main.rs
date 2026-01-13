@@ -1,18 +1,11 @@
 use app_drawer::prelude::*;
-use app_drawer::ui::utils::prelude::DesktopApps;
-use commons::prelude::*;
-use commons::input::*;
+use commons::{assets::Assets, input::*};
 use gpui::*;
 
 fn main() {
     let application = gpui::Application::new().with_assets(Assets {});
-    let desktop_apps = DesktopApps::scan();
 
-    let state = AppDrawerState {
-        apps: desktop_apps,
-        ..Default::default()
-    };
-
+    
     application.run(move |cx| {
 
 
@@ -26,7 +19,7 @@ fn main() {
             },
             move |_window, cx| {
                 // pass the initial state into the AppDrawer constructor
-                cx.new(|_cx| AppDrawer::new(state.clone(), _cx))
+                cx.new(|_cx| AppDrawer::new( _cx))
             },
         )
         .unwrap();

@@ -1,190 +1,282 @@
-use crate::prelude::IconName;
-use crate::ui::utils::prelude::{DesktopApp, DesktopApps};
-use crate::ui::widgets::IconButton;
+use crate::prelude::{ Icon, IconName };
+use commons::widgets::wing;
+use dispatcher::Dispatcher;
 use gpui::*;
+use mxsearch::prelude::AppInfo;
+use theme::prelude::{ AlphaExt, Theme };
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{ Hash, Hasher };
 
-const POPUP_BASE_TOP: f32 = 40.0;
+const POPUP_BASE_TOP: f32 = 10.0;
+const CARD_WIDTH: f32 = 508.0;
+const CARD_MAX_HEIGHT: f32 = 450.0;
+const CARD_PADDING: f32 = 20.0;
+const ICON_BOX_SIZE: f32 = 88.0;
+const ICON_SIZE: f32 = 60.0;
+const GRID_GAP: f32 = 20.0;
+const APPS_PER_ROW: u16 = 4;
+const DRAG_THRESHOLD: f32 = 2.0;
 
 pub struct SubWindow {
-    apps: Vec<DesktopApp>,
+    pub apps: Vec<AppInfo>,
     pub category: String,
-
-    // scrolling
-    scroll_offset: Pixels,
-    last_scroll_offset: Pixels,
-    drag_start_y: Pixels,
-    is_dragging: bool,
+    pub scroll_offset: Pixels,
+    pub last_scroll_offset: Pixels,
+    pub drag_start_y: Pixels,
+    pub drag_start_x: Pixels,
+    pub is_dragging: bool,
+    pub has_moved: bool,
 }
 
 impl SubWindow {
-    pub fn scan(category: String) -> Self {
-        let desktop_apps = DesktopApps::scan();
-        let apps = desktop_apps.get_apps_by_category(&category);
-
+    pub fn new(category: String, apps: Vec<AppInfo>) -> Self {
         Self {
             apps,
             category,
-            scroll_offset: px(0.),
-            last_scroll_offset: px(0.),
-            drag_start_y: px(0.),
+            scroll_offset: px(0.0),
+            last_scroll_offset: px(0.0),
+            drag_start_y: px(0.0),
+            drag_start_x: px(0.0),
             is_dragging: false,
+            has_moved: false,
         }
     }
 
-    fn calculate_scroll_bounds(
-        &self,
-        content_height: Pixels,
-        window_height: Pixels,
-    ) -> (Pixels, Pixels) {
-        let container_height = window_height - px(80.); // subtract header/padding
-        let max_scroll = px(0.);
+    pub fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
+        let container_height = px(CARD_MAX_HEIGHT - CARD_PADDING * 2.0 - 36.0);
+        let max_scroll = px(0.0);
         let min_scroll = container_height - content_height;
 
         if content_height <= container_height {
-            (px(0.), px(0.))
+            (px(0.0), px(0.0))
         } else {
             (min_scroll, max_scroll)
         }
     }
-
-    fn estimate_content_height(&self) -> Pixels {
-        let row_height = px(128.);
-        let spacing = px(20.);
-        let rows = ((self.apps.len() as f32) / 4.0).ceil() as usize;
-        rows as f32 * row_height + spacing
+    pub fn resolved_icon(app_icon: &Option<String>) -> Icon {
+        match app_icon {
+            Some(path) => Icon::default().path(path.to_string()),
+            None => Icon::from(IconName::DefaultApp),
+        }
     }
 
-    fn on_mouse_down(
+    pub fn estimate_content_height(&self) -> Pixels {
+        let rows = ((self.apps.len() as f32) / (APPS_PER_ROW as f32)).ceil();
+
+        if rows == 0.0 {
+            return px(0.0);
+        }
+
+        px(ICON_BOX_SIZE * rows + GRID_GAP * (rows - 1.0))
+    }
+
+    pub fn calculate_card_height(&self) -> f32 {
+        let content_height = self.estimate_content_height();
+        let needed_height = (content_height + px(CARD_PADDING * 2.0 + 36.0)).to_f64() as f32;
+        needed_height.min(CARD_MAX_HEIGHT)
+    }
+
+    pub fn on_mouse_down(
         &mut self,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>,
+        cx: &mut Context<Self>
     ) {
         self.drag_start_y = event.position.y;
+        self.drag_start_x = event.position.x;
         self.last_scroll_offset = self.scroll_offset;
         self.is_dragging = true;
+        self.has_moved = false;
         cx.stop_propagation();
     }
 
-    fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
+    pub fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
         self.is_dragging = false;
     }
 
-    fn on_mouse_move(
+    pub fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
+        let sender = Dispatcher::global(cx).0.clone();
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender.broadcast(dispatcher::Message::LaunchApp {
+                    app_id: possible_app_id,
+                    exec,
+                }).await;
+            })
+            .detach();
+    }
+
+    pub fn on_mouse_move(
         &mut self,
         event: &MouseMoveEvent,
-        window: &mut Window,
-        cx: &mut Context<Self>,
+        _: &mut Window,
+        cx: &mut Context<Self>
     ) {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
+            let delta_x = event.position.x - self.drag_start_x;
 
-            let window_height = window.bounds().size.height;
+            let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64() +
+                delta_x.abs().to_f64() * delta_x.abs().to_f64()) as f32;
+
+            if distance > DRAG_THRESHOLD {
+                self.has_moved = true;
+            }
 
             let content_height = self.estimate_content_height();
-
-            let (min_scroll, max_scroll) =
-                self.calculate_scroll_bounds(content_height, window_height);
-
+            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
             self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(min_scroll, max_scroll);
-
             cx.notify();
         }
+    }
+
+    /// Render the modal overlay with the SubWindow card
+    pub fn render_modal(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        div().child(self.render_card(cx))
+    }
+
+    /// Render the SubWindow card content
+    pub fn render_card(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+        let card_height = self.calculate_card_height();
+        let category = self.category.clone();
+
+        div()
+            .id("subwindow-modal-card")
+            .relative()
+            .top(px(POPUP_BASE_TOP))
+            .mx_auto()
+            .w(px(CARD_WIDTH))
+            .h(px(card_height))
+            .min_h(px(420.0))
+            .bg(colors.background_900)
+            .border(px(1.0))
+            .border_color(colors.accent_200.with_alpha(0.6))
+            .rounded(px(12.0))
+            .overflow_hidden()
+            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+            .on_mouse_move(|_, _, cx| cx.stop_propagation())
+            .child(
+                div()
+                    .id("modal_card_content")
+                    .size_full()
+                    .p(px(CARD_PADDING))
+                    .pb(px(CARD_PADDING + 36.0))
+                    .overflow_hidden()
+                    .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                    .on_mouse_move(cx.listener(Self::on_mouse_move))
+                    .child(self.render_grid(cx))
+            )
+            .child(self.render_bottom_wing(cx))
+            .child(
+                div()
+                    .absolute()
+                    .bottom_5()
+                    .left_6()
+                    .font_weight(FontWeight(400.0))
+                    .text_size(px(16.0))
+                    .line_height(px(1.25))
+                    .text_color(colors.foreground_300)
+                    .child(category)
+                    .text_ellipsis()
+                    .w(px(120.0))
+            )
+    }
+
+    /// Render the grid of apps
+    pub fn render_grid(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+        div()
+            .grid()
+            .grid_cols(APPS_PER_ROW)
+            .gap(px(GRID_GAP))
+            .top(self.scroll_offset)
+            .children(
+                self.apps
+                    .iter()
+                    .enumerate()
+                    .map(|(idx, app)| {
+                        let app_id = app.possible_app_id.clone();
+                        let id = hash_id(&app_id);
+                        let exec = app.exec.clone();
+                        let icon = Self::resolved_icon(&app.icon_path);
+
+                        div()
+                            .id(id + idx)
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .child(
+                                div()
+                                    .id(idx)
+                                    .bg(colors.background_800)
+                                    .size(px(ICON_BOX_SIZE))
+                                    .rounded(px(15.3))
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .cursor_pointer()
+                                    .on_click(
+                                        cx.listener(
+                                            move |this: &mut SubWindow, _event, _window, cx| {
+                                                if !this.has_moved {
+                                                    this.on_app_click(
+                                                        app_id.clone(),
+                                                        exec.clone(),
+                                                        cx
+                                                    );
+                                                }
+                                                this.has_moved = false;
+                                            }
+                                        )
+                                    )
+                                    .child(
+                                        div()
+                                            .size(px(ICON_SIZE))
+                                            .flex()
+                                            .items_center()
+                                            .justify_center()
+                                            .child(icon)
+                                    )
+                            )
+                    })
+            )
+    }
+
+    /// Render the bottom wing decoration
+    fn render_bottom_wing(&self, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = Theme::global(cx).colors.clone();
+
+        let mut w = wing()
+            .absolute()
+            .bottom_0()
+            .left_0()
+            .h(px(36.0))
+            .w(px(CARD_WIDTH))
+            .flex()
+            .flex_col()
+            .justify_start()
+            .items_start()
+            .bg(colors.accent_200.with_alpha(0.1))
+            .border_color(colors.accent_200.with_alpha(0.6));
+
+        w.upper_wing_size(Size::new(px(150.0), px(15.0)));
+        w.border_width(px(1.0));
+        w.border_radius(px(12.0));
+        w
     }
 }
 
 impl Render for SubWindow {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        div()
-            .id("overlay_root")
-            .size_full()
-            .absolute()
-            .child(
-                // semi-transparent dim background
-                div()
-                    .id("overlay_dim")
-                    .absolute()
-                    .size_full()
-                    .bg(rgb(0x000000))
-                    .opacity(0.6)
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|_, _, window, _| window.remove_window()),
-                    ),
-            )
-            .child(
-                // popup (not transparent)
-                div()
-                    .id("popup_panel")
-                    .absolute()
-                    .left(px(20.))
-                    .right(px(20.))
-                    .bg(rgb(0x181818))
-                    .rounded(px(12.))
-                    .p(px(20.))
-                    .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
-                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
-                    .on_mouse_move(cx.listener(Self::on_mouse_move))
-                    .top(px(POPUP_BASE_TOP) + self.scroll_offset)
-                    .child(div().grid().grid_cols(4).gap(px(14.)).children(
-                        self.apps.clone().into_iter().enumerate().map(|(idx, app)| {
-                            let name = app.name.clone();
-                            let icon = DesktopApp::resolved_icon(&app.icon_path);
-
-                            div()
-                                .flex()
-                                .flex_col()
-                                .items_center()
-                                .child(IconButton::new(("popup_app", idx)).icon(icon).on_click(
-                                    cx.listener(move |_, _, window, _| {
-                                        // Close the popup window
-                                        window.remove_window();
-
-                                        // Launch the app
-                                        let _ = DesktopApps::run_app_exec(app.exec.as_str());
-                                    }),
-                                ))
-                                .child(
-                                    div()
-                                        .mt(px(4.))
-                                        .text_color(rgb(0xffffff))
-                                        .child(name)
-                                        .text_ellipsis(),
-                                )
-                        }),
-                    ))
-                    .child(
-                        div()
-                            .relative()
-                            .flex_col()
-                            .bottom(px(-94.))
-                            .child(
-                                img(IconName::Category.resolve())
-                                    .top(px(-66.))
-                                    .right(px(32.))
-                                    .w(px(524.))
-                                    .h(px(42.)),
-                            )
-                            .child(
-                                div()
-                                    .absolute()
-                                    .top(px(-50.0))
-                                    .w(px(100.0))
-                                    .h(px(16.0))
-                                    .justify_start()
-                                    .child(
-                                        div().flex().child(
-                                            div()
-                                                .font_weight(FontWeight(400.0))
-                                                .text_size(px(16.0))
-                                                .text_color(rgb(0xffffff))
-                                                .child(self.category.clone())
-                                                .text_ellipsis()
-                                                .w(px(120.)),
-                                        ),
-                                    ),
-                            ),
-                    ),
-            )
+        self.render_modal(cx)
     }
+}
+
+fn hash_id(s: &str) -> usize {
+    let mut h = DefaultHasher::new();
+    s.hash(&mut h);
+    h.finish() as usize
 }
