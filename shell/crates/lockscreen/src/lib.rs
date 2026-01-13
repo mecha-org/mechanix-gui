@@ -70,6 +70,9 @@ pub fn listen_dispatcher(cx: &mut Context<Lockscreen>) {
                 dispatcher::Message::ShowLockscreen(show) => {
                     let _ = this.update(cx, |this, cx| {
                         this.show = show;
+                        if show {
+                            this.reset(cx);
+                        }
                         cx.notify();
                     });
                 }

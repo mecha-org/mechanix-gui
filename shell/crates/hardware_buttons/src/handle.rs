@@ -10,7 +10,7 @@ pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
     match event {
         KeyEvent::Pressed(Key::Power) => {
             info!("hardware_buttons: power button pressed");
-            message = Some(Message::ShowPowerOptions(true));
+            message = Some(Message::ShowLockscreen(true));
         }
         KeyEvent::Pressing(Key::Power) => {
             info!("hardware_buttons: power button pressing");
@@ -18,7 +18,6 @@ pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
         }
         KeyEvent::Unknown(Key::Power) => {
             info!("hardware_buttons: power button unknown event");
-            message = Some(Message::ShowPowerOptions(true));
         }
         KeyEvent::Released(Key::Power) => {
             info!("hardware_buttons: power button released");
