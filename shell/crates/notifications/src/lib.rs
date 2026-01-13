@@ -1,26 +1,29 @@
 use crate::events::AppEvents;
 use crate::prelude::icon::{Icon, IconName};
+use crate::widgets::prelude::{
+    DbNotification, NotificationCenter, NotificationList, NotificationUi, NotificationWidget,
+    UserDismissedEvent,
+};
 use desktop_dbus::NotificationService;
 use futures::channel::mpsc;
-use futures::{select, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt, select};
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::{
-    div, point, px, rgb, App, AppContext, Bounds, Context,
-    ElementId, InteractiveElement, IntoElement, ParentElement, ReadGlobal,
-    Render, SharedString, StatefulInteractiveElement, Styled, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
+    App, AppContext, Bounds, Context, ElementId, InteractiveElement, IntoElement, ParentElement,
+    ReadGlobal, Render, SharedString, StatefulInteractiveElement, Styled,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, div, point, px, rgb,
 };
 use settings::prelude::{LayerShellSettings, NotificationSettings, Settings};
-use crate::widgets::prelude::{DbNotification, NotificationCenter, NotificationList, NotificationUi, NotificationWidget, UserDismissedEvent};
 
 mod events;
-mod ui;
 mod helper;
+mod ui;
 pub mod widgets;
 
 pub mod prelude {
     pub use crate::events::AppEvents;
-    pub use crate::ui::icon;
     pub use crate::ui::NotificationStory;
+    pub use crate::ui::icon;
 }
 
 pub fn run_app(cx: &mut App) {
