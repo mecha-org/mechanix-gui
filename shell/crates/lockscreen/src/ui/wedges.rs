@@ -44,6 +44,12 @@ pub const RIGHT_WEDGE_WIDTH: f32 = 540.0;
 pub const RIGHT_WEDGE_HEIGHT: f32 = 67.0;
 pub const RIGHT_WEDGE_COLOR: u32 = 0x382000FF; // Darker brown
 
+// Wedge border/outline configuration
+pub const LEFT_WEDGE_BORDER_COLOR: u32 = 0x885000FF;  // Border color for left wedge
+pub const RIGHT_WEDGE_BORDER_COLOR: u32 = 0x885000FF; // Border color for right wedge
+pub const LEFT_WEDGE_BORDER_THICKNESS: f32 = 2.0;     // Border thickness for left wedge
+pub const RIGHT_WEDGE_BORDER_THICKNESS: f32 = 2.0;    // Border thickness for right wedge
+
 // Gap between bell and lock icons in left wedge
 pub const LEFT_WEDGE_ICON_GAP: f32 = 12.0;
 
@@ -229,6 +235,7 @@ fn status_icons(cx: &mut App) -> impl IntoElement {
 // Left wedge - size 540 x 106, with bell icon and lock icon
 pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
     let svg_color = rgba(LEFT_WEDGE_COLOR);
+    let border_color = rgba(LEFT_WEDGE_BORDER_COLOR);
     let bell_icon_color = rgba(BELL_ICON_COLOR);
     let bell_circle_color = rgba(BELL_CIRCLE_COLOR);
 
@@ -238,6 +245,7 @@ pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
         .left_0()
         .w(px(LEFT_WEDGE_WIDTH))
         .h(px(LEFT_WEDGE_HEIGHT))
+        // Filled wedge background
         .child(
             svg()
                 .path("icons/lockscreen/wedge_left.svg")
@@ -246,6 +254,16 @@ pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
                 .w(px(LEFT_WEDGE_WIDTH))
                 .h(px(LEFT_WEDGE_HEIGHT))
                 .text_color(svg_color),
+        )
+        // Outline overlay
+        .child(
+            svg()
+                .path("icons/lockscreen/wedge_left_outline.svg")
+                .absolute()
+                .inset_0()
+                .w(px(LEFT_WEDGE_WIDTH))
+                .h(px(LEFT_WEDGE_HEIGHT))
+                .text_color(border_color),
         )
         .child(
             div()
@@ -282,6 +300,7 @@ pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
 // Right wedge - size 540 x 67, with status icons
 pub fn right_wedge(cx: &mut App) -> impl IntoElement {
     let svg_color = rgba(RIGHT_WEDGE_COLOR);
+    let border_color = rgba(RIGHT_WEDGE_BORDER_COLOR);
 
     div()
         .absolute()
@@ -289,6 +308,7 @@ pub fn right_wedge(cx: &mut App) -> impl IntoElement {
         .right_0()
         .w(px(RIGHT_WEDGE_WIDTH))
         .h(px(RIGHT_WEDGE_HEIGHT))
+        // Filled wedge background
         .child(
             svg()
                 .path("icons/lockscreen/wedge_right.svg")
@@ -297,6 +317,16 @@ pub fn right_wedge(cx: &mut App) -> impl IntoElement {
                 .w(px(RIGHT_WEDGE_WIDTH))
                 .h(px(RIGHT_WEDGE_HEIGHT))
                 .text_color(svg_color),
+        )
+        // Outline overlay
+        .child(
+            svg()
+                .path("icons/lockscreen/wedge_right_outline.svg")
+                .absolute()
+                .inset_0()
+                .w(px(RIGHT_WEDGE_WIDTH))
+                .h(px(RIGHT_WEDGE_HEIGHT))
+                .text_color(border_color),
         )
         .child(
             div()
