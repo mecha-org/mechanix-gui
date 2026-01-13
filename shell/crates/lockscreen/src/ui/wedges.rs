@@ -14,9 +14,9 @@ pub const BATTERY_ICON_SIZE: f32 = 30.0;
 
 // Bell icon configuration (left wedge)
 pub const BELL_ICON_SIZE: f32 = 22.0;
-pub const BELL_ICON_COLOR: u32 = 0xFFFFFFFF; // White
+pub const BELL_ICON_COLOR: u32 = 0xFFFFFFFF;
 pub const BELL_CIRCLE_SIZE: f32 = 40.0;
-pub const BELL_CIRCLE_COLOR: u32 = 0x38200099; // Dark orange/brown
+pub const BELL_CIRCLE_COLOR: u32 = 0x38200099;
 pub const BELL_PADDING_LEFT: f32 = 12.0;
 pub const BELL_PADDING_BOTTOM: f32 = 56.0;
 
@@ -24,31 +24,31 @@ pub const BELL_PADDING_BOTTOM: f32 = 56.0;
 pub const LOCK_ICON_SIZE: f32 = 24.0;
 pub const LOCK_CIRCLE_SIZE: f32 = 40.0;
 // Lock state colors (icon colors)
-pub const LOCK_ICON_COLOR_LOCKED: u32 = 0xFFFFFFFF; // White when locked
-pub const LOCK_ICON_COLOR_HALF: u32 = 0xFFFFFFFF; // White when half open
-pub const LOCK_ICON_COLOR_OPEN: u32 = 0xFFFFFFFF; // White when fully open
+pub const LOCK_ICON_COLOR_LOCKED: u32 = 0xFFFFFFFF;
+pub const LOCK_ICON_COLOR_HALF: u32 = 0xFFFFFFFF;
+pub const LOCK_ICON_COLOR_OPEN: u32 = 0xFFFFFFFF;
 // Lock state background circle colors
-pub const LOCK_BG_COLOR_LOCKED: u32 = 0x38200099; // Dark brown, semi-transparent
-pub const LOCK_BG_COLOR_HALF: u32 = 0x5C3A0099; // Medium brown, semi-transparent  
-pub const LOCK_BG_COLOR_OPEN: u32 = 0xF4920099; // Orange, semi-transparent
+pub const LOCK_BG_COLOR_LOCKED: u32 = 0x38200099;
+pub const LOCK_BG_COLOR_HALF: u32 = 0x5C3A0099;
+pub const LOCK_BG_COLOR_OPEN: u32 = 0xF4920099;
 
 const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
 // Left wedge dimensions: 540 x 106 (from wedge_left.svg )
 pub const LEFT_WEDGE_WIDTH: f32 = 540.0;
 pub const LEFT_WEDGE_HEIGHT: f32 = 106.0;
-pub const LEFT_WEDGE_COLOR: u32 = 0x1F1200FF; // Dark brown
+pub const LEFT_WEDGE_COLOR: u32 = 0x1F1200FF;
 
 // Right wedge dimensions: 540 x 67 (from wedge_right.svg)
 pub const RIGHT_WEDGE_WIDTH: f32 = 540.0;
 pub const RIGHT_WEDGE_HEIGHT: f32 = 67.0;
-pub const RIGHT_WEDGE_COLOR: u32 = 0x382000FF; // Darker brown
+pub const RIGHT_WEDGE_COLOR: u32 = 0x382000FF;
 
 // Wedge border/outline configuration
-pub const LEFT_WEDGE_BORDER_COLOR: u32 = 0x885000FF;  // Border color for left wedge
-pub const RIGHT_WEDGE_BORDER_COLOR: u32 = 0x885000FF; // Border color for right wedge
-pub const LEFT_WEDGE_BORDER_THICKNESS: f32 = 2.0;     // Border thickness for left wedge
-pub const RIGHT_WEDGE_BORDER_THICKNESS: f32 = 2.0;    // Border thickness for right wedge
+pub const LEFT_WEDGE_BORDER_COLOR: u32 = 0x885000FF;
+pub const RIGHT_WEDGE_BORDER_COLOR: u32 = 0x885000FF;
+pub const LEFT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
+pub const RIGHT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
 
 // Gap between bell and lock icons in left wedge
 pub const LEFT_WEDGE_ICON_GAP: f32 = 12.0;

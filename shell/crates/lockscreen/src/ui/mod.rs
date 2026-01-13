@@ -12,7 +12,7 @@ const UNLOCK_THRESHOLD: f32 = 80.0;
 const WEDGES_AREA_HEIGHT: f32 = 67.0;
 
 // Gap between the slider panel and the wedges (adjust to control spacing)
-const PANEL_WEDGE_GAP: f32 = 10.0;
+const PANEL_WEDGE_GAP: f32 = 8.0;
 
 pub struct Lockscreen {
     drag_offset: Option<f32>,
@@ -127,7 +127,7 @@ impl Render for Lockscreen {
                                         .h(px(6.0))
                                         .rounded(px(3.0))
                                         .bg(handle_color)
-                                        .mb(px(20.0)),
+                                        .mb(px(5.0)),
                                 ),
                         )
                         .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
