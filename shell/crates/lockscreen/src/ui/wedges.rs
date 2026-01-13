@@ -12,6 +12,14 @@ pub const WIFI_ICON_SIZE: f32 = 25.0;
 pub const BLUETOOTH_ICON_SIZE: f32 = 25.0;
 pub const BATTERY_ICON_SIZE: f32 = 30.0;
 
+// Bell icon configuration (left wedge)
+pub const BELL_ICON_SIZE: f32 = 24.0;
+pub const BELL_ICON_COLOR: u32 = 0xFFFFFFFF; // White
+pub const BELL_CIRCLE_SIZE: f32 = 40.0;
+pub const BELL_CIRCLE_COLOR: u32 = 0xC6760033; // Dark orange/brown
+pub const BELL_PADDING_LEFT: f32 = 12.0;
+pub const BELL_PADDING_BOTTOM: f32 = 56.0;
+
 const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
 // Left wedge dimensions: 540 x 106 (from wedge_left.svg )
@@ -201,9 +209,11 @@ fn status_icons(cx: &mut App) -> impl IntoElement {
         .child(render_battery_icon(battery_icon, icon_color))
 }
 
-// Left wedge - size 540 x 106, color #382000
-pub fn left_wedge(content: impl IntoElement) -> impl IntoElement {
+// Left wedge - size 540 x 106, color #382000, with bell icon
+pub fn left_wedge() -> impl IntoElement {
     let svg_color = rgba(0x382000FF);
+    let bell_icon_color = rgba(BELL_ICON_COLOR);
+    let bell_circle_color = rgba(BELL_CIRCLE_COLOR);
 
     div()
         .absolute()
@@ -223,11 +233,28 @@ pub fn left_wedge(content: impl IntoElement) -> impl IntoElement {
         .child(
             div()
                 .absolute()
-                .inset_0()
+                .bottom(px(BELL_PADDING_BOTTOM))
+                .left(px(BELL_PADDING_LEFT))
                 .flex()
                 .items_center()
-                .justify_center()
-                .child(content),
+                .child(
+                    // Circle background with bell icon
+                    div()
+                        .w(px(BELL_CIRCLE_SIZE))
+                        .h(px(BELL_CIRCLE_SIZE))
+                        .rounded_full()
+                        .bg(bell_circle_color)
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .child(
+                            svg()
+                                .path("icons/lockscreen/bell.svg")
+                                .w(px(BELL_ICON_SIZE))
+                                .h(px(BELL_ICON_SIZE))
+                                .text_color(bell_icon_color),
+                        ),
+                ),
         )
 }
 
