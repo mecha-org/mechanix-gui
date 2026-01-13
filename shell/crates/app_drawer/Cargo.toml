@@ -20,3 +20,4 @@ unicode-segmentation = "1.12.0"
 shlex = "1.3.0" 
 mxsearch = { path = "../../../services/search/server" }
 dispatcher = { path = "../dispatcher" }
+settings = { path = "../settings" }

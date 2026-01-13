@@ -10,6 +10,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{ Hash, Hasher };
 use std::time::{ Duration, Instant };
 use commons::prelude::TextInput;
+use settings::prelude::Settings;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
 use crate::ui::widgets::{ BottomSheetKind, SubWindow };
@@ -23,7 +24,6 @@ const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const GRID_ROW_HEIGHT: f32 = 126.0;
 const GRID_ROW_WIDTH: f32 = 508.0;
 const SECTION_SPACING: f32 = 15.0;
-const APP_SIZE: (f32, f32) = (540.0, 504.0);
 const APP_ROW_HEIGHT: f32 = 60.0;
 const FLOATING_BTN_SIZE: f32 = 56.0;
 const FLOATING_BTN_BOTTOM: f32 = 16.0;
@@ -60,7 +60,7 @@ pub struct AppDrawer {
 }
 
 impl AppDrawer {
-    pub fn new( cx: &mut Context<Self>) -> Self {
+    pub fn new(cx: &mut Context<Self>) -> Self {
         let grouped = HashMap::new();
         let filtered_apps = Vec::new();
 
@@ -124,27 +124,29 @@ impl AppDrawer {
     fn group_apps_by_category(apps: Vec<AppInfo>) -> HashMap<String, Vec<AppInfo>> {
         let mut grouped: HashMap<String, Vec<AppInfo>> = HashMap::new();
 
-        for app_info in apps {
-            let category = app_info.categories
-                .get(0)
-                .map(|c| c.trim())
-                .filter(|c| !c.is_empty());
+        for app in apps {
+            let mut has_valid_category = false;
 
-            match category {
-                Some(valid_category) => {
-                    grouped
-                        .entry(valid_category.to_string())
-                        .or_insert_with(Vec::new)
-                        .push(app_info);
+            for category in &app.categories {
+                let category = category.trim();
+
+                if category.is_empty() {
+                    continue;
                 }
-                None => {
-                    grouped.entry("Other".to_string()).or_insert_with(Vec::new).push(app_info);
-                }
+
+                grouped.entry(category.to_string()).or_insert_with(Vec::new).push(app.clone());
+
+                has_valid_category = true;
+            }
+
+            if !has_valid_category {
+                grouped.entry("Other".to_string()).or_insert_with(Vec::new).push(app);
             }
         }
 
         grouped
     }
+
     pub fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
         let sender = Dispatcher::global(cx).0.clone();
         cx.background_executor()
@@ -157,11 +159,18 @@ impl AppDrawer {
             .detach();
     }
 
-    fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
+    fn calculate_scroll_bounds(
+        &self,
+        content_height: Pixels,
+        cx: &mut Context<Self>
+    ) -> (Pixels, Pixels) {
+        let settings = Settings::global(cx).app_drawer.clone();
+        let app_drawer_size = settings.layer_shell.size;
+
         let container_height = if self.is_searching {
-            px(APP_SIZE.1 - 16.0 - (SEARCH_BAR_HEIGHT + SEARCH_BAR_BOTTOM + 16.0))
+            app_drawer_size.height - px(16.0 - (SEARCH_BAR_HEIGHT + SEARCH_BAR_BOTTOM + 16.0))
         } else {
-            px(APP_SIZE.1)
+            app_drawer_size.height
         };
 
         let max_scroll = px(0.0);
@@ -229,7 +238,7 @@ impl AppDrawer {
 
             let new_scroll_offset = self.last_scroll_offset + delta_y;
             let content_height = self.estimate_content_height();
-            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height, cx);
             self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
             cx.notify();
         }
@@ -323,7 +332,7 @@ impl AppDrawer {
 
         self.is_searching = true;
         self.text_input.update(cx, |input, cx| {
-            input.focus_handle.focus(window,cx);
+            input.focus_handle.focus(window, cx);
         });
         self.scroll_offset = px(0.0);
         self.last_scroll_offset = px(0.0);
@@ -335,6 +344,8 @@ impl AppDrawer {
     fn render_search_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let text_input = self.text_input.clone();
         let colors = Theme::global(cx).colors.clone();
+        let settings = Settings::global(cx).app_drawer.clone();
+        let app_drawer_size = settings.layer_shell.size;
 
         div()
             .id("main-search")
@@ -347,12 +358,12 @@ impl AppDrawer {
             .justify_between()
             .px_2()
             .h(px(SEARCH_BAR_HEIGHT))
-            .w(px(APP_SIZE.0))
+            .w(app_drawer_size.width)
             .bg(colors.accent_300.with_alpha(0.1))
             .child(
                 div()
                     .id("search-bar")
-                    .w(px(APP_SIZE.0 - 10.0))
+                    .w(app_drawer_size.width - px(10.0))
                     .h(px(44.0))
                     .bg(colors.background_900)
                     .rounded(px(6.0))
@@ -587,6 +598,9 @@ impl AppDrawer {
 
 impl Render for AppDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let settings = Settings::global(cx).app_drawer.clone();
+        let app_drawer_size = settings.layer_shell.size;
+
         let colors = Theme::global(cx).colors.clone();
         let text_input = self.text_input.clone();
         text_input.update(cx, |input, _| {
@@ -606,13 +620,12 @@ impl Render for AppDrawer {
         if self.is_loading {
             return div()
                 .pt_2()
-                .h(px(APP_SIZE.1))
+                .h(app_drawer_size.height)
                 .flex()
                 .justify_start()
                 .relative()
                 .items_center()
                 .flex_col()
-                .size_full()
                 .overflow_hidden()
                 .child(self.render_loading(cx));
         }
@@ -621,14 +634,13 @@ impl Render for AppDrawer {
 
         div()
             .pt_2()
-            .h(px(APP_SIZE.1))
             .flex()
             .justify_start()
             .relative()
             .items_center()
             .flex_col()
-            .size_full()
             .overflow_hidden()
+            .h(app_drawer_size.height)
             // GRID MODE
             .when(!self.is_searching, |main_page_div| {
                 main_page_div
@@ -867,7 +879,7 @@ impl Render for AppDrawer {
                             .bg(colors.background_900)
                             .h(px(280.0))
                             .border_color(colors.accent_200.with_alpha(0.6))
-                            .w(px(APP_SIZE.0 - 2.0))
+                            .w(app_drawer_size.width - px(2.0))
                             .flex()
                             .flex_col()
                             .justify_start()
@@ -884,7 +896,7 @@ impl Render for AppDrawer {
                             .absolute()
                             .bottom(px(0.0))
                             .left(px(0.0))
-                            .w(px(APP_SIZE.0))
+                            .w(app_drawer_size.width)
                             .rounded_t(px(24.0))
                             .pl(px(20.0))
                             .mt(px(20.0))
