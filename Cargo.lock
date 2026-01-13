@@ -3883,7 +3883,9 @@ dependencies = [
  "gpui",
  "rust-embed",
  "settings",
+ "shell_state",
  "system_dbus",
+ "upower",
 ]
 
 [[package]]

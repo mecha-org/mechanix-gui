@@ -174,8 +174,8 @@ impl Render for Lockscreen {
                             .h(px(WEDGES_AREA_HEIGHT))
                             // Left wedge (below right wedge in z-order)
                             .child(left_wedge(div()))
-                            // Right wedge (overlaps left wedge, rendered on top)
-                            .child(right_wedge(div())),
+                            // Right wedge (overlaps left wedge, rendered on top, with status icons)
+                            .child(right_wedge(cx)),
                     )
             })
     }
