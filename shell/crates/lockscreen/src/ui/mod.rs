@@ -6,19 +6,30 @@ use wallpaper::wallpaper;
 use wedges::{left_wedge, right_wedge, LockState};
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
-const UNLOCK_THRESHOLD: f32 = 80.0;
+const UNLOCK_THRESHOLD: f32 = 100.0;
 
 // The wedges area height
 const WEDGES_AREA_HEIGHT: f32 = 67.0;
 
+const WEDGE_TARGET_GAP: f32 = 110.0;
+
+// Slider travel after which lock + bell icons fully fade
+const LOCK_ICONS_FADE_THRESHOLD: f32 = 310.0;
+
 // Gap between the slider panel and the wedges (adjust to control spacing)
 const PANEL_WEDGE_GAP: f32 = 8.0;
 
-// Fraction of the slider's vertical travel applied in the opposite direction to the wedges
-const WEDGE_PARALLAX_FRACTION: f32 = 0.35;
+// Fractions of the slider's vertical travel applied in the opposite direction to each wedge
+const LEFT_WEDGE_PARALLAX_FRACTION: f32 = 0.20;
+const RIGHT_WEDGE_PARALLAX_FRACTION: f32 = 0.25;
+
+
+// The current wedge SVGs extend beyond their viewBox heights (left path to ~118px, right to ~74px),
+const LEFT_WEDGE_BOTTOM_LIMIT: f32 = 73.0;
+const RIGHT_WEDGE_BOTTOM_LIMIT: f32 = 38.0;
 
 // How quickly icons fade relative to slider movement (left fades slower than right)
-const LEFT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.3;
+const LEFT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.1;
 const RIGHT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.8;
 
 pub struct Lockscreen {
@@ -100,12 +111,21 @@ impl Render for Lockscreen {
         let panel_top = self.position_y.min(0.0);
         // Panel height excludes the wedges area and gap at the bottom
         let panel_height = window_height - WEDGES_AREA_HEIGHT - PANEL_WEDGE_GAP;
-        // Move wedges downward proportionally to the upward panel motion
-        let wedge_offset = (-panel_top) * WEDGE_PARALLAX_FRACTION;
+        // Move each wedge downward proportionally to the upward panel motion, clamped to limit
+        let left_wedge_offset = ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(LEFT_WEDGE_BOTTOM_LIMIT);
+        let right_wedge_offset = ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(RIGHT_WEDGE_BOTTOM_LIMIT);
+        // Move wedges horizontally outward using same fractions, clamped to half the target gap
+        let left_wedge_gap = ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
+        let right_wedge_gap = ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
         // Fade icons as slider moves; clamp to [0, 1]
         let fade_progress = ((-panel_top) / UNLOCK_THRESHOLD).max(0.0).min(1.0);
         let left_icon_opacity = 1.0 - fade_progress * LEFT_WEDGE_ICON_FADE_STRENGTH;
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
+        // Additional fade for lock + bell icons so they vanish at the fade threshold
+        let lock_icon_fade = 1.0
+            - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD)
+                .max(0.0)
+                .min(1.0);
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
@@ -192,7 +212,7 @@ impl Render for Lockscreen {
                 .child({
                     let lock_state = LockState::from_position(self.position_y, UNLOCK_THRESHOLD);
                     // Left wedge icons should remain visible even when unlocked; keep clamped only.
-                    let left_icon_opacity = left_icon_opacity.max(0.0);
+                    let left_icon_opacity = (left_icon_opacity.max(0.0) * lock_icon_fade).max(0.0);
                     let right_icon_opacity = if lock_state == LockState::FullyOpen {
                         0.0
                     } else {
@@ -200,14 +220,26 @@ impl Render for Lockscreen {
                     };
                     div()
                         .absolute()
-                        .bottom(px(-wedge_offset))
+                        .bottom_0()
                         .left_0()
                         .w(size.width)
                         .h(px(WEDGES_AREA_HEIGHT))
                         // Left wedge (below right wedge in z-order, with bell and lock icons)
-                        .child(left_wedge(lock_state, left_icon_opacity))
+                        .child(
+                            div()
+                                .absolute()
+                                .bottom(px(-left_wedge_offset))
+                                    .left(px(-left_wedge_gap))
+                                .child(left_wedge(lock_state, left_icon_opacity)),
+                        )
                         // Right wedge (overlaps left wedge, rendered on top, with status icons)
-                        .child(right_wedge(cx, right_icon_opacity))
+                        .child(
+                            div()
+                                .absolute()
+                                .bottom(px(-right_wedge_offset))
+                                    .right(px(-right_wedge_gap))
+                                .child(right_wedge(cx, right_icon_opacity)),
+                        )
                 })
         })
     }
