@@ -1,12 +1,12 @@
 use commons::widgets::wing;
 use gpui::*;
+use icons::prelude::*;
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
     prelude::*,
     ui::{
         FINAL_MODAL_SIZE,
-        icon::{Icon, IconName},
         modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
     },
 };
@@ -59,6 +59,14 @@ impl SettingsDrawer {
     ) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
         let extend_options = self.extended_screens();
+        let SettingsDrawerIcons {
+            extended_detected,
+            mirror_screen,
+            extended_only,
+            second_screen,
+            connected,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
 
         div()
             .flex()
@@ -108,15 +116,18 @@ impl SettingsDrawer {
                                     Self::get_icon_and_text_color(is_active, cx);
 
                                 let icon = match ex.extend_type {
-                                    ExtendedType::ExtendedDetected => IconName::ExtendedDetected,
-                                    ExtendedType::MirrorScreen => IconName::MirrorScreen,
-                                    ExtendedType::ExtendedOnly => IconName::ExtendedOnly,
-                                    ExtendedType::SecondScreen => IconName::SecondScreen,
+                                    ExtendedType::ExtendedDetected => &extended_detected,
+                                    ExtendedType::MirrorScreen => &mirror_screen,
+                                    ExtendedType::ExtendedOnly => &extended_only,
+                                    ExtendedType::SecondScreen => &second_screen,
                                 };
 
                                 let connect_div = div().child(
-                                    Icon::new(IconName::Connected)
-                                        .size((px(24.), px(24.)))
+                                    svg()
+                                        .external_path(SharedString::from(
+                                            connected.to_string_lossy().to_string(),
+                                        ))
+                                        .size(px(24.))
                                         .text_color(text_color),
                                 );
 
@@ -138,8 +149,11 @@ impl SettingsDrawer {
                                                 .text_align(TextAlign::Left)
                                                 .child(
                                                     div().pr_2().child(
-                                                        Icon::new(icon)
-                                                            .size((px(28.), px(28.)))
+                                                        svg()
+                                                            .external_path(SharedString::from(
+                                                                icon.to_string_lossy().to_string(),
+                                                            ))
+                                                            .size(px(28.))
                                                             .text_color(icon_color),
                                                     ),
                                                 )
@@ -168,8 +182,11 @@ impl SettingsDrawer {
                                                 .text_align(TextAlign::Left)
                                                 .child(
                                                     div().pr_2().child(
-                                                        Icon::new(icon)
-                                                            .size((px(28.), px(28.)))
+                                                        svg()
+                                                            .external_path(SharedString::from(
+                                                                icon.to_string_lossy().to_string(),
+                                                            ))
+                                                            .size(px(28.))
                                                             .text_color(icon_color),
                                                     ),
                                                 )

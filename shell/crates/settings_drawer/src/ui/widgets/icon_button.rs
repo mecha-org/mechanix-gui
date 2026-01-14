@@ -1,13 +1,12 @@
 use std::rc::Rc;
 
-use crate::ui::icon::Icon;
 use gpui::{LongPressEvent, prelude::FluentBuilder, *};
 use theme::prelude::{AlphaExt, Theme};
 
 #[derive(IntoElement)]
 pub struct IconButton {
     main: Stateful<Div>,
-    icon: Option<Icon>,
+    icon: Option<Svg>,
     disabled: bool,
     pressed: bool,
     active: bool,
@@ -44,7 +43,7 @@ impl IconButton {
         }
     }
 
-    pub fn icon(mut self, icon: impl Into<Icon>) -> Self {
+    pub fn icon(mut self, icon: impl Into<Svg>) -> Self {
         self.icon = Some(icon.into());
         self
     }
@@ -195,6 +194,7 @@ impl RenderOnce for IconButton {
                         t_icon_color.into()
                     }
                 };
+
                 this.child(icon.text_color(color))
             })
             .when_some(self.size, |this, sz| this.w(sz.0).h(sz.1))

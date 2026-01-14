@@ -1,10 +1,8 @@
-use dispatcher::Dispatcher;
 use gpui::{prelude::FluentBuilder, *};
+use icons::prelude::*;
 use std::process::Command;
 use theme::ActiveTheme;
 use theme::prelude::AlphaExt;
-use crate::ui::icon::{Icon, IconName};
-pub mod icon;
 
 const INIT_ANIMATE_HEIGHT: f32 = 0.0; // Start from top
 
@@ -174,6 +172,7 @@ impl Render for PowerOptions {
         let window_height = f32::from(size.height);
         let show = self.show;
         let colors = cx.theme().colors.clone();
+        let icons = Icons::global(cx).power_options.clone();
 
         self.update_input_regions(window, show, cx);
 
@@ -286,9 +285,15 @@ impl Render for PowerOptions {
                                             .items_center()
                                             .gap_3()
                                             .child(
-                                                Icon::new(IconName::PowerOff)
+                                                svg()
+                                                    .external_path(SharedString::from(
+                                                        icons
+                                                            .power_off
+                                                            .to_string_lossy()
+                                                            .to_string(),
+                                                    ))
                                                     .text_color(colors.accent_200)
-                                                    .size((px(32.), px(32.))),
+                                                    .size(px(32.)),
                                             )
                                             .child(
                                                 div()
@@ -311,9 +316,12 @@ impl Render for PowerOptions {
                                 .justify_center()
                                 .when(arrow_height > 20.0, |div| {
                                     div.child(
-                                        Icon::new(IconName::DownArrow)
+                                        svg()
+                                            .external_path(SharedString::from(
+                                                icons.down_arrow.to_string_lossy().to_string(),
+                                            ))
                                             .text_color(colors.accent_200)
-                                            .size((px(26.), px(26.))),
+                                            .size(px(26.)),
                                     )
                                 }),
                         )

@@ -1,4 +1,5 @@
 use gpui::{input_method::KeyState, prelude::FluentBuilder, *};
+use icons::prelude::Icons;
 use settings::prelude::Settings;
 use theme::ActiveTheme;
 
@@ -159,6 +160,7 @@ impl Render for OnScreenKeyboard {
         let rows = view.rows.clone();
         let colors = cx.theme().colors.clone();
         let suggestions = self.suggestions.clone();
+        let icons = Icons::global(cx).keyboard.clone();
 
         div()
             .size_full()
@@ -306,12 +308,10 @@ impl Render for OnScreenKeyboard {
 
                                     let icon = match button.label {
                                         Label::Icon(i) => match i.as_str() {
-                                            "key-enter" => Some(""),
-                                            "keyboard-mode-symbolic" => Some(""),
-                                            "edit-clear-symbolic" => {
-                                                Some("icons/keyboard/backspace.svg")
-                                            }
-                                            "key-shift" => Some("icons/keyboard/shift.svg"),
+                                            "key-enter" => None,
+                                            "keyboard-mode-symbolic" => None,
+                                            "edit-clear-symbolic" => Some(icons.backspace.clone()),
+                                            "key-shift" => Some(icons.shift.clone()),
                                             _ => None,
                                         },
                                         _ => None,

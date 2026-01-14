@@ -1,23 +1,19 @@
-pub mod icon;
 mod modals;
 mod widgets;
 use commons::widgets::{WingSide, wing};
 use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
+use icons::prelude::{Icons, SettingsDrawerIcons};
 use settings::prelude::{Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
 use theme::prelude::AlphaExt;
 
 use crate::helper::get_wireless_strength_icon;
-use crate::ui::icon::Icon;
 use crate::ui::modals::{
     bluetooth_modal::BluetoothModalScroll, wireless_modal::WirelessModalScroll,
 };
-use crate::ui::{
-    icon::IconName,
-    widgets::{IconButton, Slider, SliderEvent, SliderState},
-};
+use crate::ui::widgets::{IconButton, Slider, SliderEvent, SliderState};
 use futures::SinkExt;
 use gpui::*;
 use theme::ActiveTheme;
@@ -734,12 +730,16 @@ impl SettingsDrawer {
 
     fn render_power_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let power_off = Icons::global(cx).settings_drawer.power_off.clone();
+
         div()
             .id("id_power")
             .child(
-                Icon::new(IconName::PowerOff)
+                svg()
+                    .external_path(SharedString::from(power_off.to_string_lossy().to_string()))
                     .text_color(colors.foreground_100)
-                    .size((px(24.), px(24.))),
+                    .w(px(24.))
+                    .h(px(24.)),
             )
             .on_click(cx.listener(
                 move |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
@@ -770,15 +770,20 @@ impl SettingsDrawer {
 
     fn render_rotation(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let rotation_on = Icons::global(cx).settings_drawer.rotation_on.clone();
+        let rotation_off = Icons::global(cx).settings_drawer.rotation_off.clone();
         let rotation_icon = if self.rotation_on {
-            IconName::RotationOn
+            rotation_on
         } else {
-            IconName::RotationOff
+            rotation_off
         };
 
         IconButton::new("id_rotation")
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            .icon(rotation_icon)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                rotation_icon.to_string_lossy().to_string(),
+            )))
+            .icon_color(colors.foreground_600)
             .active(self.rotation_on)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
@@ -795,9 +800,14 @@ impl SettingsDrawer {
 
     fn render_airplane_mode(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let airplane = Icons::global(cx).settings_drawer.airplane.clone();
 
         IconButton::new("id_airplane")
-            .icon(IconName::Airplane)
+            .icon(
+                svg()
+                    .size(px(36.))
+                    .external_path(SharedString::from(airplane.to_string_lossy().to_string())),
+            )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon_color(colors.foreground_600)
             .active(self.airplane_mode)
@@ -817,16 +827,25 @@ impl SettingsDrawer {
 
     fn render_screen_mirroring(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-
+        let screen_mirroring_on = Icons::global(cx)
+            .settings_drawer
+            .screen_mirroring_on
+            .clone();
+        let screen_mirroring_off = Icons::global(cx)
+            .settings_drawer
+            .screen_mirroring_off
+            .clone();
         // TODO: Add extended screen icons when extended screen is detected
         let screen_mirroring_icon = if self.screen_mirroring {
-            IconName::ScreenMirroringOn
+            screen_mirroring_on
         } else {
-            IconName::ScreenMirroringOff
+            screen_mirroring_off
         };
 
         IconButton::new("id_screen_mirroring")
-            .icon(screen_mirroring_icon)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                screen_mirroring_icon.to_string_lossy().to_string(),
+            )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.screen_mirroring)
             .active_icon_color(colors.accent_200)
@@ -848,9 +867,14 @@ impl SettingsDrawer {
 
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let terminal = Icons::global(cx).settings_drawer.terminal.clone();
 
         IconButton::new("id_terminal")
-            .icon(IconName::Terminal)
+            .icon(
+                svg()
+                    .size(px(36.))
+                    .external_path(SharedString::from(terminal.to_string_lossy().to_string())),
+            )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon_color(colors.foreground_600)
             .active_icon_color(colors.accent_200)
@@ -865,9 +889,11 @@ impl SettingsDrawer {
 
     fn render_microphone_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-
+        let microphone_off = Icons::global(cx).settings_drawer.microphone_off.clone();
         IconButton::new("id_microphone")
-            .icon(IconName::MicroPhoneOff)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                microphone_off.to_string_lossy().to_string(),
+            )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.microphone_recording)
             .active_icon_color(colors.accent_200)
@@ -885,9 +911,15 @@ impl SettingsDrawer {
 
     fn render_screen_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let screen_recording_off = Icons::global(cx)
+            .settings_drawer
+            .screen_recording_off
+            .clone();
 
         IconButton::new("id_screen_recording")
-            .icon(IconName::ScreenRecordingOff)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                screen_recording_off.to_string_lossy().to_string(),
+            )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active(self.screen_recording)
             .active_icon_color(colors.accent_200)
@@ -905,9 +937,14 @@ impl SettingsDrawer {
 
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let settings = Icons::global(cx).settings_drawer.settings.clone();
 
         IconButton::new("id_settings")
-            .icon(IconName::Settings)
+            .icon(
+                svg()
+                    .size(px(36.))
+                    .external_path(SharedString::from(settings.to_string_lossy().to_string())),
+            )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
@@ -921,9 +958,14 @@ impl SettingsDrawer {
 
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let camera_off = Icons::global(cx).settings_drawer.camera_off.clone();
 
         IconButton::new("id_camera")
-            .icon(IconName::CameraOff)
+            .icon(
+                svg()
+                    .size(px(36.))
+                    .external_path(SharedString::from(camera_off.to_string_lossy().to_string())),
+            )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .icon_color(colors.foreground_600)
             .active_icon_color(colors.accent_200)
@@ -937,10 +979,14 @@ impl SettingsDrawer {
     }
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-
+        let wireless_off = Icons::global(cx).settings_drawer.wireless_off.clone();
+        let connected_wireless_on = Icons::global(cx)
+            .settings_drawer
+            .connected_wireless_on
+            .clone();
         let wireless_details = ShellState::global(cx).wireless_details.clone();
         let (wireless_icon, network_label) = {
-            let mut icon = IconName::WirelessOff;
+            let mut icon = wireless_off;
             let mut label = "Wi-Fi".to_string();
 
             if wireless_details.enabled {
@@ -948,12 +994,13 @@ impl SettingsDrawer {
                     label = network.ssid.clone();
 
                     icon = if label == "Wi-Fi" {
-                        IconName::ConnectedWirelessOn
+                        connected_wireless_on
                     } else {
                         get_wireless_strength_icon(
                             true,
                             network.signal_strength,
                             "Open".to_string(), // intentional: show open in view
+                            cx,
                         )
                     };
                 }
@@ -963,7 +1010,13 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_wireless")
-            .icon(Icon::new(wireless_icon).size((px(36.), px(36.))))
+            .icon(
+                svg()
+                    .external_path(SharedString::from(
+                        wireless_icon.to_string_lossy().to_string(),
+                    ))
+                    .size(px(36.)),
+            )
             .size((px(ICON_W), px(ICON_H)))
             .active(wireless_details.enabled)
             .label(network_label)
@@ -991,17 +1044,23 @@ impl SettingsDrawer {
     fn render_bluetooth(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
+        let SettingsDrawerIcons {
+            bluetooth_off,
+            bluetooth_connected,
+            bluetooth_on,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
 
         let (bluetooth_icon, bluetooth_label) = {
             let enabled = bluetooth_details.enabled;
             let connected = bluetooth_details.connected_devices;
 
             let icon = if !enabled {
-                IconName::BluetoothOff
+                bluetooth_off
             } else if connected > 0 {
-                IconName::BluetoothConnected
+                bluetooth_connected
             } else {
-                IconName::BluetoothOn
+                bluetooth_on
             };
 
             let label = if enabled && connected > 0 {
@@ -1014,7 +1073,9 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_bluetooth")
-            .icon(bluetooth_icon)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                bluetooth_icon.to_string_lossy().to_string(),
+            )))
             .size((px(ICON_W), px(ICON_H)))
             .label(bluetooth_label)
             .active(bluetooth_details.enabled)
@@ -1041,11 +1102,17 @@ impl SettingsDrawer {
     fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let battery_percent = ShellState::global(cx).battery_percent.clone();
+        let SettingsDrawerIcons {
+            power_mode_high,
+            power_mode_balanced,
+            power_mode_low,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
 
         let power_mode_icon = match self.power_mode {
-            PowerMode::High => IconName::PowerModeHigh,
-            PowerMode::Balanced => IconName::PowerModeBalanced,
-            PowerMode::Low => IconName::PowerModeLow,
+            PowerMode::High => power_mode_high,
+            PowerMode::Balanced => power_mode_balanced,
+            PowerMode::Low => power_mode_low,
         };
         let power_mode_icon_color = match self.power_mode {
             PowerMode::High => colors.accent_200,
@@ -1053,7 +1120,9 @@ impl SettingsDrawer {
             PowerMode::Low => colors.accent_200,
         };
         IconButton::new("id_power_mode")
-            .icon(power_mode_icon)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                power_mode_icon.to_string_lossy().to_string(),
+            )))
             .size((px(ICON_W), px(ICON_H)))
             .label(format!("{}% ", battery_percent))
             .icon_color(power_mode_icon_color)
@@ -1076,8 +1145,11 @@ impl SettingsDrawer {
 
     fn render_cell_signal(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let cell_signal_none = Icons::global(cx).settings_drawer.cell_signal_none.clone();
         IconButton::new("id_cell_signal")
-            .icon(IconName::CellSignalNone)
+            .icon(svg().size(px(36.)).external_path(SharedString::from(
+                cell_signal_none.to_string_lossy().to_string(),
+            )))
             .size((px(ICON_W), px(ICON_H)))
             .label("No SIM")
             .active(self.cell_signal)
@@ -1118,13 +1190,19 @@ impl SettingsDrawer {
 
     pub fn render_brightness_slider(&self, cx: &mut Context<Self>, width: f32) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let SettingsDrawerIcons {
+            brightness_low,
+            brightness_medium,
+            brightness_high,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
         let brightness_icon =
             if self.brightness_slider_value >= 0.0 && self.brightness_slider_value <= 33.0 {
-                IconName::BrightnessLow
+                brightness_low
             } else if self.brightness_slider_value > 33.0 && self.brightness_slider_value <= 66.0 {
-                IconName::BrightnessMedium
+                brightness_medium
             } else {
-                IconName::BrightnessHigh
+                brightness_high
             };
         div()
             .flex()
@@ -1135,7 +1213,9 @@ impl SettingsDrawer {
             .pl_2()
             .child(
                 IconButton::new("id_brightness")
-                    .icon(brightness_icon)
+                    .icon(svg().size(px(36.)).external_path(SharedString::from(
+                        brightness_icon.to_string_lossy().to_string(),
+                    )))
                     .icon_color(colors.accent_200)
                     .size((px(32.), px(32.)))
                     .bg_color(colors.background_900)
@@ -1178,16 +1258,23 @@ impl SettingsDrawer {
 
     fn render_volume_slider(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let SettingsDrawerIcons {
+            volume_off,
+            volume_low,
+            volume_medium,
+            volume_high,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
 
         let volume_icon = if self.volume_mute {
-            IconName::VolumeOff
+            volume_off
         } else {
             if self.volume_slider_value >= 0.0 && self.volume_slider_value <= 33.0 {
-                IconName::VolumeLow
+                volume_low
             } else if self.volume_slider_value > 33.0 && self.volume_slider_value <= 66.0 {
-                IconName::VolumeMedium
+                volume_medium
             } else {
-                IconName::VolumeHigh
+                volume_high
             }
         };
         let volume_icon_color = if self.volume_mute {
@@ -1212,9 +1299,12 @@ impl SettingsDrawer {
                     .id("volume_icon")
                     .bg(colors.background_900)
                     .child(
-                        Icon::new(volume_icon)
+                        svg()
+                            .external_path(SharedString::from(
+                                volume_icon.to_string_lossy().to_string(),
+                            ))
                             .text_color(volume_icon_color)
-                            .size((px(32.), px(32.))),
+                            .size(px(32.)),
                     )
                     .on_click(cx.listener(
                         move |this: &mut SettingsDrawer,

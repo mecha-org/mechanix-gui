@@ -3,13 +3,13 @@ use crate::{
     prelude::*,
     ui::{
         FINAL_MODAL_SIZE,
-        icon::{Icon, IconName},
         modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
     },
 };
 use commons::widgets::wing;
 use futures::SinkExt;
 use gpui::*;
+use icons::prelude::Icons;
 use shell_state::{BtMessage, ShellState};
 use theme::prelude::{AlphaExt, Theme};
 
@@ -110,6 +110,7 @@ impl ScrollBehavior for BluetoothModalScroll {
 impl SettingsDrawer {
     pub fn render_bluetooth_modal(&mut self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
+        let connected = Icons::global(cx).settings_drawer.connected.clone();
 
         let bluetooth_details = ShellState::global(cx).bluetooth_details.clone();
         let bt_tx = ShellState::global(cx).bt_tx.clone().unwrap();
@@ -210,11 +211,14 @@ impl SettingsDrawer {
                                         let (icon_color, text_color) =
                                             Self::get_icon_and_text_color(is_connected, cx);
 
-                                        let bluetooth_icon = get_bluetooth_icon(is_connected);
+                                        let bluetooth_icon = get_bluetooth_icon(is_connected, cx);
 
                                         let connect_div = div().child(
-                                            Icon::new(IconName::Connected)
-                                                .size((px(24.), px(24.)))
+                                            svg()
+                                                .external_path(SharedString::from(
+                                                    connected.to_string_lossy().to_string(),
+                                                ))
+                                                .size(px(24.))
                                                 .text_color(text_color),
                                         );
 
@@ -236,8 +240,15 @@ impl SettingsDrawer {
                                                         .text_align(TextAlign::Left)
                                                         .child(
                                                             div().pr_2().child(
-                                                                Icon::new(bluetooth_icon)
-                                                                    .size((px(28.), px(28.)))
+                                                                svg()
+                                                                    .external_path(
+                                                                        SharedString::from(
+                                                                            bluetooth_icon
+                                                                                .to_string_lossy()
+                                                                                .to_string(),
+                                                                        ),
+                                                                    )
+                                                                    .size(px(28.))
                                                                     .text_color(icon_color),
                                                             ),
                                                         )
@@ -268,8 +279,15 @@ impl SettingsDrawer {
                                                         .text_align(TextAlign::Left)
                                                         .child(
                                                             div().pr_2().child(
-                                                                Icon::new(bluetooth_icon)
-                                                                    .size((px(28.), px(28.)))
+                                                                svg()
+                                                                    .external_path(
+                                                                        SharedString::from(
+                                                                            bluetooth_icon
+                                                                                .to_string_lossy()
+                                                                                .to_string(),
+                                                                        ),
+                                                                    )
+                                                                    .size(px(28.))
                                                                     .text_color(icon_color),
                                                             ),
                                                         )
