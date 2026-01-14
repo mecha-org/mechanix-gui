@@ -1,0 +1,95 @@
+[package]
+name = "mechanix-keyboard"
+description = "Keyboard application"
+edition = "2024"
+version = "0.0.2"
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }
+commons = { path = "../commons" }
+settings = { path = "../settings" }
+shell_state = { path = "../shell_state" }
+serde = { workspace = true }
+serde_yaml = "0.9.21"
+anyhow = "1.0.79"
+xkbcommon = { version = "0.8.0", features = ["wayland"] }
+bitflags = "1.3.*"
+theme = { path = "../theme" }
+serde_json = { version = "1.0.144" }
+dirs = { workspace = true }
+icons = { path = "../icons" }
+
+
+[package.metadata.deb]
+maintainer = "Akshay Raina <akshayr@mechasystems.com>"
+extended-description = """\
+Keyboard application."""
+depends = "$auto"
+section = "utility"
+priority = "optional"
+assets = [
+    # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
+    [
+        "../../../target/release/mechanix-keyboard",
+        "usr/bin/",
+        "755",
+    ],
+    # [
+    #     "../../../assets/icons.example.toml",
+    #     "etc/mechanix/shell/assets/icons.toml",
+    #     "755",
+    # ],
+    # [
+    #     "../../../assets/settings.example.toml",
+    #     "etc/mechanix/shell/assets/settings.toml",
+    #     "755",
+    # ],
+    [
+        "../../../assets/icons/keyboard/*",
+        "usr/share/mechanix/shell/assets/icons/keyboard/",
+        "755",
+    ],
+    [
+        "../../../assets/layouts/*",
+        "usr/share/mechanix/shell/assets/layouts/",
+        "755",
+    ],
+    [
+        "../../../assets/trie/*",
+        "usr/share/mechanix/shell/assets/trie/",
+        "755",
+    ],
+]
+
+[package.metadata.generate-rpm]
+summary = "Keyboard application"
+license = "MIT"                  # or workspace override if you have one
+auto-req = "yes"
+
+assets = [
+    # Binary
+    { source = "../../../target/release/mechanix-keyboard", dest = "/usr/bin/mechanix-keyboard", mode = "755" },
+
+    # # Icons loading file
+    # { source = "../../../assets/icons.example.toml", dest = "/etc/mechanix/shell/assets/icons.toml", mode = "755" },
+
+    # # Settings file
+    # { source = "../../../assets/settings.example.toml", dest = "/etc/mechanix/shell/assets/settings.toml", mode = "755" },
+
+    # Keyboard icons
+    { source = "../../../assets/icons/keyboard/*", dest = "/usr/share/mechanix/shell/assets/icons/keyboard/", mode = "755" },
+
+    # Layouts
+    { source = "../../../assets/layouts/*", dest = "/usr/share/mechanix/shell/assets/layouts/", mode = "755" },
+
+    # Trie
+    { source = "../../../assets/trie/*", dest = "/usr/share/mechanix/shell/assets/trie/", mode = "755" },
+
+
+]

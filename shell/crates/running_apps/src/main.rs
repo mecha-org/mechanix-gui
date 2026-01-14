@@ -1,4 +1,5 @@
 use commons::prelude::*;
+use gpui::*;
 use running_apps::run_app;
 use tracing_subscriber::EnvFilter;
 
@@ -9,7 +10,8 @@ fn main() {
 
     let application = gpui::Application::new().with_assets(Assets {});
     application.run(|cx| {
-        run_app(cx);
+        let installed_apps = cx.new(|cx| InstalledApps::new(cx));
+        run_app(installed_apps, cx);
         cx.activate(true);
     });
 }

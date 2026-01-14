@@ -1,0 +1,94 @@
+[status_bar.layer_shell]
+layer = "overlay"
+anchor = ["right", "left", "top"]
+namespace = "mechanix.status.bar"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 300.0 }
+
+[settings_drawer]
+navbar_size = { width = 199.22, height = 28.5 }
+
+[settings_drawer.layer_shell]
+layer = "top"
+anchor = ["bottom"]
+namespace = "mechanix.settings.drawer"
+exclusive_zone = 29.0
+size = { width = 540.0, height = 620.0 }
+
+[running_apps]
+navbar_size = { width = 199.22, height = 28.5 }
+
+[running_apps.layer_shell]
+layer = "top"
+anchor = ["top"]
+namespace = "mechanix.running.apps"
+exclusive_zone = -1.0
+size = { width = 540.0, height = 620.0 }
+
+[universal_search]
+navbar_size = { width = 199.22, height = 28.5 }
+
+[universal_search.layer_shell]
+layer = "top"
+anchor = ["bottom"]
+namespace = "mechanix.universal.search"
+exclusive_zone = -1.0
+size = { width = 540.0, height = 620.0 }
+
+[universal_search.system_apps]
+files = "mechanix_files"
+
+[homescreen]
+status_bar_size = { width = 540.0, height = 36.0 }
+navbar_size = { width = 199.22, height = 28.5 }
+navbar_height = 40.0
+
+[homescreen.layer_shell]
+layer = "bottom"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.homescreen"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+
+[power_options.layer_shell]
+layer = "overlay"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.power.options"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+[app_drawer.layer_shell]
+layer = "top"
+anchor = ["top"]
+namespace = "mechanix.app.drawer"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 504.0 }
+
+[volume_slider.layer_shell]
+layer = "overlay"
+anchor = ["bottom", "left"]
+namespace = "mechanix.hardware_buttons.slider"
+exclusive_zone = 0.0
+size = { width = 37.0, height = 277.0 }
+
+[volume_slider]
+min_volume_level = 0.0
+max_volume_level = 100.0
+
+[launcher.layer_shell]
+layer = "bottom"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.launcher"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+[keyboard]
+default_layout = "/usr/share/mechanix/shell/assets/layouts/us.yaml"
+
+[keyboard.layer_shell]
+layer = "overlay"
+anchor = ["bottom", "left", "right"]
+namespace = "mechanix.keyboard"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 274.0 }

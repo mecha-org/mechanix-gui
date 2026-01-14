@@ -1,7 +1,7 @@
 [package]
 name = "mxsearch"
 description = "Search service for the Mechanix shell"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [dependencies]
@@ -21,7 +21,7 @@ sources = { path = "../sources" }
 [package.metadata.deb]
 maintainer = "Minesh Purohit <mineshp@mechasystems.com>"
 extended-description = """\
-Configuration system for the Mechanix shell, services and gui apps."""
+A simple and fast search engine for your apps and files."""
 depends = "$auto"
 section = "utility"
 priority = "optional"
@@ -30,6 +30,11 @@ assets = [
     [
         "../../../target/release/mxsearch",
         "usr/bin/",
+        "755",
+    ],
+    [
+        "settings.toml.example",
+        "usr/share/mechanix/mxsearch/settings.toml",
         "755",
     ],
 

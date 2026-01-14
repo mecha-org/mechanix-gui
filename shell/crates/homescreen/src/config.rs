@@ -30,7 +30,7 @@ impl Default for WindowConfig {
     fn default() -> Self {
         Self {
             width: 540.0,
-            height: 620.0,
+            height: 504.0,
         }
     }
 }
@@ -83,10 +83,10 @@ pub struct GridPadding {
 impl Default for GridPadding {
     fn default() -> Self {
         Self {
-            top: 20.0,
-            right: 20.0,
-            bottom: 20.0,
-            left: 20.0,
+            top: 0.0,
+            right: 0.0,
+            bottom: 0.0,
+            left: 0.0,
         }
     }
 }

@@ -41,9 +41,8 @@ futures = "0.3.31"
 futures-timer = "3.0.3"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "7da85902b7f136c56ad838607589efe6377c319a", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "cb10fb146dac2d008f2445475de2c1d90e9e4bba", features = [
     "wayland",
-    "linux-impeller",
 ] }
 rust-embed = "8.8.0"
 networkmanager = { path = "dbus/freedesktop/networkmanager" }
@@ -53,5 +52,5 @@ pulseaudio = { path = "dbus/freedesktop/pulseaudio" }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 toml = { version = "0.9.8", features = ["serde"] }
-crossbeam-channel = "0.5.15"
 dirs = "6.0.0"
+mxsearch = { path = "./services/search/server" }

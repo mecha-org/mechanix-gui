@@ -1,150 +1,217 @@
+use commons::widgets::wing;
+use futures::SinkExt;
 use gpui::*;
+use icons::prelude::SettingsDrawerIcons;
+use icons::prelude::*;
+use shell_state::{ShellState, VolumeMessage};
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::{
     prelude::*,
-    ui::icon::{Icon, IconName},
+    ui::{
+        FINAL_MODAL_SIZE,
+        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
+    },
 };
-
-#[derive(Debug, Clone, PartialEq, Default)]
-enum OutputType {
-    #[default]
-    SystemSpeaker,
-    ExternalSpeaker,
-    Headphone,
-}
-
-#[derive(Debug)]
-struct SinkDevice {
-    name: String,
-    device_type: OutputType,
-    is_active: bool,
-}
 
 impl SettingsDrawer {
     pub fn render_sound_modal(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
+        let SettingsDrawerIcons {
+            system_speaker,
+            external_speaker,
+            connected,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
 
-        let sink_list = vec![
-            SinkDevice {
-                name: "System speaker".to_string(),
-                device_type: OutputType::SystemSpeaker,
-                is_active: true,
-            },
-            SinkDevice {
-                name: "Headphones".to_string(),
-                device_type: OutputType::Headphone,
-                is_active: false,
-            },
-            SinkDevice {
-                name: "External speaker".to_string(),
-                device_type: OutputType::ExternalSpeaker,
-                is_active: false,
-            },
-        ];
+        let mut sound_list = ShellState::global(cx).sound_devices.clone();
+        let default_sound_device = ShellState::global(cx).default_sound_device.clone();
+        let volume_tx = ShellState::global(cx).volume_tx.clone().unwrap();
+
+        let default_description = default_sound_device.description.clone();
+        sound_list.sort_by_key(|device| device.description != default_description);
 
         div()
             .flex()
             .flex_col()
-            .w_full()
-            .h_full()
-            .bg(colors.background_1000)
             .size_full()
-            .border_1()
-            .rounded_xl()
-            .border_color(colors.accent_200.with_alpha(0.4))
-            .child(self.render_header_div(cx, "Sound"))
-            .child(div().flex().flex_col().flex_1().relative().children(
-                sink_list.iter().enumerate().map(|(idx, sink)| {
-                    let is_active = sink.is_active;
-
-                    let (icon_color, text_color) = Self::get_icon_and_text_color(is_active, cx);
-
-                    let mut icon = IconName::SystemSpeaker;
-
-                    match sink.device_type {
-                        OutputType::SystemSpeaker => icon = IconName::SystemSpeaker,
-                        OutputType::ExternalSpeaker => icon = IconName::ExternalSpeaker,
-                        OutputType::Headphone => icon = IconName::Headphone,
-                    }
-
-                    let connect_div = div().child(
-                        Icon::new(IconName::Connected)
-                            .size((px(24.), px(24.)))
-                            .text_color(icon_color),
-                    );
-
-                    let main_div = if is_active {
+            .child({
+                let mut w = wing()
+                    .flex()
+                    .flex_col()
+                    .flex_1()
+                    .relative()
+                    .bg(colors.background_1000)
+                    .border_color(colors.accent_200.with_alpha(0.4))
+                    .border_1()
+                    .border_t_0()
+                    .rounded(px(8.))
+                    .overflow_hidden()
+                    .child(
                         div()
-                            .id(("sink", idx))
+                            .child("Sound")
                             .flex()
-                            .items_center()
-                            .justify_between()
-                            .h(px(60.))
-                            .px_4()
-                            .bg(colors.accent_200.with_alpha(0.1))
-                            .border_y_1()
-                            .border_color(colors.accent_200.with_alpha(0.4))
-                            .child(
-                                div()
-                                    .flex()
-                                    .flex_row()
-                                    .text_align(TextAlign::Left)
-                                    .child(
-                                        div().pr_2().child(
-                                            Icon::new(icon)
-                                                .size((px(28.), px(28.)))
-                                                .text_color(icon_color),
-                                        ),
-                                    )
-                                    .child(
-                                        div()
-                                            .pl_2()
-                                            .font_weight(FontWeight::NORMAL)
-                                            .text_color(text_color)
-                                            .child(sink.name.clone()),
-                                    ),
-                            )
-                            .child(if sink.is_active { connect_div } else { div() })
-                    } else {
+                            .w_full()
+                            .justify_start()
+                            .text_color(colors.foreground_400)
+                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                                px(18.)
+                            } else {
+                                px(24.)
+                            })
+                            .pl(px(16.))
+                            .pt(px(8.))
+                            .h(px(MODAL_HEADER_HEIGHT)),
+                    )
+                    .child(
                         div()
-                            .id(("mode", idx))
-                            .flex()
-                            .items_center()
-                            .justify_between()
-                            .h(px(60.))
-                            .px_4()
-                            .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
-                            .child(
-                                div()
-                                    .flex()
-                                    .flex_row()
-                                    .text_align(TextAlign::Left)
-                                    .child(
-                                        div().pr_2().child(
-                                            Icon::new(icon)
-                                                .size((px(28.), px(28.)))
-                                                .text_color(icon_color),
-                                        ),
-                                    )
-                                    .child(
-                                        div()
-                                            .pl_2()
-                                            .font_weight(FontWeight::NORMAL)
-                                            .text_color(text_color)
-                                            .child(sink.name.clone()),
-                                    ),
-                            )
-                            .on_click(cx.listener(move |_, _, _, _| {
-                                println!("sink device clicked...");
-                            }))
-                    };
+                            .id("scrollable")
+                            .flex_1()
+                            .relative()
+                            .overflow_y_scroll()
+                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
+                                px(16.)
+                            } else {
+                                px(18.)
+                            })
+                            .children(sound_list.iter().enumerate().map(|(idx, device)| {
+                                let device_name = device
+                                    .name
+                                    .clone()
+                                    .unwrap_or_else(|| "Unknown".to_string());
+                                let device_desc = device
+                                    .description
+                                    .clone()
+                                    .unwrap_or_else(|| "Unknown".to_string());
 
-                    main_div
-                }),
-            ))
-            // Footer
-            .child(self.render_settings_div(cx))
+                                let default_device_name = default_sound_device
+                                    .name
+                                    .clone()
+                                    .unwrap_or_else(|| "Unknown".to_string());
+
+                                let is_active = device_name == default_device_name;
+
+                                let (icon_color, text_color) =
+                                    Self::get_icon_and_text_color(is_active, cx);
+
+                                let icon = if device_desc.to_lowercase().contains("built-in") {
+                                    &system_speaker
+                                } else {
+                                    &external_speaker
+                                };
+
+                                let connect_div = div().child(
+                                    svg().external_path(SharedString::from(
+                                        connected.to_string_lossy().to_string(),
+                                    ))
+                                        .size(px(24.))
+                                        .text_color(text_color),
+                                );
+
+                                let mut device_div = if is_active {
+                                    div()
+                                        .id(("device_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .bg(colors.accent_200.with_alpha(0.1))
+                                        .border_y_1()
+                                        .border_color(colors.accent_200.with_alpha(0.4))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .text_align(TextAlign::Left)
+                                                .child(
+                                                    div().pr_2().child(
+                                                        svg().external_path(SharedString::from(
+                                                            icon.to_string_lossy().to_string(),
+                                                        ))
+                                                            .size(px(28.))
+                                                            .text_color(icon_color),
+                                                    ),
+                                                )
+                                                .child(
+                                                    div()
+                                                        .pl_2()
+                                                        .font_weight(FontWeight::NORMAL)
+                                                        .text_color(text_color)
+                                                        .child(device_desc.clone()),
+                                                ),
+                                        )
+                                        .child(connect_div)
+                                } else {
+                                    div()
+                                        .id(("device_item", idx))
+                                        .flex()
+                                        .items_center()
+                                        .justify_between()
+                                        .h(px(ROW_HEIGHT))
+                                        .px_4()
+                                        .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .text_align(TextAlign::Left)
+                                                .child(
+                                                    div().pr_2().child(
+                                                        svg().external_path(SharedString::from(
+                                                            icon.to_string_lossy().to_string(),
+                                                        ))
+                                                            .size(px(28.))
+                                                            .text_color(icon_color),
+                                                    ),
+                                                )
+                                                .child(
+                                                    div()
+                                                        .pl_2()
+                                                        .font_weight(FontWeight::NORMAL)
+                                                        .text_color(text_color)
+                                                        .child(device_desc.clone()),
+                                                ),
+                                        )
+                                };
+
+                                if !is_active {
+                                    let device_name_clone = device_name.clone();
+                                    let volume_tx_clone = volume_tx.clone();
+
+                                    device_div = device_div.on_click(cx.listener(
+                                        move |this: &mut SettingsDrawer,
+                                              _event: &ClickEvent,
+                                              _window: &mut Window,
+                                              cx: &mut Context<Self>| {
+                                            let device_name = device_name_clone.clone();
+                                            let mut volume_tx = volume_tx_clone.clone();
+
+                                            cx.background_executor()
+                                                .spawn(async move {
+                                                    let _ = volume_tx
+                                                        .send(VolumeMessage::SetDefaultOutputSoundDevice {
+                                                            name: device_name,
+                                                        })
+                                                        .await;
+                                                })
+                                                .detach();
+                                            Self::start_close_animation(this, cx);
+
+                                            cx.notify();
+                                        },
+                                    ));
+                                }
+
+                                device_div
+                            })),
+                    )
+                    .child(self.render_settings_div(cx));
+                w.upper_wing_size(Size::new(px(237.0), px(36.0)));
+                w.border_width(px(1.0));
+                w.border_radius(px(8.0));
+                w
+            })
             .into_any()
     }
 }

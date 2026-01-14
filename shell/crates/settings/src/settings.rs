@@ -6,6 +6,8 @@ use gpui::*;
 use serde::Deserialize;
 use toml::{Table, Value};
 
+const LAYOUTS_BASE_PATH: &str = "/usr/share/mechanix/shell/layouts/";
+
 #[derive(Debug, Default, Clone, Deserialize, PartialEq)]
 pub struct Settings {
     #[serde(default)]
@@ -26,6 +28,10 @@ pub struct Settings {
     pub power_options: PowerOptionsSettings,
     #[serde(default)]
     pub volume_slider: VolumeSliderSettings,
+    #[serde(default)]
+    pub keyboard: KeyboardSettings,
+    #[serde(default)]
+    pub launcher: LauncherSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -130,6 +136,8 @@ pub struct UniversalSearchSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub system_apps: SystemApps,
 }
 
 impl Default for UniversalSearchSettings {
@@ -143,6 +151,7 @@ impl Default for UniversalSearchSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            system_apps: SystemApps::default(),
         }
     }
 }
@@ -199,6 +208,12 @@ pub struct HomescreenSettings {
     pub status_bar_size: Size<Pixels>,
 
     #[serde(default)]
+    pub navbar_size: Size<Pixels>,
+
+    #[serde(default)]
+    pub navbar_height: Pixels,
+
+    #[serde(default)]
     pub layer_shell: LayerShellSettings,
 }
 
@@ -206,6 +221,7 @@ impl Default for HomescreenSettings {
     fn default() -> Self {
         Self {
             status_bar_size: Size::new(px(540.0), px(36.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
             layer_shell: LayerShellSettings {
                 layer: Layer::Bottom,
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
@@ -213,6 +229,7 @@ impl Default for HomescreenSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
+            navbar_height: px(40.),
         }
     }
 }
@@ -265,6 +282,64 @@ impl Default for VolumeSliderSettings {
     }
 }
 
+/// Keyboard settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct KeyboardSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub default_layout: String,
+}
+
+impl Default for KeyboardSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Top,
+                anchor: Anchor::TOP,
+                namespace: "mechanix.keyboard".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(274.0)),
+            },
+            default_layout: format!("{}us.yaml", LAYOUTS_BASE_PATH),
+        }
+    }
+}
+
+/// Launcher settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct LauncherSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+}
+
+impl Default for LauncherSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Bottom,
+                anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
+                namespace: "mechanix.launcher".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct SystemApps {
+    pub files: String,
+}
+
+impl Default for SystemApps {
+    fn default() -> Self {
+        Self {
+            files: "mechanix_files".into(),
+        }
+    }
+}
+
 pub fn config_paths_for(file_name: &str) -> Vec<PathBuf> {
     let mut config_paths = Vec::new();
 
@@ -280,16 +355,16 @@ pub fn config_paths_for(file_name: &str) -> Vec<PathBuf> {
     };
 
     config_paths.push(PathBuf::from(format!(
-        "/usr/share/mechanix/launcher/assets/{}",
+        "/usr/share/mechanix/shell/assets/{}",
         file_name
     )));
     config_paths.push(PathBuf::from(format!(
-        "/etc/mechanix/launcher/assets/{}",
+        "/etc/mechanix/shell/assets/{}",
         file_name
     )));
 
     if let Some(home_dir) = dirs::home_dir() {
-        config_paths.push(home_dir.join(format!(".config/mechanix/launcher/assets/{}", file_name)));
+        config_paths.push(home_dir.join(format!(".config/mechanix/shell/assets/{}", file_name)));
     }
 
     config_paths

@@ -43,24 +43,52 @@ pub fn validate_schema(toml_file: &Value) -> Result<(), ValidatorError> {
         for (key, val) in section {
             let entry = as_table(val, &format!("key '{}' in section '{}'", key, section_name))?;
 
-            debug!("Validating key '{}' in section '{}'", key, section_name);
+            // If this table directly describes a setting (has a 'type'), validate it.
+            if entry.contains_key("type") {
+                debug!("Validating key '{}' in section '{}'", key, section_name);
 
-            let type_val = get_required_str(entry, "type", &key, &section_name)?;
-            validate_type(type_val, &key, &section_name)?;
+                let type_val = get_required_str(entry, "type", &key, &section_name)?;
+                validate_type(type_val, &key, &section_name)?;
 
-            if !entry.contains_key("default") {
-                return Err(missing_field_error("default", key, section_name));
-            }
+                if !entry.contains_key("default") {
+                    return Err(missing_field_error("default", key, section_name));
+                }
 
-            if !entry.contains_key("description") {
-                return Err(missing_field_error("description", key, section_name));
-            }
+                if !entry.contains_key("description") {
+                    return Err(missing_field_error("description", key, section_name));
+                }
 
-            match type_val {
-                "string" => validate_string_type(entry, &key, &section_name)?,
-                "number" => validate_number_type(entry, &key, &section_name)?,
-                "enum" => validate_enum_type(entry, &key, &section_name)?,
-                _ => {} // If new types are added, define new validation
+                match type_val {
+                    "string" => validate_string_type(entry, &key, &section_name)?,
+                    "number" => validate_number_type(entry, &key, &section_name)?,
+                    "enum" => validate_enum_type(entry, &key, &section_name)?,
+                    _ => {} // If new types are added, define new validation
+                }
+            } else {
+                // Otherwise, this is a grouping table (e.g., settings.display). Validate its children.
+                for (subkey, subval) in entry {
+                    let subentry = as_table(subval, &format!("key '{}' in section '{}.{}'", subkey, section_name, key))?;
+
+                    debug!("Validating key '{}' in section '{}.{}'", subkey, section_name, key);
+
+                    let type_val = get_required_str(subentry, "type", subkey, &format!("{}.{}", section_name, key))?;
+                    validate_type(type_val, subkey, &format!("{}.{}", section_name, key))?;
+
+                    if !subentry.contains_key("default") {
+                        return Err(missing_field_error("default", subkey, &format!("{}.{}", section_name, key)));
+                    }
+
+                    if !subentry.contains_key("description") {
+                        return Err(missing_field_error("description", subkey, &format!("{}.{}", section_name, key)));
+                    }
+
+                    match type_val {
+                        "string" => validate_string_type(subentry, subkey, &format!("{}.{}", section_name, key))?,
+                        "number" => validate_number_type(subentry, subkey, &format!("{}.{}", section_name, key))?,
+                        "enum" => validate_enum_type(subentry, subkey, &format!("{}.{}", section_name, key))?,
+                        _ => {} // If new types are added, define new validation
+                    }
+                }
             }
         }
     }
@@ -224,6 +252,9 @@ pub fn validate_setting(schema: &Value, namespace: &str, value: &str) -> Result<
         }
         "string" => {
             // Optionally check max_length, etc.
+        }
+        "object" => {
+            // Optionally check the format, etc.
         }
         "number" | "int" | "float" => {
             if value.parse::<f64>().is_err() {

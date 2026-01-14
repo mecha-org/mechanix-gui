@@ -1,15 +1,15 @@
 mod data;
 mod ui;
 
+use commons::input::*;
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
-use commons::input::*;
 use settings::prelude::*;
 use ui::models::UniversalSearch;
 
 pub mod prelude {
     pub use crate::data::*;
-    pub use crate::run_app;
+    // pub use crate::run_app;
     pub use crate::ui::models::UniversalSearch;
 }
 
@@ -28,28 +28,8 @@ pub fn run_app(cx: &mut App) {
         ..
     } = layer_shell;
 
-    // Register key bindings for the text input
-    cx.bind_keys([
-        KeyBinding::new("backspace", Backspace, None),
-        KeyBinding::new("delete", Delete, None),
-        KeyBinding::new("left", Left, None),
-        KeyBinding::new("right", Right, None),
-        KeyBinding::new("shift-left", SelectLeft, None),
-        KeyBinding::new("shift-right", SelectRight, None),
-        KeyBinding::new("cmd-a", SelectAll, None),
-        KeyBinding::new("ctrl-a", SelectAll, None), // Add Windows/Linux alternative
-        KeyBinding::new("home", Home, None),
-        KeyBinding::new("end", End, None),
-        KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, None),
-        KeyBinding::new("cmd-v", Paste, None),
-        KeyBinding::new("ctrl-v", Paste, None), // Add Windows/Linux alternative
-        KeyBinding::new("cmd-c", Copy, None),
-        KeyBinding::new("ctrl-c", Copy, None), // Add Windows/Linux alternative
-        KeyBinding::new("cmd-x", Cut, None),
-        KeyBinding::new("ctrl-x", Cut, None), // Add Windows/Linux alternative
-    ]);
-
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let screen_size = gpui::size(size.width, size.height - navbar_size.height);
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, screen_size, cx));
 
     cx.open_window(
         WindowOptions {

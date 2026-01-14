@@ -1,12 +1,21 @@
-// Layout constants
-pub const CARD_WIDTH: f32 = 250.0;
-pub const CARD_HEIGHT: f32 = 290.0;
-pub const CARD_GAP: f32 = 8.0;
-pub const CONTAINER_WIDTH: f32 = 540.0;
-pub const PADDING: f32 = 0.0;
+use std::sync::LazyLock;
 
-// Drag thresholds
-pub const DRAG_DETECTION_THRESHOLD: f32 = 5.0;
-pub const VERTICAL_DISMISS_THRESHOLD: f32 = -50.0;
-pub const HORIZONTAL_SWITCH_THRESHOLD: f32 = 0.2; // 20% of card width to switch
-pub const VERTICAL_TARGET_THRESHOLD: f32 = -500.0;
+use gpui::*;
+
+pub static CARD_SIZE: LazyLock<Size<Pixels>> = LazyLock::new(|| Size::new(px(480.), px(600.)));
+pub const CARD_STEP: f32 = 100.;
+pub const SWIPE_THRESHOLD: f32 = 150.0;
+
+// Duration for a single card swipe (manual drag release)
+pub const ANIMATION_DURATION: f32 = 0.3; // Default: 0.3
+
+// Base duration for the first card in "Clear All"
+pub const CLEAR_ANIMATION_BASE: f32 = 0.5; // Default: 0.5
+
+// Additional delay added for each subsequent card in "Clear All"
+pub const CLEAR_ANIMATION_STEP: f32 = 0.3; // Default: 0.1
+
+pub const CLICK_THRESHOLD: f32 = 5.0;
+
+// Duration for initial animation
+pub const INITIAL_ANIMATION_DURATION: f32 = 0.2;

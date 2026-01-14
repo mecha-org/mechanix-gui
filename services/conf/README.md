@@ -85,6 +85,8 @@ mode = "dark"
 theme = { type = "string", key = "color", default = "black" }
 borderRadius = { type = "number", key = "radius", default = 8 }
 darkMode = { type = "bool", key = "enabled", default = false }
+[settings.active_theme]
+theme_colors = { type = "object", default = { accent = "oklch(0.6388 0.1435 64.8 / 98.0)", background = "oklch(0.0 0.0 0.0 / 100.0)", foreground = "oklch(1.0 0.0 0.0 / 100.0)" }, description = "Theme color palette" }
 
 ```
 

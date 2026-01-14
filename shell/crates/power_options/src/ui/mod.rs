@@ -1,8 +1,8 @@
-use dispatcher::Dispatcher;
 use gpui::{prelude::FluentBuilder, *};
-
-use crate::ui::icon::{Icon, IconName};
-pub mod icon;
+use icons::prelude::*;
+use std::process::Command;
+use theme::ActiveTheme;
+use theme::prelude::AlphaExt;
 
 const INIT_ANIMATE_HEIGHT: f32 = 0.0; // Start from top
 
@@ -50,26 +50,32 @@ impl PowerOptions {
         this
     }
 
-    fn update_input_regions(window: &mut Window, size: Size<Pixels>, show: bool) {
+    fn power_off() -> std::io::Result<()> {
+        Command::new("shutdown").args(["-h", "now"]).status()?;
+        Ok(())
+    }
+
+    fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
         println!("update------region----{:?}", show);
+        let size = window.bounds().size;
         let regions = if show {
             vec![Bounds {
                 origin: point(px(0.0), px(0.0)),
                 size,
             }]
         } else {
-            vec![Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size: gpui::size(px(0.0), px(0.0)),
-            }]
+            vec![]
         };
 
         window.set_input_regions(Some(regions));
+        cx.notify();
         println!("Input regions updated: show={}", show);
     }
     fn handle_upward_swipe(&mut self, cx: &mut Context<Self>) {
         println!("Go back - close power options");
         self.snap_to(0.0, cx);
+        self.show = false;
+        cx.notify();
     }
 
     fn animate_initial_reveal(&mut self, window_height: f32, cx: &mut Context<Self>) {
@@ -131,7 +137,7 @@ impl PowerOptions {
                             let total_height = this.initial_height + target;
                             if total_height >= window_height {
                                 this.power_off = true;
-                                println!("Power off triggered!");
+                                Self::power_off();
                             }
 
                             cx.notify();
@@ -165,6 +171,10 @@ impl Render for PowerOptions {
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
+        let colors = cx.theme().colors.clone();
+        let icons = Icons::global(cx).power_options.clone();
+
+        self.update_input_regions(window, show, cx);
 
         // Self::update_input_regions(window, size, show);
         println!("RENDERING power-options {:?}", show);
@@ -200,7 +210,7 @@ impl Render for PowerOptions {
                         .relative()
                         .w(size.width)
                         .h(size.height)
-                        .bg(rgb(0x1a1a1a))
+                        .bg(colors.background_900)
                         .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                             if let Some(offset) = this.drag_offset {
                                 let new_y = event.position.y.to_f64() as f32 - offset;
@@ -244,7 +254,7 @@ impl Render for PowerOptions {
                                 .id("power-off-swipe-area")
                                 .h(px(amber_card_height))
                                 .w_full()
-                                .bg(rgb(0x2d1f0f))
+                                .bg(colors.accent_400.with_alpha(0.4))
                                 .rounded_b(px(20.0))
                                 .flex()
                                 .items_center()
@@ -275,14 +285,20 @@ impl Render for PowerOptions {
                                             .items_center()
                                             .gap_3()
                                             .child(
-                                                Icon::new(IconName::PowerOff)
-                                                    .text_color(rgb(0xC67600))
-                                                    .size((px(32.), px(32.))),
+                                                svg()
+                                                    .external_path(SharedString::from(
+                                                        icons
+                                                            .power_off
+                                                            .to_string_lossy()
+                                                            .to_string(),
+                                                    ))
+                                                    .text_color(colors.accent_200)
+                                                    .size(px(32.)),
                                             )
                                             .child(
                                                 div()
                                                     .text_xl()
-                                                    .text_color(rgb(0xd4a574))
+                                                    .text_color(colors.foreground_200)
                                                     .child("Swipe to power off"),
                                             ),
                                     )
@@ -293,22 +309,25 @@ impl Render for PowerOptions {
                             div()
                                 .h(px(arrow_height))
                                 .w_full()
-                                .bg(rgb(0x000000))
+                                .bg(colors.background_1000)
                                 .flex()
                                 .flex_row()
                                 .items_center()
                                 .justify_center()
                                 .when(arrow_height > 20.0, |div| {
                                     div.child(
-                                        Icon::new(IconName::DownArrow)
-                                            .text_color(rgb(0xC67600))
-                                            .size((px(26.), px(26.))),
+                                        svg()
+                                            .external_path(SharedString::from(
+                                                icons.down_arrow.to_string_lossy().to_string(),
+                                            ))
+                                            .text_color(colors.accent_200)
+                                            .size(px(26.)),
                                     )
                                 }),
                         )
                         .child(
                             // Lower area - black background
-                            div().flex_1().w_full().bg(rgb(0x000000)),
+                            div().flex_1().w_full().bg(colors.background_1000),
                         ),
                 )
             })
