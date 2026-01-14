@@ -105,6 +105,26 @@ impl Default for RunningAppsSettings {
     }
 }
 
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct DrawerApps {
+    pub settings: String,
+    pub terminal: String,
+    pub camera: String,
+}
+
+impl Default for DrawerApps {
+    fn default() -> Self {
+        Self {
+            settings: "Mechanix Settings".into(),
+            terminal: "Alacritty".into(),
+            camera: "Mechanix Camera".into()
+        }
+    }
+}
+
+
+
 /// Settings drawer settings
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct SettingsDrawerSettings {
@@ -112,6 +132,8 @@ pub struct SettingsDrawerSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub drawer_apps: DrawerApps,
 }
 
 impl Default for SettingsDrawerSettings {
@@ -125,6 +147,7 @@ impl Default for SettingsDrawerSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            drawer_apps: DrawerApps::default(),
         }
     }
 }

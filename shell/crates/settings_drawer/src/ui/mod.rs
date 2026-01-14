@@ -4,6 +4,7 @@ use commons::widgets::{WingSide, wing};
 use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
+use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
 use settings::prelude::{Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
@@ -88,7 +89,9 @@ pub struct SettingsDrawer {
     pub wireless_modal_scroll: WirelessModalScroll,
     pub bluetooth_modal_scroll: BluetoothModalScroll,
 
-    pub search_service: Option<MxSearchService>,
+    pub settings_app_info: Option<AppInfo>,
+    pub camera_app_info: Option<AppInfo>,
+    pub terminal_info: Option<AppInfo>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,6 +108,7 @@ pub enum ModalKind {
 impl SettingsDrawer {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let settings = Settings::global(cx).settings_drawer.clone();
+        let apps = Settings::global(cx).settings_drawer.clone().drawer_apps;
 
         let ShellState {
             volume_tx,
@@ -126,17 +130,6 @@ impl SettingsDrawer {
         let mut _subscriptions = vec![b_subscription, v_subscription];
 
         let closed_pos = Self::calculate_closed_position(&settings);
-
-        cx.spawn(async move |this, cx| {
-            if let Ok(service) = MxSearchService::new().await {
-                this.update(cx, |this, cx| {
-                    this.search_service = Some(service);
-                    cx.notify();
-                })
-                .ok();
-            }
-        })
-        .detach();
 
         let settings_drawer = Self {
             open_power_options: false,
@@ -175,8 +168,39 @@ impl SettingsDrawer {
 
             wireless_modal_scroll: WirelessModalScroll::new(),
             bluetooth_modal_scroll: BluetoothModalScroll::new(),
-            search_service: None,
+            settings_app_info: None,
+            camera_app_info: None,
+            terminal_info: None,
         };
+
+        cx.spawn(async move |this, cx| {
+            if let Ok(service) = MxSearchService::new().await {
+                let mut settings_app: Option<AppInfo> = None;
+                let mut camera_app: Option<AppInfo> = None;
+                let mut terminal_app: Option<AppInfo> = None;
+                if let Ok(apps) = service.search_applications(&apps.settings).await {
+                    settings_app = apps.first().cloned();
+                }
+
+                if let Ok(apps) = service.search_applications(&apps.camera).await {
+                    camera_app = apps.first().cloned();
+                }
+
+                if let Ok(apps) = service.search_applications(&apps.terminal).await {
+                    terminal_app = apps.first().cloned();
+                }
+
+                this.update(cx, |this, cx| {
+                    this.settings_app_info = settings_app;
+                    this.camera_app_info = camera_app;
+                    this.terminal_info = terminal_app;
+
+                    cx.notify();
+                })
+                .ok();
+            }
+        })
+        .detach();
         settings_drawer
     }
 
@@ -722,41 +746,21 @@ impl SettingsDrawer {
             )
     }
 
-    fn launch_app_by_query(
-        search_service: Option<MxSearchService>,
-        query: String,
-        cx: &mut Context<Self>,
-    ) {
-        let Some(search_service) = search_service else {
-            eprintln!("Search service not yet initialized");
+    fn launch_app(app_info: Option<AppInfo>, cx: &mut Context<Self>) {
+        if app_info.is_none() {
             return;
-        };
-
-        let query_lowercase = query.to_lowercase();
+        }
         let sender = Dispatcher::global(cx).0.clone();
+        let app_info = app_info.clone().unwrap();
 
         cx.background_executor()
             .spawn(async move {
-                match search_service.search_applications(&query_lowercase).await {
-                    Ok(result) => {
-                        let Some(app_result) = result.first().cloned() else {
-                            println!("No app found for query: {}", query_lowercase);
-                            return;
-                        };
-
-                        let possible_app_id = app_result.possible_app_id;
-                        let app_exec = app_result.exec;
-                        println!("GOT APP ID: {:?}", possible_app_id);
-
-                        let _ = sender
-                            .broadcast(dispatcher::Message::LaunchApp {
-                                app_id: possible_app_id,
-                                exec: app_exec,
-                            })
-                            .await;
-                    }
-                    Err(e) => eprintln!("Error getting app id: {e:?}"),
-                }
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: app_info.possible_app_id,
+                        exec: app_info.exec,
+                    })
+                    .await;
             })
             .detach();
     }
@@ -919,7 +923,6 @@ impl SettingsDrawer {
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let terminal = Icons::global(cx).settings_drawer.terminal.clone();
-        let search_service = self.search_service.clone();
 
         IconButton::new("id_terminal")
             .icon(
@@ -932,9 +935,8 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                move |_, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
-                    println!("Camera clicked");
-                    Self::launch_app_by_query(search_service.clone(), "Alacritty".to_string(), cx);
+                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    Self::launch_app(this.terminal_info.clone(), cx);
                     cx.notify();
                 },
             ))
@@ -991,7 +993,6 @@ impl SettingsDrawer {
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let settings = Icons::global(cx).settings_drawer.settings.clone();
-        let search_service = self.search_service.clone();  
 
         IconButton::new("id_settings")
             .icon(
@@ -1003,13 +1004,8 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                move |_, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
-                    println!("Settings clicked");
-                    Self::launch_app_by_query(
-                        search_service.clone(),
-                        "Mechanix Settings".to_string(),
-                        cx,
-                    );
+                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    Self::launch_app(this.settings_app_info.clone(), cx);
                     cx.notify();
                 },
             ))
@@ -1018,7 +1014,6 @@ impl SettingsDrawer {
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let camera_off = Icons::global(cx).settings_drawer.camera_off.clone();
-        let search_service = self.search_service.clone(); // Remove .expect()
 
         IconButton::new("id_camera")
             .icon(
@@ -1031,13 +1026,8 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                move |_, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
-                    println!("Camera clicked");
-                    Self::launch_app_by_query(
-                        search_service.clone(),
-                        "Mechanix Camera".to_string(),
-                        cx,
-                    );
+                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    Self::launch_app(this.camera_app_info.clone(), cx);
                     cx.notify();
                 },
             ))
