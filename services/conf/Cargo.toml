@@ -51,7 +51,7 @@ assets = [
     [
         "../conf/schemas/default_profile.toml",
         "etc/mxconf/profile/default_profile.toml",
-        "644",
+        "755",
     ],
     [
         "../conf/schemas/org.mechanix.desktop.toml",
@@ -67,4 +67,6 @@ auto-req = "yes"
 assets = [
     # Binary
     { source = "../../target/release/mxconf", dest = "/usr/bin/mxconf", mode = "755" },
+    { source = "../conf/schemas/default_profile.toml", dest = "/etc/mxconf/profile/default_profile.toml", mode = "755" },
+    { source = "../conf/schemas/org.mechanix.desktop.toml", dest = "/usr/share/mxconf/schemas/org.mechanix.desktop.toml", mode = "644" },
 ]

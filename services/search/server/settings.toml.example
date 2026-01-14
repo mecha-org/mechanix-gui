@@ -5,13 +5,13 @@
 # Application search (.desktop files)
 [apps]
 # Enable the AppSearchService
-enable_search = false
+enable_search = true
 
 # Keep index dirs consistent across services
 index_dir = ".config/mxsearch/index/apps"
 
 # How many results to return for app queries
-search_limit = 10
+search_limit = 100
 
 # Tantivy writer heap (bytes). 50 MB is a good default for small-to-medium sets.
 target_memory_usage_in_bytes = 50_000_000
