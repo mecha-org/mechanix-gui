@@ -1,8 +1,6 @@
 use crate::widgets::NotificationList;
 use gpui::{Context, IntoElement, Render, Window, *};
 
-pub mod icon;
-
 pub struct NotificationStory {
     pub notification_list: Entity<NotificationList>,
 }

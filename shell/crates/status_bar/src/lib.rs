@@ -12,7 +12,7 @@ use crate::ui::StatusBar;
 pub mod prelude {
     pub use crate::events::AppEvents;
     pub use crate::run_app;
-    pub use crate::ui::{Icon, IconName, StatusBar, status_bar_components};
+    pub use crate::ui::{StatusBar, status_bar_components};
 }
 
 pub fn run_app(cx: &mut App) {

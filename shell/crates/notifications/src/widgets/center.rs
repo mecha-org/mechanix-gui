@@ -2,7 +2,6 @@ use crate::helper::{
     cubic_bezier, format_notification_body, format_notification_name, format_notification_summary,
     time_ago,
 };
-use crate::ui::icon::{Icon, IconName};
 
 use crate::widgets::notification::{
     DbNotification, NotificationId, NotificationUi, UserDismissedEvent,
@@ -10,6 +9,7 @@ use crate::widgets::notification::{
 use commons::widgets::{WingSide, wing};
 use gpui::prelude::FluentBuilder;
 use gpui::*;
+use icons::prelude::Icons;
 use smol::Timer;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{
@@ -29,7 +29,7 @@ const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
 const EXPANDED_ITEM_HEIGHT: f32 = 72.0; // body-only cards
 const CARD_GAP: f32 = 8.0; // mt_2()
 const GROUP_GAP: f32 = 10.0; // gap_2p5()
-const LIST_PADDING_TOP: f32 = 12.0; 
+const LIST_PADDING_TOP: f32 = 12.0;
 const LIST_PADDING_BOTTOM: f32 = 12.0;
 
 pub struct DragInfo {
@@ -939,6 +939,7 @@ impl Render for NotificationWidget {
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let icons = Icons::global(cx).notifications.clone();
         // Header - updated styling
         let mut header = div()
             .flex()
@@ -1075,6 +1076,8 @@ impl NotificationCenter {
                                    group_id: u64,
                                    item_id: u64| {
                 let mut content = div().flex().flex_col().gap_2();
+                let default_icon: SharedString =
+                    icons.application.to_string_lossy().to_string().into();
 
                 // Top line: icon + name · time (only for first card or when collapsed)
                 if show_header {
@@ -1110,8 +1113,10 @@ impl NotificationCenter {
                                             item_icon_path.is_none() && g.icon_path.is_none(),
                                             |this| {
                                                 this.child(
-                                                    Icon::new(IconName::Application)
-                                                        .size((px(16.), px(16.)))
+                                                    svg()
+                                                        .external_path(default_icon)
+                                                        .w(px(16.))
+                                                        .h(px(16.))
                                                         .text_color(colors.foreground_0),
                                                 )
                                             },

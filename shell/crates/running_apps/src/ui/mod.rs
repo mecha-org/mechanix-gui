@@ -1,6 +1,4 @@
 mod components;
-mod icon;
-
 use crate::prelude::models::*;
 use commons::prelude::InstalledApps;
 use gpui::foreign_toplevel_management::ForeignToplevelHandle;
