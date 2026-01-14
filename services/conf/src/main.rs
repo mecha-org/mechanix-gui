@@ -81,7 +81,7 @@ enum Commands {
 const LAST_MODIFIED_TREE_NAME: &str = "schema_last_modified";
 const CONNECTION_BUS_NAME: &str = "org.mechanix.MxConf";
 const SCHEMA_DIR: &str = "/usr/share/mxconf/schemas";
-const DEFAULT_PROFILE_PATH: &str = "/etc/mxconf/profile/default.toml";
+const DEFAULT_PROFILE_PATH: &str = "/etc/mxconf/profile/default_profile.toml";
 const KEY_FILE_DIR: &str = "/etc/mxconf/keyfiles";
 const DB_PATH: &str = ".config/mxconf";
 
