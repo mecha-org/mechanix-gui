@@ -14,7 +14,6 @@ use settings::prelude::Settings;
 use crate::prelude::Icon;
 use crate::prelude::IconName;
 use crate::ui::widgets::{ BottomSheetKind, SubWindow };
-use crate::ui::widgets::IconButton;
 
 pub mod icon;
 pub mod utils;
@@ -191,7 +190,7 @@ impl AppDrawer {
             }
 
             let gaps = if num_apps > 1.0 { (num_apps - 1.0) * 1.0 } else { 0.0 };
-            px(APP_ROW_HEIGHT * num_apps + gaps)
+            px(APP_ROW_HEIGHT * num_apps + gaps + 200.0)
         } else {
             let count = self.grouped.len() as f32;
             if count == 0.0 {
@@ -201,7 +200,7 @@ impl AppDrawer {
             let rows_height = GRID_ROW_HEIGHT * count;
             let gaps_height = if count > 1.0 { SECTION_SPACING * (count - 1.0) } else { 0.0 };
 
-            px(rows_height + gaps_height)
+            px(rows_height + gaps_height + 100.0)
         }
     }
 
@@ -266,10 +265,7 @@ impl AppDrawer {
         self.filtered = self.all_apps
             .iter()
             .filter(|app| {
-                app.name.to_lowercase().contains(&query) ||
-                    app.exec.to_lowercase().contains(&query) ||
-                    app.categories.iter().any(|c| c.to_lowercase().contains(&query))
-            })
+                app.name.to_lowercase().contains(&query)            })
             .cloned()
             .collect();
 
@@ -349,21 +345,23 @@ impl AppDrawer {
 
         div()
             .id("main-search")
+            .absolute()
             .bottom_0()
             .left_0()
+            .w(app_drawer_size.width)
             .rounded_t(px(8.0))
             .flex()
             .flex_row()
             .items_center()
             .justify_between()
             .px_2()
+            .overflow_hidden()
             .h(px(SEARCH_BAR_HEIGHT))
-            .w(app_drawer_size.width)
             .bg(colors.accent_300.with_alpha(0.1))
             .child(
                 div()
                     .id("search-bar")
-                    .w(app_drawer_size.width - px(10.0))
+                    .flex_1()
                     .h(px(44.0))
                     .bg(colors.background_900)
                     .rounded(px(6.0))
@@ -450,6 +448,230 @@ impl AppDrawer {
             )
     }
 
+    fn render_category_list(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+        let grouped = &self.grouped;
+        let colors = Theme::global(cx).colors.clone();
+
+        div()
+            .relative()
+            .flex()
+            .flex_col()
+            .gap(px(SECTION_SPACING))
+            .top(self.scroll_offset)
+            .children(
+                grouped
+                    .into_iter()
+                    .enumerate()
+                    .map(|(idx, (category, apps))| {
+                        let total = apps.len();
+                        let show_popup = total > 1;
+                        let shown_apps = if show_popup {
+                            apps.iter().take(6).cloned().collect::<Vec<_>>()
+                        } else {
+                            apps.clone()
+                        };
+
+                        let category_for_popup = category.clone();
+
+                        div()
+                            .id(idx)
+                            .relative()
+                            .w(px(GRID_ROW_WIDTH))
+                            .h(px(GRID_ROW_HEIGHT))
+                            .cursor_pointer()
+                            .on_click(
+                                cx.listener(move |this: &mut AppDrawer, _event, _window, cx| {
+                                    if !this.has_moved && !this.is_long_press {
+                                        // Add this condition
+                                        this.show_subwindow_modal = true;
+                                        this.subwindow_category = category_for_popup.clone();
+                                        this.subwindow = None;
+                                        cx.notify();
+                                    }
+                                    this.has_moved = false;
+                                    this.is_long_press = false; // Add this reset
+                                })
+                            )
+                            .child(
+                                div()
+                                    .grid()
+                                    .grid_cols(6)
+                                    .gap(px(28.0))
+                                    .bg(colors.background_900)
+                                    .p(px(20.0))
+                                    .rounded(px(8.0))
+                                    .border(px(1.0))
+                                    .border_color(colors.accent_200.with_alpha(0.6))
+                                    .w(px(GRID_ROW_WIDTH))
+                                    .h(px(GRID_ROW_HEIGHT))
+                                    .justify_center()
+                                    .children(
+                                        shown_apps
+                                            .into_iter()
+                                            .enumerate()
+                                            .map(|(idx, app)| {
+                                                let app_id = app.possible_app_id.clone();
+                                                let exec = app.exec.clone();
+
+                                                let id = hash_id(&app_id);
+                                                let icon = Self::resolved_icon(&app.icon_path);
+                                                let app_for_sheet = app.clone();
+
+                                                div()
+                                                    .id(id + idx)
+                                                    .bg(colors.background_800)
+                                                    .flex()
+                                                    .items_center()
+                                                    .justify_center()
+                                                    .rounded(px(5.6))
+                                                    .size(px(56.0)) // outer boxSize (same as IconButton default)
+                                                    .on_mouse_down(
+                                                        MouseButton::Left,
+                                                        cx.listener(
+                                                            move |
+                                                                this: &mut AppDrawer,
+                                                                _event,
+                                                                _window,
+                                                                cx
+                                                            | {
+                                                                this.press_start_time = Some(
+                                                                    Instant::now()
+                                                                );
+                                                                this.press_app_info = Some(
+                                                                    app_for_sheet.clone()
+                                                                );
+                                                                this.is_long_press = false;
+
+                                                                // Long-press detector
+                                                                cx.spawn(async move |this, cx| {
+                                                                    cx
+                                                                        .background_executor()
+                                                                        .timer(
+                                                                            LONG_PRESS_DURATION
+                                                                        ).await;
+
+                                                                    this.update(cx, |this, cx| {
+                                                                        if
+                                                                            this.press_start_time.is_some() &&
+                                                                            !this.has_moved &&
+                                                                            !this.is_long_press
+                                                                        {
+                                                                            this.is_long_press = true;
+                                                                            this.show_bottom_sheet = true;
+                                                                            this.sheet_app =
+                                                                                this.press_app_info.clone();
+                                                                            this.sheet_kind =
+                                                                                BottomSheetKind::MainOptions;
+
+                                                                            // cancel click
+                                                                            this.press_start_time =
+                                                                                None;
+                                                                            cx.notify();
+                                                                        }
+                                                                    }).ok();
+                                                                }).detach();
+
+                                                                cx.stop_propagation();
+                                                            }
+                                                        )
+                                                    )
+                                                    .on_mouse_up(
+                                                        MouseButton::Left,
+                                                        cx.listener(
+                                                            move |
+                                                                this: &mut AppDrawer,
+                                                                _event,
+                                                                _window,
+                                                                cx
+                                                            | {
+                                                                if
+                                                                    let Some(start_time) =
+                                                                        this.press_start_time
+                                                                {
+                                                                    let duration =
+                                                                        start_time.elapsed();
+
+                                                                    if
+                                                                        duration >=
+                                                                            LONG_PRESS_DURATION &&
+                                                                        !this.has_moved
+                                                                    {
+                                                                        // long press
+                                                                        this.is_long_press = true;
+                                                                        this.show_bottom_sheet = true;
+                                                                        this.sheet_app =
+                                                                            this.press_app_info.clone();
+                                                                        this.sheet_kind =
+                                                                            BottomSheetKind::MainOptions;
+                                                                        cx.notify();
+                                                                    } else if
+                                                                        !this.has_moved &&
+                                                                        !this.is_long_press
+                                                                    {
+                                                                        // short press
+                                                                        this.on_app_click(
+                                                                            app_id.clone(),
+                                                                            exec.clone(),
+                                                                            cx
+                                                                        );
+                                                                    }
+                                                                }
+
+                                                                this.press_start_time = None;
+                                                                this.press_app_info = None;
+                                                                this.has_moved = false;
+
+                                                                cx.stop_propagation();
+                                                            }
+                                                        )
+                                                    )
+                                                    .child(
+                                                        div()
+                                                            .size(px(41.0))
+                                                            .border(px(1.0))
+                                                            .items_center()
+                                                            .justify_center()
+                                                            .child(icon)
+                                                    )
+                                            })
+                                    )
+                            )
+                            .child({
+                                let mut w = wing()
+                                    .absolute()
+                                    .bottom_0()
+                                    .left_0()
+                                    .h(px(36.0))
+                                    .w(px(GRID_ROW_WIDTH))
+
+                                    .flex()
+                                    .flex_col()
+                                    .justify_start()
+                                    .items_start()
+                                    .bg(colors.accent_200.with_alpha(0.1))
+                                    .border_color(colors.accent_200.with_alpha(0.6));
+                                w.upper_wing_size(Size::new(px(150.0), px(15.0)));
+                                w.border_width(px(1.0));
+                                w.border_radius(px(8.0));
+                                w
+                            })
+                            .child(
+                                div()
+                                    .absolute()
+                                    .bottom_5()
+                                    .left_6()
+                                    .font_weight(FontWeight(400.0))
+                                    .text_size(px(16.0))
+                                    .line_height(px(1.25))
+                                    .text_color(colors.foreground_300)
+                                    .child(category.clone())
+                                    .text_ellipsis()
+                                    .w(px(120.0))
+                            )
+                    })
+            )
+    }
+
     fn render_search_list(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         self.is_searching = true;
         Self::filter(self, cx);
@@ -486,6 +708,7 @@ impl AppDrawer {
                                 .flex()
                                 .flex_row()
                                 .items_center()
+                                .cursor_pointer()
                                 .child(
                                     div()
                                         .flex()
@@ -533,8 +756,8 @@ impl AppDrawer {
 
     pub fn resolved_icon(app_icon: &Option<String>) -> Icon {
         match app_icon {
-            Some(path) => Icon::default().path(path.to_string()),
-            None => Icon::from(IconName::DefaultApp),
+            Some(path) if !path.trim().is_empty() => { Icon::default().path(path.clone()) }
+            _ => Icon::from(IconName::DefaultApp),
         }
     }
 
@@ -630,297 +853,134 @@ impl Render for AppDrawer {
                 .child(self.render_loading(cx));
         }
 
-        let grouped = &self.grouped;
-
         div()
-            .pt_2()
-            .flex()
-            .justify_start()
-            .relative()
-            .items_center()
-            .flex_col()
-            .overflow_hidden()
             .h(app_drawer_size.height)
-            // GRID MODE
-            .when(!self.is_searching, |main_page_div| {
-                main_page_div
+            .w(app_drawer_size.width)
+            .child(
+                div()
+                    .pt_2()
                     .flex()
+                    .justify_start()
+                    .relative()
+                    .items_center()
                     .flex_col()
-                    .size_full()
                     .overflow_hidden()
-                    .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
-                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
-                    .on_mouse_move(cx.listener(Self::on_mouse_move))
-                    .child(
-                        div()
-                            .relative()
+                    // GRID MODE
+                    .when(!self.is_searching, |main_page_div| {
+                        main_page_div
                             .flex()
                             .flex_col()
-                            .gap(px(SECTION_SPACING))
-                            .top(self.scroll_offset)
-                            .children(
-                                grouped
-                                    .into_iter()
-                                    .enumerate()
-                                    .map(|(idx, (category, apps))| {
-                                        let total = apps.len();
-                                        let show_popup = total > 1;
-                                        let shown_apps = if show_popup {
-                                            apps.iter().take(6).cloned().collect::<Vec<_>>()
-                                        } else {
-                                            apps.clone()
-                                        };
+                            .size_full()
+                            .overflow_hidden()
+                            .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+                            .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                            .on_mouse_move(cx.listener(Self::on_mouse_move))
+                            .child(self.render_category_list(cx))
+                    })
+                    // SEARCH MODE
+                    .when(self.is_searching, |search_div| {
+                        search_div
+                            .bg(colors.background_900)
+                            .size_full()
+                            .flex()
+                            .flex_col()
+                            .items_start()
+                            .justify_start()
+                            .child(
+                                div().flex_1().overflow_hidden().child(self.render_search_list(cx))
+                            )
+                            .when(!self.show_bottom_sheet, |div| {
+                                div.child(self.render_search_bar(cx))
+                            })
+                    })
+                    // SUBWINDOW MODAL
+                    .when(self.show_subwindow_modal, |modal_div| {
+                        modal_div.child(self.render_subwindow_modal(cx))
+                    })
+                    // BOTTOM SHEET
+                    .when(self.show_bottom_sheet, |menu_div| {
+                        let bottom_sheet_height = match self.sheet_kind {
+                            BottomSheetKind::MainOptions => px(280.0),
+                            BottomSheetKind::ConfirmDelete => px(249.0),
+                            BottomSheetKind::Properties => px(330.0),
+                            BottomSheetKind::None => px(0.0),
+                        };
 
-                                        let category_for_popup = category.clone();
-
-                                        div()
-                                            .id(idx)
-                                            .relative()
-                                            .w(px(GRID_ROW_WIDTH))
-                                            .h(px(GRID_ROW_HEIGHT))
-                                            .cursor_pointer()
-                                            .on_click(
-                                                cx.listener(
-                                                    move |
-                                                        this: &mut AppDrawer,
-                                                        _event,
-                                                        _window,
-                                                        cx
-                                                    | {
-                                                        if !this.has_moved && !this.is_long_press {
-                                                            // Add this condition
-                                                            this.show_subwindow_modal = true;
-                                                            this.subwindow_category =
-                                                                category_for_popup.clone();
-                                                            this.subwindow = None;
-                                                            cx.notify();
-                                                        }
-                                                        this.has_moved = false;
-                                                        this.is_long_press = false; // Add this reset
-                                                    }
-                                                )
-                                            )
-                                            .child(
-                                                div()
-                                                    .grid()
-                                                    .grid_cols(6)
-                                                    .gap(px(28.0))
-                                                    .bg(colors.background_900)
-                                                    .p(px(20.0))
-                                                    .rounded(px(8.0))
-                                                    .border(px(1.0))
-                                                    .border_color(colors.accent_200.with_alpha(0.6))
-                                                    .w(px(GRID_ROW_WIDTH))
-                                                    .h(px(GRID_ROW_HEIGHT))
-                                                    .justify_center()
-                                                    .children(
-                                                        shown_apps
-                                                            .into_iter()
-                                                            .enumerate()
-                                                            .map(|(idx, app)| {
-                                                                let app_id =
-                                                                    app.possible_app_id.clone();
-                                                                let exec = app.exec.clone();
-
-                                                                let id = hash_id(&app_id);
-                                                                let icon = Self::resolved_icon(
-                                                                    &app.icon_path
-                                                                );
-                                                                let app_for_sheet = app.clone();
-
-                                                                IconButton::new(id + idx)
-                                                                    .icon(icon)
-
-                                                                    .on_mouse_down(
-                                                                        cx.listener(
-                                                                            move |
-                                                                                this: &mut AppDrawer,
-                                                                                _event,
-                                                                                _window,
-                                                                                cx
-                                                                            | {
-                                                                                this.press_start_time =
-                                                                                    Some(
-                                                                                        Instant::now()
-                                                                                    );
-                                                                                this.press_app_info =
-                                                                                    Some(
-                                                                                        app_for_sheet.clone()
-                                                                                    );
-                                                                                this.is_long_press = false;
-                                                                                cx.stop_propagation();
-                                                                            }
-                                                                        )
-                                                                    )
-                                                                    .on_mouse_up(
-                                                                        cx.listener(
-                                                                            move |
-                                                                                this: &mut AppDrawer,
-                                                                                _event,
-                                                                                _window,
-                                                                                cx
-                                                                            | {
-                                                                                if
-                                                                                    let Some(
-                                                                                        start_time,
-                                                                                    ) = this.press_start_time
-                                                                                {
-                                                                                    let duration =
-                                                                                        start_time.elapsed();
-
-                                                                                    if
-                                                                                        duration >=
-                                                                                            LONG_PRESS_DURATION &&
-                                                                                        !this.has_moved
-                                                                                    {
-                                                                                        // Long press - show bottom sheet
-                                                                                        this.is_long_press = true;
-                                                                                        this.show_bottom_sheet = true;
-                                                                                        this.sheet_app =
-                                                                                            this.press_app_info.clone();
-                                                                                        this.sheet_kind =
-                                                                                            BottomSheetKind::MainOptions;
-                                                                                        cx.notify();
-                                                                                    } else if
-                                                                                        !this.has_moved &&
-                                                                                        !this.is_long_press
-                                                                                    {
-                                                                                        // Short press - launch app
-                                                                                        this.on_app_click(
-                                                                                            app_id.clone(),
-                                                                                            exec.clone(),
-                                                                                            cx
-                                                                                        );
-                                                                                    }
-                                                                                }
-
-                                                                                this.press_start_time =
-                                                                                    None;
-                                                                                this.press_app_info =
-                                                                                    None;
-                                                                                this.has_moved = false;
-                                                                                cx.stop_propagation();
-                                                                            }
-                                                                        )
-                                                                    )
-                                                            })
-                                                    )
-                                            )
-                                            .child({
-                                                let mut w = wing()
-                                                    .absolute()
-                                                    .bottom_0()
-                                                    .left_0()
-                                                    .h(px(36.0))
-                                                    .w(px(GRID_ROW_WIDTH))
-                                                    .flex()
-                                                    .flex_col()
-                                                    .justify_start()
-                                                    .items_start()
-                                                    .bg(colors.accent_200.with_alpha(0.1))
-                                                    .border_color(
-                                                        colors.accent_200.with_alpha(0.6)
-                                                    );
-                                                w.upper_wing_size(Size::new(px(150.0), px(15.0)));
-                                                w.border_width(px(1.0));
-                                                w.border_radius(px(8.0));
-                                                w
-                                            })
-                                            .child(
-                                                div()
-                                                    .absolute()
-                                                    .bottom_5()
-                                                    .left_6()
-                                                    .font_weight(FontWeight(400.0))
-                                                    .text_size(px(16.0))
-                                                    .line_height(px(1.25))
-                                                    .text_color(colors.foreground_300)
-                                                    .child(category.clone())
-                                                    .text_ellipsis()
-                                                    .w(px(120.0))
-                                            )
+                        menu_div
+                            .child(
+                                div()
+                                    .id("bottom-sheet-bg")
+                                    .absolute()
+                                    .top(px(0.0))
+                                    .left(px(0.0))
+                                    .size_full()
+                                    .bg(rgb(0x000000))
+                                    .opacity(0.6)
+                                    .on_click(
+                                        cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                                            this.show_bottom_sheet = false;
+                                            cx.notify();
+                                        })
+                                    )
+                                    .on_mouse_down(MouseButton::Left, |_, _, cx|
+                                        cx.stop_propagation()
+                                    )
+                                    .on_mouse_up(MouseButton::Left, |_, _, cx|
+                                        cx.stop_propagation()
+                                    )
+                            )
+                            .child({
+                                let mut w = wing()
+                                    .absolute()
+                                    .bottom(px(-10.0))
+                                    .bg(colors.background_900)
+                                    .h(bottom_sheet_height)
+                                    .border_color(colors.accent_200.with_alpha(0.6))
+                                    .w(app_drawer_size.width - px(2.0))
+                                    .flex()
+                                    .flex_col()
+                                    .justify_start()
+                                    .items_start();
+                                w.upper_wing_size(Size::new(px(80.0), px(15.0)));
+                                w.upper_wing_side(WingSide::Right);
+                                w.border_width(px(1.0));
+                                w.border_radius(px(8.0));
+                                w
+                            })
+                            .child(
+                                div()
+                                    .id("bottom-sheet-panel")
+                                    .absolute()
+                                    .bottom(px(0.0))
+                                    .left(px(0.0))
+                                    .w(app_drawer_size.width)
+                                    .rounded_t(px(24.0))
+                                    .pl(px(20.0))
+                                    .mt(px(20.0))
+                                    .pb(px(20.0))
+                                    .pr(px(20.0))
+                                    .on_mouse_down(MouseButton::Left, |_, _, cx|
+                                        cx.stop_propagation()
+                                    )
+                                    .on_mouse_up(MouseButton::Left, |_, _, cx|
+                                        cx.stop_propagation()
+                                    )
+                                    .on_click(|_, _, cx| cx.stop_propagation())
+                                    .child(match self.sheet_kind {
+                                        BottomSheetKind::MainOptions => self.render_main_sheet(cx),
+                                        BottomSheetKind::ConfirmDelete =>
+                                            self.render_delete_sheet(cx),
+                                        BottomSheetKind::Properties =>
+                                            self.render_properties_sheet(cx),
+                                        BottomSheetKind::None => Empty.into_any(),
                                     })
                             )
-                    )
-            })
-            // SEARCH MODE
-            .when(self.is_searching, |search_div| {
-                search_div.bg(colors.background_900).child(self.render_search_list(cx))
-            })
-            // SUBWINDOW MODAL
-            .when(self.show_subwindow_modal, |modal_div| {
-                modal_div.child(self.render_subwindow_modal(cx))
-            })
-            // BOTTOM SHEET
-            .when(self.show_bottom_sheet, |menu_div| {
-                menu_div
-                    .child(
-                        div()
-                            .id("bottom-sheet-bg")
-                            .absolute()
-                            .top(px(0.0))
-                            .left(px(0.0))
-                            .size_full()
-                            .bg(rgb(0x000000))
-                            .opacity(0.6)
-                            .on_click(
-                                cx.listener(|this: &mut AppDrawer, _, _, cx| {
-                                    this.show_bottom_sheet = false;
-                                    cx.notify();
-                                })
-                            )
-                            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                    )
-                    .child({
-                        let mut w = wing()
-                            .absolute()
-                            .bottom(px(-10.0))
-                            .bg(colors.background_900)
-                            .h(px(280.0))
-                            .border_color(colors.accent_200.with_alpha(0.6))
-                            .w(app_drawer_size.width - px(2.0))
-                            .flex()
-                            .flex_col()
-                            .justify_start()
-                            .items_start();
-                        w.upper_wing_size(Size::new(px(80.0), px(15.0)));
-                        w.upper_wing_side(WingSide::Right);
-                        w.border_width(px(1.0));
-                        w.border_radius(px(8.0));
-                        w
                     })
-                    .child(
-                        div()
-                            .id("bottom-sheet-panel")
-                            .absolute()
-                            .bottom(px(0.0))
-                            .left(px(0.0))
-                            .w(app_drawer_size.width)
-                            .rounded_t(px(24.0))
-                            .pl(px(20.0))
-                            .mt(px(20.0))
-                            .pb(px(20.0))
-                            .pr(px(20.0))
-                            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                            .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
-                            .on_click(|_, _, cx| cx.stop_propagation())
-                            .child(match self.sheet_kind {
-                                BottomSheetKind::MainOptions => self.render_main_sheet(cx),
-                                BottomSheetKind::ConfirmDelete => self.render_delete_sheet(cx),
-                                BottomSheetKind::Properties => self.render_properties_sheet(cx),
-                                BottomSheetKind::None => Empty.into_any(),
-                            })
-                    )
-            })
-            // SEARCH BAR
-            .when(self.is_searching && !self.show_bottom_sheet, |div| {
-                div.child(self.render_search_bar(cx))
-            })
-            // FLOATING SEARCH BUTTON (rendered last to be on top)
-            .when(!self.is_searching && !self.show_bottom_sheet, |div| {
-                div.child(self.render_floating_search_button(cx))
-            })
+                    // FLOATING SEARCH BUTTON (rendered last to be on top)
+                    .when(!self.is_searching && !self.show_bottom_sheet, |div| {
+                        div.child(self.render_floating_search_button(cx))
+                    })
+            )
     }
 }
 
