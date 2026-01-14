@@ -3314,6 +3314,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "icons"
+version = "0.0.1"
+dependencies = [
+ "commons",
+ "dirs 6.0.0",
+ "gpui",
+ "serde",
+ "toml 0.9.8",
+]
+
+[[package]]
 name = "icu_collections"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4052,6 +4063,7 @@ dependencies = [
  "commons",
  "dirs 6.0.0",
  "gpui",
+ "icons",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -4063,13 +4075,14 @@ dependencies = [
 
 [[package]]
 name = "mechanix-launcher"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "commons",
  "dispatcher",
  "gpui",
  "hardware_buttons",
  "homescreen",
+ "icons",
  "notifications",
  "power_options",
  "running_apps",
@@ -4467,6 +4480,7 @@ dependencies = [
  "desktop_dbus",
  "futures",
  "gpui",
+ "icons",
  "regex",
  "settings",
  "smol",
@@ -5210,6 +5224,7 @@ dependencies = [
  "dispatcher",
  "futures",
  "gpui",
+ "icons",
  "rust-embed",
  "settings",
  "system_dbus",
@@ -5729,6 +5744,7 @@ dependencies = [
  "dispatcher",
  "futures",
  "gpui",
+ "icons",
  "indexmap",
  "lazy_static",
  "notify",
@@ -6185,6 +6201,7 @@ dependencies = [
  "dispatcher",
  "futures",
  "gpui",
+ "icons",
  "networkmanager",
  "pulseaudio",
  "rust-embed",
@@ -6489,6 +6506,7 @@ dependencies = [
  "commons",
  "futures",
  "gpui",
+ "icons",
  "networkmanager",
  "rust-embed",
  "settings",
@@ -7481,6 +7499,7 @@ dependencies = [
  "commons",
  "dispatcher",
  "gpui",
+ "icons",
  "mxsearch",
  "settings",
  "theme",

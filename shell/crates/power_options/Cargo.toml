@@ -20,3 +20,4 @@ settings = { path = "../settings" }
 theme = { path = "../theme" }
 dispatcher = { path = "../dispatcher" }
 futures = "0.3.31"
+icons = { path = "../icons" }

@@ -10,6 +10,7 @@ mod types;
 mod ui;
 mod utils;
 
+use icons::prelude::*;
 use settings::prelude::*;
 use shell_state::ShellState;
 use trie::util::get_trie;
@@ -30,6 +31,10 @@ pub fn run_app(cx: &mut App) {
 
     if !cx.has_global::<Settings>() {
         settings::init(cx);
+    }
+
+    if !cx.has_global::<Icons>() {
+        icons::init(cx);
     }
 
     let settings = Settings::global(cx).keyboard.clone();

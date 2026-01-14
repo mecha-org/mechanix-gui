@@ -1,6 +1,5 @@
-
 [package]
-name = "universal_search"
+name = "icons"
 edition = "2024"
 version.workspace = true
 authors.workspace = true
@@ -12,9 +11,7 @@ keywords.workspace = true
 
 [dependencies]
 gpui = { workspace = true }
+serde = { workspace = true }
 commons = { path = "../commons" }
-mxsearch = { path = "../../../services/search/server" }
-settings = { path = "../settings" }
-theme = { path = "../theme" }
-dispatcher = { path = "../dispatcher" }
-icons = { path = "../icons" }
+toml = { workspace = true }
+dirs = { workspace = true }

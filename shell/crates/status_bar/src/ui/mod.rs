@@ -1,8 +1,7 @@
 use gpui::{prelude::FluentBuilder, *};
-use std::time::Duration;
-pub mod icon;
-pub use icon::{Icon, IconName};
+use icons::prelude::{Icons, StatusBarIcons};
 use shell_state::ShellState;
+use std::time::Duration;
 use upower::interfaces::device::{BatteryLevel, BatteryState};
 
 pub struct StatusBar {
@@ -120,63 +119,99 @@ pub fn status_bar_components(
         ..
     } = ShellState::global(cx);
 
+    let StatusBarIcons {
+        battery_0_charging,
+        battery_10_charging,
+        battery_10,
+        battery_100_charging,
+        battery_100,
+        battery_20_charging,
+        battery_20,
+        battery_30_charging,
+        battery_30,
+        battery_40_charging,
+        battery_40,
+        battery_50_charging,
+        battery_50,
+        battery_60_charging,
+        battery_60,
+        battery_70_charging,
+        battery_70,
+        battery_80_charging,
+        battery_80,
+        battery_90_charging,
+        battery_90,
+        battery_empty,
+        bluetooth_connected,
+        bluetooth_off,
+        bluetooth_on,
+        bluetooth_warning,
+        wireless_high,
+        wireless_low,
+        wireless_medium,
+        wireless_off,
+        wireless_on,
+        wireless_warning,
+        ..
+    } = Icons::global(cx).status_bar.clone();
+
     let wireless_enabled = wireless_details.enabled;
     let bluetooth_enabled = bluetooth_details.enabled;
-    let bluetooth_connected = bluetooth_details.connected_devices > 0;
+    let is_bluetooth_connected = bluetooth_details.connected_devices > 0;
     let wireless_strength = wireless_details
         .connected_network
         .as_ref()
         .map_or(0, |n| n.signal_strength);
 
-    let wireless_icon = match wireless_enabled {
+    let wireless_icon_path = match wireless_enabled {
         true => match wireless_strength {
-            0 => IconName::WirelessOn,
-            1..=30 => IconName::WirelessLow,
-            31..=60 => IconName::WirelessMedium,
-            61..=100 => IconName::WirelessHigh,
-            _ => IconName::WirelessWarning,
+            0 => wireless_on,
+            1..=30 => wireless_low,
+            31..=60 => wireless_medium,
+            61..=100 => wireless_high,
+            _ => wireless_warning,
         },
-        false => IconName::WirelessOff,
+        false => wireless_off,
     };
 
-    let bluetooth_icon = match bluetooth_enabled {
-        true => match bluetooth_connected {
-            true => IconName::BluetoothConnected,
-            false => IconName::BluetoothOn,
+    let bluetooth_icon_path = match bluetooth_enabled {
+        true => match is_bluetooth_connected {
+            true => bluetooth_connected,
+            false => bluetooth_on,
         },
-        false => IconName::BluetoothOff,
+        false => bluetooth_off,
     };
 
-    let battery_icon = match battery_state {
+    let battery_icon_path = match battery_state {
         BatteryState::Charging => match battery_percent {
-            0..=10 => IconName::Battery10Charging,
-            11..=20 => IconName::Battery20Charging,
-            21..=30 => IconName::Battery30Charging,
-            31..=40 => IconName::Battery40Charging,
-            41..=50 => IconName::Battery50Charging,
-            51..=60 => IconName::Battery60Charging,
-            61..=70 => IconName::Battery70Charging,
-            71..=80 => IconName::Battery80Charging,
-            81..=90 => IconName::Battery90Charging,
-            91..=100 => IconName::Battery100Charging,
-            _ => IconName::BatteryEmpty,
+            0..=10 => battery_10_charging,
+            11..=20 => battery_20_charging,
+            21..=30 => battery_30_charging,
+            31..=40 => battery_40_charging,
+            41..=50 => battery_50_charging,
+            51..=60 => battery_60_charging,
+            61..=70 => battery_70_charging,
+            71..=80 => battery_80_charging,
+            81..=90 => battery_90_charging,
+            91..=100 => battery_100_charging,
+            _ => battery_empty,
         },
         BatteryState::Discharging => match battery_percent {
-            0..=10 => IconName::Battery10,
-            11..=20 => IconName::Battery20,
-            21..=30 => IconName::Battery30,
-            31..=40 => IconName::Battery40,
-            41..=50 => IconName::Battery50,
-            51..=60 => IconName::Battery60,
-            61..=70 => IconName::Battery70,
-            71..=80 => IconName::Battery80,
-            81..=90 => IconName::Battery90,
-            91..=100 => IconName::Battery100,
-            _ => IconName::BatteryEmpty,
+            0..=10 => battery_10,
+            11..=20 => battery_20,
+            21..=30 => battery_30,
+            31..=40 => battery_40,
+            41..=50 => battery_50,
+            51..=60 => battery_60,
+            61..=70 => battery_70,
+            71..=80 => battery_80,
+            81..=90 => battery_90,
+            91..=100 => battery_100,
+            _ => battery_empty,
         },
-        BatteryState::FullCharged => IconName::Battery100,
-        BatteryState::Empty => IconName::BatteryEmpty,
-        _ => IconName::BatteryEmpty,
+        BatteryState::FullCharged => battery_100,
+        BatteryState::Empty => battery_empty,
+        _ => battery_empty,
     };
     div()
         .when_else(
@@ -228,20 +263,8 @@ pub fn status_bar_components(
             div()
                 .flex()
                 .gap_2()
-                .child(
-                    Icon::new(wireless_icon.clone())
-                        .size((px(20.0), px(20.0)))
-                        .text_color(rgb(0xE9E9E9)),
-                )
-                .child(
-                    Icon::new(bluetooth_icon.clone())
-                        .size((px(20.0), px(20.0)))
-                        .text_color(rgb(0xE9E9E9)),
-                )
-                .child(
-                    Icon::from(battery_icon.clone())
-                        .size((px(20.0), px(20.0)))
-                        .text_color(rgb(0xE9E9E9)),
-                ),
+                .child(img(wireless_icon_path).w(px(20.)).h(px(20.)))
+                .child(img(bluetooth_icon_path).w(px(20.)).h(px(20.)))
+                .child(img(battery_icon_path).w(px(20.)).h(px(20.))),
         )
 }
