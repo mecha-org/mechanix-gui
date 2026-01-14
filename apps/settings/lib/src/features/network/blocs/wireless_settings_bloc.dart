@@ -203,6 +203,8 @@ class WirelessSettingsBloc
           if (availAccessPoints.active != null) {
             add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
           }
+
+          // TODO: Revisit this code later
           // final savedNetworks =
           //     await wifiRepository.savedNetworks(state.availableOtherNetworks);
 

@@ -18,9 +18,6 @@ abstract class WifiRepository {
   Future<({AccessPoints? active, List<AccessPoints> available})>
       availableAccessPoints(List<SavedWirelessNetwork>? allSavedNetworks);
 
-  // Future<({AccessPoints? active, List<AccessPoints> available})>
-  //     scanAvailableAccessPoints(List<SavedWirelessNetwork>? savedNetworks);
-
   Future<List<SavedNetworks>> savedNetworks(
       List<AccessPoints> availableAccessPoints);
 
