@@ -44,12 +44,12 @@ assets = [
         "755",
     ],
     [
-        "../../../assets/icons.toml.example",
+        "../../../assets/icons.example.toml",
         "etc/mechanix/shell/assets/icons.toml",
         "755",
     ],
     [
-        "../../../assets/settings.toml",
+        "../../../assets/settings.example.toml",
         "etc/mechanix/shell/assets/settings.toml",
         "755",
     ],
@@ -100,10 +100,10 @@ assets = [
     { source = "../../../target/release/mechanix-launcher", dest = "/usr/bin/mechanix-launcher", mode = "755" },
 
     # Icons loading file
-    { source = "../../../assets/icons.toml.example", dest = "/etc/mechanix/shell/assets/icons.toml", mode = "755" },
+    { source = "../../../assets/icons.example.toml", dest = "/etc/mechanix/shell/assets/icons.toml", mode = "755" },
 
     # Settings file
-    { source = "../../../assets/settings.toml", dest = "/etc/mechanix/shell/assets/settings.toml", mode = "755" },
+    { source = "../../../assets/settings.example.toml", dest = "/etc/mechanix/shell/assets/settings.toml", mode = "755" },
 
     # App drawer icons
     { source = "../../../assets/icons/app-drawer/*", dest = "/usr/share/mechanix/shell/assets/icons/app-drawer/", mode = "755" },
