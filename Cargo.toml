@@ -41,7 +41,7 @@ futures = "0.3.31"
 futures-timer = "3.0.3"
 thiserror = "2.0.12"
 env_logger = { version = "0.11.8" }
-gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "cb10fb146dac2d008f2445475de2c1d90e9e4bba", features = [
+gpui = { git = "https://github.com/namana-mecha/zed.git", rev = "601f1d39f302299f64550572b6877003297213ef", features = [
     "wayland",
 ] }
 rust-embed = "8.8.0"
