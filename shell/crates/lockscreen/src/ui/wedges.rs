@@ -1,6 +1,7 @@
 use gpui::*;
 use shell_state::ShellState;
 use upower::interfaces::device::BatteryState;
+// use gpui::prelude::FluentBuilder; // Removed unused import
 
 pub const STATUS_ICON_GAP: f32 = 15.0;
 pub const STATUS_ICON_PADDING_RIGHT: f32 = 20.0;
@@ -233,13 +234,15 @@ fn status_icons(cx: &mut App) -> impl IntoElement {
 }
 
 // Left wedge - size 540 x 106, with bell icon and lock icon
-pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
+pub fn left_wedge(lock_state: LockState, icon_opacity: f32) -> impl IntoElement {
     let svg_color = rgba(LEFT_WEDGE_COLOR);
     let border_color = rgba(LEFT_WEDGE_BORDER_COLOR);
     let bell_icon_color = rgba(BELL_ICON_COLOR);
     let bell_circle_color = rgba(BELL_CIRCLE_COLOR);
+    // Left wedge icons remain visible even when unlocked; only hide if opacity is zero.
+    let show_icons = icon_opacity > 0.0;
 
-    div()
+    let mut container = div()
         .absolute()
         .bottom_0()
         .left_0()
@@ -264,8 +267,10 @@ pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
                 .w(px(LEFT_WEDGE_WIDTH))
                 .h(px(LEFT_WEDGE_HEIGHT))
                 .text_color(border_color),
-        )
-        .child(
+        );
+
+    if show_icons {
+        container = container.child(
             div()
                 .absolute()
                 .bottom(px(BELL_PADDING_BOTTOM))
@@ -274,6 +279,7 @@ pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
                 .flex_row()
                 .items_center()
                 .gap(px(LEFT_WEDGE_ICON_GAP))
+                .opacity(icon_opacity.max(0.0))
                 // Bell icon in circle
                 .child(
                     div()
@@ -294,15 +300,19 @@ pub fn left_wedge(lock_state: LockState) -> impl IntoElement {
                 )
                 // Lock icon in circle (state-based)
                 .child(lock_icon(lock_state)),
-        )
+        );
+    }
+
+    container
 }
 
 // Right wedge - size 540 x 67, with status icons
-pub fn right_wedge(cx: &mut App) -> impl IntoElement {
+pub fn right_wedge(cx: &mut App, icon_opacity: f32) -> impl IntoElement {
     let svg_color = rgba(RIGHT_WEDGE_COLOR);
     let border_color = rgba(RIGHT_WEDGE_BORDER_COLOR);
+    let show_icons = icon_opacity > 0.0;
 
-    div()
+    let mut container = div()
         .absolute()
         .bottom_0()
         .right_0()
@@ -327,16 +337,22 @@ pub fn right_wedge(cx: &mut App) -> impl IntoElement {
                 .w(px(RIGHT_WEDGE_WIDTH))
                 .h(px(RIGHT_WEDGE_HEIGHT))
                 .text_color(border_color),
-        )
-        .child(
+        );
+
+    if show_icons {
+        container = container.child(
             div()
                 .absolute()
                 .bottom(px(STATUS_ICON_PADDING_BOTTOM))
                 .right(px(STATUS_ICON_PADDING_RIGHT))
                 .flex()
                 .items_center()
+                .opacity(icon_opacity.max(0.0))
                 .child(status_icons(cx)),
-        )
+        );
+    }
+
+    container
 }
 
 /// Lock icon state based on slider position
