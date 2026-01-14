@@ -3,7 +3,7 @@ use shell_state::ShellState;
 mod wallpaper;
 mod wedges;
 use wallpaper::wallpaper;
-use wedges::{left_wedge, right_wedge, LockState};
+use wedges::{LockState, left_wedge, right_wedge};
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
 const UNLOCK_THRESHOLD: f32 = 100.0;
@@ -16,13 +16,21 @@ const WEDGE_TARGET_GAP: f32 = 110.0;
 // Slider travel after which lock + bell icons fully fade
 const LOCK_ICONS_FADE_THRESHOLD: f32 = 310.0;
 
+// Unlock prompt styling
+const UNLOCK_PROMPT_TEXT_COLOR: u32 = 0xC57600FF; // #C57600
+const UNLOCK_PROMPT_BG_COLOR: u32 = 0x000000FF;   // #000000
+const UNLOCK_PROMPT_RADIUS: f32 = 12.0;
+const UNLOCK_PROMPT_ARROW_SIZE: f32 = 40.0;
+const UNLOCK_PROMPT_ICON_PATH: &str = "icons/lockscreen/arrow.svg";
+const UNLOCK_PROMPT_SIZE_FACTOR: f32 = 0.9;
+const UNLOCK_PROMPT_BOTTOM_OFFSET: f32 = 45.0;
+
 // Gap between the slider panel and the wedges (adjust to control spacing)
 const PANEL_WEDGE_GAP: f32 = 8.0;
 
 // Fractions of the slider's vertical travel applied in the opposite direction to each wedge
 const LEFT_WEDGE_PARALLAX_FRACTION: f32 = 0.20;
 const RIGHT_WEDGE_PARALLAX_FRACTION: f32 = 0.25;
-
 
 // The current wedge SVGs extend beyond their viewBox heights (left path to ~118px, right to ~74px),
 const LEFT_WEDGE_BOTTOM_LIMIT: f32 = 73.0;
@@ -39,6 +47,7 @@ pub struct Lockscreen {
     position_y: f32,
     window_height: f32,
     pub show: bool,
+    show_arrow_prompt: bool,
 }
 
 impl Lockscreen {
@@ -53,6 +62,7 @@ impl Lockscreen {
             position_y: 0.0,
             window_height: 0.0,
             show: false,
+            show_arrow_prompt: false,
         }
     }
 
@@ -104,28 +114,29 @@ impl Render for Lockscreen {
         self.update_input_regions(window, show, cx);
 
         let overlay_color = hsla(0.0, 0.0, 0.0, 0.75);
-        let text_color = hsla(0.0, 0.0, 1.0, 1.0);
-        let handle_color = hsla(0.0, 0.0, 1.0, 0.9);
+        let text_color = rgba(UNLOCK_PROMPT_TEXT_COLOR);
+        let show_arrow_prompt = self.show_arrow_prompt;
 
         // Panel top position: starts at 0 (top of screen), moves up (negative) when swiped
         let panel_top = self.position_y.min(0.0);
         // Panel height excludes the wedges area and gap at the bottom
         let panel_height = window_height - WEDGES_AREA_HEIGHT - PANEL_WEDGE_GAP;
         // Move each wedge downward proportionally to the upward panel motion, clamped to limit
-        let left_wedge_offset = ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(LEFT_WEDGE_BOTTOM_LIMIT);
-        let right_wedge_offset = ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(RIGHT_WEDGE_BOTTOM_LIMIT);
+        let left_wedge_offset =
+            ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(LEFT_WEDGE_BOTTOM_LIMIT);
+        let right_wedge_offset =
+            ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(RIGHT_WEDGE_BOTTOM_LIMIT);
         // Move wedges horizontally outward using same fractions, clamped to half the target gap
-        let left_wedge_gap = ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
-        let right_wedge_gap = ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
+        let left_wedge_gap =
+            ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
+        let right_wedge_gap =
+            ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
         // Fade icons as slider moves; clamp to [0, 1]
         let fade_progress = ((-panel_top) / UNLOCK_THRESHOLD).max(0.0).min(1.0);
         let left_icon_opacity = 1.0 - fade_progress * LEFT_WEDGE_ICON_FADE_STRENGTH;
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
         // Additional fade for lock + bell icons so they vanish at the fade threshold
-        let lock_icon_fade = 1.0
-            - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD)
-                .max(0.0)
-                .min(1.0);
+        let lock_icon_fade = 1.0 - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
@@ -154,21 +165,47 @@ impl Render for Lockscreen {
                                 .flex_col()
                                 .items_center()
                                 .justify_end()
-                                .pb(px(60.0))
+                                .pb(px(UNLOCK_PROMPT_BOTTOM_OFFSET))
                                 .gap_4()
                                 .child(
                                     div()
-                                        .text_xl()
-                                        .text_color(text_color)
-                                        .child("Swipe up to unlock"),
-                                )
-                                .child(
-                                    div()
-                                        .w(px(64.0))
-                                        .h(px(6.0))
-                                        .rounded(px(3.0))
-                                        .bg(handle_color)
-                                        .mb(px(5.0)),
+                                        .cursor_pointer()
+                                        .bg(rgba(UNLOCK_PROMPT_BG_COLOR))
+                                        .rounded(px(UNLOCK_PROMPT_RADIUS * UNLOCK_PROMPT_SIZE_FACTOR))
+                                        .px(px(14.0 * UNLOCK_PROMPT_SIZE_FACTOR))
+                                        .py(px(10.0 * UNLOCK_PROMPT_SIZE_FACTOR))
+                                        .flex()
+                                        .opacity(0.8)
+                                        .items_center()
+                                        .justify_center()
+                                        .gap(px(8.0 * UNLOCK_PROMPT_SIZE_FACTOR))
+                                        .on_mouse_down(
+                                            MouseButton::Left,
+                                            cx.listener(|component, _event: &MouseDownEvent, _, cx| {
+                                                component.show_arrow_prompt = !component.show_arrow_prompt;
+                                                cx.notify();
+                                            }),
+                                        )
+                                        .child({
+                                            let mut inner = div();
+                                            if show_arrow_prompt {
+                                                inner = inner.child(
+                                                    svg()
+                                                        .path(UNLOCK_PROMPT_ICON_PATH)
+                                                        .w(px(UNLOCK_PROMPT_ARROW_SIZE * UNLOCK_PROMPT_SIZE_FACTOR))
+                                                        .h(px(UNLOCK_PROMPT_ARROW_SIZE * UNLOCK_PROMPT_SIZE_FACTOR))
+                                                        .text_color(text_color),
+                                                );
+                                            } else {
+                                                inner = inner
+                                                    .text_size(px(18.0 * UNLOCK_PROMPT_SIZE_FACTOR))
+                                                    .text_color(text_color)
+                                                        .font_weight(FontWeight::BOLD)
+                                                        .opacity(1.0)
+                                                        .child("Swipe up to unlock");
+                                            }
+                                            inner
+                                        }),
                                 ),
                         )
                         .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
@@ -229,7 +266,7 @@ impl Render for Lockscreen {
                             div()
                                 .absolute()
                                 .bottom(px(-left_wedge_offset))
-                                    .left(px(-left_wedge_gap))
+                                .left(px(-left_wedge_gap))
                                 .child(left_wedge(lock_state, left_icon_opacity)),
                         )
                         // Right wedge (overlaps left wedge, rendered on top, with status icons)
@@ -237,7 +274,7 @@ impl Render for Lockscreen {
                             div()
                                 .absolute()
                                 .bottom(px(-right_wedge_offset))
-                                    .right(px(-right_wedge_gap))
+                                .right(px(-right_wedge_gap))
                                 .child(right_wedge(cx, right_icon_opacity)),
                         )
                 })
