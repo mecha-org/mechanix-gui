@@ -6202,6 +6202,7 @@ dependencies = [
  "futures",
  "gpui",
  "icons",
+ "mxsearch",
  "networkmanager",
  "pulseaudio",
  "rust-embed",

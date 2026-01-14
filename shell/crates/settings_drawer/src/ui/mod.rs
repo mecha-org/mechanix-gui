@@ -4,6 +4,7 @@ use commons::widgets::{WingSide, wing};
 use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
+use mxsearch::service::MxSearchService;
 use settings::prelude::{Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
@@ -50,12 +51,9 @@ pub struct SettingsDrawer {
     pub rotation_on: bool,
     pub airplane_mode: bool,
     pub screen_mirroring: bool,
-    pub open_terminal: bool,
 
     pub microphone_recording: bool,
     pub screen_recording: bool,
-    pub settings_active: bool,
-    // camera
     pub power_mode: PowerMode,
     pub cell_signal: bool,
 
@@ -89,6 +87,8 @@ pub struct SettingsDrawer {
 
     pub wireless_modal_scroll: WirelessModalScroll,
     pub bluetooth_modal_scroll: BluetoothModalScroll,
+
+    pub search_service: Option<MxSearchService>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -126,8 +126,19 @@ impl SettingsDrawer {
         let mut _subscriptions = vec![b_subscription, v_subscription];
 
         let closed_pos = Self::calculate_closed_position(&settings);
-        Self {
-            settings_active: false,
+
+        cx.spawn(async move |this, cx| {
+            if let Ok(service) = MxSearchService::new().await {
+                this.update(cx, |this, cx| {
+                    this.search_service = Some(service);
+                    cx.notify();
+                })
+                .ok();
+            }
+        })
+        .detach();
+
+        let settings_drawer = Self {
             open_power_options: false,
             rotation_on: false,
             airplane_mode: false,
@@ -137,7 +148,6 @@ impl SettingsDrawer {
             screen_recording: false,
 
             volume_device_name: None,
-            open_terminal: false,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
@@ -165,7 +175,9 @@ impl SettingsDrawer {
 
             wireless_modal_scroll: WirelessModalScroll::new(),
             bluetooth_modal_scroll: BluetoothModalScroll::new(),
-        }
+            search_service: None,
+        };
+        settings_drawer
     }
 
     pub fn calculate_closed_position(settings: &SettingsDrawerSettings) -> f32 {
@@ -710,6 +722,45 @@ impl SettingsDrawer {
             )
     }
 
+    fn launch_app_by_query(
+        search_service: Option<MxSearchService>,
+        query: String,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(search_service) = search_service else {
+            eprintln!("Search service not yet initialized");
+            return;
+        };
+
+        let query_lowercase = query.to_lowercase();
+        let sender = Dispatcher::global(cx).0.clone();
+
+        cx.background_executor()
+            .spawn(async move {
+                match search_service.search_applications(&query_lowercase).await {
+                    Ok(result) => {
+                        let Some(app_result) = result.first().cloned() else {
+                            println!("No app found for query: {}", query_lowercase);
+                            return;
+                        };
+
+                        let possible_app_id = app_result.possible_app_id;
+                        let app_exec = app_result.exec;
+                        println!("GOT APP ID: {:?}", possible_app_id);
+
+                        let _ = sender
+                            .broadcast(dispatcher::Message::LaunchApp {
+                                app_id: possible_app_id,
+                                exec: app_exec,
+                            })
+                            .await;
+                    }
+                    Err(e) => eprintln!("Error getting app id: {e:?}"),
+                }
+            })
+            .detach();
+    }
+
     fn open_modal_on_long_press(
         modal: ModalKind,
         is_enabled: bool,
@@ -868,6 +919,7 @@ impl SettingsDrawer {
     fn render_terminal(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let terminal = Icons::global(cx).settings_drawer.terminal.clone();
+        let search_service = self.search_service.clone();
 
         IconButton::new("id_terminal")
             .icon(
@@ -880,8 +932,9 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
-                    println!("terminal clicked");
+                move |_, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    println!("Camera clicked");
+                    Self::launch_app_by_query(search_service.clone(), "Alacritty".to_string(), cx);
                     cx.notify();
                 },
             ))
@@ -938,6 +991,7 @@ impl SettingsDrawer {
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let settings = Icons::global(cx).settings_drawer.settings.clone();
+        let search_service = self.search_service.clone();  
 
         IconButton::new("id_settings")
             .icon(
@@ -949,8 +1003,13 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
-                    println!("settigns clicked");
+                move |_, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    println!("Settings clicked");
+                    Self::launch_app_by_query(
+                        search_service.clone(),
+                        "Mechanix Settings".to_string(),
+                        cx,
+                    );
                     cx.notify();
                 },
             ))
@@ -959,6 +1018,7 @@ impl SettingsDrawer {
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let camera_off = Icons::global(cx).settings_drawer.camera_off.clone();
+        let search_service = self.search_service.clone(); // Remove .expect()
 
         IconButton::new("id_camera")
             .icon(
@@ -971,12 +1031,18 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
-                    println!("camera clicked");
+                move |_, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    println!("Camera clicked");
+                    Self::launch_app_by_query(
+                        search_service.clone(),
+                        "Mechanix Camera".to_string(),
+                        cx,
+                    );
                     cx.notify();
                 },
             ))
     }
+
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let wireless_off = Icons::global(cx).settings_drawer.wireless_off.clone();
