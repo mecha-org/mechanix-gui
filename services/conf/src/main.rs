@@ -9,6 +9,7 @@ use crate::cli::{
     describe_key, get_setting_table, list_keys, list_schemas, set_setting_table, watch_setting,
 };
 
+use crate::database::{start_db_actor, Database, DbCmd};
 use crate::error::ServerError;
 use crate::server::{ConfigServerInterface, SERVED_AT};
 use crate::validator::validate_schema;
@@ -16,10 +17,10 @@ use anyhow::{Context, Result};
 use clap::{CommandFactory, Parser, Subcommand};
 use dirs::home_dir;
 use log::{debug, error, info, trace, warn};
-use crate::database::{start_db_actor, Database, DbCmd};
 use notify::{recommended_watcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use tokio::fs;
 use tokio::sync::{mpsc, oneshot};
 use zbus::ConnectionBuilder;
 
@@ -114,11 +115,14 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
 
     let (rsp_tx, rsp_rx) = oneshot::channel();
     // Check if a file already exists with the same last_modified timestamp
-    if let Err(er) = db_tx.send(DbCmd::Get {
-        identifier: LAST_MODIFIED_TREE_NAME.to_string(),
-        key: schema_file_name.to_string(),
-        rsp: rsp_tx,
-    }).await {
+    if let Err(er) = db_tx
+        .send(DbCmd::Get {
+            identifier: LAST_MODIFIED_TREE_NAME.to_string(),
+            key: schema_file_name.to_string(),
+            rsp: rsp_tx,
+        })
+        .await
+    {
         error!("Failed to get last_modified: {}", er);
         return Err(anyhow::anyhow!("Failed to get last_modified"));
     }
@@ -140,12 +144,15 @@ async fn process_toml_file(path: &PathBuf, db_tx: mpsc::Sender<DbCmd>) -> Result
     };
 
     let (rsp_tx, rsp_rx) = oneshot::channel();
-    if let Err(er) = db_tx.send(DbCmd::Set {
-        identifier: LAST_MODIFIED_TREE_NAME.to_string(),
-        key: schema_file_name.to_string(),
-        value: last_modified.to_be_bytes().to_vec(),
-        rsp: rsp_tx,
-    }).await {
+    if let Err(er) = db_tx
+        .send(DbCmd::Set {
+            identifier: LAST_MODIFIED_TREE_NAME.to_string(),
+            key: schema_file_name.to_string(),
+            value: last_modified.to_be_bytes().to_vec(),
+            rsp: rsp_tx,
+        })
+        .await
+    {
         error!("Failed to insert last_modified: {}", er);
         return Err(anyhow::anyhow!("Failed to insert last_modified"));
     }
@@ -332,6 +339,24 @@ async fn start_server() -> Result<(), ServerError> {
     let schema_dir_to_watch = home_dir.join(schema_dir);
     // Watch the schemas directory for changes
     let schemas_dir = Path::new(&schema_dir_to_watch);
+    if !schemas_dir.exists() {
+        match fs::create_dir_all(&schemas_dir).await {
+            Ok(_) => (),
+            Err(e) => {
+                error!("Failed to create schemas directory: {}", e);
+                return Err(ServerError::FsError(e.to_string()));
+            }
+        }
+    }
+    // Process Existing Schemas
+    match process_existing_schemas(&schemas_dir, db_tx.clone()).await {
+        Ok(_) => {
+            info!("Existing schemas processed successfully!")
+        }
+        Err(err) => {
+            error!("Failed to process existing schema: {}",err);
+        }
+    }
     match watcher.watch(schemas_dir, RecursiveMode::NonRecursive) {
         Ok(_) => (),
         Err(e) => {
@@ -361,6 +386,19 @@ async fn start_server() -> Result<(), ServerError> {
                 }
             }
             Err(err) => error!("Error receiving event: {}", err),
+        }
+    }
+    Ok(())
+}
+
+async fn process_existing_schemas(dir: &Path, db_tx: mpsc::Sender<DbCmd> ) -> Result<(), Box<dyn std::error::Error>> {
+    let mut entries = tokio::fs::read_dir(dir).await?;
+    while let Some(entry) = entries.next_entry().await? {
+        let path = entry.path();
+        if path.extension().and_then(|s| s.to_str()) == Some("toml") {
+            if let Err(err) = process_toml_file(&path, db_tx.clone()).await {
+                error!("Failed to process TOML file '{}': {}", path.display(), err);
+            }
         }
     }
     Ok(())
