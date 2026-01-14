@@ -3,7 +3,7 @@
 name = "mechanix-launcher"
 description = "Launcher application"
 edition = "2024"
-version = "0.0.3"
+version = "0.0.4"
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
