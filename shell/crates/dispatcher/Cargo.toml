@@ -15,6 +15,7 @@ gpui = { workspace = true }
 async-broadcast = "0.7.2"
 mxconf_dbus = { path = "../../../dbus/mechanix/mxconf" }
 futures = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 
 [dev-dependencies]
 async-broadcast = "0.7.2"

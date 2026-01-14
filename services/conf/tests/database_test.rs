@@ -36,7 +36,7 @@ fn test_database_insert_settings_and_get() {
     let key = "test_key";
     let value = b"test_value";
 
-    let result = db.insert_settings(schema_identifier, key, value);
+    let result = db.insert(schema_identifier, key, value);
     assert!(result.is_ok(), "Insert settings should succeed");
 
     // Get the value
@@ -73,11 +73,11 @@ fn test_database_insert_checksum_and_get() {
     let checksum_identifier = "test_checksum";
     let checksum_value = 12345u32;
 
-    let result = db.insert_checksum(schema_name, checksum_identifier, &checksum_value);
+    let result = db.insert(schema_name, checksum_identifier, &checksum_value);
     assert!(result.is_ok(), "Insert checksum should succeed");
 
     // Get the checksum
-    let result = db.get_checksum(checksum_identifier, schema_name);
+    let result = db.get(checksum_identifier, schema_name);
     assert!(result.is_ok(), "Get checksum should succeed");
 
     let checksum_opt = result.unwrap();
@@ -103,13 +103,13 @@ fn test_database_scan_with_prefix() {
     let value = b"test_value";
 
     for key in &keys {
-        let result = db.insert_settings(schema_identifier, key, value);
+        let result = db.insert(schema_identifier, key, value);
         assert!(result.is_ok(), "Insert settings should succeed");
     }
 
     // Also insert a key without the prefix
     let non_prefix_key = "different_key";
-    let result = db.insert_settings(schema_identifier, non_prefix_key, value);
+    let result = db.insert(schema_identifier, non_prefix_key, value);
     assert!(result.is_ok(), "Insert settings should succeed");
 
     // Scan with prefix
@@ -134,7 +134,7 @@ fn test_database_get_nonexistent_checksum() {
     let (_temp_dir, db) = setup_test_db();
 
     // Try to get a nonexistent checksum
-    let result = db.get_checksum("nonexistent_checksum", "nonexistent_key");
+    let result = db.get("nonexistent_checksum", "nonexistent_key");
     assert!(result.is_ok(), "Get checksum should succeed even for nonexistent keys");
 
     let checksum_opt = result.unwrap();
@@ -151,12 +151,12 @@ fn test_database_insert_settings_update() {
     let key = "test_key";
     let value1 = b"test_value1";
 
-    let result = db.insert_settings(schema_identifier, key, value1);
+    let result = db.insert(schema_identifier, key, value1);
     assert!(result.is_ok(), "Insert settings should succeed");
 
     // Update the value
     let value2 = b"test_value2";
-    let result = db.insert_settings(schema_identifier, key, value2);
+    let result = db.insert(schema_identifier, key, value2);
     assert!(result.is_ok(), "Update should succeed");
 
     // Get the updated value
