@@ -1,12 +1,14 @@
 use commons::assets::Assets;
 use desktop_dbus::NotificationService;
-use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
+use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use gpui::*;
 
-use notifications::prelude::icon::{Icon, IconName};
 use notifications::prelude::AppEvents;
+use notifications::prelude::icon::{Icon, IconName};
+use notifications::widgets::{
+    DbNotification, NotificationCenter, NotificationList, NotificationUi, UserDismissedEvent,
+};
 use std::time::{SystemTime, UNIX_EPOCH};
-use notifications::widgets::{DbNotification, NotificationCenter, NotificationList, NotificationUi, UserDismissedEvent};
 
 // Root view to compose NotificationCenter (background) and the toast NotificationList (overlay)
 struct Root {
@@ -196,7 +198,7 @@ fn main() {
                             match event {
                                 AppEvents::NotificationReceived { id, notification } => {
                                     let title = format!("{}:{}", notification.app_name, notification.summary); // adapt fields to your type
-                                    let body = notification.body.clone();
+                                   let body = notification.body.clone();
                                     let key_ss: SharedString = id.to_string().into();
                                     let key_id = ElementId::Name(key_ss);
                                     let actions = notification.actions.clone();

@@ -3,6 +3,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/models/saved_networks.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:nm/nm.dart';
 
 class WirelessSettingsState extends Equatable {
@@ -18,10 +19,11 @@ class WirelessSettingsState extends Equatable {
   final AccessPoints? selectedAccessPoint;
   final NetworkManagerAccessPoint? selectedNMAccessPoint;
 
-  final String? wifiState;
+  final WifiStatus? wifiState;
   final String? error;
   final AccessPoints? connectedNetwork;
   final NetworkManagerDeviceState? deviceState;
+  final WirelessProtocol selectedAPWirelessProtocol;
 
   final WiredDevice? wiredDevice;
 
@@ -39,6 +41,7 @@ class WirelessSettingsState extends Equatable {
     this.deviceState,
     this.selectedNMAccessPoint,
     this.wiredDevice,
+    this.selectedAPWirelessProtocol = WirelessProtocol.none,
   });
 
   WirelessSettingsState copyWith({
@@ -49,12 +52,13 @@ class WirelessSettingsState extends Equatable {
     bool? availableOtherNetworksLoading,
     bool? availableSavedNetworksLoading,
     AccessPoints? selectedAccessPoint,
-    String? wifiState,
+    WifiStatus? wifiState,
     String? error,
     AccessPoints? connectedNetwork,
     NetworkManagerDeviceState? deviceState,
     NetworkManagerAccessPoint? selectedNMAccessPoint,
     WiredDevice? wiredDevice,
+    WirelessProtocol? selectedAPWirelessProtocol,
   }) {
     return WirelessSettingsState(
       wifiOn: wifiOn ?? this.wifiOn,
@@ -75,6 +79,8 @@ class WirelessSettingsState extends Equatable {
       selectedNMAccessPoint:
           selectedNMAccessPoint ?? this.selectedNMAccessPoint,
       wiredDevice: wiredDevice ?? this.wiredDevice,
+      selectedAPWirelessProtocol:
+          selectedAPWirelessProtocol ?? this.selectedAPWirelessProtocol,
     );
   }
 
@@ -92,6 +98,7 @@ class WirelessSettingsState extends Equatable {
         connectedNetwork,
         deviceState,
         selectedNMAccessPoint,
+        selectedAPWirelessProtocol,
       ];
 }
 

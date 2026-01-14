@@ -1,3 +1,4 @@
+use std::thread;
 use std::time::Duration;
 use bluez::{interfaces::device::BluetoothDevice, service::{BluetoothEvent, BluetoothService, InterfaceEvent}};
 use pulseaudio::service::{DeviceInfo, PulseAudioService};
@@ -460,8 +461,8 @@ impl ShellStateManager {
                                  Some(VolumeMessage::SetDefaultOutputSoundDevice { name }) => {
                                     match pulse_manager.handle.set_default_sink_by_name(&name).await {
                                         Ok(_) => {
-                                            println!("Default output sound device set to: {}", name);
-                                              let _= get_sound_device_info(&mut message_tx, &pulse_manager).await;
+                                            let _ = thread::sleep(Duration::from_millis(5));
+                                            let _= get_sound_device_info(&mut message_tx, &pulse_manager).await;
                                         }
                                         Err(e) => {
                                             eprintln!("Failed to unset mute: {}", e);

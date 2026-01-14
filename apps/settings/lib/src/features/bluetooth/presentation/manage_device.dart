@@ -85,7 +85,7 @@ class _ManageDeviceState extends State<ManageDevice> {
               ],
             )),
           ),
-          bottomSheet: MechanixBottomBar(
+          bottomNavigationBar: MechanixBottomBar(
             leadingWidget: [context.backButton],
           ),
         );

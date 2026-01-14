@@ -29,12 +29,10 @@ class _WifiSecurityWidgetState extends State<WifiSecurityWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const MechanixNavigationBar(title: "Configure DNS"),
-      body: ContainerWidget(
+      body: const ContainerWidget(
         child: SingleChildScrollView(
-            child: WirelessProtocolsList(
-          onChanged: onChange,
-          selectedValue: selectedValue,
-        )),
+          child: WirelessProtocolsList(),
+        ),
       ).padOnly(left: 16, right: 16, top: 8),
     );
   }

@@ -160,7 +160,6 @@ impl SettingsDrawer {
                                         .justify_between()
                                         .h(px(ROW_HEIGHT))
                                         .px_4()
-                                        .rounded(px(8.))
                                         .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
                                         .child(
                                             div()

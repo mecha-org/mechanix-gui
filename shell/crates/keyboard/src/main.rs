@@ -1,6 +1,6 @@
 use commons::prelude::*;
 use gpui::*;
-use keyboard::prelude::*;
+use mechanix_keyboard::prelude::*;
 
 fn main() {
     let application = Application::new().with_assets(Assets {});

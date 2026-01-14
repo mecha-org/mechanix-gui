@@ -295,7 +295,7 @@ impl Default for KeyboardSettings {
                 anchor: Anchor::TOP,
                 namespace: "mechanix.keyboard".into(),
                 exclusive_zone: px(0.0),
-                size: Size::new(px(540.0), px(300.0)),
+                size: Size::new(px(540.0), px(274.0)),
             },
         }
     }
