@@ -6,6 +6,8 @@ use gpui::*;
 use serde::Deserialize;
 use toml::{Table, Value};
 
+const LAYOUTS_BASE_PATH: &str = "/usr/share/mechanix/shell/layouts/";
+
 #[derive(Debug, Default, Clone, Deserialize, PartialEq)]
 pub struct Settings {
     #[serde(default)]
@@ -285,6 +287,8 @@ impl Default for VolumeSliderSettings {
 pub struct KeyboardSettings {
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub default_layout: String,
 }
 
 impl Default for KeyboardSettings {
@@ -297,6 +301,7 @@ impl Default for KeyboardSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(274.0)),
             },
+            default_layout: format!("{}us.yaml", LAYOUTS_BASE_PATH),
         }
     }
 }

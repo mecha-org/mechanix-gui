@@ -34,6 +34,9 @@ jobs:
           - name: Launcher Crate Build
             package: mechanix-launcher
             path: shell/crates/launcher
+          - name: Keyboard Crate Build
+            package: mechanix-keyboard
+            path: shell/crates/keyboard
 
     runs-on: ubuntu-24.04-arm
     environment: pre-release
