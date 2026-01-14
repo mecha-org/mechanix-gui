@@ -101,6 +101,9 @@ pub fn listen_dispatcher(cx: &mut Context<SettingsDrawer>) {
 
     let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
 
+    let settings = Settings::global(cx).settings_drawer.clone();
+    let closed_pos = SettingsDrawer::calculate_closed_position(&settings);
+
     cx.spawn(async move |this, cx| {
         while let Ok(message) = dispatcher_rx.recv().await {
             match message {
@@ -108,7 +111,7 @@ pub fn listen_dispatcher(cx: &mut Context<SettingsDrawer>) {
                     if show {
                         let _ = this.update(cx, |this, cx| {
                             this.is_visible = false;
-                            this.position = SettingsDrawer::closed_pos();
+                            this.position = closed_pos;
                             cx.notify();
                         });
                     }

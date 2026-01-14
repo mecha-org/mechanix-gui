@@ -213,7 +213,7 @@ impl ConfigServerInterface {
         let schema_path = self.schema_dir.join(format!("{}.toml", schema_name));
         let schema = fs::read_to_string(&schema_path)
             .map_err(|e| ZbusError::Failed(format!("Failed to read schema file: {}", e)))?;
-        let schema_as_toml = toml::from_str(&schema)
+        let schema_as_toml: Value = toml::from_str(&schema)
             .map_err(|e| ZbusError::Failed(format!("Invalid TOML: {}", e)))?;
         let db_tx = self.db_tx.clone();
         let (rsp, rx) = oneshot::channel();
@@ -230,9 +230,24 @@ impl ConfigServerInterface {
             .map_err(|e| ZbusError::Failed(format!("Failed to receive DB response: {}", e)))?;
 
         let mut results = HashMap::new();
+        // Settings is empty in database then return default value from schema
+        if settings.is_empty() {
+            let actual_key = extract_key(key);
+            match get_default_value_by_key(&schema_as_toml, &actual_key) {
+                None => {
+                    warn!("NO DEFAULT RESULT FOR KEY: {:?}", actual_key);
+                }
+                Some(result) => {
+                    results.insert(actual_key, result.to_string());
+                }
+            }
+
+        }
+
 
         for (k, v) in settings {
-            let value = String::from_utf8(v).map_err(|e| ZbusError::Failed(format!("Invalid UTF-8: {}", e)))?;
+            let value = String::from_utf8(v)
+                .map_err(|e| ZbusError::Failed(format!("Invalid UTF-8: {}", e)))?;
             match validate_value(&schema_as_toml, &k, &value) {
                 Ok(_) => {
                     results.insert(k, value);
@@ -362,6 +377,14 @@ fn extract_schema_name(key: &str) -> String {
     key.split('.').take(3).collect::<Vec<&str>>().join(".")
 }
 
+fn extract_key(key_including_schema: &str) -> String {
+    key_including_schema
+        .split('.')
+        .skip(3)
+        .collect::<Vec<&str>>()
+        .join(".")
+}
+
 /// Extract leaf tables from a TOML value.
 ///
 /// This function recursively traverses a TOML value and extracts all leaf tables.
@@ -421,6 +444,22 @@ fn extract_description<'a>(value: &'a Value, dotted_key: &str) -> Option<&'a str
         if let Some(Value::String(desc)) = table.get("description") {
             return Some(desc);
         }
+    }
+    None
+}
+
+/// Extract the default value from a TOML value for a given key.
+fn get_default_value_by_key<'a>(value: &'a Value, dotted_key: &str) -> Option<&'a Value> {
+    let mut current = value;
+    for part in dotted_key.split('.') {
+        if let Value::Table(table) = current {
+            current = table.get(part)?;
+        } else {
+            return None;
+        }
+    }
+    if let Value::Table(table) = current {
+        return table.get("default");
     }
     None
 }

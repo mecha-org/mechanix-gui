@@ -1,19 +1,24 @@
 use commons::widgets::wing;
 use gpui::*;
+use icons::prelude::SettingsDrawerIcons;
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::ui::FINAL_MODAL_SIZE;
 use crate::ui::modals::MODAL_HEADER_HEIGHT;
 use crate::{
     prelude::*,
-    ui::{
-        icon::{Icon, IconName},
-        widgets::{Switch, SwitchSize},
-    },
+    ui::widgets::{Switch, SwitchSize},
 };
+use icons::prelude::*;
+
 impl SettingsDrawer {
     pub fn render_display_modal(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
+        let SettingsDrawerIcons {
+            auto_brightness,
+            dark_mode,
+            ..
+        } = Icons::global(cx).settings_drawer.clone();
 
         let (auto_brightness_icon_color, auto_brightness_text_color) =
             Self::get_icon_and_text_color(self.auto_brightness, cx);
@@ -85,8 +90,13 @@ impl SettingsDrawer {
                                             .flex_row()
                                             .text_align(TextAlign::Left)
                                             .child(
-                                                Icon::new(IconName::AutoBrightness)
-                                                    .size((px(28.), px(28.)))
+                                                svg()
+                                                    .external_path(SharedString::from(
+                                                        auto_brightness
+                                                            .to_string_lossy()
+                                                            .to_string(),
+                                                    ))
+                                                    .size(px(28.))
                                                     .text_color(auto_brightness_icon_color),
                                             )
                                             .child(
@@ -125,8 +135,11 @@ impl SettingsDrawer {
                                             .flex_row()
                                             .text_align(TextAlign::Left)
                                             .child(
-                                                Icon::new(IconName::DarkMode)
-                                                    .size((px(28.), px(28.)))
+                                                svg()
+                                                    .external_path(SharedString::from(
+                                                        dark_mode.to_string_lossy().to_string(),
+                                                    ))
+                                                    .size(px(28.))
                                                     .text_color(dark_mode_icon_color),
                                             )
                                             .child(

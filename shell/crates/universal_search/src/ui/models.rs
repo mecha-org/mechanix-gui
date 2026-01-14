@@ -1,6 +1,5 @@
-use std::ops::Range;
+use std::{ops::Range, path::PathBuf};
 
-use crate::ui::icon::IconName;
 use commons::input::TextInput;
 use gpui::{Bounds, Context, Entity, FocusHandle, Pixels, Point, ShapedLine, SharedString};
 use mxsearch::{prelude::*, service::MxSearchService};
@@ -12,14 +11,14 @@ pub struct UniversalSearch {
     pub last_scroll_offset: Pixels,
     pub app_count: usize,
     pub file_count: usize,
-    pub ardour_icon: IconName,
-    pub arrow_up_right_icon: IconName,
-    pub chromium_icon: IconName,
-    pub firefox_icon: IconName,
-    pub github_icon: IconName,
-    pub folder_icon: IconName,
-    pub search_icon: IconName,
-    pub x_icon: IconName,
+    pub ardour_icon: PathBuf,
+    pub arrow_up_right_icon: PathBuf,
+    pub chromium_icon: PathBuf,
+    pub firefox_icon: PathBuf,
+    pub github_icon: PathBuf,
+    pub folder_icon: PathBuf,
+    pub search_icon: PathBuf,
+    pub x_icon: PathBuf,
     pub text_input: Entity<TextInput>,
     pub last_search_query: String,
     pub is_searching: bool,
@@ -47,7 +46,7 @@ pub struct SearchResults {
 
 pub struct RecentApps {
     pub name: String,
-    pub icon_path: IconName,
+    pub icon_path: PathBuf,
 }
 
 #[derive(Debug, Clone, PartialEq)]

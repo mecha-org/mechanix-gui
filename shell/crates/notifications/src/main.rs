@@ -1,12 +1,14 @@
 use commons::assets::Assets;
 use desktop_dbus::NotificationService;
-use futures::{channel::mpsc, select, FutureExt, SinkExt, StreamExt};
+use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use gpui::*;
+use icons::prelude::*;
 
-use notifications::prelude::icon::{Icon, IconName};
 use notifications::prelude::AppEvents;
+use notifications::widgets::{
+    DbNotification, NotificationCenter, NotificationList, NotificationUi, UserDismissedEvent,
+};
 use std::time::{SystemTime, UNIX_EPOCH};
-use notifications::widgets::{DbNotification, NotificationCenter, NotificationList, NotificationUi, UserDismissedEvent};
 
 // Root view to compose NotificationCenter (background) and the toast NotificationList (overlay)
 struct Root {
@@ -196,7 +198,7 @@ fn main() {
                             match event {
                                 AppEvents::NotificationReceived { id, notification } => {
                                     let title = format!("{}:{}", notification.app_name, notification.summary); // adapt fields to your type
-                                    let body = notification.body.clone();
+                                   let body = notification.body.clone();
                                     let key_ss: SharedString = id.to_string().into();
                                     let key_id = ElementId::Name(key_ss);
                                     let actions = notification.actions.clone();
@@ -270,6 +272,8 @@ fn main() {
                                                 .action(move |_, _, cx| {
                                                     // Render an actions bar similar to the mock:
                                                     // a top border and evenly-spaced action cells with optional icons.
+                                                    let icons = Icons::global(cx).notifications.clone();
+                                                    let default_icon = SharedString::from(icons.application.to_string_lossy().to_string());
                                                     let mut row = div()
                                                         .id("actions-row")
                                                         .mt_2()
@@ -315,7 +319,7 @@ fn main() {
                                                                     this.dismiss(window, cx);
                                                                 }))
                                                                 // Placeholder icon, will be replaced by designer
-                                                                .child(Icon::new(IconName::Application).size((px(18.), px(18.))).text_color(if is_last { rgb(0xff9500) } else { rgb(0xe9e9e9) }))
+                                                                .child(svg().external_path(&default_icon).w(px(18.)).h(px(18.)).text_color(if is_last { rgb(0xff9500) } else { rgb(0xe9e9e9) }))
                                                                 .child(action_label.clone())
                                                         );
 

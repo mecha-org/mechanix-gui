@@ -1,25 +1,27 @@
 use crate::events::AppEvents;
-use crate::prelude::icon::{Icon, IconName};
+use crate::widgets::prelude::{
+    DbNotification, NotificationCenter, NotificationList, NotificationUi, NotificationWidget,
+    UserDismissedEvent,
+};
 use desktop_dbus::NotificationService;
 use futures::channel::mpsc;
-use futures::{select, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt, select};
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::{
-    div, point, px, rgb, App, AppContext, Bounds, Context,
-    ElementId, InteractiveElement, IntoElement, ParentElement, ReadGlobal,
-    Render, SharedString, StatefulInteractiveElement, Styled, WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions,
+    App, AppContext, Bounds, Context, ElementId, InteractiveElement, IntoElement, ParentElement,
+    ReadGlobal, Render, SharedString, StatefulInteractiveElement, Styled,
+    WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, div, point, px, rgb, svg,
 };
+use icons::prelude::Icons;
 use settings::prelude::{LayerShellSettings, NotificationSettings, Settings};
-use crate::widgets::prelude::{DbNotification, NotificationCenter, NotificationList, NotificationUi, NotificationWidget, UserDismissedEvent};
 
 mod events;
-mod ui;
 mod helper;
+mod ui;
 pub mod widgets;
 
 pub mod prelude {
     pub use crate::events::AppEvents;
-    pub use crate::ui::icon;
     pub use crate::ui::NotificationStory;
 }
 
@@ -253,6 +255,7 @@ pub fn run_app(cx: &mut App) {
                                 let ui_tx_buttons = ui_tx_for_ui_task.clone();
                                 let center_for_click = center_for_visibility.clone();
                                 let _ = list_for_events.update_in(cx, |list, window, cx| {
+
                                     list.push(
                                         {
                                             let base = NotificationUi::new()
@@ -297,6 +300,8 @@ pub fn run_app(cx: &mut App) {
 
                                                 let items: Vec<(String, String)> = actions_pairs.clone();
                                                 let total = items.len();
+                                                let icons = Icons::global(notif_cx).notifications.clone();
+                                                let default_icon: SharedString = icons.application.to_string_lossy().to_string().into();
                                                 for (idx, (action_id, action_label)) in items.into_iter().enumerate() {
                                                     let is_last = idx + 1 == total;
                                                     let btn_id = format!("action-{}", action_id);
@@ -304,6 +309,7 @@ pub fn run_app(cx: &mut App) {
                                                     let btn_eid = ElementId::Name(SharedString::from(btn_id));
                                                     let ui_tx_click = ui_tx_buttons.clone();
                                                     let clicked_notif_id = notif_id;
+                                                    
 
                                                     // Each cell is flex_1 and centered
                                                     row = row.child(
@@ -330,7 +336,7 @@ pub fn run_app(cx: &mut App) {
                                                                 this.dismiss(window, cx);
                                                             }))
                                                             // Placeholder icon, will be replaced by designer
-                                                            .child(Icon::new(IconName::Application).size((px(18.), px(18.))).text_color(if is_last { rgb(0xff9500) } else { rgb(0xe9e9e9) }))
+                                                            .child(svg().external_path(&default_icon).w(px(18.)).h(px(18.)).text_color(if is_last { rgb(0xff9500) } else { rgb(0xe9e9e9) }))
                                                             .child(action_label.clone())
                                                     );
 

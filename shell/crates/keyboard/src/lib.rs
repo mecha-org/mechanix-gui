@@ -10,6 +10,7 @@ mod types;
 mod ui;
 mod utils;
 
+use icons::prelude::*;
 use settings::prelude::*;
 use shell_state::ShellState;
 use trie::util::get_trie;
@@ -32,6 +33,10 @@ pub fn run_app(cx: &mut App) {
         settings::init(cx);
     }
 
+    if !cx.has_global::<Icons>() {
+        icons::init(cx);
+    }
+
     let settings = Settings::global(cx).keyboard.clone();
     let LayerShellSettings {
         size,
@@ -48,8 +53,9 @@ pub fn run_app(cx: &mut App) {
         },
         cx,
     ));
+    let default_layout = settings.default_layout;
 
-    let layout = Layout::from_file("assets/layouts/us.yaml".to_string()).unwrap();
+    let layout = Layout::from_file(default_layout).unwrap();
     let parsed_layout = layout.build(size.width.to_f64()).unwrap();
     let trie = get_trie();
 

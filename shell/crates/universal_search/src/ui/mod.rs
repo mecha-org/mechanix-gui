@@ -1,16 +1,14 @@
-pub mod icon;
 pub mod models;
 
 use std::path::PathBuf;
 
 use crate::data::data::*;
-use crate::ui::icon::Icon;
 use crate::ui::models::FileType;
 use commons::input::TextInput;
 use dispatcher::Dispatcher;
 use gpui::prelude::FluentBuilder;
 use gpui::*;
-use icon::IconName;
+use icons::prelude::*;
 use models::{DragInfo, SearchResults, UniversalSearch};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
@@ -68,6 +66,17 @@ impl UniversalSearch {
             }
         })
         .detach();
+        let UniversalSearchIcons {
+            ardour: ardour_icon,
+            chromium: chromium_icon,
+            firefox: firefox_icon,
+            github: github_icon,
+            default_folder: folder_icon,
+            search: search_icon,
+            x: x_icon,
+            arrow_up_right: arrow_up_right_icon,
+            ..
+        } = Icons::global(cx).universal_search.clone();
 
         Self {
             app_count: 0,
@@ -76,14 +85,14 @@ impl UniversalSearch {
             is_dragging: false,
             drag_start_y: px(0.0),
             last_scroll_offset: px(0.0),
-            ardour_icon: IconName::Ardour,
-            arrow_up_right_icon: IconName::ArrowUpRight,
-            chromium_icon: IconName::Chromium,
-            firefox_icon: IconName::Firefox,
-            github_icon: IconName::Github,
-            folder_icon: IconName::DefaultFolder,
-            search_icon: IconName::Search,
-            x_icon: IconName::XIcon,
+            ardour_icon,
+            arrow_up_right_icon,
+            chromium_icon,
+            firefox_icon,
+            github_icon,
+            folder_icon,
+            search_icon,
+            x_icon,
             text_input: cx.new(|cx| TextInput::new(cx)),
             last_search_query: String::new(),
             is_searching: false,
@@ -351,6 +360,7 @@ impl UniversalSearch {
     ) -> impl IntoElement {
         let arrow_up_right_icon = self.arrow_up_right_icon.clone();
         let colors = Theme::global(cx).colors.clone();
+        let icons = Icons::global(cx).universal_search.clone();
 
         div().h(px(FILE_SECTION_HEIGHT)).w_full().child(
             div().size_full().flex().flex_row().items_center().child(
@@ -393,8 +403,15 @@ impl UniversalSearch {
                                             .when(search.file_type == FileType::App, |this| {
                                                 this.when_none(&search.path, |this| {
                                                     this.child(
-                                                        Icon::from(IconName::DefaultApp)
-                                                            .size((px(22.26), px(22.26))),
+                                                        svg()
+                                                            .external_path(SharedString::from(
+                                                                icons
+                                                                    .default_app
+                                                                    .to_string_lossy()
+                                                                    .to_string(),
+                                                            ))
+                                                            .text_color(colors.accent_500)
+                                                            .size(px(22.26)),
                                                     )
                                                 })
                                                 .when_some(search.path.clone(), |this, path| {
@@ -403,11 +420,17 @@ impl UniversalSearch {
                                             })
                                             .when(search.file_type == FileType::File, |this| {
                                                 this.child(
-                                                    Icon::from(get_file_extension_icon(
-                                                        &search.extension,
-                                                    ))
-                                                    .size((px(22.26), px(22.26)))
-                                                    .text_color(colors.foreground_400),
+                                                    svg()
+                                                        .external_path(SharedString::from(
+                                                            get_file_extension_icon(
+                                                                &search.extension,
+                                                                cx,
+                                                            )
+                                                            .to_string_lossy()
+                                                            .to_string(),
+                                                        ))
+                                                        .size(px(22.26))
+                                                        .text_color(colors.foreground_400),
                                                 )
                                             }),
                                     ),
@@ -436,11 +459,20 @@ impl UniversalSearch {
                             .items_center()
                             .justify_center()
                             .child(match search.file_type {
-                                FileType::App => Icon::from(IconName::ArrowCounterClockWise)
-                                    .size((px(20.), px(20.)))
+                                FileType::App => svg()
+                                    .external_path(SharedString::from(
+                                        icons
+                                            .arrow_counter_clock_wise
+                                            .to_string_lossy()
+                                            .to_string(),
+                                    ))
+                                    .size(px(20.0))
                                     .text_color(colors.foreground_800),
-                                FileType::File => Icon::from(arrow_up_right_icon)
-                                    .size((px(18.0), px(18.0)))
+                                FileType::File => svg()
+                                    .external_path(SharedString::from(
+                                        arrow_up_right_icon.to_string_lossy().to_string(),
+                                    ))
+                                    .size(px(18.0))
                                     .text_color(colors.foreground_800),
                             }),
                     ),
@@ -645,8 +677,13 @@ impl UniversalSearch {
                                                     .h(px(24.0))
                                                     .rounded(px(8.0))
                                                     .child(
-                                                        Icon::from(search_icon)
-                                                            .size((px(24.0), px(24.0)))
+                                                        svg()
+                                                            .external_path(SharedString::from(
+                                                                search_icon
+                                                                    .to_string_lossy()
+                                                                    .to_string(),
+                                                            ))
+                                                            .size(px(24.0))
                                                             .text_color(colors.accent_300),
                                                     ),
                                             )
@@ -671,8 +708,11 @@ impl UniversalSearch {
                                         this.clear_text_input(cx, window);
                                     }))
                                     .child(
-                                        Icon::from(x_icon)
-                                            .size((px(24.0), px(24.0)))
+                                        svg()
+                                            .external_path(SharedString::from(
+                                                x_icon.to_string_lossy().to_string(),
+                                            ))
+                                            .size(px(24.0))
                                             .text_color(colors.foreground_400),
                                     ),
                             ),

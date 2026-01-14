@@ -1,7 +1,7 @@
 [package]
 name = "mxconf"
 description = "Configuration system for the Mechanix shell, services and gui apps"
-version = "0.0.1"
+version = "0.0.2"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -48,6 +48,16 @@ assets = [
         "usr/bin/",
         "755",
     ],
+    [
+        "../conf/schemas/default_profile.toml",
+        "etc/mxconf/profile/default_profile.toml",
+        "755",
+    ],
+    [
+        "../conf/schemas/org.mechanix.desktop.toml",
+        "usr/share/mxconf/schemas/org.mechanix.desktop.toml",
+        "644",
+    ],
 ]
 
 [package.metadata.generate-rpm]
@@ -57,4 +67,6 @@ auto-req = "yes"
 assets = [
     # Binary
     { source = "../../target/release/mxconf", dest = "/usr/bin/mxconf", mode = "755" },
+    { source = "../conf/schemas/default_profile.toml", dest = "/etc/mxconf/profile/default_profile.toml", mode = "755" },
+    { source = "../conf/schemas/org.mechanix.desktop.toml", dest = "/usr/share/mxconf/schemas/org.mechanix.desktop.toml", mode = "644" },
 ]
