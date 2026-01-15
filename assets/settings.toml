@@ -15,11 +15,6 @@ namespace = "mechanix.settings.drawer"
 exclusive_zone = 29.0
 size = { width = 540.0, height = 620.0 }
 
-[settings_drawer.drawer_apps]
-settings = "Mechanix Settings" 
-terminal = "Alacritty"
-camera = "Mechanix Camera"
-
 [running_apps]
 navbar_size = { width = 199.22, height = 28.5 }
 
@@ -39,9 +34,6 @@ anchor = ["bottom"]
 namespace = "mechanix.universal.search"
 exclusive_zone = -1.0
 size = { width = 540.0, height = 620.0 }
-
-[universal_search.system_apps]
-files = "mechanix_files"
 
 [homescreen]
 status_bar_size = { width = 540.0, height = 36.0 }
@@ -97,3 +89,9 @@ anchor = ["bottom", "left", "right"]
 namespace = "mechanix.keyboard"
 exclusive_zone = 0.0
 size = { width = 540.0, height = 274.0 }
+
+[system_apps]
+files = "mechanix_files"
+settings = "Mechanix Settings"
+terminal = "Alacritty"
+camera = "Mechanix Camera"

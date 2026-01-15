@@ -108,7 +108,7 @@ pub enum ModalKind {
 impl SettingsDrawer {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let settings = Settings::global(cx).settings_drawer.clone();
-        let apps = Settings::global(cx).settings_drawer.clone().drawer_apps;
+        let apps = Settings::global(cx).system_apps.clone();
 
         let ShellState {
             volume_tx,
