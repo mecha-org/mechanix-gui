@@ -49,6 +49,7 @@ pub enum Message {
     },
     SetKeyboardAlwayson(bool),
     ShowPowerOptions(bool),
+    ShowLockscreen(bool),
     VolumeUp,
     VolumeDown,
     LaunchApp {
