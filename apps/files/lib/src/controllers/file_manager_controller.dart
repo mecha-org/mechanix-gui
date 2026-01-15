@@ -129,19 +129,16 @@ class FileManagerController {
   /// returns an empty list if there is no storage
   static Future<List<Directory>> getStorageList() async {
     if (Platform.isLinux) {
-      final Directory dir = await getApplicationDocumentsDirectory();
-
-      // Gives the home directory.
-      final Directory home = dir.parent.parent;
-
-      // you may provide root directory.
-      // final Directory root = dir.parent.parent.parent;
-      return [home];
+      final home = Platform.environment['HOME'];
+      if (home != null && home.isNotEmpty) {
+        return [Directory(home)];
+      }
+      return [Directory('/')]; // final fallback
     }
     return [];
   }
 
-  // /// Jumps to the parent directory of currently opened directory if the parent is accessible.
+  /// Jumps to the parent directory of currently opened directory if the parent is accessible.
   Future<void> goToParentDirectory() async {
     if (!(await isRootDirectory()))
       openDirectory(Directory(_path.value).parent);

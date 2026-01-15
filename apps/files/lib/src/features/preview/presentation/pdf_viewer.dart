@@ -22,8 +22,13 @@ import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 class PdfViewerPage extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
+  FileExplorerPageState? state;
 
-  PdfViewerPage({super.key, required this.rootContext, required this.filePath});
+  PdfViewerPage(
+      {super.key,
+      required this.rootContext,
+      required this.filePath,
+      this.state});
 
   @override
   State<PdfViewerPage> createState() => _PdfViewerPageState();
@@ -274,8 +279,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   /// Normal app bar with file name and search icon
   PreferredSizeWidget _buildNormalAppBar() {
-    final explorerState =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final explorerState = widget.state;
 
     final controller = explorerState?.controller;
 
@@ -355,8 +359,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return Container(
       color: Colors.grey.shade900,
@@ -422,8 +425,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   Widget buildActionsMenu(BuildContext context) {
     final offset = const Offset(-8, -14);
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return MechanixMenu(
       offset: offset,

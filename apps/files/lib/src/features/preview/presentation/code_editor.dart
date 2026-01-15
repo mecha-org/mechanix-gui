@@ -41,9 +41,13 @@ final pureBlackTheme = {
 class CodeEditorPage extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
+  FileExplorerPageState? state;
 
   CodeEditorPage(
-      {super.key, required this.rootContext, required this.filePath});
+      {super.key,
+      required this.rootContext,
+      required this.filePath,
+      this.state});
 
   @override
   State<CodeEditorPage> createState() => _CodeEditorPageState();
@@ -295,8 +299,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       );
     }
 
-    final explorerState =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final explorerState = widget.state;
 
     final controller = explorerState?.controller;
 
@@ -426,9 +429,6 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
-
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
@@ -504,8 +504,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
   Widget buildActionsMenu(BuildContext context) {
     final offset = const Offset(-8, -14);
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return MechanixMenu(
       offset: offset,

@@ -30,7 +30,7 @@ class AppConfig {
 
   String? get(String key) => _config[key];
   String get homeDir =>
-      get('org.mechanix.files.files_home_page.home_dir') ?? '/home';
+      get('org.mechanix.files.files_home_page.home_dir') ?? '/home/mecha';
   String get downloadsDir =>
       get('org.mechanix.files.files_home_page.downloads_dir') ??
       '/home/mecha/Downloads';

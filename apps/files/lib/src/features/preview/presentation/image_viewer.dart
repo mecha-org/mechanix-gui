@@ -22,9 +22,13 @@ import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 class ImageViewerPage extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
+  FileExplorerPageState? state;
 
   ImageViewerPage(
-      {super.key, required this.rootContext, required this.filePath});
+      {super.key,
+      required this.rootContext,
+      required this.filePath,
+      this.state});
 
   @override
   State<ImageViewerPage> createState() => _ImageViewerPageState();
@@ -37,8 +41,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final explorerState =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final explorerState = widget.state;
 
     final controller = explorerState?.controller;
 
@@ -60,7 +63,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           ? _SvgViewer(imagePath: widget.filePath)
           : (_isEditing
               ? ImageEditorPage(
-                  rootContext: widget.rootContext,
+                  state: widget.state,
                   imagePath: widget.filePath,
                   onClose: () {
                     setState(() {
@@ -96,8 +99,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
@@ -179,8 +181,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
 
   Widget buildActionsMenu(BuildContext context) {
     final offset = const Offset(-8, -14);
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return MechanixMenu(
       offset: offset,
