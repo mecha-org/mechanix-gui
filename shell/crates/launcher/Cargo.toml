@@ -91,7 +91,7 @@ assets = [
     ],
     [
         "../../../assets/icons/lockscreen/*",
-        "usr/share/mechanix/shell/launcher/assets/icons/lockscreen/",
+        "usr/share/mechanix/shell/assets/icons/lockscreen/",
         "755",
     ],
 ]
@@ -134,7 +134,7 @@ assets = [
     { source = "../../../assets/icons/power-options/*", dest = "/usr/share/mechanix/shell/assets/icons/power-options/", mode = "755" },
 
     # Lockscreen icons
-    { source = "../../../assets/icons/lockscreen/*", dest = "/usr/share/mechanix/shell/launcher/assets/icons/lockscreen/", mode = "755" },
+    { source = "../../../assets/icons/lockscreen/*", dest = "/usr/share/mechanix/shell/assets/icons/lockscreen/", mode = "755" },
 
 
 ]
