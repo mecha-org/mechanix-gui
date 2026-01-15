@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use sled::Tree;
 use sled::{Config, Db};
 use std::collections::HashMap;

@@ -24,5 +24,6 @@ shell_state = { path = "../shell_state" }
 anyhow = { workspace = true }
 theme = { path = "../theme" }
 dispatcher = { path = "../dispatcher" }
+icons = { path = "../icons" }
+mxsearch = { path = "../../../services/search/server" }
 futures = "0.3.31"
-

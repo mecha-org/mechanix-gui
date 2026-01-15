@@ -2,7 +2,6 @@ use crate::helper::{
     cubic_bezier, format_notification_body, format_notification_name, format_notification_summary,
     time_ago,
 };
-use crate::ui::icon::{Icon, IconName};
 
 use crate::widgets::notification::{
     DbNotification, NotificationId, NotificationUi, UserDismissedEvent,
@@ -10,6 +9,7 @@ use crate::widgets::notification::{
 use commons::widgets::{WingSide, wing};
 use gpui::prelude::FluentBuilder;
 use gpui::*;
+use icons::prelude::Icons;
 use smol::Timer;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::{
@@ -961,6 +961,7 @@ impl Render for NotificationWidget {
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let icons = Icons::global(cx).notifications.clone();
          let settings = Settings::global(cx).notifications.clone();
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
@@ -1100,6 +1101,8 @@ impl NotificationCenter {
                                    group_id: u64,
                                    item_id: u64| {
                 let mut content = div().flex().flex_col().gap_2();
+                let default_icon: SharedString =
+                    icons.application.to_string_lossy().to_string().into();
 
                 // Top line: icon + name · time (only for first card or when collapsed)
                 if show_header {
@@ -1135,8 +1138,10 @@ impl NotificationCenter {
                                             item_icon_path.is_none() && g.icon_path.is_none(),
                                             |this| {
                                                 this.child(
-                                                    Icon::new(IconName::Application)
-                                                        .size((px(16.), px(16.)))
+                                                    svg()
+                                                        .external_path(default_icon)
+                                                        .w(px(16.))
+                                                        .h(px(16.))
                                                         .text_color(colors.foreground_0),
                                                 )
                                             },

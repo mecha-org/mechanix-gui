@@ -165,6 +165,9 @@ pub fn run() {
         //init global settings
         settings::init(cx);
 
+        //init icons settings
+        icons::init(cx);
+
         //init dispatcher
         dispatcher::init(cx);
 

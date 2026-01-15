@@ -1,6 +1,4 @@
 mod components;
-mod icon;
-
 use crate::prelude::models::*;
 use commons::prelude::InstalledApps;
 use gpui::foreign_toplevel_management::ForeignToplevelHandle;
@@ -63,6 +61,8 @@ impl Render for RunningApps {
                         } else {
                             //short swipe
                             //Mimize all apps
+                            this.show_apps = false;
+                            this.update_input_regions(window, false);
                             this.send_minimize_all_apps(cx);
                         }
                         this.bar_drag_start_y = None;

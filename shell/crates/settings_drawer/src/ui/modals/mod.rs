@@ -1,5 +1,6 @@
 use commons::widgets::wing;
 use gpui::*;
+use icons::prelude::*;
 use theme::prelude::{AlphaExt, Theme};
 
 pub mod bluetooth_modal;
@@ -9,10 +10,7 @@ pub mod performance_modal;
 pub mod sound_modal;
 pub mod wireless_modal;
 
-use crate::ui::{
-    FINAL_MODAL_SIZE, SettingsDrawer,
-    icon::{Icon, IconName},
-};
+use crate::ui::{FINAL_MODAL_SIZE, SettingsDrawer};
 
 pub const ROW_HEIGHT: f32 = 60.0;
 pub const MODAL_HEADER_HEIGHT: f32 = 60.0;
@@ -67,6 +65,7 @@ impl SettingsDrawer {
 
     pub fn render_settings_div(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
+        let settings = Icons::global(cx).settings_drawer.clone().settings;
 
         div()
             .id("id_settings")
@@ -88,8 +87,9 @@ impl SettingsDrawer {
             .flex_shrink_0()
             .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
             .child(
-                Icon::new(IconName::Settings)
-                    .size((px(28.), px(28.)))
+                svg()
+                    .external_path(SharedString::from(settings.to_string_lossy().to_string()))
+                    .size(px(28.))
                     .text_color(colors.accent_300),
             )
             .child(

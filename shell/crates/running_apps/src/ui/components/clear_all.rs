@@ -1,8 +1,8 @@
 use crate::models::models::AppCardAnimation;
 use crate::ui::RunningApps;
-use crate::ui::icon::IconName;
 use gpui::prelude::*;
 use gpui::*;
+use icons::prelude::Icons;
 
 impl RunningApps {
     pub fn clear_all_cards(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
@@ -22,6 +22,8 @@ impl RunningApps {
     }
 
     pub fn render_clear_all(&self, cx: &mut Context<'_, Self>) -> impl IntoElement {
+        let cleanup = Icons::global(cx).running_apps.cleanup.clone();
+
         div()
             .w_full()
             .h_1_4()
@@ -45,7 +47,7 @@ impl RunningApps {
                     .gap_2()
                     .items_center()
                     .justify_center()
-                    .child(img(IconName::CleanUp.resolve()))
+                    .child(img(cleanup))
                     .child("Close All")
                     .cursor_pointer()
                     .hover(|s| s.bg(rgb(0x252525)))

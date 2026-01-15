@@ -12,9 +12,9 @@ use std::{any::TypeId, collections::HashMap, rc::Rc, time::Duration};
 use crate::helper::{cubic_bezier, time_ago};
 use regex::Regex;
 
-use crate::ui::icon::{Icon, IconName};
 use commons::widgets::wing;
-use gpui::Size;
+use gpui::*;
+use icons::prelude::*;
 use theme::ActiveTheme;
 use theme::prelude::AlphaExt;
 
@@ -33,11 +33,20 @@ pub enum NotificationType {
 }
 
 impl NotificationType {
-    fn icon(&self, cx: &App) -> Icon {
+    fn icon(&self, cx: &App) -> Svg {
         let colors = cx.theme().colors.clone();
+        let icons = Icons::global(cx).notifications.clone();
         match self {
-            Self::Info => Icon::new(IconName::Info).text_color(colors.foreground_500),
-            Self::Application => Icon::new(IconName::Application).text_color(colors.foreground_500),
+            Self::Info => svg()
+                .size(px(20.))
+                .external_path(SharedString::from(icons.info.to_string_lossy().to_string()))
+                .text_color(colors.foreground_500),
+            Self::Application => svg()
+                .size(px(20.))
+                .external_path(SharedString::from(
+                    icons.application.to_string_lossy().to_string(),
+                ))
+                .text_color(colors.foreground_500),
         }
     }
 }
@@ -87,7 +96,7 @@ pub struct NotificationUi {
     message: Option<SharedString>,
     // Store a path to the raster image; build gpui::img in render.
     icon_img: Option<std::path::PathBuf>,
-    icon: Option<Icon>,
+    icon: Option<SharedString>,
     pub(crate) autohide: bool,
     pub(crate) expire_timeout: Duration,
     action_builder: Option<Rc<dyn Fn(&mut Self, &mut Window, &mut Context<Self>) -> Stateful<Div>>>,
@@ -226,7 +235,7 @@ impl NotificationUi {
     /// Set the icon of the notification.
     ///
     /// If icon is None, the notification will use the default icon of the type.
-    pub fn icon(mut self, icon: impl Into<Icon>) -> Self {
+    pub fn icon(mut self, icon: impl Into<SharedString>) -> Self {
         self.icon = Some(icon.into());
         self
     }
@@ -485,6 +494,8 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
 impl Render for NotificationUi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let icons = Icons::global(cx).notifications.clone();
+        let close_icon: SharedString = icons.close.to_string_lossy().to_string().into();
         let content = self
             .content_builder
             .clone()
@@ -710,7 +721,7 @@ impl Render for NotificationUi {
                                 div()
                                     .id("close")
                                     .child(
-                                        Icon::new(IconName::Close).size((px(20.), px(20.))), // .text_color(colors.foreground_300),
+                                        svg().external_path(close_icon).size(px(20.)), // .text_color(colors.foreground_300),
                                     )
                                     .on_click(cx.listener(|this, _, window, cx| {
                                         this.dismiss(window, cx);
