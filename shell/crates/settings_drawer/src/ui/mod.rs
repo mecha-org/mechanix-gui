@@ -4,6 +4,8 @@ use commons::widgets::{WingSide, wing};
 use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
+use mxsearch::prelude::AppInfo;
+use mxsearch::service::MxSearchService;
 use settings::prelude::{Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
@@ -50,12 +52,9 @@ pub struct SettingsDrawer {
     pub rotation_on: bool,
     pub airplane_mode: bool,
     pub screen_mirroring: bool,
-    pub open_terminal: bool,
 
     pub microphone_recording: bool,
     pub screen_recording: bool,
-    pub settings_active: bool,
-    // camera
     pub power_mode: PowerMode,
     pub cell_signal: bool,
 
@@ -89,6 +88,10 @@ pub struct SettingsDrawer {
 
     pub wireless_modal_scroll: WirelessModalScroll,
     pub bluetooth_modal_scroll: BluetoothModalScroll,
+
+    pub settings_app_info: Option<AppInfo>,
+    pub camera_app_info: Option<AppInfo>,
+    pub terminal_info: Option<AppInfo>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,6 +108,7 @@ pub enum ModalKind {
 impl SettingsDrawer {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let settings = Settings::global(cx).settings_drawer.clone();
+        let apps = Settings::global(cx).system_apps.clone();
 
         let ShellState {
             volume_tx,
@@ -126,8 +130,8 @@ impl SettingsDrawer {
         let mut _subscriptions = vec![b_subscription, v_subscription];
 
         let closed_pos = Self::calculate_closed_position(&settings);
-        Self {
-            settings_active: false,
+
+        let settings_drawer = Self {
             open_power_options: false,
             rotation_on: false,
             airplane_mode: false,
@@ -137,7 +141,6 @@ impl SettingsDrawer {
             screen_recording: false,
 
             volume_device_name: None,
-            open_terminal: false,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
             brightness_slider_value: 0.0,
@@ -165,7 +168,40 @@ impl SettingsDrawer {
 
             wireless_modal_scroll: WirelessModalScroll::new(),
             bluetooth_modal_scroll: BluetoothModalScroll::new(),
-        }
+            settings_app_info: None,
+            camera_app_info: None,
+            terminal_info: None,
+        };
+
+        cx.spawn(async move |this, cx| {
+            if let Ok(service) = MxSearchService::new().await {
+                let mut settings_app: Option<AppInfo> = None;
+                let mut camera_app: Option<AppInfo> = None;
+                let mut terminal_app: Option<AppInfo> = None;
+                if let Ok(apps) = service.search_applications(&apps.settings).await {
+                    settings_app = apps.first().cloned();
+                }
+
+                if let Ok(apps) = service.search_applications(&apps.camera).await {
+                    camera_app = apps.first().cloned();
+                }
+
+                if let Ok(apps) = service.search_applications(&apps.terminal).await {
+                    terminal_app = apps.first().cloned();
+                }
+
+                this.update(cx, |this, cx| {
+                    this.settings_app_info = settings_app;
+                    this.camera_app_info = camera_app;
+                    this.terminal_info = terminal_app;
+
+                    cx.notify();
+                })
+                .ok();
+            }
+        })
+        .detach();
+        settings_drawer
     }
 
     pub fn calculate_closed_position(settings: &SettingsDrawerSettings) -> f32 {
@@ -710,6 +746,25 @@ impl SettingsDrawer {
             )
     }
 
+    fn launch_app(app_info: Option<AppInfo>, cx: &mut Context<Self>) {
+        if app_info.is_none() {
+            return;
+        }
+        let sender = Dispatcher::global(cx).0.clone();
+        let app_info = app_info.clone().unwrap();
+
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: app_info.possible_app_id,
+                        exec: app_info.exec,
+                    })
+                    .await;
+            })
+            .detach();
+    }
+
     fn open_modal_on_long_press(
         modal: ModalKind,
         is_enabled: bool,
@@ -880,8 +935,8 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
-                    println!("terminal clicked");
+                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    Self::launch_app(this.terminal_info.clone(), cx);
                     cx.notify();
                 },
             ))
@@ -949,8 +1004,8 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
-                    println!("settigns clicked");
+                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    Self::launch_app(this.settings_app_info.clone(), cx);
                     cx.notify();
                 },
             ))
@@ -971,12 +1026,13 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(cx.listener(
-                |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
-                    println!("camera clicked");
+                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+                    Self::launch_app(this.camera_app_info.clone(), cx);
                     cx.notify();
                 },
             ))
     }
+
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let wireless_off = Icons::global(cx).settings_drawer.wireless_off.clone();

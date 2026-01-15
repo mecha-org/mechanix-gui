@@ -45,11 +45,8 @@ impl Render for DragInfo {
 
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
-        let files_app_name = Settings::global(cx)
-            .universal_search
-            .clone()
-            .system_apps
-            .files;
+        let files_app_name = Settings::global(cx).system_apps.clone().files;
+
         cx.spawn(async move |this, cx| {
             if let Ok(service) = MxSearchService::new().await {
                 let mut files_app: Option<AppInfo> = None;

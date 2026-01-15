@@ -19,6 +19,7 @@ pub fn run_app(cx: &mut App) {
     let SettingsDrawerSettings {
         layer_shell,
         navbar_size,
+        ..
     } = Settings::global(cx).settings_drawer.clone();
     let LayerShellSettings {
         size,

@@ -32,6 +32,8 @@ pub struct Settings {
     pub keyboard: KeyboardSettings,
     #[serde(default)]
     pub launcher: LauncherSettings,
+    #[serde(default)]
+    pub system_apps: SystemApps,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -112,6 +114,8 @@ pub struct SettingsDrawerSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub system_apps: SystemApps,
 }
 
 impl Default for SettingsDrawerSettings {
@@ -125,6 +129,7 @@ impl Default for SettingsDrawerSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            system_apps: SystemApps::default(),
         }
     }
 }
@@ -136,8 +141,6 @@ pub struct UniversalSearchSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
-    #[serde(default)]
-    pub system_apps: SystemApps,
 }
 
 impl Default for UniversalSearchSettings {
@@ -151,7 +154,6 @@ impl Default for UniversalSearchSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
-            system_apps: SystemApps::default(),
         }
     }
 }
@@ -329,13 +331,20 @@ impl Default for LauncherSettings {
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct SystemApps {
+    #[serde(default)]
     pub files: String,
+    pub settings: String,
+    pub terminal: String,
+    pub camera: String,
 }
 
 impl Default for SystemApps {
     fn default() -> Self {
         Self {
             files: "mechanix_files".into(),
+            settings: "Mechanix Settings".into(),
+            terminal: "Alacritty".into(),
+            camera: "Mechanix Camera".into(),
         }
     }
 }
