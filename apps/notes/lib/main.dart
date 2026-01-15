@@ -62,8 +62,9 @@ Future<void> initializeHive() async {
     await appDir.create(recursive: true);
   }
 
-  await Hive.initFlutter(appDir.path);
+  Hive.init(appDir.path);
 }
+
 class NotesApp extends StatelessWidget with WatchItMixin {
   NotesApp({super.key});
 
