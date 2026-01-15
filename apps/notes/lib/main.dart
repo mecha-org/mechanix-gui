@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -46,8 +48,21 @@ void main() async {
 }
 
 Future<void> initializeHive() async {
-  final appDir = await getApplicationSupportDirectory();
-  await Hive.initFlutter(appDir.path);
+  final home = Platform.environment['HOME'];
+  final xdgConfig = Platform.environment['XDG_CONFIG_HOME'];
+
+  if (home == null && xdgConfig == null) {
+    throw Exception('Cannot determine home directory');
+  }
+
+  final baseDir = xdgConfig ?? '$home/.config';
+  final appDir = Directory('$baseDir/mechanix_notes');
+  print(appDir.path);
+  if (!await appDir.exists()) {
+    await appDir.create(recursive: true);
+  }
+
+  Hive.init(appDir.path);
 }
 
 class NotesApp extends StatelessWidget with WatchItMixin {

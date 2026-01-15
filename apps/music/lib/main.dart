@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -15,7 +17,6 @@ import 'package:widgets/theme/mechanix_theme.dart';
 import 'package:widgets/theme/variants.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
-import 'package:path_provider/path_provider.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -46,8 +47,19 @@ void main() async {
 }
 
 Future<void> initializeHive() async {
-  final appDir = await getApplicationSupportDirectory();
-  await Hive.initFlutter(appDir.path);
+  final home = Platform.environment['HOME'];
+  final xdgConfig = Platform.environment['XDG_CONFIG_HOME'];
+
+  if (home == null && xdgConfig == null) {
+    throw Exception('Cannot determine home directory');
+  }
+
+  final baseDir = xdgConfig ?? '$home/.config';
+  final appDir = Directory('$baseDir/mechanix_music');
+  if (!await appDir.exists()) {
+    await appDir.create(recursive: true);
+  }
+  Hive.init(appDir.path);
 }
 
 class MainApp extends StatelessWidget with WatchItMixin {

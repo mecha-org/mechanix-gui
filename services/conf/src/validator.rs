@@ -320,6 +320,9 @@ pub fn validate_value(schema_entry: &Value, namespace: &str, value: &str) -> Res
         "string" => {
             // Optionally check max_length, etc.
         }
+        "object" => {
+            // Optionally we can validate object structure.
+        }
         "number" => {
             if value.parse::<f64>().is_err() {
                 return Err(format!("Value '{}' is not a valid number", value));
