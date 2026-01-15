@@ -21,11 +21,13 @@ import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 class VideoPlayer extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
+  FileExplorerPageState? state;
 
   VideoPlayer({
     super.key,
     required this.filePath,
     required this.rootContext,
+    this.state,
   });
 
   @override
@@ -104,8 +106,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
-    final explorerState =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final explorerState = widget.state;
 
     final controller = explorerState?.controller;
 
@@ -155,8 +156,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return Container(
       decoration: BoxDecoration(
@@ -313,8 +313,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
   Widget buildActionsMenu(BuildContext context) {
     final offset = const Offset(-8, -14);
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return MechanixMenu(
       offset: offset,

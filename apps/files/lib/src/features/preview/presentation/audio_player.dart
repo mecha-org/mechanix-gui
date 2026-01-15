@@ -20,8 +20,13 @@ import '../../../commons/constants.dart';
 class AudioPlayerOverlay extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
+  FileExplorerPageState? state;
+
   AudioPlayerOverlay(
-      {super.key, required this.filePath, required this.rootContext});
+      {super.key,
+      required this.filePath,
+      required this.rootContext,
+      this.state});
 
   @override
   State<AudioPlayerOverlay> createState() => _AudioPlayerOverlayState();
@@ -80,8 +85,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final explorerState =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final explorerState = widget.state;
 
     final controller = explorerState?.controller;
 
@@ -128,8 +132,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return Container(
       decoration: BoxDecoration(
@@ -279,8 +282,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
   Widget buildActionsMenu(BuildContext context) {
     final offset = const Offset(-8, -14);
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     return MechanixMenu(
       offset: offset,
