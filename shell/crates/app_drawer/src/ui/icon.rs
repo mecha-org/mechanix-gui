@@ -1,4 +1,4 @@
-use gpui::{prelude::FluentBuilder, *};
+use gpui::{ prelude::FluentBuilder, * };
 use std::path::PathBuf;
 
 pub const APP_DRAWER_ICONS_DIR: &str = "icons/app-drawer/";
@@ -54,6 +54,9 @@ impl Icon {
     pub fn build(name: IconName) -> Self {
         Self::default().path(name.resolve())
     }
+    pub fn is_empty(&self) -> bool {
+        self.path.is_empty()
+    }
 
     pub fn path(mut self, path: impl Into<SharedString>) -> Self {
         self.path = path.into();
@@ -68,32 +71,18 @@ impl Icon {
 
 impl RenderOnce for Icon {
     fn render(self, _window: &mut Window, _cx: &mut App) -> impl gpui::IntoElement {
-        let is_svg = self.path.ends_with(".svg");
         let is_absolute = self.path.starts_with("/");
-
-        // SVG HANDLING (tint only for relative assets)
-        if is_svg {
-            if !is_absolute {
-                // Relative SVG → render with optional color
-                let svg_el = svg().path(self.path.clone()).w(px(40.)).h(px(40.));
-
-                let tinted =
-                    svg_el.when_some(self.text_color, |this, color| this.text_color(color));
-
-                return tinted.into_any_element();
-            }
-        }
 
         if is_absolute {
             return img(PathBuf::from(self.path.as_str()))
-                .w(px(58.))
-                .h(px(58.))
+                .size_full()
+                .when_some(self.text_color, |this, color| this.text_color(color))
                 .into_any_element();
         }
 
         img(self.path.clone())
-            .w(px(58.))
-            .h(px(58.))
+            .size_full()
+            .when_some(self.text_color, |this, color| this.text_color(color))
             .into_any_element()
     }
 }

@@ -1,7 +1,6 @@
 use crate::prelude::Icon;
 use crate::prelude::IconName;
-// use crate::ui::utils::prelude::DesktopApp;
-use crate::ui::widgets::{ IconButton, TextButton };
+use crate::ui::widgets::{ TextButton };
 
 use gpui::*;
 use theme::prelude::Theme;
@@ -60,17 +59,32 @@ impl AppDrawer {
                     .pt(px(8.0))
                     .pb(px(8.0))
                     .child(
-                        IconButton::new("app-icon")
-                            .icon(icon)
+                        div()
+                            .id("app-icon")
+                            .bg(Theme::global(cx).colors.background_800)
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .rounded(px(5.6))
                             .size(px(60.0))
-                            .width(px(40.0))
-                            .height(px(40.0))
+                            .child(
+                                div()
+                                    .w(px(40.0))
+                                    .h(px(40.0))
+                                    .border(px(1.0))
+                                    .items_center()
+                                    .justify_center()
+                                    .child(icon)
+                            )
                     )
+
                     .child(
                         div()
                             .text_size(px(20.0))
                             .text_color(colors.foreground_300)
                             .line_height(px(1.2))
+                            .text_ellipsis()
+                            .max_w(px(200.0))
                             .child(app.name.clone())
                     )
             )
@@ -155,70 +169,122 @@ impl AppDrawer {
     }
 
     pub fn render_delete_sheet(&self, cx: &mut Context<AppDrawer>) -> AnyElement {
+        let colors = Theme::global(cx).colors.clone();
+
         let app = match &self.sheet_app {
             Some(a) => a,
             None => {
                 return Empty.into_any();
             }
         };
+        let icon_path = app.icon_path.clone();
+        let icon = Self::resolved_icon(&icon_path);
 
         div()
+            .flex()
             .flex_col()
-            .gap(px(16.0))
-            .children([
-                // Title
+            .h_full()
+            .child(
                 div()
-                    .text_size(px(20.0))
-                    .text_color(rgb(0xffffff))
-                    .font_weight(FontWeight::BOLD)
-                    .child(format!("Delete ‘{}’", app.name)),
-                // Subtitle
-                div()
-                    .mt(px(10.0))
-                    .text_size(px(16.0))
-                    .text_color(rgb(0xc0c0c0))
-                    .child("This action will delete the app permanently"),
-                // Buttons row
-                div()
+                    .id("app-name")
                     .flex()
                     .flex_row()
+                    .items_center()
                     .gap(px(12.0))
-                    .mt(px(18.0))
-                    .mb(px(-10.0))
+                    .items_center()
+                    .pt(px(8.0))
+                    .pb(px(8.0))
+                    .child(
+                        div()
+                            .id("app-icon")
+                            .bg(Theme::global(cx).colors.background_800)
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .rounded(px(5.6))
+                            .size(px(60.0))
+                            .child(
+                                div()
+                                    .w(px(40.0))
+                                    .h(px(40.0))
+                                    .border(px(1.0))
+                                    .items_center()
+                                    .justify_center()
+                                    .child(icon)
+                            )
+                    )
+
+                    .child(
+                        div()
+                            .text_size(px(20.0))
+                            .text_color(colors.foreground_300)
+                            .line_height(px(1.2))
+                            .max_w(px(200.0))
+                            .text_ellipsis()
+                            .child(app.name.clone())
+                    )
+            )
+
+            .child(
+                div()
+                    .flex_col()
+                    .gap(px(16.0))
                     .children([
-                        // Cancel
-                        TextButton::new("cancel-delete", "Cancel")
-                            .width(px(246.0))
-                            .height(px(40.0))
-                            .rounded(px(18.0))
-                            .bg_color(rgb(0x505050))
-                            .text_color(gpui::white())
+                        // Title
+                        div()
+                            .text_size(px(20.0))
+                            .text_color(colors.foreground_200)
+                            .font_weight(FontWeight::BOLD)
+                            .child(format!("Delete ‘{}’ app?", app.name)),
+                        // Subtitle
+                        div()
+                            .mt(px(10.0))
                             .text_size(px(16.0))
-                            .on_click(
-                                cx.listener(|this: &mut AppDrawer, _, _, cx| {
-                                    this.sheet_kind = BottomSheetKind::MainOptions;
-                                    cx.notify();
-                                })
-                            ),
-                        // DELETE
-                        TextButton::new("confirm-delete", "Delete app")
-                            .width(px(246.0))
-                            .height(px(40.0))
-                            .rounded(px(18.0))
-                            .text_size(px(16.0))
-                            // .bg_color(rgb(0xc92a2a)) // Red
-                            .text_color(gpui::white())
-                            .on_click(
-                                cx.listener(|this: &mut AppDrawer, _, _, cx| {
-                                    // if let Some(app) = &this.sheet_app {
-                                    //     this.remove_app(&app.name);
-                                    // }
-                                    this.show_bottom_sheet = false;
-                                    cx.notify();
-                                })
-                            ),
-                    ]),
-            ])
+                            .text_color(colors.foreground_200)
+                            .child("This action will delete the app permanently"),
+                        // Buttons row
+                        div()
+                            .flex()
+                            .flex_row()
+                            .gap(px(12.0))
+                            .mt(px(18.0))
+                            .mb(px(-10.0))
+                            .children([
+                                // Cancel
+                                TextButton::new("cancel-delete", "Cancel")
+                                    .width(px(246.0))
+                                    .height(px(40.0))
+                                    .rounded(px(8.0))
+                                    .bg_color(colors.background_500)
+                                    .text_color(colors.foreground_200)
+                                    .text_size(px(18.0))
+                                    .on_click(
+                                        cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                                            this.sheet_kind = BottomSheetKind::MainOptions;
+                                            cx.notify();
+                                        })
+                                    ),
+                                // DELETE
+                                TextButton::new("confirm-delete", "Delete app")
+                                    .width(px(246.0))
+                                    .height(px(40.0))
+                                    .rounded(px(8.0))
+                                    .text_size(px(18.0))
+                                    .bg_color(rgb(0xffd3002a)) // Red
+                                    .text_color(gpui::white())
+                                    .text_color(colors.foreground_200)
+                                    .on_click(
+                                        cx.listener(|this: &mut AppDrawer, _, _, cx| {
+                                            // if let Some(app) = &this.sheet_app {
+                                            //     this.remove_app(&app.name);
+                                            // }
+                                            this.show_bottom_sheet = false;
+                                            cx.notify();
+                                        })
+                                    ),
+                            ]),
+                    ])
+            )
             .into_any()
     }
 
@@ -230,6 +296,7 @@ impl AppDrawer {
             }
         };
         let icon = Self::resolved_icon(&app.icon_path);
+        let colors = Theme::global(cx).colors.clone();
 
         div()
             .flex_col()
@@ -244,41 +311,45 @@ impl AppDrawer {
                     .items_center()
                     .pt(px(8.0))
                     .pb(px(8.0))
-                    .child(IconButton::new("app-icon").icon(icon).width(px(48.0)).height(px(48.0)))
+                    .child(
+                        div()
+                            .id("app-icon")
+                            .bg(Theme::global(cx).colors.background_800)
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .rounded(px(5.6))
+                            .size(px(60.0)) // outer size
+                            .child(
+                                div()
+                                    .w(px(40.0))
+                                    .h(px(40.0))
+                                    .border(px(1.0))
+                                    .items_center()
+                                    .justify_center()
+                                    .child(icon)
+                            )
+                    )
                     .child(
                         div()
                             .text_size(px(20.0))
-                            .text_color(rgb(0xffffff))
+                            .text_color(colors.foreground_300)
                             .font_weight(FontWeight::BOLD)
+                            .text_ellipsis()
+                            .max_w(px(200.0))
                             .child(app.name.clone())
                     ),
-                divider(cx),
-                self.properties_row("Version", "1.0.1", gpui::white()),
-                // divider(cx),
-                self.properties_row("Size", "200 MB", gpui::white()),
-                // div()
-                //     .id("button")
-                //     .mt(px(18.0))
-                //     .mb(px(-10.0))
-                //     .child(
-                //         TextButton::new("close-btn", "Close")
-                //             .width(px(508.0))
-                //             .height(px(40.0))
-                //             .rounded(px(18.0))
-                //             .bg_color(rgb(0x424242))
-                //             .text_color(rgb(0xffffff))
-                //             .on_click(
-                //                 cx.listener(|this: &mut AppDrawer, _, _, cx| {
-                //                     this.show_bottom_sheet = false;
-                //                     cx.notify();
-                //                 })
-                //             )
-                //     ),
+                self.properties_row("Kind", "Terminal", colors.foreground_400).mt_5(),
+                self.properties_row("Size", "20 mb on disk", colors.foreground_400),
+                self.properties_row("Location", "Comet (user-mecha)", colors.foreground_400),
+                self.properties_row("Accessed", "25-12-2025, 12.30pm", colors.foreground_400),
+                self.properties_row("Created", "25-12-2025, 12.30pm", colors.foreground_400),
+                self.properties_row("Modified", "25-12-2025, 12.30pm", colors.foreground_400),
             ])
             .into_any()
     }
 
-    pub fn properties_row(&self, label: &str, value: &str, text_color: Hsla) -> Stateful<Div> {
+    pub fn properties_row(&self, label: &str, value: &str, text_color: Rgba) -> Stateful<Div> {
         let row_label: SharedString = label.to_string().into();
         let id: SharedString = label.to_string().into();
 
@@ -288,23 +359,8 @@ impl AppDrawer {
             .flex_row()
             .items_start()
             .justify_between()
-            .pt(px(8.0))
-            .pb(px(8.0))
-            .pl(px(16.0))
-            .pr(px(16.0))
-            .child(
-                div()
-                    .text_size(px(16.0))
-                    .text_color(text_color)
-                    .font_weight(FontWeight::BOLD)
-                    .child(row_label)
-            )
-            .child(
-                div()
-                    .text_size(px(14.0))
-                    .text_color(text_color)
-                    .font_weight(FontWeight::MEDIUM)
-                    .child(value.to_string())
-            )
+
+            .child(div().text_size(px(18.0)).text_color(text_color).child(row_label))
+            .child(div().text_size(px(18.0)).text_color(text_color).child(value.to_string()))
     }
 }

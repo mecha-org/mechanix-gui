@@ -53,10 +53,11 @@ impl SubWindow {
             (min_scroll, max_scroll)
         }
     }
+
     pub fn resolved_icon(app_icon: &Option<String>) -> Icon {
         match app_icon {
-            Some(path) => Icon::default().path(path.to_string()),
-            None => Icon::from(IconName::DefaultApp),
+            Some(path) if !path.trim().is_empty() => { Icon::default().path(path.clone()) }
+            _ => Icon::from(IconName::DefaultApp),
         }
     }
 
