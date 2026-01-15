@@ -520,103 +520,108 @@ impl Render for NotificationUi {
             .unwrap_or(0);
 
         let time_ago: SharedString = time_ago(current_timestamp, received_at).into();
-
+        
         let mut w = wing()
             .w_128()
             .group("")
+            .absolute()
             .relative()
             .border_1()
             .border_color(colors.accent_200.with_alpha(0.6))
-            .bg(colors.accent_200.with_alpha(0.2))
+            .bg(colors.background_1000)
             .rounded(px(12.0))
             .shadow_md()
-            .pt(px(2.0))
-            .px_4()
-            .py_3p5()
             .child(
                 div()
-                    .id("test")
-                    .flex()
-                    .flex_row()
-                    .items_center()
-                    .min_w(px(0.0))
-                    .overflow_hidden()
-                    .child(
-                        div()
+                    .id("inner-wing")
+                    .child({
+                        let mut w1 = wing()
+                            .w_128()
                             .flex()
-                            .flex_col()
-                            .flex_1()
+                            .flex_row()
+                            .bg(colors.accent_200.with_alpha(0.2))
+                            .items_center()
                             .min_w(px(0.0))
                             .overflow_hidden()
+                            .pt(px(4.0))
+                            .px_4()
+                            .pb(px(10.0))
                             .child(
                                 div()
                                     .flex()
-                                    .flex_row()
-                                    .items_center()
-                                    .pt(px(-10.0))
-                                    .pb(px(8.0))
-                                    // .when_some(icon_path, |this, path| { //TODO: Add image
-                                    //     this.child(
-                                    //         div()
-                                    //             .w(px(20.0))
-                                    //             .h(px(20.0))
-                                    //             // .flex()
-                                    //             .pt(px(-10.0))
-                                    //             // .items_center()
-                                    //             .justify_center()
-                                    //             .child(img(path).size_full().text_color(colors.foreground_700)),
-                                    //     )
-                                    // })
-                                    .when_some(self.title.clone(), |this, title| {
+                                    .flex_col()
+                                    .flex_1()
+                                    .min_w(px(0.0))
+                                    .overflow_hidden()                                    
+                                    .child(
+                                        div()
+                                            .flex()
+                                            .flex_row()
+                                            .items_center()
+                                            .when_some(icon_path, |this, path| {
+                                                this.child(
+                                                    div()
+                                                        .w(px(20.0))
+                                                        .h(px(20.0))                                                        
+                                                        .mr(px(4.0))
+                                                        .rounded(px(4.0))
+                                                        .flex()
+                                                        .items_center()
+                                                        .justify_center()
+                                                        .child(img(path).size_full().rounded(px(4.0)).text_color(colors.foreground_700)),
+                                                )
+                                            })
+                                            .when_some(self.title.clone(), |this, title| {
+                                                this.child(
+                                                    div()
+                                                        .text_sm()
+                                                        .font_weight(FontWeight::SEMIBOLD)
+                                                        .text_color(colors.foreground_500)
+                                                        .whitespace_normal()
+                                                        .child(format!(" {}", title))
+                                                        .text_ellipsis()
+                                                        .w(has_icon
+                                                            .then_some(px(100.))
+                                                            .unwrap_or(px(120.))),
+                                                )
+                                            })
+                                            .child(
+                                                div()
+                                                    .text_sm()
+                                                    .font_weight(FontWeight::SEMIBOLD)
+                                                    .text_color(colors.foreground_900)
+                                                    .whitespace_normal()
+                                                    .child(format!(" · {}", time_ago))
+                                                    .text_ellipsis()
+                                                    .w(px(120.)),
+                                            ),
+                                    )
+                                    .when_some(self.message.clone(), |this, message| {
                                         this.child(
                                             div()
                                                 .text_sm()
-                                                .font_weight(FontWeight::SEMIBOLD)
-                                                // Brighter title for emphasis
-                                                .text_color(colors.foreground_500)
+                                                .mt(px(8.0))
+                                                .text_color(colors.foreground_300)
                                                 .whitespace_normal()
-                                                .child(format!(" {}", title))
-                                                .text_ellipsis()
-                                                .w(has_icon
-                                                    .then_some(px(100.))
-                                                    .unwrap_or(px(120.))),
+                                                .line_height(px(20.0))
+                                                .max_h(px(40.0))
+                                                .overflow_hidden()
+                                                .child(message),
                                         )
-                                    })
-                                    .child(
-                                        div()
-                                            .text_sm()
-                                            .font_weight(FontWeight::SEMIBOLD)
-                                            .text_color(colors.foreground_900)
-                                            .whitespace_normal()
-                                            .child(format!(" · {}", time_ago))
-                                            .text_ellipsis()
-                                            .w(px(120.)),
-                                    ),
-                            )
-                            // Max 2 lines
-                            .when_some(self.message.clone(), |this, message| {
-                                this.child(
-                                    div()
-                                        .text_sm()
-                                        .text_color(colors.foreground_300)
-                                        .whitespace_normal()
-                                        .line_height(px(20.0))
-                                        .max_h(px(40.0))
-                                        .overflow_hidden()
-                                        .child(message),
-                                )
-                            }), // .when_some(self.message.clone(), |this, message| {
-                                //     let parsed = parse_markup(message.as_ref());
-                                //     this.child(render_markup(&parsed, cx))
-                                // })
-                                // .when_some(content, |this, content| this.child(content))
-                                // .when_some(action, |this, action| this.child(action)),
-                    )
+                                    }),
+                            );
+
+                        // configure inner wing
+                        w1.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                        w1.include_upper_wing_in_bounds(true);
+                        w1.border_radius(px(12.0));
+                        w1.border_width(px(1.0));
+
+                        w1
+                    })
                     .when_some(self.on_click.clone(), |this, on_click| {
                         this.on_click(cx.listener(move |view, event, window, cx| {
-                            // Prevent accidental clicks when user was dragging
                             if view.drag_moved {
-                                // reset the flag after suppressing a click
                                 view.drag_moved = false;
                                 return;
                             }
@@ -624,7 +629,7 @@ impl Render for NotificationUi {
                             on_click(event, window, cx);
                         }))
                     })
-                    // Swipe-to-dismiss handlers
+                    // mouse handlers
                     .on_mouse_down(
                         MouseButton::Left,
                         cx.listener(|this, e: &MouseDownEvent, _window, cx| {
@@ -715,7 +720,7 @@ impl Render for NotificationUi {
                     ),
             );
 
-        // Wing configuration
+        // Outer wing configuration
         w.upper_wing_size(Size::new(px(180.0), px(28.0)));
         w.include_upper_wing_in_bounds(true);
         w.border_radius(px(12.0));

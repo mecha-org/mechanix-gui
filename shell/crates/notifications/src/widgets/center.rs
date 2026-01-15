@@ -21,15 +21,14 @@ use theme::ActiveTheme;
 use theme::prelude::AlphaExt;
 use theme::prelude::Theme;
 
-const NAVBAR_SIZE: (f32, f32) = (198.22, 28.5);
-const APP_SIZE: (f32, f32) = (540., 620.);
+use settings::prelude::Settings;
 
 const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
 const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
 const EXPANDED_ITEM_HEIGHT: f32 = 72.0; // body-only cards
 const CARD_GAP: f32 = 8.0; // mt_2()
 const GROUP_GAP: f32 = 10.0; // gap_2p5()
-const LIST_PADDING_TOP: f32 = 12.0; 
+const LIST_PADDING_TOP: f32 = 12.0;
 const LIST_PADDING_BOTTOM: f32 = 12.0;
 
 pub struct DragInfo {
@@ -310,7 +309,7 @@ impl NotificationCenter {
             clearing: false,
             expanded_groups: HashMap::new(),
             item_states: HashMap::new(),
-            position: Self::closed_pos(), // Default closed position
+            position: Self::closed_pos(_cx), // Default closed position
             drag_offset: None,
             drag_start_pos: 0.0,
             scroll_offset: px(0.0),
@@ -327,9 +326,14 @@ impl NotificationCenter {
         self.is_dragging = false;
     }
 
-    fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
-        let container_height = px(APP_SIZE.1 - NAVBAR_SIZE.1);
+    fn calculate_scroll_bounds(&self, cx: &Context<Self>, content_height: Pixels) -> (Pixels, Pixels) {
+        let settings = Settings::global(cx).notifications.clone();
+        let notifications_center_size = settings.layer_shell.size;
+        let navbar_size = settings.navbar_size;
 
+        let container_height = notifications_center_size.height - navbar_size.height;
+
+        // let container_height = px(0.0);
         if content_height <= container_height {
             return (px(0.0), px(0.0));
         }
@@ -376,9 +380,9 @@ impl NotificationCenter {
         total
     }
 
-    fn reclamp_scroll(&mut self) {
+    fn reclamp_scroll(&mut self, cx: &mut Context<Self>) {
         let content_height = self.estimated_content_height();
-        let (min, max) = self.calculate_scroll_bounds(content_height);
+        let (min, max) = self.calculate_scroll_bounds(cx, content_height);
 
         self.scroll_offset = self.scroll_offset.clamp(min, max);
         self.last_scroll_offset = self.scroll_offset;
@@ -397,7 +401,7 @@ impl NotificationCenter {
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
         let content_height = self.estimated_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(cx,content_height);
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
         cx.notify();
@@ -537,7 +541,7 @@ impl NotificationCenter {
             }
         }
 
-        self.reclamp_scroll();
+        self.reclamp_scroll(cx);
         cx.notify();
     }
 
@@ -659,7 +663,7 @@ impl NotificationCenter {
             .copied()
             .unwrap_or(false);
         self.expanded_groups.insert(group_id, !is_expanded);
-        self.reclamp_scroll();
+        self.reclamp_scroll(cx);
         cx.notify();
     }
 
@@ -695,8 +699,12 @@ impl NotificationCenter {
         cx.notify();
     }
 
-    pub fn closed_pos() -> f32 {
-        APP_SIZE.1 - NAVBAR_SIZE.1
+    pub fn closed_pos(cx: &Context<Self>) -> f32 {
+        let settings = Settings::global(cx).notifications.clone();
+        let size = settings.layer_shell.size;
+        let navbar = settings.navbar_size;
+
+        (size.height - navbar.height).into()
     }
 
     pub fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
@@ -707,7 +715,7 @@ impl NotificationCenter {
 
         if target == 0.0 {
             self.is_visible = true;
-        } else if target == Self::closed_pos() {
+        } else if target == Self::closed_pos(cx) {
             self.is_visible = false;
         }
 
@@ -722,7 +730,7 @@ impl NotificationCenter {
                             this.position = target;
                             if target == 0.0 {
                                 this.is_visible = true;
-                            } else if target == Self::closed_pos() {
+                            } else if target == Self::closed_pos(cx) {
                                 this.is_visible = false;
                             }
                             cx.notify();
@@ -737,7 +745,7 @@ impl NotificationCenter {
 
                     this.update(cx, |this, cx| {
                         this.position = current;
-                        if current < (Self::closed_pos() / 2.0) {
+                        if current < (Self::closed_pos(cx) / 2.0) {
                             this.is_visible = true;
                         } else {
                             this.is_visible = false;
@@ -758,10 +766,14 @@ impl NotificationCenter {
 
 impl Render for NotificationCenter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let settings = Settings::global(cx).notifications.clone();
+        let notifications_center_size = settings.layer_shell.size;
+        let navbar_size = settings.navbar_size;
+
         let colors = cx.theme().colors.clone();
 
         let open_y = 0.;
-        let closed_y = Self::closed_pos();
+        let closed_y = Self::closed_pos(cx);
 
         let threshold_px = 40.;
 
@@ -821,19 +833,19 @@ impl Render for NotificationCenter {
                             .flex()
                             .flex_row()
                             .justify_start()
-                            .h(px(NAVBAR_SIZE.1))
+                            .h(navbar_size.height)
                             .child(
                                 div()
                                     .id("left-wing")
                                     .child({
                                         let mut w = wing();
                                         w.upper_wing_size(size(
-                                            px(NAVBAR_SIZE.0),
-                                            px(NAVBAR_SIZE.1),
+                                            navbar_size.width,
+                                            navbar_size.height,
                                         ));
                                         // w.border_width(px(2.));
                                         w.upper_wing_side(WingSide::Left);
-                                        w.w(px(NAVBAR_SIZE.0)).h(px(NAVBAR_SIZE.1)).bg(
+                                        w.w(navbar_size.width).h(navbar_size.height).bg(
                                             if self.is_visible {
                                                 colors.background_1000
                                             } else {
@@ -882,6 +894,10 @@ impl NotificationWidget {
 
 impl Render for NotificationWidget {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let settings = Settings::global(cx).notifications.clone();
+        let notifications_center_size = settings.layer_shell.size;
+        let navbar_size = settings.navbar_size;
+
         let center_is_visible = self.center.read(cx).is_visible;
         let list_is_empty = self.notification_list.read(cx).notifications.is_empty();
 
@@ -900,7 +916,7 @@ impl Render for NotificationWidget {
                         center.add_db_notification(notif, cx);
                     }
 
-                    center.reclamp_scroll();
+                    center.reclamp_scroll(cx);
                     cx.notify();
                 });
                 self.notification_list.update(cx, |list, cx| {
@@ -918,12 +934,18 @@ impl Render for NotificationWidget {
         if center.is_visible || !list.notifications.is_empty() {
             regions.push(Bounds {
                 origin: point(px(0.), px(0.)),
-                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                size: size(
+                    notifications_center_size.width,
+                    notifications_center_size.height,
+                ),
             });
         } else {
             regions.push(Bounds {
-                origin: point(px(0.), px(APP_SIZE.1 - NAVBAR_SIZE.1)),
-                size: size(px(NAVBAR_SIZE.0), px(NAVBAR_SIZE.1)),
+                origin: point(
+                    px(0.),
+                    notifications_center_size.height - navbar_size.height,
+                ),
+                size: size(navbar_size.width, navbar_size.height),
             });
         }
         window.set_input_regions(Some(regions));
@@ -939,6 +961,9 @@ impl Render for NotificationWidget {
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+         let settings = Settings::global(cx).notifications.clone();
+        let notifications_center_size = settings.layer_shell.size;
+        let navbar_size = settings.navbar_size;
         // Header - updated styling
         let mut header = div()
             .flex()
@@ -1020,14 +1045,14 @@ impl NotificationCenter {
             //     // Back layer (third card hint) - only if count > 2
             //     if g.count > 2 {
             //         let mut w = wing();
-            //         w.upper_wing_size(size(px(20.0), px(NAVBAR_SIZE.1)));
+            //         w.upper_wing_size(size(px(20.0), navbar_size.height));
             //         w.upper_wing_side(WingSide::Left);
             //         // w.include_upper_wing_in_bounds(false);
             //         let mut w = w
             //             .absolute()
             //                 .w(px(20.0))
-            //                 .h(px(NAVBAR_SIZE.1))
-            //                 .left(px(NAVBAR_SIZE.0))
+            //                 .h(navbar_size.height)
+            //                 .left(navbar_size.width)
             //                 .bg(if self.is_visible {
             //                     colors.accent_200.with_alpha(0.2)
             //                 } else {
@@ -1043,15 +1068,15 @@ impl NotificationCenter {
             //     if !is_expanded && g.count > 1 {
             //         let mut w = wing();
 
-            //         w.upper_wing_size(size(px(NAVBAR_SIZE.0 + 20.0), px(NAVBAR_SIZE.1)));
+            //         w.upper_wing_size(size(navbar_size.width + px(20.0), navbar_size.height));
             //         w.upper_wing_side(WingSide::Left);
             //         w.include_upper_wing_in_bounds(true);
             //         let mut w = w
             //         .absolute()
             //             .w(px(20.0))
-            //             .h(px(NAVBAR_SIZE.1))
+            //             .h(navbar_size.height)
             //             // .tab_index(1)
-            //             //.left(px(NAVBAR_SIZE.0 - 20.0))
+            //             //.left(navbar_size.width - 20.0)
             //             .bg(if self.is_visible {
             //                 colors.accent_200.with_alpha(0.2)
             //             } else {
@@ -1230,7 +1255,7 @@ impl NotificationCenter {
                         .overflow_hidden()
                         .relative()
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.6))
+                        .border_color(colors.accent_200.with_alpha(0.4))
                         .bg(colors.accent_200.with_alpha(0.1))
                         .rounded(px(12.0))
                         .shadow_md()
@@ -1250,7 +1275,7 @@ impl NotificationCenter {
                         .relative()
                         .rounded(px(12.0))
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.1))
+                        .border_color(colors.accent_200.with_alpha(0.4))
                         .bg(colors.accent_200.with_alpha(0.1))
                         .px_4()
                         .py_3p5()
@@ -1695,8 +1720,8 @@ impl NotificationCenter {
         // Main container
         div()
             .relative()
-            .w(px(APP_SIZE.0))
-            .h(px(APP_SIZE.1))
+            .w(notifications_center_size.width)
+            .h(notifications_center_size.height)
             .bg(colors.background_1000)
             .child(
                 div()
