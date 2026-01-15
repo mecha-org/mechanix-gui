@@ -55,3 +55,13 @@ target/
 
 # mxsearch settings file
 services/search/server/settings.toml
+
+#Keyboard suggestions cached json
+assets/trie/words_cached.json
+
+# Cross compile files
+Cross.toml
+Dockerfile.aarch64
+libimpeller.so
+
+shell/crates/commons/examples/stack_cards.rs
