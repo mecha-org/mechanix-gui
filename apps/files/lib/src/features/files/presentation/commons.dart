@@ -185,8 +185,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            CodeEditorPage(rootContext: context, filePath: fullPath),
+        builder: (_) => CodeEditorPage(
+            rootContext: context, filePath: fullPath, state: state),
       ),
     );
     return;
@@ -198,8 +198,8 @@ void handleFileTap(
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) =>
-          AudioPlayerOverlay(rootContext: context, filePath: fullPath),
+      builder: (_) => AudioPlayerOverlay(
+          rootContext: context, filePath: fullPath, state: state),
     );
     return;
   }
@@ -210,7 +210,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => VideoPlayer(rootContext: context, filePath: fullPath),
+        builder: (_) =>
+            VideoPlayer(rootContext: context, filePath: fullPath, state: state),
       ),
     );
     return;
@@ -222,7 +223,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(rootContext: context, filePath: fullPath),
+        builder: (_) => PdfViewerPage(
+            rootContext: context, filePath: fullPath, state: state),
       ),
     );
     return;
@@ -234,8 +236,8 @@ void handleFileTap(
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            ImageViewerPage(rootContext: context, filePath: fullPath),
+        builder: (_) => ImageViewerPage(
+            rootContext: context, filePath: fullPath, state: state),
       ),
     );
     return;

@@ -13,13 +13,13 @@ import 'package:widgets/widgets/notification/notification_type.dart';
 class ImageEditorPage extends StatefulWidget {
   final String imagePath;
   final VoidCallback onClose;
-  final BuildContext rootContext;
+  final FileExplorerPageState? state;
 
   const ImageEditorPage({
     super.key,
     required this.imagePath,
     required this.onClose,
-    required this.rootContext,
+    this.state,
   });
   @override
   State<ImageEditorPage> createState() => _ImageEditorPageState();
@@ -188,8 +188,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
     // Ensure any active crop is committed
     _commitCropIfAny();
 
-    final state =
-        widget.rootContext.findAncestorStateOfType<FileExplorerPageState>();
+    final state = widget.state;
 
     final dir = p.dirname(widget.imagePath);
     final originalName = p.basenameWithoutExtension(widget.imagePath);

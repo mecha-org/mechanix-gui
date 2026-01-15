@@ -24,6 +24,8 @@ pub struct Icons {
     pub status_bar: StatusBarIcons,
     #[serde(default)]
     pub universal_search: UniversalSearchIcons,
+    #[serde(default)]
+    pub lockscreen: LockscreenIcons,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -114,6 +116,38 @@ impl Default for RunningAppsIcons {
     fn default() -> Self {
         Self {
             cleanup: PathBuf::from(format!("{}running-apps/cleanup.svg", ICONS_BASE_PATH)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct LockscreenIcons {
+    pub arrow: PathBuf,
+    pub bell: PathBuf,
+    pub lock: PathBuf,
+    pub lock_open_full: PathBuf,
+    pub lock_open_half: PathBuf,
+    pub wedge_left: PathBuf,
+    pub wedge_left_outline: PathBuf,
+    pub wedge_right: PathBuf,
+    pub wedge_right_outline: PathBuf,
+    pub wallpaper: PathBuf,
+}
+
+impl Default for LockscreenIcons {
+    fn default() -> Self {
+        Self {
+            arrow: PathBuf::from(format!("{}lockscreen/arrow.svg", ICONS_BASE_PATH)),
+            bell: PathBuf::from(format!("{}lockscreen/bell.svg", ICONS_BASE_PATH)),
+            lock: PathBuf::from(format!("{}lockscreen/lock.svg", ICONS_BASE_PATH)),
+            lock_open_full: PathBuf::from(format!("{}lockscreen/lock-open-full.svg", ICONS_BASE_PATH)),
+            lock_open_half: PathBuf::from(format!("{}lockscreen/lock-open-half.svg", ICONS_BASE_PATH)),
+            wedge_left: PathBuf::from(format!("{}lockscreen/wedge_left.svg", ICONS_BASE_PATH)),
+            wedge_left_outline: PathBuf::from(format!("{}lockscreen/wedge_left_outline.svg", ICONS_BASE_PATH)),
+            wedge_right: PathBuf::from(format!("{}lockscreen/wedge_right.svg", ICONS_BASE_PATH)),
+            wedge_right_outline: PathBuf::from(format!("{}lockscreen/wedge_right_outline.svg", ICONS_BASE_PATH)),
+            wallpaper: PathBuf::from(format!("{}lockscreen/wallpaper.png", ICONS_BASE_PATH)),
         }
     }
 }
