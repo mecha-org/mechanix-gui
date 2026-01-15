@@ -63,7 +63,7 @@ layer = "top"
 anchor = ["top"]
 namespace = "mechanix.app.drawer"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 504.0 }
+size = { width = 540.0, height = 554.0 }
 
 [volume_slider.layer_shell]
 layer = "overlay"

@@ -83,6 +83,8 @@ impl AppDrawer {
                             .text_size(px(20.0))
                             .text_color(colors.foreground_300)
                             .line_height(px(1.2))
+                            .text_ellipsis()
+                            .max_w(px(200.0))
                             .child(app.name.clone())
                     )
             )
@@ -217,6 +219,8 @@ impl AppDrawer {
                             .text_size(px(20.0))
                             .text_color(colors.foreground_300)
                             .line_height(px(1.2))
+                            .max_w(px(200.0))
+                            .text_ellipsis()
                             .child(app.name.clone())
                     )
             )
@@ -331,6 +335,8 @@ impl AppDrawer {
                             .text_size(px(20.0))
                             .text_color(colors.foreground_300)
                             .font_weight(FontWeight::BOLD)
+                            .text_ellipsis()
+                            .max_w(px(200.0))
                             .child(app.name.clone())
                     ),
                 self.properties_row("Kind", "Terminal", colors.foreground_400).mt_5(),

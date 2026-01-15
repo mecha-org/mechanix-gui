@@ -18,6 +18,9 @@ use crate::ui::widgets::{ BottomSheetKind, SubWindow };
 pub mod icon;
 pub mod utils;
 mod widgets;
+const MIN_MODAL_SIZE: (f32, f32) = (10.0, 10.0);
+const MODAL_ANIMATION_DURATION_MS: f32 = 300.0;
+const MODAL_ANIMATION_FRAME_MS: u64 = 16;
 
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const GRID_ROW_HEIGHT: f32 = 126.0;
@@ -25,7 +28,7 @@ const GRID_ROW_WIDTH: f32 = 508.0;
 const SECTION_SPACING: f32 = 15.0;
 const APP_ROW_HEIGHT: f32 = 60.0;
 const FLOATING_BTN_SIZE: f32 = 56.0;
-const FLOATING_BTN_BOTTOM: f32 = 16.0;
+const FLOATING_BTN_BOTTOM: f32 = 6.0;
 const FLOATING_BTN_RIGHT: f32 = 15.0;
 const SEARCH_BAR_BOTTOM: f32 = 20.0;
 const DRAG_THRESHOLD: f32 = 2.0;
@@ -56,6 +59,13 @@ pub struct AppDrawer {
     press_start_time: Option<Instant>,
     press_app_info: Option<AppInfo>,
     is_long_press: bool,
+    pub modal_animation_progress: f32,
+    pub is_modal_animating: bool,
+    pub modal_origin_point: Point<Pixels>,
+    pub modal_origin_center: (f32, f32),
+    pub modal_current_center: (f32, f32),
+    pub modal_target_center: (f32, f32),
+    pub modal_current_size: (f32, f32),
 }
 
 impl AppDrawer {
@@ -87,6 +97,13 @@ impl AppDrawer {
             press_start_time: None,
             press_app_info: None,
             is_long_press: false,
+            modal_animation_progress: 0.0,
+            is_modal_animating: false,
+            modal_origin_point: Point::new(px(0.0), px(0.0)),
+            modal_origin_center: (0.0, 0.0),
+            modal_current_center: (0.0, 0.0),
+            modal_target_center: (0.0, 0.0),
+            modal_current_size: MIN_MODAL_SIZE,
         };
 
         cx.spawn(async move |this, cx| {
@@ -190,7 +207,7 @@ impl AppDrawer {
             }
 
             let gaps = if num_apps > 1.0 { (num_apps - 1.0) * 1.0 } else { 0.0 };
-            px(APP_ROW_HEIGHT * num_apps + gaps + 200.0)
+            px(APP_ROW_HEIGHT * num_apps + gaps + 16.0)
         } else {
             let count = self.grouped.len() as f32;
             if count == 0.0 {
@@ -200,7 +217,7 @@ impl AppDrawer {
             let rows_height = GRID_ROW_HEIGHT * count;
             let gaps_height = if count > 1.0 { SECTION_SPACING * (count - 1.0) } else { 0.0 };
 
-            px(rows_height + gaps_height + 100.0)
+            px(rows_height + gaps_height + 16.0)
         }
     }
 
@@ -215,6 +232,8 @@ impl AppDrawer {
         self.last_scroll_offset = self.scroll_offset;
         self.is_dragging = true;
         self.has_moved = false;
+        self.press_start_time = None;
+        self.is_long_press = false;
         cx.stop_propagation();
     }
 
@@ -228,11 +247,15 @@ impl AppDrawer {
             let delta_y = event.position.y - self.drag_start_y;
             let delta_x = event.position.x - self.drag_start_x;
 
-            let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64() +
-                delta_x.abs().to_f64() * delta_x.abs().to_f64()) as f32;
+            let distance_squared =
+                delta_y.abs().to_f64() * delta_y.abs().to_f64() +
+                delta_x.abs().to_f64() * delta_x.abs().to_f64();
 
-            if distance > DRAG_THRESHOLD {
+            // Set has_moved immediately when threshold is exceeded
+            if distance_squared > ((DRAG_THRESHOLD * DRAG_THRESHOLD) as f64) {
                 self.has_moved = true;
+                // Cancel any pending long press
+                self.press_start_time = None;
             }
 
             let new_scroll_offset = self.last_scroll_offset + delta_y;
@@ -264,12 +287,46 @@ impl AppDrawer {
 
         self.filtered = self.all_apps
             .iter()
-            .filter(|app| {
-                app.name.to_lowercase().contains(&query)            })
+            .filter(|app| { app.name.to_lowercase().contains(&query) })
             .cloned()
             .collect();
 
         cx.notify();
+    }
+
+    fn start_modal_animation(&mut self, origin: Point<Pixels>, cx: &mut Context<Self>) {
+        self.modal_animation_progress = 0.0;
+        self.is_modal_animating = true;
+        self.modal_origin_point = origin;
+
+        cx.spawn(async move |this, cx| {
+            let start = std::time::Instant::now();
+            let duration = std::time::Duration::from_millis(MODAL_ANIMATION_DURATION_MS as u64);
+
+            loop {
+                let elapsed = start.elapsed();
+                if elapsed >= duration {
+                    this.update(cx, |this, cx| {
+                        this.modal_animation_progress = 1.0;
+                        this.is_modal_animating = false;
+                        cx.notify();
+                    }).ok();
+                    break;
+                }
+
+                let progress = elapsed.as_secs_f32() / duration.as_secs_f32();
+                let eased = 1.0 - (1.0 - progress).powi(3); // ease out cubic
+
+                this.update(cx, |this, cx| {
+                    this.modal_animation_progress = eased;
+                    cx.notify();
+                }).ok();
+
+                cx
+                    .background_executor()
+                    .timer(std::time::Duration::from_millis(MODAL_ANIMATION_FRAME_MS)).await;
+            }
+        }).detach();
     }
 
     fn render_floating_search_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -341,22 +398,15 @@ impl AppDrawer {
         let text_input = self.text_input.clone();
         let colors = Theme::global(cx).colors.clone();
         let settings = Settings::global(cx).app_drawer.clone();
-        let app_drawer_size = settings.layer_shell.size;
 
         div()
             .id("main-search")
-            .absolute()
-            .bottom_0()
-            .left_0()
-            .w(app_drawer_size.width)
-            .rounded_t(px(8.0))
+            .h(px(SEARCH_BAR_HEIGHT))
+            .w_full()
             .flex()
             .flex_row()
             .items_center()
-            .justify_between()
             .px_2()
-            .overflow_hidden()
-            .h(px(SEARCH_BAR_HEIGHT))
             .bg(colors.accent_300.with_alpha(0.1))
             .child(
                 div()
@@ -456,6 +506,9 @@ impl AppDrawer {
             .relative()
             .flex()
             .flex_col()
+            .size_full()
+            .items_center()
+            .py_2()
             .gap(px(SECTION_SPACING))
             .top(self.scroll_offset)
             .children(
@@ -482,14 +535,42 @@ impl AppDrawer {
                             .on_click(
                                 cx.listener(move |this: &mut AppDrawer, _event, _window, cx| {
                                     if !this.has_moved && !this.is_long_press {
-                                        // Add this condition
+                                        let settings = Settings::global(cx).app_drawer.clone();
+                                        let app_drawer_size = settings.layer_shell.size;
+
+                                        // Calculate card position
+                                        let card_x = px(16.0);
+                                        let card_y =
+                                            px(8.0) +
+                                            this.scroll_offset +
+                                            px((idx as f32) * (GRID_ROW_HEIGHT + SECTION_SPACING));
+                                        let card_bottom = card_y + px(GRID_ROW_HEIGHT);
+
+                                        // Clamp Y position to viewport
+                                        let viewport_top = px(8.0);
+                                        let viewport_bottom = app_drawer_size.height;
+
+                                        let clamped_y = if card_bottom < viewport_top {
+                                            viewport_top
+                                        } else if card_y > viewport_bottom {
+                                            viewport_bottom
+                                        } else {
+                                            card_bottom
+                                        };
+
+                                        // Origin point: bottom-left of the card
+                                        let origin = Point::new(card_x, clamped_y);
+
                                         this.show_subwindow_modal = true;
                                         this.subwindow_category = category_for_popup.clone();
                                         this.subwindow = None;
+
+                                        this.start_modal_animation(origin, cx);
                                         cx.notify();
                                     }
+
                                     this.has_moved = false;
-                                    this.is_long_press = false; // Add this reset
+                                    this.is_long_press = false;
                                 })
                             )
                             .child(
@@ -512,7 +593,6 @@ impl AppDrawer {
                                             .map(|(idx, app)| {
                                                 let app_id = app.possible_app_id.clone();
                                                 let exec = app.exec.clone();
-
                                                 let id = hash_id(&app_id);
                                                 let icon = Self::resolved_icon(&app.icon_path);
                                                 let app_for_sheet = app.clone();
@@ -524,7 +604,7 @@ impl AppDrawer {
                                                     .items_center()
                                                     .justify_center()
                                                     .rounded(px(5.6))
-                                                    .size(px(56.0)) // outer boxSize (same as IconButton default)
+                                                    .size(px(56.0))
                                                     .on_mouse_down(
                                                         MouseButton::Left,
                                                         cx.listener(
@@ -542,7 +622,6 @@ impl AppDrawer {
                                                                 );
                                                                 this.is_long_press = false;
 
-                                                                // Long-press detector
                                                                 cx.spawn(async move |this, cx| {
                                                                     cx
                                                                         .background_executor()
@@ -562,8 +641,6 @@ impl AppDrawer {
                                                                                 this.press_app_info.clone();
                                                                             this.sheet_kind =
                                                                                 BottomSheetKind::MainOptions;
-
-                                                                            // cancel click
                                                                             this.press_start_time =
                                                                                 None;
                                                                             cx.notify();
@@ -596,7 +673,6 @@ impl AppDrawer {
                                                                             LONG_PRESS_DURATION &&
                                                                         !this.has_moved
                                                                     {
-                                                                        // long press
                                                                         this.is_long_press = true;
                                                                         this.show_bottom_sheet = true;
                                                                         this.sheet_app =
@@ -608,7 +684,6 @@ impl AppDrawer {
                                                                         !this.has_moved &&
                                                                         !this.is_long_press
                                                                     {
-                                                                        // short press
                                                                         this.on_app_click(
                                                                             app_id.clone(),
                                                                             exec.clone(),
@@ -620,7 +695,6 @@ impl AppDrawer {
                                                                 this.press_start_time = None;
                                                                 this.press_app_info = None;
                                                                 this.has_moved = false;
-
                                                                 cx.stop_propagation();
                                                             }
                                                         )
@@ -643,7 +717,6 @@ impl AppDrawer {
                                     .left_0()
                                     .h(px(36.0))
                                     .w(px(GRID_ROW_WIDTH))
-
                                     .flex()
                                     .flex_col()
                                     .justify_start()
@@ -671,7 +744,6 @@ impl AppDrawer {
                     })
             )
     }
-
     fn render_search_list(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         self.is_searching = true;
         Self::filter(self, cx);
@@ -680,9 +752,9 @@ impl AppDrawer {
 
         div()
             .id("search-results-list")
-            .overflow_hidden()
             .size_full()
             .px_4()
+            .py_2()
             .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
@@ -763,18 +835,39 @@ impl AppDrawer {
 
     fn render_subwindow_modal(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
+        let settings = Settings::global(cx).app_drawer.clone();
+        let app_drawer_size = settings.layer_shell.size;
 
         if self.subwindow.is_none() {
             let category = self.subwindow_category.clone();
-
             if let Some(apps) = self.grouped.get(&category) {
                 let apps = apps.clone();
-
-                self.subwindow = Some(cx.new(|_cx| { SubWindow::new(category.clone(), apps) }));
+                self.subwindow = Some(cx.new(|_cx| SubWindow::new(category.clone(), apps)));
             }
         }
 
         let subwindow_entity = self.subwindow.clone().unwrap();
+        let progress = self.modal_animation_progress;
+        let origin = self.modal_origin_point;
+
+        let final_width = px(GRID_ROW_WIDTH);
+        let final_height_f32 = 500.0;
+
+        let target_x = (app_drawer_size.width - final_width) / 2.0;
+        let target_y = px(8.0);
+
+        let current_width = px(
+            MIN_MODAL_SIZE.0 + ((final_width.to_f64() as f32) - MIN_MODAL_SIZE.0) * progress
+        );
+        let current_height = px(
+            MIN_MODAL_SIZE.1 + (final_height_f32 - MIN_MODAL_SIZE.1) * progress
+        );
+
+        let current_x = origin.x + (target_x - origin.x) * progress;
+        let current_y =
+            origin.y - current_height + (target_y - origin.y + current_height) * progress;
+
+        let opacity = progress;
 
         div()
             .id("subwindow-modal-overlay")
@@ -788,18 +881,30 @@ impl AppDrawer {
                     .absolute()
                     .size_full()
                     .bg(colors.background_900)
-                    .opacity(0.6)
+                    .opacity(0.6 * opacity)
                     .on_click(
                         cx.listener(|this: &mut AppDrawer, _, _, cx| {
                             this.show_subwindow_modal = false;
                             this.subwindow = None;
+                            this.modal_animation_progress = 0.0;
+                            this.is_modal_animating = false;
                             cx.notify();
                         })
                     )
                     .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
                     .on_mouse_up(MouseButton::Left, |_, _, cx| cx.stop_propagation())
             )
-            .child(subwindow_entity)
+            .child(
+                div()
+                    .absolute()
+                    .left(current_x)
+                    .top(current_y)
+                    .w(current_width)
+                    .h(current_height)
+                    .overflow_hidden()
+                    .opacity(opacity)
+                    .child(subwindow_entity)
+            )
     }
 
     fn render_loading(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -858,13 +963,12 @@ impl Render for AppDrawer {
             .w(app_drawer_size.width)
             .child(
                 div()
-                    .pt_2()
                     .flex()
-                    .justify_start()
+                    .justify_center()
                     .relative()
                     .items_center()
                     .flex_col()
-                    .overflow_hidden()
+                    .size_full()
                     // GRID MODE
                     .when(!self.is_searching, |main_page_div| {
                         main_page_div
@@ -881,18 +985,27 @@ impl Render for AppDrawer {
                     .when(self.is_searching, |search_div| {
                         search_div
                             .bg(colors.background_900)
-                            .size_full()
                             .flex()
                             .flex_col()
-                            .items_start()
-                            .justify_start()
+                            .size_full()
                             .child(
-                                div().flex_1().overflow_hidden().child(self.render_search_list(cx))
+                                div()
+                                    .flex_1()
+                                    .w_full()
+                                    .overflow_hidden()
+                                    .on_mouse_down(
+                                        MouseButton::Left,
+                                        cx.listener(Self::on_mouse_down)
+                                    )
+                                    .pb(px(SEARCH_BAR_HEIGHT + 150.0))
+                                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                                    .on_mouse_move(cx.listener(Self::on_mouse_move))
+                                    .child(self.render_search_list(cx))
                             )
-                            .when(!self.show_bottom_sheet, |div| {
-                                div.child(self.render_search_bar(cx))
-                            })
+                            // SEARCH BAR
+                            .child(self.render_search_bar(cx))
                     })
+
                     // SUBWINDOW MODAL
                     .when(self.show_subwindow_modal, |modal_div| {
                         modal_div.child(self.render_subwindow_modal(cx))
@@ -901,8 +1014,8 @@ impl Render for AppDrawer {
                     .when(self.show_bottom_sheet, |menu_div| {
                         let bottom_sheet_height = match self.sheet_kind {
                             BottomSheetKind::MainOptions => px(280.0),
-                            BottomSheetKind::ConfirmDelete => px(249.0),
-                            BottomSheetKind::Properties => px(330.0),
+                            BottomSheetKind::ConfirmDelete => px(239.0),
+                            BottomSheetKind::Properties => px(320.0),
                             BottomSheetKind::None => px(0.0),
                         };
 
@@ -976,10 +1089,11 @@ impl Render for AppDrawer {
                                     })
                             )
                     })
-                    // FLOATING SEARCH BUTTON (rendered last to be on top)
-                    .when(!self.is_searching && !self.show_bottom_sheet, |div| {
-                        div.child(self.render_floating_search_button(cx))
-                    })
+                    // FLOATING SEARCH BUTTON
+                    .when(
+                        !self.is_searching && !self.show_bottom_sheet && !self.show_subwindow_modal,
+                        |div| { div.child(self.render_floating_search_button(cx)) }
+                    )
             )
     }
 }
