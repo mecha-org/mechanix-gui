@@ -630,9 +630,11 @@ impl SettingsDrawer {
                                     .flex()
                                     .flex_row()
                                     .child(current_time_date)
-                                    .text_xl()
                                     .font_family(font_name)
-                                    .text_color(colors.foreground_100),
+                                    .font_weight(FontWeight::NORMAL)
+                                    .line_height(px(1.3))
+                                    .text_size(px(20.))
+                                    .text_color(colors.foreground_200),
                             )
                             .child(self.render_power_button(cx)),
                     )
@@ -1246,8 +1248,7 @@ impl SettingsDrawer {
             .flex()
             .items_center()
             .w_full()
-            .h_full()
-            .text_lg()
+            .h_full() 
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
@@ -1317,8 +1318,7 @@ impl SettingsDrawer {
             .items_center()
             .justify_center()
             .w_full()
-            .h_full()
-            .text_lg()
+            .h_full() 
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
