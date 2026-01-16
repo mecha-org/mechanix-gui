@@ -97,7 +97,7 @@ impl RunningApps {
                     if let Some((top_level, app)) = self.apps.get(card_idx) {
                         // println!("CLICK: Card {:?} - '{:?}'", top_level.app_id(), app.name);
                         self.show_apps = false;
-                        self.update_input_regions(window, false);
+                        self.update_input_regions(window, false, cx);
                         top_level.activate();
                         cx.notify();
                     }

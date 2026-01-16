@@ -18,7 +18,7 @@ pub mod prelude {
 pub fn run_app(cx: &mut App) {
     let SettingsDrawerSettings {
         layer_shell,
-        navbar_size,
+        input_regions,
         ..
     } = Settings::global(cx).settings_drawer.clone();
     let LayerShellSettings {
@@ -46,11 +46,8 @@ pub fn run_app(cx: &mut App) {
         |window, cx| {
             let mut regions = Vec::new();
             regions.push(Bounds {
-                origin: point(
-                    size.width - navbar_size.width,
-                    size.height - navbar_size.height,
-                ),
-                size: gpui::size(navbar_size.width, navbar_size.height),
+                origin: input_regions.minimized.origin,
+                size: input_regions.minimized.size,
             });
             window.set_input_regions(Some(regions));
 

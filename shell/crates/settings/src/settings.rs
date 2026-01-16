@@ -92,6 +92,8 @@ pub struct RunningAppsSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for RunningAppsSettings {
@@ -105,6 +107,7 @@ impl Default for RunningAppsSettings {
                 size: Size::new(px(540.0), px(300.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            input_regions: InputRegions::default(),
         }
     }
 }
@@ -118,6 +121,8 @@ pub struct SettingsDrawerSettings {
     pub navbar_size: Size<Pixels>,
     #[serde(default)]
     pub system_apps: SystemApps,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for SettingsDrawerSettings {
@@ -132,6 +137,7 @@ impl Default for SettingsDrawerSettings {
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
             system_apps: SystemApps::default(),
+            input_regions: InputRegions::default(),
         }
     }
 }
@@ -167,6 +173,8 @@ pub struct NotificationSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for NotificationSettings {
@@ -180,6 +188,7 @@ impl Default for NotificationSettings {
                 size: Size::new(px(540.0), px(620.0)),
             },
             navbar_size: Size::new(px(199.22), px(28.5)),
+            input_regions: InputRegions::default(),
         }
     }
 }
@@ -350,6 +359,22 @@ impl Default for LauncherSettings {
             },
         }
     }
+}
+
+#[derive(Default, Debug, Clone, Deserialize, PartialEq)]
+pub struct InputRegions {
+    #[serde(default)]
+    pub minimized: Region,
+    #[serde(default)]
+    pub maximized: Region,
+}
+
+#[derive(Default, Debug, Clone, Deserialize, PartialEq)]
+pub struct Region {
+    #[serde(default)]
+    pub origin: Point<Pixels>,
+    #[serde(default)]
+    pub size: Size<Pixels>,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]

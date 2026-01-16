@@ -13,7 +13,7 @@ use gpui::{
     WindowBackgroundAppearance, WindowBounds, WindowKind, WindowOptions, div, point, px, rgb, svg,
 };
 use icons::prelude::Icons;
-use settings::prelude::{LayerShellSettings, NotificationSettings, Settings};
+use settings::prelude::{InputRegions, LayerShellSettings, NotificationSettings, Settings};
 
 mod events;
 mod helper;
@@ -29,8 +29,14 @@ pub fn run_app(cx: &mut App) {
     let NotificationSettings {
         layer_shell,
         navbar_size,
+        input_regions,
         ..
     } = Settings::global(cx).notifications.clone();
+    
+    let InputRegions {
+        minimized,
+        maximized,
+    } = input_regions;
 
     let LayerShellSettings {
         size,
@@ -384,8 +390,8 @@ pub fn run_app(cx: &mut App) {
             {
                 let mut regions = Vec::new();
                 regions.push(Bounds {
-                    origin: point(px(0.), size.height - navbar_size.height),
-                    size: gpui::size(navbar_size.width, navbar_size.height),
+                    origin: minimized.origin,
+                    size: minimized.size,
                 });
                 window.set_input_regions(Some(regions));
                 cx.new(|cx| NotificationWidget::new(center, notification_list, cx))
