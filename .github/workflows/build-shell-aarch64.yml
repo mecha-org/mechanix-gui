@@ -73,10 +73,6 @@ jobs:
           echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
           sudo apt update
           sudo apt install nushell
-      - name: Setup | Pulp CLI
-        run: |
-          pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb pulp_rpm
       - name: Install dependencies
         run: |
           sudo apt update
