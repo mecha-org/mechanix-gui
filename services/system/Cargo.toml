@@ -37,12 +37,12 @@ assets = [
     [
         "../system/system-dbus.conf",
         "etc/dbus-1/system.d/system-dbus.conf",
-        "755",
+        "644",
     ],
     [
         "../system/systemd.service",
         "etc/systemd/system/mechanix-system-service.service",
-        "755",
+        "644",
     ],
 ]
 
