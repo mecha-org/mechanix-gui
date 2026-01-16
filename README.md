@@ -24,6 +24,8 @@ This repository contains multiple components of Mechanix GUI developed in Rust a
 
 ### Run a specific binary crate, for example the launcher shell application
 
+#### For running from root directory
+
 ```
 $ cargo run -p mechanix-launcher
 ```
@@ -33,7 +35,6 @@ $ cargo run -p mechanix-launcher
 ```
 $ cargo run
 ```
-
 
 #### Run the desktop services application
 
