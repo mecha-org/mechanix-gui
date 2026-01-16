@@ -14,7 +14,7 @@ pub struct LayoutManagerState {
 }
 
 impl LayoutManagerState {
-    pub fn new(_config: HomescreenConfig) -> Self {
+    pub fn new(_config: &HomescreenConfig) -> Self {
         Self {
             layout_nodes: HashMap::new(),
         }
@@ -85,7 +85,7 @@ impl LayoutManager {
         if let Some(widget_data) = state.widgets.get_mut(&widget_id) {
             widget_data.grid_bounds = new_grid_bounds;
             widget_data.set_page_number(new_page_number);
-            let new_bounds = grid_bounds_to_pixels(new_grid_bounds, &state.config);
+            let new_bounds = grid_bounds_to_pixels(new_grid_bounds, &state.config, new_page_number);
             widget_data.set_bounds(new_bounds);
         }
     }
@@ -217,6 +217,7 @@ impl LayoutManager {
             widget_bounds,
             widget_data.grid_bounds.size,
             &state.config,
+            page_number,
         );
 
         if !is_valid_grid_position(&new_grid_bounds, &state.config) {
