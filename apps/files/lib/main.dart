@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:dbus/dbus.dart';
@@ -15,23 +14,16 @@ import 'package:mechanix_files/src/features/files/data/recent_file_manager_repos
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
-import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
 
 Future<void> main(List<String> args) async {
   di.registerSingleton(ThemeToggle());
-
   WidgetsFlutterBinding.ensureInitialized();
+  
   final configResult = await connectToMxconf();
-
-  // Parse command-line arguments
-  const compileTimeOpenPath =
-      String.fromEnvironment('MECHANIX_FILES_OPEN_PATH');
-  final runtimeOpenPath = Platform.environment['MECHANIX_FILES_OPEN_PATH'];
-  final openPath =
-      compileTimeOpenPath.isNotEmpty ? compileTimeOpenPath : runtimeOpenPath;
-
   AppConfig().loadFromMap(configResult);
+
+  final openPath = _parseOpenPath();
 
   runApp(
     MultiBlocProvider(
@@ -43,9 +35,15 @@ Future<void> main(List<String> args) async {
           create: (_) => FileRepositoryImpl(),
         ),
       ],
-      child: MechanixFilesApp(openPath: openPath ?? ''),
+      child: MechanixFilesApp(openPath: openPath),
     ),
   );
+}
+
+String _parseOpenPath() {
+  const compileTimeOpenPath = String.fromEnvironment('MECHANIX_FILES_OPEN_PATH');
+  final runtimeOpenPath = Platform.environment['MECHANIX_FILES_OPEN_PATH'];
+  return compileTimeOpenPath.isNotEmpty ? compileTimeOpenPath : (runtimeOpenPath ?? '');
 }
 
 class MechanixFilesApp extends WatchingWidget {
@@ -78,9 +76,9 @@ class _MechanixFilesAppContent extends StatefulWidget {
 }
 
 class _MechanixFilesAppContentState extends State<_MechanixFilesAppContent> {
-  final _bus = DBusClient.session();
-  StreamSubscription<DBusSignal>? _signalSubscription;
-
+  late final DBusClient _bus;
+  late final ThemeSettingsService _themeService;
+  
   MechanixThemeData _currentThemeData = MechanixThemeData(
     mechanixVariant: MechanixVariant.amber,
   );
@@ -88,118 +86,35 @@ class _MechanixFilesAppContentState extends State<_MechanixFilesAppContent> {
   @override
   void initState() {
     super.initState();
-    listenForSettingsChange();
+    _initializeThemeService();
+  }
+
+  void _initializeThemeService() {
+    _bus = DBusClient.session();
+    _themeService = ThemeSettingsService(_bus);
+    
+    _themeService.listenForThemeChanges(_handleThemeChange);
     _fetchInitialTheme();
+  }
+
+  Future<void> _fetchInitialTheme() async {
+    final colors = await _themeService.fetchCurrentTheme();
+    if (colors != null) {
+      _handleThemeChange(colors);
+    }
+  }
+
+  void _handleThemeChange(Map<String, String> colors) {
+    setState(() {
+      _currentThemeData = _themeService.colorsToThemeData(colors);
+    });
   }
 
   @override
   void dispose() {
-    _signalSubscription?.cancel();
+    _themeService.dispose();
     _bus.close();
     super.dispose();
-  }
-
-  void listenForSettingsChange() {
-    final remoteObj = DBusRemoteObject(
-      _bus,
-      name: 'org.mechanix.MxConf',
-      path: DBusObjectPath('/org/mechanix/MxConf'),
-    );
-
-    _signalSubscription = DBusRemoteObjectSignalStream(
-      object: remoteObj,
-      interface: 'org.mechanix.MxConf',
-      name: 'SchemaKeyChanged',
-    ).listen((signal) {
-      if (signal.values.length >= 3) {
-        final schema = (signal.values[0] as DBusString).value;
-        final key = (signal.values[1] as DBusString).value;
-        final rawValue = (signal.values[2] as DBusString).value;
-
-        if (schema == 'org.mechanix.desktop' &&
-            key == 'settings.active_theme.theme_colors') {
-          final colors = _parseThemeColors(rawValue);
-          if (colors != null) {
-            _applyThemeColors(colors);
-          }
-        }
-      }
-    });
-  }
-
-  Map<String, String>? _parseThemeColors(String description) {
-    final accentMatch =
-        RegExp(r'accent\s*=\s*"([^"]+)"').firstMatch(description);
-    final backgroundMatch =
-        RegExp(r'background\s*=\s*"([^"]+)"').firstMatch(description);
-    final foregroundMatch =
-        RegExp(r'foreground\s*=\s*"([^"]+)"').firstMatch(description);
-
-    if (accentMatch == null ||
-        backgroundMatch == null ||
-        foregroundMatch == null) {
-      print('Failed to parse all theme colors');
-      return null;
-    }
-
-    return {
-      'accent': accentMatch.group(1)!,
-      'background': backgroundMatch.group(1)!,
-      'foreground': foregroundMatch.group(1)!,
-    };
-  }
-
-  Future<void> _fetchInitialTheme() async {
-    print('Fetching initial theme from DBus...');
-    try {
-      final remoteObj = DBusRemoteObject(
-        _bus,
-        name: 'org.mechanix.MxConf',
-        path: DBusObjectPath('/org/mechanix/MxConf'),
-      );
-
-      const key = "org.mechanix.desktop.settings.active_theme.theme_colors";
-
-      final response = await remoteObj.callMethod(
-        'org.mechanix.MxConf',
-        'GetSetting',
-        [const DBusString(key)],
-      );
-
-      if (response.returnValues.isNotEmpty &&
-          response.returnValues[0] is DBusDict) {
-        final dict = response.returnValues[0] as DBusDict;
-        final dbusValue = dict.children[DBusString(key)];
-        if (dbusValue is DBusString) {
-          final colors = _parseThemeColors(dbusValue.value);
-          if (colors != null) {
-            _applyThemeColors(colors);
-          }
-        }
-      }
-    } catch (e) {
-      print('Error fetching initial theme: $e');
-    }
-  }
-
-  void _applyThemeColors(Map<String, String> colors) {
-    final accent = colors['accent'];
-    final background = colors['background'];
-    final foreground = colors['foreground'];
-
-    final updatedThemeData = MechanixThemeData(
-      mechanixVariant: MechanixVariant.custom(
-          accent?.toOKLCHStringToColor() ?? Colors.amber),
-      mechanixBackgroundVariant: MechanixVariant.custom(
-          background?.toOKLCHStringToColor() ?? defaultBackgroundColor),
-      mechanixForegroundVariant: MechanixVariant.custom(
-          foreground?.toOKLCHStringToColor() ??  defaultForegroundColor),
-    );
-
-    setState(() {
-      _currentThemeData = updatedThemeData;
-    });
-
   }
 
   @override
@@ -236,38 +151,54 @@ class MainApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) => FilesBloc(
-              fileRepository: context.read<FileRepository>(),
-              recentFilesManager: context.read<RecentFilesManager>())
-            ..add(InitializeFiles()),
+            fileRepository: context.read<FileRepository>(),
+            recentFilesManager: context.read<RecentFilesManager>(),
+          )..add(InitializeFiles()),
         ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
-        darkTheme: darkTheme.copyWith(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          hoverColor: Colors.transparent,
-          splashFactory: NoSplash.splashFactory,
-          iconButtonTheme: const IconButtonThemeData(
-            style: ButtonStyle(
-              splashFactory: NoSplash.splashFactory,
-              overlayColor: WidgetStatePropertyAll(Colors.transparent),
-            ),
-          ),
-          scaffoldBackgroundColor: Colors.black,
-          pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
-          ),
-        ),
+        theme: _buildCustomTheme(),
+        darkTheme: _buildDarkTheme(),
         themeMode: themeMode,
-        home: openPath.isNotEmpty
-            ? FileExplorerPage(startPath: openPath)
-            : const FileHomePage(),
+        home: _buildHomePage(),
         routes: {
           AppRoutes.files: (context) => const FileHomePage(),
         },
       ),
     );
+  }
+
+  ThemeData _buildCustomTheme() {
+    return lightTheme.copyWith(
+      scaffoldBackgroundColor: Colors.black,
+    );
+  }
+
+  ThemeData _buildDarkTheme() {
+    return darkTheme.copyWith(
+      splashColor: Colors.transparent,
+      highlightColor: Colors.transparent,
+      hoverColor: Colors.transparent,
+      splashFactory: NoSplash.splashFactory,
+      iconButtonTheme: const IconButtonThemeData(
+        style: ButtonStyle(
+          splashFactory: NoSplash.splashFactory,
+          overlayColor: WidgetStatePropertyAll(Colors.transparent),
+        ),
+      ),
+      scaffoldBackgroundColor: Colors.black,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
+        },
+      ),
+    );
+  }
+
+  Widget _buildHomePage() {
+    return openPath.isNotEmpty
+        ? FileExplorerPage(startPath: openPath)
+        : const FileHomePage();
   }
 }
