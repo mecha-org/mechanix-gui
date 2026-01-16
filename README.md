@@ -2,7 +2,6 @@
 
 This repository contains multiple components of Mechanix GUI developed in Rust and Flutter:
 
-
 | Component    | GitHub Folder Link                                                                                                     |
 | ------------ |------------------------------------------------------------------------------------------------------------------------|
 | Launcher     | [mechanix-gui/shell/crates/launcher](https://github.com/mecha-org/mechanix-gui/tree/pre-release/shell/crates/launcher) |
@@ -13,8 +12,8 @@ This repository contains multiple components of Mechanix GUI developed in Rust a
 | Music App    | [mechanix-gui/apps/music](https://github.com/mecha-org/mechanix-gui/tree/pre-release/apps/music)                       |
 | Notes App    | [mechanix-gui/apps/notes](https://github.com/mecha-org/mechanix-gui/tree/pre-release/apps/notes)                       |
 
-
 ## Repository Structure
+
 - **apps/** - Applications written in Flutter (files, settings, music, notes)
 - **shell/** - Layer shell applications written in Rust (launcher, keyboard, notification)
 - **services/** - Background services written in Rust (desktop, search, conf, system)
@@ -28,18 +27,19 @@ This repository contains multiple components of Mechanix GUI developed in Rust a
 #### For running from root directory
 
 ```
-$ cargo run -p mechanix-launcher
+cargo run -p mechanix-launcher
 ```
 
 #### For running inside shell/crates/{package}
-```
-$ cargo run
-```
 
+```
+cargo run
+```
 
 #### Run the desktop services application
+
 ```
-$ cargo run -p mechanix-desktop-services
+cargo run -p mechanix-desktop-services
 ```
 
 ## Flutter apps
@@ -47,9 +47,9 @@ $ cargo run -p mechanix-desktop-services
 To run Flutter applications, navigate to the desired app folder and use Flutter Elinux commands:
 
 ```
-$ cd apps/settings
-$ flutter-elinux pub get
-$ flutter-elinux run
+cd apps/settings
+flutter-elinux pub get
+flutter-elinux run
 ```
 
 Replace `settings` with the name of the app you want to work on.
