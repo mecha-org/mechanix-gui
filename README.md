@@ -24,22 +24,21 @@ This repository contains multiple components of Mechanix GUI developed in Rust a
 
 ### Run a specific binary crate, for example the launcher shell application
 
-#### For running from root directory
-
 ```
-cargo run -p mechanix-launcher
+$ cargo run -p mechanix-launcher
 ```
 
 #### For running inside shell/crates/{package}
 
 ```
-cargo run
+$ cargo run
 ```
+
 
 #### Run the desktop services application
 
 ```
-cargo run -p mechanix-desktop-services
+$ cargo run -p mechanix-desktop-services
 ```
 
 ## Flutter apps
@@ -47,9 +46,9 @@ cargo run -p mechanix-desktop-services
 To run Flutter applications, navigate to the desired app folder and use Flutter Elinux commands:
 
 ```
-cd apps/settings
-flutter-elinux pub get
-flutter-elinux run
+$ cd apps/settings
+$ flutter-elinux pub get
+$ flutter-elinux run
 ```
 
 Replace `settings` with the name of the app you want to work on.
