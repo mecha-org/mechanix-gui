@@ -1,0 +1,16 @@
+[Unit]
+Description=Mechanix System Service
+After=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mechanix-system-service
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target
