@@ -59,13 +59,11 @@ class FileHomePageState extends State<FileHomePage> {
             children: [
               MechanixSectionList(
                 sectionListItems: [
-                  SectionListItems.leadingIcon(
+                  SectionListItems(
                       title: "Home directory",
                       titleTextStyle: listItemTitleTextStyle(context),
                       onTap: () => onTap(context, homeDir, "Home"),
-                      iconPath: Images.home,
-                      iconColor: context.primary,
-                      ),
+                      leading: Image.asset(Images.home, height: 24, width: 24)),
                   SectionListItems(
                       title: "Recents",
                       titleTextStyle: listItemTitleTextStyle(context),
