@@ -6,7 +6,7 @@ use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{Settings, SettingsDrawerSettings};
+use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
 use theme::prelude::AlphaExt;
@@ -340,7 +340,8 @@ impl SettingsDrawer {
 impl Render for SettingsDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let settings = Settings::global(cx).settings_drawer.clone();
-        let navbar_size = settings.navbar_size;
+        let navbar_size = settings.navbar_size.clone();
+        let input_regions = settings.input_regions.clone();
         let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
 
         let colors = cx.theme().colors.clone();
@@ -388,6 +389,27 @@ impl Render for SettingsDrawer {
                     }
                 }),
             )
+            .when(!self.is_visible, |this| {
+                this.child(
+                    div()
+                        .id("input-region")
+                        .absolute()
+                        .bottom(px(0.))
+                        .right(px(0.))
+                        .w(input_regions.minimized.size.width)
+                        .h(input_regions.minimized.size.height)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                                cx.stop_propagation();
+                                this.drag_start_pos = this.position;
+                                this.drag_offset =
+                                    Some(event.position.y.to_f64() as f32 - this.position);
+                                cx.notify();
+                            }),
+                        ),
+                )
+            })
             .child(
                 div()
                     .w_full()
@@ -401,36 +423,18 @@ impl Render for SettingsDrawer {
                             .flex_row()
                             .justify_end()
                             .h(navbar_size.height)
-                            .child(
-                                div()
-                                    .id("right-wing")
-                                    .child({
-                                        let mut w = wing();
-                                        w.upper_wing_size(size(
-                                            navbar_size.width,
-                                            navbar_size.height,
-                                        ));
-                                        w.upper_wing_side(WingSide::Right);
-                                        w.w(navbar_size.width).h(navbar_size.height).bg(
-                                            if self.is_visible {
-                                                colors.background_1000
-                                            } else {
-                                                colors.background_800
-                                            },
-                                        )
-                                    })
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
-                                            cx.stop_propagation();
-                                            this.drag_start_pos = this.position;
-                                            this.drag_offset = Some(
-                                                event.position.y.to_f64() as f32 - this.position,
-                                            );
-                                            cx.notify();
-                                        }),
-                                    ),
-                            ),
+                            .child(div().id("right-wing").child({
+                                let mut w = wing();
+                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                                w.upper_wing_side(WingSide::Right);
+                                w.w(navbar_size.width).h(navbar_size.height).bg(
+                                    if self.is_visible {
+                                        colors.background_1000
+                                    } else {
+                                        colors.background_800
+                                    },
+                                )
+                            })),
                     )
                     .when(self.is_visible, |content_div| {
                         content_div.size_full().bg(colors.background_1000)
@@ -506,22 +510,20 @@ impl SettingsDrawer {
         let mut regions = Vec::new();
 
         let settings = Settings::global(cx).settings_drawer.clone();
-        let navbar_size = settings.navbar_size;
-        let settings_drawer_size = settings.layer_shell.size;
-        let closed_pos_px = Self::closed_pos(settings_drawer_size, navbar_size);
+        let InputRegions {
+            minimized,
+            maximized,
+        } = settings.input_regions;
 
         if open {
             regions.push(Bounds {
-                origin: point(px(0.), px(0.)),
-                size: settings_drawer_size,
+                origin: maximized.origin,
+                size: maximized.size,
             });
         } else {
             regions.push(Bounds {
-                origin: point(
-                    settings_drawer_size.width - navbar_size.width,
-                    closed_pos_px,
-                ),
-                size: navbar_size,
+                origin: minimized.origin,
+                size: minimized.size,
             });
         }
         window.set_input_regions(Some(regions));
@@ -592,6 +594,15 @@ impl SettingsDrawer {
             .relative()
             .w(settings_drawer_size.width)
             .h(settings_drawer_size.height)
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                    cx.stop_propagation();
+                    this.drag_start_pos = this.position;
+                    this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
+                    cx.notify();
+                }),
+            )
             .child(
                 div()
                     .id("main_container")

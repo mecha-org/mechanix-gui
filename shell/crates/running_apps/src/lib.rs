@@ -5,7 +5,7 @@ use gpui::{
     *,
 };
 
-use settings::prelude::{LayerShellSettings, RunningAppsSettings, Settings};
+use settings::prelude::{InputRegions, LayerShellSettings, RunningAppsSettings, Settings};
 
 pub mod config;
 pub mod models;
@@ -50,8 +50,11 @@ fn root_view(
         let RunningAppsSettings {
             navbar_size,
             layer_shell,
+            input_regions,
             ..
         } = settings;
+
+        let InputRegions { minimized, .. } = input_regions;
 
         let LayerShellSettings {
             size: window_size, ..
@@ -60,12 +63,10 @@ fn root_view(
         let mut regions = Vec::new();
 
         regions.push(Bounds {
-            origin: point(
-                (window_size.width - navbar_size.width) / 2.,
-                window_size.height - navbar_size.height,
-            ),
-            size: navbar_size,
+            origin: minimized.origin,
+            size: minimized.size,
         });
+
         window.set_input_regions(Some(regions));
 
         let running_apps = cx.new(|cx| RunningApps::new(installed_apps));
