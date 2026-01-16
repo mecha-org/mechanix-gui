@@ -50,6 +50,17 @@ jobs:
         with:
           toolchain: stable
 
+      - name: Cache Cargo Data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Install cargo tools
         run: |
           cargo install cargo-deb
@@ -60,10 +71,6 @@ jobs:
           echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
           sudo apt update
           sudo apt install nushell
-      - name: Setup | Pulp CLI
-        run: |
-          pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb pulp_rpm
       - name: Install dependencies
         run: |
           sudo apt update
@@ -209,7 +216,7 @@ jobs:
           set -euo pipefail
           # Using the package name from matrix
           DEB_FILE=$(find ./build/deb -name "${{ matrix.package }}*.deb" -type f | head -n1)
-          
+
           if [ -z "$DEB_FILE" ]; then
             echo "[ERROR] No .deb file found"
             exit 1
