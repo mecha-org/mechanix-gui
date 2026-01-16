@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use gpui::{LongPressEvent, prelude::FluentBuilder, *};
-use theme::prelude::{AlphaExt, Theme};
+use theme::prelude::{AlphaExt, Fonts, Theme};
 
 #[derive(IntoElement)]
 pub struct IconButton {
@@ -120,6 +120,7 @@ impl IconButton {
 impl RenderOnce for IconButton {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
+        let font_name = Fonts::global(cx).primary.clone();
 
         let t_icon_color = colors.foreground_400;
         let t_active_icon_color = colors.accent_200; // default - gray | custom can be - amber
@@ -204,7 +205,9 @@ impl RenderOnce for IconButton {
             main.flex_col()
                 .justify_center()
                 .child(label)
-                .text_sm()
+                .text_size(px(12.))
+                .font_weight(FontWeight::NORMAL)
+                .font_family(font_name)
                 .text_color(colors.foreground_600)
         } else {
             main

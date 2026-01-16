@@ -9,7 +9,7 @@ use mxsearch::service::MxSearchService;
 use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
-use theme::prelude::AlphaExt;
+use theme::prelude::{AlphaExt, Fonts};
 
 use crate::helper::get_wireless_strength_icon;
 use crate::ui::modals::{
@@ -345,6 +345,7 @@ impl Render for SettingsDrawer {
         let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
 
         let colors = cx.theme().colors.clone();
+        let font_name = Fonts::global(cx).primary.clone();
 
         let open_y = 0.;
         let closed_y = closed_pos_f32;
@@ -355,6 +356,7 @@ impl Render for SettingsDrawer {
         div()
             .w_full()
             .h_full()
+            .font_family(font_name)
             .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                 if let Some(offset) = this.drag_offset {
                     let new_y = event.position.y.to_f64() as f32 - offset;
@@ -536,8 +538,9 @@ impl SettingsDrawer {
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let current_time_date = ShellState::global(cx).current_time_date.clone();
+        let font_name = Fonts::global(cx).primary.clone();
 
+        let current_time_date = ShellState::global(cx).current_time_date.clone();
         let settings = Settings::global(cx).settings_drawer.clone();
         let navbar_size = settings.navbar_size;
         let settings_drawer_size = settings.layer_shell.size;
@@ -628,6 +631,7 @@ impl SettingsDrawer {
                                     .flex_row()
                                     .child(current_time_date)
                                     .text_xl()
+                                    .font_family(font_name)
                                     .text_color(colors.foreground_100),
                             )
                             .child(self.render_power_button(cx)),

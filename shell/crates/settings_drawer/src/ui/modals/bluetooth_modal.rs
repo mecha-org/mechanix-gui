@@ -138,24 +138,7 @@ impl SettingsDrawer {
                     .border_t_0()
                     .rounded(px(8.))
                     .overflow_hidden()
-                    .child(
-                        div()
-                            .child("Bluetooth")
-                            .flex()
-                            .w_full()
-                            .justify_start()
-                            .text_color(colors.foreground_400)
-                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                px(18.)
-                            } else {
-                                px(24.)
-                            })
-                            .pl(px(16.))
-                            .pt(px(8.))
-                            .border_b_1()
-                            .border_color(colors.accent_200.with_alpha(0.4))
-                            .h(px(MODAL_HEADER_HEIGHT)),
-                    )
+                    .child(self.render_header_div(cx, "Bluetooth"))
                     .child(
                         div()
                             .id("scrollable")
@@ -167,6 +150,7 @@ impl SettingsDrawer {
                             } else {
                                 px(18.)
                             })
+                            .font_weight(FontWeight::NORMAL)
                             .border_b_1()
                             .border_color(colors.accent_200.with_alpha(0.4))
                             .on_mouse_down(
@@ -255,7 +239,6 @@ impl SettingsDrawer {
                                                         .child(
                                                             div()
                                                                 .pl_2()
-                                                                .font_weight(FontWeight::NORMAL)
                                                                 .text_color(text_color)
                                                                 .child(name.clone()),
                                                         ),
@@ -294,7 +277,6 @@ impl SettingsDrawer {
                                                         .child(
                                                             div()
                                                                 .pl_2()
-                                                                .font_weight(FontWeight::NORMAL)
                                                                 .text_color(text_color)
                                                                 .child(name.clone()),
                                                         ),
