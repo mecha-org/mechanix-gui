@@ -37,6 +37,11 @@ assets = [
         "usr/share/mechanix/mxsearch/settings.toml",
         "755",
     ],
+    [
+        "../systemd.service",
+        "/etc/systemd/user/mxsearch.service",
+        "755",
+    ],
 ]
 
 [package.metadata.generate-rpm]
@@ -47,4 +52,5 @@ assets = [
     # Binary
     { source = "../../../target/release/mxsearch", dest = "/usr/bin/mxsearch", mode = "755" },
     { source = "../server/settings.toml.example", dest = "/usr/share/mechanix/mxsearch/settings.toml", mode = "755" },
+    { source = "../systemd.service", dest = "/etc/systemd/user/mxsearch.service", mode = "755" },
 ]

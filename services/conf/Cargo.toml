@@ -45,17 +45,22 @@ assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
         "../../target/release/mxconf",
-        "usr/bin/",
+        "/usr/bin/",
         "755",
     ],
     [
         "../conf/schemas/default_profile.toml",
-        "etc/mxconf/profile/default_profile.toml",
+        "/etc/mxconf/profile/default_profile.toml",
         "755",
     ],
     [
         "../conf/schemas/org.mechanix.desktop.toml",
-        "usr/share/mxconf/schemas/org.mechanix.desktop.toml",
+        "/usr/share/mxconf/schemas/org.mechanix.desktop.toml",
+        "644",
+    ],
+    [
+        "../conf/systemd.service",
+        "/etc/systemd/user/mxconf.service",
         "644",
     ],
 ]
@@ -67,6 +72,7 @@ auto-req = "yes"
 assets = [
     # Binary
     { source = "../../target/release/mxconf", dest = "/usr/bin/mxconf", mode = "755" },
-    { source = "../conf/schemas/default_profile.toml", dest = "/etc/mxconf/profile/default_profile.toml", mode = "755" },
+    { source = "../conf/schemas/default_profile.toml", dest = "/etc/mxconf/profile/default_profile.toml", mode = "644" },
     { source = "../conf/schemas/org.mechanix.desktop.toml", dest = "/usr/share/mxconf/schemas/org.mechanix.desktop.toml", mode = "644" },
+    { source = "../conf/systemd.service", dest = "/etc/systemd/user/mxconf.service", mode = "644" },
 ]

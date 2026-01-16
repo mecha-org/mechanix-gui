@@ -46,6 +46,11 @@ assets = [
         "usr/bin/",
         "755",
     ],
+    [
+        "../desktop/systemd.service",
+        "/etc/systemd/user/mechanix-session-service.service",
+        "755",
+    ],
 ]
 
 [package.metadata.generate-rpm]
@@ -55,4 +60,5 @@ auto-req = "yes"
 assets = [
     # Binary
     { source = "../../target/release/mechanix-session-service", dest = "/usr/bin/mechanix-session-service", mode = "755" },
+    { source = "../desktop/systemd.service", dest = "/etc/systemd/user/mechanix-session-service.service", mode = "644" },
 ]
