@@ -14,6 +14,7 @@ use crate::{
     event_listeners::{listen_dispatcher, listen_theme_channel},
     manager::ThemeManager,
     prelude::{ColorsSetting, ThemeMode},
+    theme::Fonts,
 };
 
 pub mod prelude {
@@ -27,6 +28,8 @@ pub fn init(cx: &mut App) {
     ThemeManager::global_mut(cx).set_mode(ThemeMode::Dark);
     ThemeManager::global_mut(cx).set_colors(ColorsSetting::default());
     ThemeManager::apply(cx);
+    Fonts::init(cx);
+
     let (theme_tx, theme_rx) = mpsc::channel::<ThemeEvents>(120);
     listen_dispatcher(cx, theme_tx);
     listen_theme_channel(cx, theme_rx);
@@ -42,6 +45,16 @@ impl ActiveTheme for App {
     }
 }
 
+pub trait ActiveFonts {
+    fn fonts(&self) -> &Fonts;
+}
+
+impl ActiveFonts for App {
+    fn fonts(&self) -> &Fonts {
+        Fonts::global(self)
+    }
+}
+
 pub enum ThemeEvents {
     SetThemeColors {
         accent: String,
@@ -49,4 +62,7 @@ pub enum ThemeEvents {
         foreground: String,
     },
     SetThemeMode(String),
+    SetPrimaryFont(String),
+    SetSecondaryFont(String),
+    SetTertiaryFont(String),
 }

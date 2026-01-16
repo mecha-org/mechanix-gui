@@ -67,3 +67,37 @@ impl Theme {
         self.colors.apply_setting(mode, colors);
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Fonts {
+    pub primary: SharedString,
+    pub secondary: SharedString,
+    pub tertiary: SharedString,
+}
+
+impl Default for Fonts {
+    fn default() -> Self {
+        Self {
+            primary: "Overused Grotesk".into(),
+            secondary: "Noto Sans".into(),
+            tertiary: "Inter".into(),
+        }
+    }
+}
+
+impl Global for Fonts {}
+
+impl Fonts {
+    pub fn init(cx: &mut App) {
+        let fonts = Fonts::default();
+        cx.set_global(fonts);
+    }
+
+    pub fn global(cx: &App) -> &Fonts {
+        cx.global::<Fonts>()
+    }
+
+    pub fn global_mut(cx: &mut App) -> &mut Fonts {
+        cx.global_mut::<Fonts>()
+    }
+}
