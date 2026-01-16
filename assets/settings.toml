@@ -104,7 +104,7 @@ exclusive_zone = 0.0
 size = { width = 540.0, height = 620.0 }
 
 [keyboard]
-default_layout = "/usr/share/mechanix/shell/assets/layouts/us.yaml"
+default_layout = "assets/layouts/us.yaml"
 
 [keyboard.layer_shell]
 layer = "overlay"
