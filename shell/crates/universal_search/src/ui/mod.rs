@@ -14,7 +14,7 @@ use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
 use settings::prelude::Settings;
 use theme::ActiveTheme;
-use theme::prelude::{AlphaExt, Theme};
+use theme::prelude::{AlphaExt, Theme, Fonts};
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 52.0;
@@ -363,11 +363,11 @@ impl UniversalSearch {
             div().size_full().flex().flex_row().items_center().child(
                 div()
                     .size_full()
-                    .text_color(colors.foreground_400)
                     .flex()
                     .flex_row()
                     .justify_between()
                     .items_center()
+                    .text_color(colors.foreground_400)
                     .child(
                         div()
                             .flex()
@@ -508,6 +508,7 @@ impl UniversalSearch {
         window: &mut Window,
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let font_name = Fonts::global(cx).primary.clone();
 
         // Initialize text input
         self.text_input.update(cx, |input, _| {
@@ -543,6 +544,7 @@ impl UniversalSearch {
             .flex()
             .flex_col()
             .bg(colors.background_1000)
+            .font_family(font_name)
             .on_drop(cx.listener(Self::on_drop))
             .on_drag_move(cx.listener(Self::on_drag_move))
             .child(
