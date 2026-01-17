@@ -228,7 +228,7 @@ impl RunningApps {
     fn running_apps(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let has_apps = !self.apps.is_empty();
         let colors = Theme::global(cx).colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         div()
             .flex()
@@ -248,7 +248,7 @@ impl RunningApps {
                             .line_height(px(24.0))
                             .text_center()
                             .font_weight(FontWeight(500.0))
-                            .font_family(font_name)
+                            .font_family(primary_font)
                             .max_w(px(300.0))
                             .child("There are no apps or droids")
                             .child(div().child("you are looking for.")),

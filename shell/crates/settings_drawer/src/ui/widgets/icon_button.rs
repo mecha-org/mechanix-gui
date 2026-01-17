@@ -120,7 +120,7 @@ impl IconButton {
 impl RenderOnce for IconButton {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let t_icon_color = colors.foreground_400;
         let t_active_icon_color = colors.accent_200; // default - gray | custom can be - amber
@@ -207,7 +207,7 @@ impl RenderOnce for IconButton {
                 .child(label)
                 .text_size(px(12.))
                 .font_weight(FontWeight::NORMAL)
-                .font_family(font_name)
+                .font_family(primary_font)
                 .text_color(colors.foreground_600)
         } else {
             main

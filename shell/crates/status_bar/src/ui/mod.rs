@@ -120,7 +120,7 @@ pub fn status_bar_components(
         ..
     } = ShellState::global(cx);
     let colors = Theme::global(cx).colors.clone();
-    let font_name = Fonts::global(cx).primary.clone();
+    let primary_font = Fonts::global(cx).primary.clone();
 
     let StatusBarIcons {
         battery_0_charging,
@@ -259,7 +259,7 @@ pub fn status_bar_components(
                 .flex_row()
                 .items_start()
                 .child(current_time_date.clone())
-                .font_family(font_name)
+                .font_family(primary_font)
                 .font_weight(FontWeight::NORMAL)
                 .line_height(px(1.2))
                 .text_color(colors.foreground_200)

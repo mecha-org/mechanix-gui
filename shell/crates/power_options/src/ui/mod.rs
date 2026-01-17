@@ -172,7 +172,7 @@ impl Render for PowerOptions {
         let window_height = f32::from(size.height);
         let show = self.show;
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let icons = Icons::global(cx).power_options.clone();
 
@@ -302,7 +302,7 @@ impl Render for PowerOptions {
                                                     .line_height(px(1.2))
                                                     .text_size(px(24.))
                                                     .text_color(colors.foreground_200)
-                                                    .font_family(font_name)
+                                                    .font_family(primary_font)
                                                     .font_weight(FontWeight::NORMAL)
                                                     .child("Swipe to power off"),
                                             ),

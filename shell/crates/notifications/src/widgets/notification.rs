@@ -425,7 +425,7 @@ fn parse_urls_in_text(text: &str) -> Vec<MarkupNode> {
 /// Render parsed markup nodes as GPUI elements
 pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
     let colors = cx.theme().colors.clone();
-    let font_name = Fonts::global(cx).primary.clone();
+    let primary_font = Fonts::global(cx).primary.clone();
 
     let mut container = div().flex().flex_col().gap_1().w_full().overflow_hidden();
 
@@ -435,7 +435,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
         .flex_wrap()
         .gap_1()
         .w_full()
-        .font_family(font_name)
+        .font_family(primary_font)
         .overflow_hidden();
 
     let mut has_content = false;
@@ -497,7 +497,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
 impl Render for NotificationUi {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let icons = Icons::global(cx).notifications.clone();
         let close_icon: SharedString = icons.close.to_string_lossy().to_string().into();
@@ -562,7 +562,7 @@ impl Render for NotificationUi {
                             .pt(px(4.0))
                             .px_4()
                             .pb(px(10.0))
-                            .font_family(font_name)
+                            .font_family(primary_font)
                             .child(
                                 div()
                                     .flex()

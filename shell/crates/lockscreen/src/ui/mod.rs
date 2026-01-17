@@ -107,7 +107,7 @@ impl Lockscreen {
 impl Render for Lockscreen {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
         
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
@@ -207,7 +207,7 @@ impl Render for Lockscreen {
                                                 inner = inner
                                                     .text_size(px(18.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                                     .text_color(text_color)
-                                                       .font_family(font_name)
+                                                       .font_family(primary_font)
                                                         .font_weight(FontWeight::SEMIBOLD)
                                                         .opacity(1.0)
                                                         .child("Swipe up to unlock");

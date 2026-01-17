@@ -6,13 +6,13 @@ pub struct HomescreenUi;
 impl HomescreenUi {
     pub fn render(state: &HomescreenState, cx: &mut App) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let mut element = div()
             .size_full()
             .overflow_hidden()
             .bg(colors.background_1000)
-            .font_family(font_name)
+            .font_family(primary_font)
             .text_color(colors.foreground_300);
 
         let mut dragged_widgets = Vec::new();

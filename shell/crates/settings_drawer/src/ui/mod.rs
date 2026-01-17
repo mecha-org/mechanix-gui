@@ -345,7 +345,7 @@ impl Render for SettingsDrawer {
         let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
 
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let open_y = 0.;
         let closed_y = closed_pos_f32;
@@ -356,7 +356,7 @@ impl Render for SettingsDrawer {
         div()
             .w_full()
             .h_full()
-            .font_family(font_name)
+            .font_family(primary_font)
             .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                 if let Some(offset) = this.drag_offset {
                     let new_y = event.position.y.to_f64() as f32 - offset;
@@ -538,7 +538,7 @@ impl SettingsDrawer {
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let current_time_date = ShellState::global(cx).current_time_date.clone();
         let settings = Settings::global(cx).settings_drawer.clone();
@@ -630,7 +630,7 @@ impl SettingsDrawer {
                                     .flex()
                                     .flex_row()
                                     .child(current_time_date)
-                                    .font_family(font_name)
+                                    .font_family(primary_font)
                                     .font_weight(FontWeight::NORMAL)
                                     .line_height(px(1.3))
                                     .text_size(px(20.))

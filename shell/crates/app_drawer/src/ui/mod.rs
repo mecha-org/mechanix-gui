@@ -931,7 +931,7 @@ impl Render for AppDrawer {
         let app_drawer_size = settings.layer_shell.size;
 
         let colors = Theme::global(cx).colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let text_input = self.text_input.clone();
         text_input.update(cx, |input, _| {
@@ -972,7 +972,7 @@ impl Render for AppDrawer {
                     .items_center()
                     .flex_col()
                     .size_full()
-                    .font_family(font_name)
+                    .font_family(primary_font)
                     // GRID MODE
                     .when(!self.is_searching, |main_page_div| {
                         main_page_div

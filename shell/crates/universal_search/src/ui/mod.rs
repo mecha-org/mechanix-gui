@@ -508,7 +508,7 @@ impl UniversalSearch {
         window: &mut Window,
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         // Initialize text input
         self.text_input.update(cx, |input, _| {
@@ -544,7 +544,7 @@ impl UniversalSearch {
             .flex()
             .flex_col()
             .bg(colors.background_1000)
-            .font_family(font_name)
+            .font_family(primary_font)
             .on_drop(cx.listener(Self::on_drop))
             .on_drag_move(cx.listener(Self::on_drag_move))
             .child(

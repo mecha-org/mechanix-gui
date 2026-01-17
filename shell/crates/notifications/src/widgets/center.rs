@@ -974,7 +974,7 @@ impl Render for NotificationWidget {
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let font_name = Fonts::global(cx).primary.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let icons = Icons::global(cx).notifications.clone();
         let settings = Settings::global(cx).notifications.clone();
@@ -991,7 +991,7 @@ impl NotificationCenter {
             .px_4()
             .pt_4()
             .pb_3()
-            .font_family(font_name)
+            .font_family(primary_font)
             .child(
                 div()
                     .text_color(colors.foreground_300)
