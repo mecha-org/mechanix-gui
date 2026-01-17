@@ -27,10 +27,8 @@ int main(int argc, char** argv) {
 
   flutter::FlutterViewController::ViewProperties view_properties = {};
 
-  view_properties.width = 540;
-  view_properties.height = 620;
-  // view_properties.width = options.WindowWidth();
-  // view_properties.height = options.WindowHeight();
+  view_properties.width = options.WindowWidth();
+  view_properties.height = options.WindowHeight();
   view_properties.view_mode = options.WindowViewMode();
   view_properties.view_rotation = options.WindowRotation();
   view_properties.title = options.WindowTitle();
