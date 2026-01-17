@@ -18,8 +18,7 @@ use std::{
     time::Duration,
 };
 use theme::ActiveTheme;
-use theme::prelude::AlphaExt;
-use theme::prelude::Theme;
+use theme::prelude::{AlphaExt, Fonts};
 
 use settings::prelude::Settings;
 
@@ -975,6 +974,8 @@ impl Render for NotificationWidget {
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let font_name = Fonts::global(cx).primary.clone();
+
         let icons = Icons::global(cx).notifications.clone();
         let settings = Settings::global(cx).notifications.clone();
         let notifications_center_size = settings.layer_shell.size;
@@ -990,6 +991,7 @@ impl NotificationCenter {
             .px_4()
             .pt_4()
             .pb_3()
+            .font_family(font_name)
             .child(
                 div()
                     .text_color(colors.foreground_300)
