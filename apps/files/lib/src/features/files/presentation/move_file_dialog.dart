@@ -397,8 +397,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         onChanged: (v) => setState(() => renameText = v),
         anchorWidget: showCheck
             ? IconButton(
-                icon: Icon(Icons.check,
-                    color: context.colorScheme.surfaceContainerLowest),
+                icon: Icon(Icons.check, color: context.colorScheme.onSurface),
                 onPressed: () {
                   final filesBloc = context.read<FilesBloc>();
                   filesBloc.add(
@@ -413,8 +412,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 },
               )
             : IconButton(
-                icon: Icon(Icons.close,
-                    color: context.colorScheme.surfaceContainerLowest),
+                icon: Icon(Icons.close, color: context.colorScheme.onSurface),
                 onPressed: () {
                   setState(() => showRenameBar = false);
                   controller.clearNewFolder();

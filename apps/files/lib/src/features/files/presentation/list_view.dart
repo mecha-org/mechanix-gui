@@ -120,7 +120,7 @@ Widget buildListView(
                     formatModifiedTime(modified),
                     style: TextStyle(
                       fontSize: 16,
-                      color: context.colorScheme.surfaceContainerHigh,
+                      color: context.colorScheme.surfaceContainer,
                       fontWeight: FontWeight.w400,
                     ),
                   ),

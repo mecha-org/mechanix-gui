@@ -377,7 +377,7 @@ MechanixFilledButtonThemeData buttonThemeData(
       break;
 
     case MechanixButtonType.cancel:
-      backgroundColor = context.colorScheme.secondary; // dark grey
+      backgroundColor = context.colorScheme.secondaryContainer; // dark grey
       break;
 
     case MechanixButtonType.disable:

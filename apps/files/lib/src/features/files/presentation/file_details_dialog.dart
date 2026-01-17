@@ -77,8 +77,7 @@ class FileDetailsDialog extends StatelessWidget {
                               Text(
                                 "Properties",
                                 style: TextStyle(
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest,
+                                  color: context.colorScheme.onSurface,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                 ),

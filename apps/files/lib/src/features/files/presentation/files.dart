@@ -1216,8 +1216,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       anchorWidget: showCheck
                           ? IconButton(
                               icon: Icon(Icons.check,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () async {
                                 final trimmed = currentName.trim();
 
@@ -1253,8 +1252,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             )
                           : IconButton(
                               icon: Icon(Icons.close,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () {
                                 entry?.remove();
                               },
@@ -1551,8 +1549,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       anchorWidget: showCheck
                           ? IconButton(
                               icon: Icon(Icons.check,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () {
                                 entry?.remove();
 
@@ -1577,8 +1574,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             )
                           : IconButton(
                               icon: Icon(Icons.close,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () {
                                 entry?.remove();
                                 controller.clearLiveRename();

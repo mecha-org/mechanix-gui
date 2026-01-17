@@ -385,8 +385,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         onChanged: (v) => setState(() => renameText = v),
         anchorWidget: showCheck
             ? IconButton(
-                icon: Icon(Icons.check,
-                    color: context.colorScheme.surfaceContainerLowest),
+                icon: Icon(Icons.check, color: context.colorScheme.onSurface),
                 onPressed: () {
                   final filesBloc = context.read<FilesBloc>();
                   filesBloc.add(
@@ -401,8 +400,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 },
               )
             : IconButton(
-                icon: Icon(Icons.close,
-                    color: context.colorScheme.surfaceContainerLowest),
+                icon: Icon(Icons.close, color: context.colorScheme.onSurface),
                 onPressed: () {
                   setState(() => showRenameBar = false);
                   controller.clearNewFolder();
