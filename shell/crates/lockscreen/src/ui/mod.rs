@@ -2,8 +2,11 @@ use gpui::{prelude::FluentBuilder, *};
 use shell_state::ShellState;
 mod wallpaper;
 mod wedges;
+use theme::ActiveTheme;
 use wallpaper::wallpaper;
 use wedges::{LockState, left_wedge, right_wedge};
+use theme::prelude::{AlphaExt, Fonts};
+
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
 const UNLOCK_THRESHOLD: f32 = 100.0;
@@ -17,8 +20,8 @@ const WEDGE_TARGET_GAP: f32 = 110.0;
 const LOCK_ICONS_FADE_THRESHOLD: f32 = 310.0;
 
 // Unlock prompt styling
-const UNLOCK_PROMPT_TEXT_COLOR: u32 = 0xC57600FF; // #C57600
-const UNLOCK_PROMPT_BG_COLOR: u32 = 0x000000FF;   // #000000
+// const UNLOCK_PROMPT_TEXT_COLOR: u32 = 0xC57600FF; // #C57600
+// const UNLOCK_PROMPT_BG_COLOR: u32 = 0x000000FF;   // #000000
 const UNLOCK_PROMPT_RADIUS: f32 = 12.0;
 const UNLOCK_PROMPT_ARROW_SIZE: f32 = 40.0;
 const UNLOCK_PROMPT_ICON_PATH: &str = "icons/lockscreen/arrow.svg";
@@ -103,6 +106,9 @@ impl Lockscreen {
 
 impl Render for Lockscreen {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+        let font_name = Fonts::global(cx).primary.clone();
+        
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
@@ -114,7 +120,8 @@ impl Render for Lockscreen {
         self.update_input_regions(window, show, cx);
 
         let overlay_color = hsla(0.0, 0.0, 0.0, 0.75);
-        let text_color = rgba(UNLOCK_PROMPT_TEXT_COLOR);
+        let text_color = colors.accent_200;
+        let unlock_prompt_bg_color = colors.background_1000;
         let show_arrow_prompt = self.show_arrow_prompt;
 
         // Panel top position: starts at 0 (top of screen), moves up (negative) when swiped
@@ -170,7 +177,7 @@ impl Render for Lockscreen {
                                 .child(
                                     div()
                                         .cursor_pointer()
-                                        .bg(rgba(UNLOCK_PROMPT_BG_COLOR))
+                                        .bg(unlock_prompt_bg_color)
                                         .rounded(px(UNLOCK_PROMPT_RADIUS * UNLOCK_PROMPT_SIZE_FACTOR))
                                         .px(px(14.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                         .py(px(10.0 * UNLOCK_PROMPT_SIZE_FACTOR))
@@ -200,7 +207,8 @@ impl Render for Lockscreen {
                                                 inner = inner
                                                     .text_size(px(18.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                                     .text_color(text_color)
-                                                        .font_weight(FontWeight::BOLD)
+                                                       .font_family(font_name)
+                                                        .font_weight(FontWeight::SEMIBOLD)
                                                         .opacity(1.0)
                                                         .child("Swipe up to unlock");
                                             }
