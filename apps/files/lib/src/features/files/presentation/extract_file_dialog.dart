@@ -439,39 +439,38 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                 ),
                 sectionListItems: [
-                  SectionListItems(
-                    title: "Home directory",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(homeDir));
-                    },
-                    leading: Image.asset(Images.home, height: 20, width: 20),
-                  ),
-
+                  SectionListItems.leadingIcon(
+                      title: "Home directory",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory(homeDir));
+                      },
+                      iconColor: context.colorScheme.primary,
+                      iconPath: Images.home),
                   // Downloads
-                  SectionListItems(
-                    title: "Downloads",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(downloadsDir));
-                    },
-                    leading:
-                        Image.asset(Images.downloads, height: 24, width: 24),
-                  ),
+                  SectionListItems.leadingIcon(
+                      title: "Downloads",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory(downloadsDir));
+                      },
+                      iconColor: context.colorScheme.primary,
+                      iconPath: Images.downloads,
+                      iconSize: const Size(24, 24)),
 
                   // Documents
-                  SectionListItems(
-                    title: "Documents",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(documentsDir));
-                    },
-                    leading: Image.asset(Images.homeDocuments,
-                        height: 24, width: 24),
-                  ),
+                  SectionListItems.leadingIcon(
+                      title: "Documents",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory(documentsDir));
+                      },
+                      iconColor: context.colorScheme.primary,
+                      iconPath: Images.homeDocuments,
+                      iconSize: const Size(24, 24)),
                 ]),
 
             // Root dir
@@ -486,15 +485,16 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   ),
                 ),
                 sectionListItems: [
-                  SectionListItems(
+                  SectionListItems.leadingIcon(
                     title: "Root (/)",
                     titleTextStyle: listItemTitleTextStyle(context),
                     onTap: () {
                       setState(() => showHomeView = false);
                       controller.openDirectory(Directory("/"));
                     },
-                    leading:
-                        Image.asset(Images.hardDrive, height: 24, width: 24),
+                    iconColor: context.colorScheme.primary,
+                    iconPath: Images.hardDrive,
+                    iconSize: const Size(24, 24),
                   ),
                 ]),
           ],

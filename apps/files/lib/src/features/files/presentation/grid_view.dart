@@ -124,6 +124,7 @@ Widget buildGridView(
                                   width: size * 0.5,
                                   height: size * 0.5,
                                   fit: BoxFit.contain,
+                                  color: context.colorScheme.primary,
                                 ),
                               ),
                             ),
@@ -237,6 +238,7 @@ Widget buildGridViewForRecentFiles(
                             width: size * 0.5,
                             height: size * 0.5,
                             fit: BoxFit.contain,
+                            color: context.colorScheme.primary,
                           ),
                         ),
                         if (isSelectionMode)

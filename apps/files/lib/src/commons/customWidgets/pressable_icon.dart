@@ -73,9 +73,9 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
       onTap: disabled ? null : widget.onTap,
       child: Container(
         decoration: pressed
-            ? const BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(8)),
-                color: Color.fromRGBO(21, 21, 21, 0.5),
+            ? BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(8)),
+                color: context.colorScheme.secondaryContainer,
               )
             : null,
         padding: const EdgeInsets.all(12),
