@@ -625,7 +625,9 @@ impl Render for NotificationUi {
                                                 .overflow_hidden()
                                                 .child(message),
                                         )
-                                    }),
+                                    })
+                                    //.when_some(content, |this, content| this.child(content))
+                                    //.when_some(action, |this, action| this.child(action)),
                             );
 
                         // configure inner wing
