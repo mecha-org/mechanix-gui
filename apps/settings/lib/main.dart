@@ -64,6 +64,7 @@ import 'package:mechanix_settings/src/features/sound/presentation/notification_s
 import 'package:mechanix_settings/src/features/sound/presentation/output_devices.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
+import 'package:mechanix_settings/src/features/system_update/presentation/system_updates.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
 import 'load_settings.dart';
@@ -320,6 +321,7 @@ class MainApp extends StatelessWidget {
 
           // Other Routes
           AppRoutes.about: (context) => const About(),
+          AppRoutes.systemUpdates: (context) => const SystemUpdates(),
           AppRoutes.dateTime: (context) => const DateTimeSettings(),
           AppRoutes.timeSettings: (context) => const TimeSettings(),
           AppRoutes.dateSettings: (context) => const DateSettings(),
