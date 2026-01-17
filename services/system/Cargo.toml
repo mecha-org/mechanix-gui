@@ -41,7 +41,7 @@ assets = [
     ],
     [
         "../system/systemd.service",
-        "",
+        "/etc/systemd/system/mechanix-system-service.service",
         "644",
     ],
 ]
