@@ -397,7 +397,6 @@ impl AppDrawer {
     fn render_search_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let text_input = self.text_input.clone();
         let colors = Theme::global(cx).colors.clone();
-        let settings = Settings::global(cx).app_drawer.clone();
 
         div()
             .id("main-search")
@@ -1031,7 +1030,7 @@ impl Render for AppDrawer {
                                     .top(px(0.0))
                                     .left(px(0.0))
                                     .size_full()
-                                    .bg(rgb(0x000000))
+                                    .bg(colors.background_1000)
                                     .opacity(0.6)
                                     .on_click(
                                         cx.listener(|this: &mut AppDrawer, _, _, cx| {

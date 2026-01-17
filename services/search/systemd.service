@@ -1,0 +1,17 @@
+[Unit]
+Description=Apps and Files Search Service
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.mechanix.MxSearch
+ExecStart=/usr/bin/mxsearch
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

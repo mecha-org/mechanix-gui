@@ -1,0 +1,16 @@
+[Unit]
+Description=Desktop Session Service
+After=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/mechanix-session-service
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+StandardError=journal
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
