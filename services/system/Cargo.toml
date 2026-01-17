@@ -53,7 +53,7 @@ auto-req = "yes"
 assets = [
     # Binary
     { source = "../../target/release/mechanix-system-service", dest = "/usr/bin/mechanix-system-service", mode = "755" },
-    { source = "../system/system-dbus.conf", dest = "etc/dbus-1/system.d/system-dbus.conf", mode = "644" },
-    { source = "../system/systemd.service", dest = "etc/systemd/system/mechanix-system-service.service", mode = "644" },
+    { source = "../system/system-dbus.conf", dest = "/etc/dbus-1/system.d/system-dbus.conf", mode = "644" },
+    { source = "../system/systemd.service", dest = "/etc/systemd/system/mechanix-system-service.service", mode = "644" },
 
 ]
