@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:widgets/mechanix.dart';
 
 class CustomTrailingText extends StatelessWidget {
-  const CustomTrailingText({super.key, required this.title, this.titleStyle});
+  const CustomTrailingText({
+    super.key,
+    required this.title,
+    this.titleStyle,
+    this.textAlign = TextAlign.right,
+  });
 
   final String title;
   final TextStyle? titleStyle;
+  final TextAlign textAlign;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +21,7 @@ class CustomTrailingText extends StatelessWidget {
 
     return Text(
       title,
-      textAlign: TextAlign.right,
+      textAlign: textAlign,
       style: baseStyle.merge(titleStyle),
     );
   }

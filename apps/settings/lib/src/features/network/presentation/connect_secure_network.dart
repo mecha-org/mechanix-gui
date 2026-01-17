@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
@@ -18,9 +19,14 @@ import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 class ConnectSecureNetwork extends StatelessWidget {
-  const ConnectSecureNetwork({this.accessPoint, super.key});
+  const ConnectSecureNetwork({
+    this.accessPoint,
+    super.key,
+    this.isFromDetailsRoute = false,
+  });
 
   final NetworkManagerAccessPoint? accessPoint;
+  final bool isFromDetailsRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +96,14 @@ class ConnectSecureNetwork extends StatelessWidget {
                                       .read<ConnectNetworkBloc>()
                                       .add(ConnectToNetwork(accessPoint!));
 
-                                  Navigator.pop(context);
+                                  if (isFromDetailsRoute) {
+                                    Navigator.popUntil(
+                                        context,
+                                        ModalRoute.withName(
+                                            AppRoutes.wireless));
+                                  } else {
+                                    Navigator.pop(context);
+                                  }
                                 }
                               },
                               validator: (value) {
