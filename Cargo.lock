@@ -3897,6 +3897,7 @@ dependencies = [
  "settings",
  "shell_state",
  "system_dbus",
+ "theme",
  "upower",
 ]
 

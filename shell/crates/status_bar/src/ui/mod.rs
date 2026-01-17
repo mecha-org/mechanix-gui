@@ -2,6 +2,7 @@ use gpui::{prelude::FluentBuilder, *};
 use icons::prelude::{Icons, StatusBarIcons};
 use shell_state::ShellState;
 use std::time::Duration;
+use theme::prelude::{Fonts, Theme};
 use upower::interfaces::device::{BatteryLevel, BatteryState};
 
 pub struct StatusBar {
@@ -118,6 +119,8 @@ pub fn status_bar_components(
         battery_percent,
         ..
     } = ShellState::global(cx);
+    let colors = Theme::global(cx).colors.clone();
+    let primary_font = Fonts::global(cx).primary.clone();
 
     let StatusBarIcons {
         battery_0_charging,
@@ -246,7 +249,7 @@ pub fn status_bar_components(
         .justify_between()
         .w(size.width)
         .h(size.height)
-        .text_color(gpui::white())
+        .text_color(colors.foreground_200)
         .pt_2()
         .pl_4()
         .pr_4()
@@ -256,8 +259,11 @@ pub fn status_bar_components(
                 .flex_row()
                 .items_start()
                 .child(current_time_date.clone())
-                .text_lg()
-                .text_color(rgb(0xE9E9E9)),
+                .font_family(primary_font)
+                .font_weight(FontWeight::NORMAL)
+                .line_height(px(1.2))
+                .text_color(colors.foreground_200)
+                .text_size(px(16.)),
         )
         .child(
             div()

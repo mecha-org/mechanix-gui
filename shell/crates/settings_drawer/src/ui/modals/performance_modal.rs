@@ -24,6 +24,8 @@ impl SettingsDrawer {
         cx: &mut gpui::Context<SettingsDrawer>,
     ) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
+        let connected = Icons::global(cx).settings_drawer.connected.clone();
+
         let SettingsDrawerIcons {
             high_performance,
             low_performance,
@@ -60,22 +62,7 @@ impl SettingsDrawer {
                     .border_t_0()
                     .rounded(px(8.))
                     .overflow_hidden()
-                    .child(
-                        div()
-                            .child("Battery")
-                            .flex()
-                            .w_full()
-                            .justify_start()
-                            .text_color(colors.foreground_400)
-                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                px(18.)
-                            } else {
-                                px(24.)
-                            })
-                            .pl(px(16.))
-                            .pt(px(8.))
-                            .h(px(MODAL_HEADER_HEIGHT)),
-                    )
+                    .child(self.render_header_div(cx, "Battery"))
                     .child(
                         div()
                             .flex_1()
@@ -102,7 +89,7 @@ impl SettingsDrawer {
                                 let connect_div = div().child(
                                     svg()
                                         .external_path(SharedString::from(
-                                            icon.to_string_lossy().to_string(),
+                                            connected.to_string_lossy().to_string(),
                                         ))
                                         .size(px(24.))
                                         .text_color(text_color),
