@@ -31,17 +31,17 @@ assets = [
     # target/release path is special, and gets replaced by cargo-deb with the actual target dir path.
     [
         "../../target/release/mechanix-system-service",
-        "usr/bin/",
+        "/usr/bin/",
         "755",
     ],
     [
         "../system/system-dbus.conf",
-        "etc/dbus-1/system.d/system-dbus.conf",
+        "/etc/dbus-1/system.d/system-dbus.conf",
         "644",
     ],
     [
         "../system/systemd.service",
-        "etc/systemd/system/mechanix-system-service.service",
+        "/etc/systemd/system/mechanix-system-service.service",
         "644",
     ],
 ]
