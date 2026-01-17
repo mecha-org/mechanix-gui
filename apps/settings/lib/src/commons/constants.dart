@@ -86,4 +86,5 @@ class Images {
   static const String launcherIcon = 'assets/images/launcher_icon.png';
   static const String securityIcon = 'assets/images/security_icon.png';
   static const String updateIcon = 'assets/images/update_icon.png';
+  static const String blockIcon = 'assets/images/block_icon.png';
 }

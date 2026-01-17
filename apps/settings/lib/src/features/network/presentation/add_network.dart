@@ -66,6 +66,16 @@ class _AddNetworkState extends State<AddNetwork> {
                         theme: MechanixTextInputThemeData(
                           borderRadius: BorderRadius.circular(8),
                           enabledBorderSide: BorderSide(
+                            color: context.outline,
+                            style: BorderStyle.solid,
+                            width: 1,
+                          ),
+                          borderSide: BorderSide(
+                            color: context.outline,
+                            style: BorderStyle.solid,
+                            width: 1,
+                          ),
+                          focusedBorderSide: BorderSide(
                             color: context.outlineVariant,
                             style: BorderStyle.solid,
                             width: 1,
@@ -77,6 +87,14 @@ class _AddNetworkState extends State<AddNetwork> {
                             color: Colors.transparent,
                           ),
                         ),
+                        prefixIcon: IconWidget(
+                          iconPath: Images.wifi,
+                          iconWidth: 19,
+                          iconHeight: 21,
+                          boxWidth: 24,
+                          boxHeight: 24,
+                          iconColor: context.outline,
+                        ).padOnly(left: 16, top: 16, right: 8, bottom: 16),
                         onChanged: (value) {
                           context
                               .read<ConnectNetworkBloc>()
@@ -88,16 +106,27 @@ class _AddNetworkState extends State<AddNetwork> {
                           return MechanixTextInput.password(
                             hintText: 'Enter Password',
                             isFormField: true,
-                            prefixIcon: const IconWidget(
+                            prefixIcon: IconWidget(
                               iconPath: Images.lockIcon,
                               iconWidth: 19,
                               iconHeight: 21,
                               boxWidth: 24,
                               boxHeight: 24,
+                              iconColor: context.outline,
                             ).padOnly(left: 16, top: 16, right: 8, bottom: 16),
                             theme: MechanixTextInputThemeData(
                               borderRadius: BorderRadius.circular(8),
                               enabledBorderSide: BorderSide(
+                                color: context.outline,
+                                style: BorderStyle.solid,
+                                width: 1,
+                              ),
+                              borderSide: BorderSide(
+                                color: context.outline,
+                                style: BorderStyle.solid,
+                                width: 1,
+                              ),
+                              focusedBorderSide: BorderSide(
                                 color: context.outlineVariant,
                                 style: BorderStyle.solid,
                                 width: 1,
@@ -116,6 +145,7 @@ class _AddNetworkState extends State<AddNetwork> {
                               if (state.password.isNotEmpty &&
                                   state.password.length >= 8) {
                                 onAddButtonPressed(context, state);
+                                Navigator.pop(context);
                               }
                             },
                           );
