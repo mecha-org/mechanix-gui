@@ -1,12 +1,11 @@
 use gpui::*;
 use shell_state::ShellState;
+use theme::prelude::{AlphaExt, ThemeColors};
 use upower::interfaces::device::BatteryState;
-// use gpui::prelude::FluentBuilder; // Removed unused import
 
 pub const STATUS_ICON_GAP: f32 = 15.0;
 pub const STATUS_ICON_PADDING_RIGHT: f32 = 20.0;
 pub const STATUS_ICON_PADDING_BOTTOM: f32 = 28.0;
-pub const STATUS_ICON_COLOR: u32 = 0xFFFFFFFF;
 
 // Individual icon sizes - customize each independently
 pub const WIFI_ICON_SIZE: f32 = 25.0;
@@ -15,39 +14,25 @@ pub const BATTERY_ICON_SIZE: f32 = 30.0;
 
 // Bell icon configuration (left wedge)
 pub const BELL_ICON_SIZE: f32 = 22.0;
-pub const BELL_ICON_COLOR: u32 = 0xFFFFFFFF;
 pub const BELL_CIRCLE_SIZE: f32 = 40.0;
-pub const BELL_CIRCLE_COLOR: u32 = 0x38200099;
 pub const BELL_PADDING_LEFT: f32 = 12.0;
 pub const BELL_PADDING_BOTTOM: f32 = 56.0;
 
 // Lock icon configuration (center, above panel)
 pub const LOCK_ICON_SIZE: f32 = 24.0;
 pub const LOCK_CIRCLE_SIZE: f32 = 40.0;
-// Lock state colors (icon colors)
-pub const LOCK_ICON_COLOR_LOCKED: u32 = 0xFFFFFFFF;
-pub const LOCK_ICON_COLOR_HALF: u32 = 0xFFFFFFFF;
-pub const LOCK_ICON_COLOR_OPEN: u32 = 0xFFFFFFFF;
-// Lock state background circle colors
-pub const LOCK_BG_COLOR_LOCKED: u32 = 0x38200099;
-pub const LOCK_BG_COLOR_HALF: u32 = 0x5C3A0099;
-pub const LOCK_BG_COLOR_OPEN: u32 = 0xF4920099;
 
 const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
 
 // Left wedge dimensions: 540 x 106 (from wedge_left.svg )
 pub const LEFT_WEDGE_WIDTH: f32 = 540.0;
 pub const LEFT_WEDGE_HEIGHT: f32 = 106.0;
-pub const LEFT_WEDGE_COLOR: u32 = 0x1F1200FF;
 
 // Right wedge dimensions: 540 x 67 (from wedge_right.svg)
 pub const RIGHT_WEDGE_WIDTH: f32 = 540.0;
 pub const RIGHT_WEDGE_HEIGHT: f32 = 67.0;
-pub const RIGHT_WEDGE_COLOR: u32 = 0x382000FF;
 
 // Wedge border/outline configuration
-pub const LEFT_WEDGE_BORDER_COLOR: u32 = 0x885000FF;
-pub const RIGHT_WEDGE_BORDER_COLOR: u32 = 0x885000FF;
 pub const LEFT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
 pub const RIGHT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
 
@@ -150,7 +135,7 @@ fn render_battery_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
 }
 
 /// Creates the status icons (wifi, bluetooth, battery) based on current ShellState
-fn status_icons(cx: &mut App) -> impl IntoElement {
+fn status_icons(cx: &mut App, colors: &ThemeColors) -> impl IntoElement {
     let ShellState {
         wireless_details,
         bluetooth_details,
@@ -221,24 +206,24 @@ fn status_icons(cx: &mut App) -> impl IntoElement {
         _ => StatusIconName::BatteryEmpty,
     };
 
-    // Icon color from constant
-    let icon_color = rgba(STATUS_ICON_COLOR);
+    // Icon color from theme accent ramp
+    let status_icon_color = colors.accent_200;
 
     div()
         .flex()
         .flex_row()
         .gap(px(STATUS_ICON_GAP))
-        .child(render_wifi_icon(wireless_icon, icon_color))
-        .child(render_bluetooth_icon(bluetooth_icon, icon_color))
-        .child(render_battery_icon(battery_icon, icon_color))
+        .child(render_wifi_icon(wireless_icon, status_icon_color))
+        .child(render_bluetooth_icon(bluetooth_icon, status_icon_color))
+        .child(render_battery_icon(battery_icon, status_icon_color))
 }
 
 // Left wedge - size 540 x 106, with bell icon and lock icon
-pub fn left_wedge(lock_state: LockState, icon_opacity: f32) -> impl IntoElement {
-    let svg_color = rgba(LEFT_WEDGE_COLOR);
-    let border_color = rgba(LEFT_WEDGE_BORDER_COLOR);
-    let bell_icon_color = rgba(BELL_ICON_COLOR);
-    let bell_circle_color = rgba(BELL_CIRCLE_COLOR);
+pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32) -> impl IntoElement {
+    let left_wedge_fill_color = colors.background_900;
+    let left_wedge_border_color = colors.accent_500.with_alpha(0.7);
+    let bell_icon_color = colors.accent_200;
+    let bell_circle_color = colors.accent_300.with_alpha(0.6);
     // Left wedge icons remain visible even when unlocked; only hide if opacity is zero.
     let show_icons = icon_opacity > 0.0;
 
@@ -256,7 +241,7 @@ pub fn left_wedge(lock_state: LockState, icon_opacity: f32) -> impl IntoElement 
                 .inset_0()
                 .w(px(LEFT_WEDGE_WIDTH))
                 .h(px(LEFT_WEDGE_HEIGHT))
-                .text_color(svg_color),
+                .text_color(left_wedge_fill_color),
         )
         // Outline overlay
         .child(
@@ -266,7 +251,7 @@ pub fn left_wedge(lock_state: LockState, icon_opacity: f32) -> impl IntoElement 
                 .inset_0()
                 .w(px(LEFT_WEDGE_WIDTH))
                 .h(px(LEFT_WEDGE_HEIGHT))
-                .text_color(border_color),
+                .text_color(left_wedge_border_color),
         );
 
     if show_icons {
@@ -299,7 +284,7 @@ pub fn left_wedge(lock_state: LockState, icon_opacity: f32) -> impl IntoElement 
                         ),
                 )
                 // Lock icon in circle (state-based)
-                .child(lock_icon(lock_state)),
+                .child(lock_icon(lock_state, colors)),
         );
     }
 
@@ -307,9 +292,9 @@ pub fn left_wedge(lock_state: LockState, icon_opacity: f32) -> impl IntoElement 
 }
 
 // Right wedge - size 540 x 67, with status icons
-pub fn right_wedge(cx: &mut App, icon_opacity: f32) -> impl IntoElement {
-    let svg_color = rgba(RIGHT_WEDGE_COLOR);
-    let border_color = rgba(RIGHT_WEDGE_BORDER_COLOR);
+pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> impl IntoElement {
+    let right_wedge_fill_color = colors.background_700;
+    let right_wedge_border_color = colors.accent_500.with_alpha(0.7);
     let show_icons = icon_opacity > 0.0;
 
     let mut container = div()
@@ -326,7 +311,7 @@ pub fn right_wedge(cx: &mut App, icon_opacity: f32) -> impl IntoElement {
                 .inset_0()
                 .w(px(RIGHT_WEDGE_WIDTH))
                 .h(px(RIGHT_WEDGE_HEIGHT))
-                .text_color(svg_color),
+                .text_color(right_wedge_fill_color),
         )
         // Outline overlay
         .child(
@@ -336,7 +321,7 @@ pub fn right_wedge(cx: &mut App, icon_opacity: f32) -> impl IntoElement {
                 .inset_0()
                 .w(px(RIGHT_WEDGE_WIDTH))
                 .h(px(RIGHT_WEDGE_HEIGHT))
-                .text_color(border_color),
+                .text_color(right_wedge_border_color),
         );
 
     if show_icons {
@@ -348,7 +333,7 @@ pub fn right_wedge(cx: &mut App, icon_opacity: f32) -> impl IntoElement {
                 .flex()
                 .items_center()
                 .opacity(icon_opacity.max(0.0))
-                .child(status_icons(cx)),
+                .child(status_icons(cx, colors)),
         );
     }
 
@@ -383,19 +368,16 @@ impl LockState {
         }
     }
 
-    fn icon_color(&self) -> Rgba {
-        match self {
-            LockState::Locked => rgba(LOCK_ICON_COLOR_LOCKED),
-            LockState::HalfOpen => rgba(LOCK_ICON_COLOR_HALF),
-            LockState::FullyOpen => rgba(LOCK_ICON_COLOR_OPEN),
-        }
+    fn icon_color(&self, colors: &ThemeColors) -> Rgba {
+        let _ = self; // state currently shares the same accent color
+        colors.accent_200
     }
 
-    fn bg_color(&self) -> Rgba {
+    fn bg_color(&self, colors: &ThemeColors) -> Rgba {
         match self {
-            LockState::Locked => rgba(LOCK_BG_COLOR_LOCKED),
-            LockState::HalfOpen => rgba(LOCK_BG_COLOR_HALF),
-            LockState::FullyOpen => rgba(LOCK_BG_COLOR_OPEN),
+            LockState::Locked => colors.accent_200.with_alpha(0.6),
+            LockState::HalfOpen => colors.accent_100.with_alpha(0.6),
+            LockState::FullyOpen => colors.accent_0.with_alpha(0.6),
         }
     }
 }
@@ -404,12 +386,12 @@ impl LockState {
 /// - Locked: at rest (position_y = 0)
 /// - HalfOpen: dragging but below threshold
 /// - FullyOpen: beyond unlock threshold
-pub fn lock_icon(lock_state: LockState) -> impl IntoElement {
+pub fn lock_icon(lock_state: LockState, colors: &ThemeColors) -> impl IntoElement {
     div()
         .w(px(LOCK_CIRCLE_SIZE))
         .h(px(LOCK_CIRCLE_SIZE))
         .rounded_full()
-        .bg(lock_state.bg_color())
+        .bg(lock_state.bg_color(colors))
         .flex()
         .items_center()
         .justify_center()
@@ -418,6 +400,6 @@ pub fn lock_icon(lock_state: LockState) -> impl IntoElement {
                 .path(lock_state.icon_path())
                 .w(px(LOCK_ICON_SIZE))
                 .h(px(LOCK_ICON_SIZE))
-                .text_color(lock_state.icon_color()),
+                .text_color(lock_state.icon_color(colors)),
         )
 }
