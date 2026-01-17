@@ -4,6 +4,7 @@ import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
+import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
@@ -59,13 +60,44 @@ class _NetworkSettingsState extends State<NetworkSettings> {
               theme: MechanixMenuThemeData(
                 decoration: BoxDecoration(color: context.surfaceContainerHigh),
                 dropdownWidth: 135,
-                dropdownHeight: 84, //128-44
+                dropdownHeight: 128,
               ),
               animationDuration: const Duration(milliseconds: 400),
               offset: const Offset(-45, 25),
               topTabWidth: 1,
               dropdownPosition: DropdownPosition.centerRight,
               items: [
+                MechanixMenuItemsType(
+                  title: "About",
+                  leading: const IconWidget(
+                    iconPath: Images.settings,
+                    boxWidth: 20,
+                    boxHeight: 20,
+                    iconWidth: 16,
+                    iconHeight: 16,
+                  ),
+                  onTap: () {
+                    final connectNetworkBloc =
+                        context.read<ConnectNetworkBloc>();
+                    final wirelessSettingsBloc =
+                        context.read<WirelessSettingsBloc>();
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MultiBlocProvider(
+                          providers: [
+                            BlocProvider.value(value: connectNetworkBloc),
+                            BlocProvider.value(value: wirelessSettingsBloc),
+                          ],
+                          child: SavedNetworkDetails(
+                            network: item,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 MechanixMenuItemsType(
                   title: "Forget",
                   leading: const IconWidget(

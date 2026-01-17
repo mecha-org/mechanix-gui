@@ -87,7 +87,7 @@ class WifiRepositoryImpl implements WifiRepository {
     try {
       await _client.setWirelessEnabled(enable);
     } catch (e) {
-      logger.e('Failed to set Wireless Enabled: $e');
+      print('Failed to set Wireless Enabled: $e');
     }
   }
 
@@ -490,13 +490,18 @@ class WifiRepositoryImpl implements WifiRepository {
                   ?.toString() ??
               '';
           final seenBssids = <String>{};
-          print(flatSettings);
 
           if (!seenBssids.contains(bssid)) {
             seenBssids.add(bssid); // mark this BSSID as seen
+
+            final macAddress =
+                flatSettings["802-11-wireless.seen-bssids"].toString() == 'null'
+                    ? ''
+                    : flatSettings["802-11-wireless.seen-bssids"].toString();
+
             SavedWirelessNetwork savedNetwork = SavedWirelessNetwork(
               ssid: flatSettings["connection.id"],
-              macAddress: flatSettings["802-11-wireless.mac-address"],
+              macAddress: macAddress.replaceAll(RegExp(r'[\[\]]'), ''),
               security: flatSettings["802-11-wireless-security.key-mgmt"],
               ipv4Method: flatSettings["ipv4.method"],
               autoConnect: flatSettings["connection.autoconnect"],
