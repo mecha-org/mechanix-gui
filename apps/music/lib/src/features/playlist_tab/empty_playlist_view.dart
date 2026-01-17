@@ -3,9 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
-import 'package:widgets/widgets/icon_widget.dart';
+import 'package:widgets/mechanix.dart';
 
 class EmptyPlaylistView extends StatelessWidget {
   final PlaylistViewEnum playlistView;
@@ -42,11 +41,11 @@ class EmptyPlaylistView extends StatelessWidget {
                         ),
                       ),
                       backgroundColor: WidgetStatePropertyAll(
-                        MusicColors.buttonBackgroundColor,
+                        context.secondary,
                       ),
                     ),
                     icon: IconWidget(
-                      iconColor: MusicColors.borderColor,
+                      iconColor: context.primary,
                       iconPath: MusicIcons.plusIcon,
                       iconHeight: 24,
                       boxHeight: 24,
@@ -55,11 +54,11 @@ class EmptyPlaylistView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 20),
-                  const Text(
+                   Text(
                     "Add a track",
                     style: TextStyle(
                       fontSize: 18,
-                      color: MusicColors.disabledColor,
+                      color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -107,12 +106,12 @@ class _EmptyGridCard extends StatelessWidget {
         child: Container(
           height: 164,
           decoration: BoxDecoration(
-            color: MusicColors.buttonBackgroundColor,
+            color: context.secondary,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
             child: IconWidget(
-              iconColor: MusicColors.borderColor,
+              iconColor: context.primary,
               iconPath: MusicIcons.plusIcon,
               iconHeight: 24,
               boxHeight: 24,

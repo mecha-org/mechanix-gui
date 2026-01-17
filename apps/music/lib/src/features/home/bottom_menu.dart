@@ -5,7 +5,6 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:tuple/tuple.dart';
@@ -54,9 +53,8 @@ class BottomMenu extends StatelessWidget {
             boxWidth: 24,
             iconHeight: 24,
             iconWidth: 24,
-            iconColor: Colors.white,
             iconPath: MusicIcons.threeDotIcon,
-            activeIconColor: MusicColors.borderColor,
+            activeIconColor: context.primary,
           ),
           items: [
             MechanixMenuItemsType(
@@ -71,8 +69,8 @@ class BottomMenu extends StatelessWidget {
                 iconPath: MusicIcons.addToPlaylistIcon,
                 iconColor:
                     playlists.length >= Constants.playlistLimit
-                        ? Colors.grey
-                        : Colors.white,
+                        ? Theme.of(context).disabledColor
+                        : null,
               ),
             ),
             MechanixMenuItemsType(
@@ -87,10 +85,7 @@ class BottomMenu extends StatelessWidget {
               },
               title:
                   "${playlistView == PlaylistViewEnum.list ? "Grid" : "List"} View",
-              leading: const IconWidget(
-                iconPath: MusicIcons.listViewIcon,
-                iconColor: Colors.white,
-              ),
+              leading: const IconWidget(iconPath: MusicIcons.listViewIcon),
             ),
           ],
         ).padRight(12);
