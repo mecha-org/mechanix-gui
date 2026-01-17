@@ -1,0 +1,17 @@
+[Unit]
+Description=Mechanix Configuration Service
+After=dbus.service
+
+[Service]
+Type=dbus
+BusName=org.mechanix.MxConf
+ExecStart=/usr/bin/mxconf -s
+Restart=on-failure
+RestartSec=10s
+StandardOutput=journal
+
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

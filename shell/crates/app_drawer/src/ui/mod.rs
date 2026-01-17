@@ -4,7 +4,7 @@ use gpui::prelude::*;
 use gpui::*;
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use theme::prelude::{ AlphaExt, Theme };
+use theme::prelude::{ AlphaExt, Fonts, Theme };
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{ Hash, Hasher };
@@ -748,6 +748,7 @@ impl AppDrawer {
         self.is_searching = true;
         Self::filter(self, cx);
         let colors = Theme::global(cx).colors.clone();
+
         let searched_apps = self.filtered.clone();
 
         div()
@@ -807,8 +808,8 @@ impl AppDrawer {
                                         .child(
                                             div()
                                                 .font_weight(FontWeight(500.0))
-                                                .text_size(px(16.0))
                                                 .line_height(px(1.2))
+                                                .text_size(px(16.0))
                                                 .text_color(colors.foreground_600)
                                                 .child(name)
                                         )
@@ -930,6 +931,8 @@ impl Render for AppDrawer {
         let app_drawer_size = settings.layer_shell.size;
 
         let colors = Theme::global(cx).colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
+
         let text_input = self.text_input.clone();
         text_input.update(cx, |input, _| {
             input.placeholder = "Search".into();
@@ -969,6 +972,7 @@ impl Render for AppDrawer {
                     .items_center()
                     .flex_col()
                     .size_full()
+                    .font_family(primary_font)
                     // GRID MODE
                     .when(!self.is_searching, |main_page_div| {
                         main_page_div

@@ -2,7 +2,7 @@ use gpui::{prelude::FluentBuilder, *};
 use icons::prelude::*;
 use std::process::Command;
 use theme::ActiveTheme;
-use theme::prelude::AlphaExt;
+use theme::prelude::{AlphaExt, Fonts};
 
 const INIT_ANIMATE_HEIGHT: f32 = 0.0; // Start from top
 
@@ -172,6 +172,8 @@ impl Render for PowerOptions {
         let window_height = f32::from(size.height);
         let show = self.show;
         let colors = cx.theme().colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
+
         let icons = Icons::global(cx).power_options.clone();
 
         self.update_input_regions(window, show, cx);
@@ -297,8 +299,11 @@ impl Render for PowerOptions {
                                             )
                                             .child(
                                                 div()
-                                                    .text_xl()
+                                                    .line_height(px(1.2))
+                                                    .text_size(px(24.))
                                                     .text_color(colors.foreground_200)
+                                                    .font_family(primary_font)
+                                                    .font_weight(FontWeight::NORMAL)
                                                     .child("Swipe to power off"),
                                             ),
                                     )
