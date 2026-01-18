@@ -48,7 +48,7 @@ class NotesRepositoryImpl extends NotesRepository {
             'icon': const DBusString(''),
             'thumbnail': const DBusString(''),
             'last_modified': DBusUint64(note.updatedAt.millisecondsSinceEpoch),
-            'content': DBusString(note.content),
+            'content': DBusString(note.plainText),
             'source_entry_path': DBusString(''),
           };
 
