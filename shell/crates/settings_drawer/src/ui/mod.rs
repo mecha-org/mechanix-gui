@@ -443,9 +443,6 @@ impl Render for SettingsDrawer {
                                 )
                             })),
                     )
-                    .when(self.is_visible, |content_div| {
-                        content_div.size_full().bg(colors.background_1000)
-                    })
                     .child(self.drawer_items(window, cx)),
             )
     }
@@ -563,7 +560,6 @@ impl SettingsDrawer {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
 
-        let current_time_date = ShellState::global(cx).current_time_date.clone();
         let settings = Settings::global(cx).settings_drawer.clone();
         let navbar_size = settings.navbar_size;
         let settings_drawer_size = settings.layer_shell.size;
@@ -646,19 +642,8 @@ impl SettingsDrawer {
                             .h(px(32.82))
                             .mt_7()
                             .py_1()
-                            .items_center()
-                            .justify_between()
-                            .child(
-                                div()
-                                    .flex()
-                                    .flex_row()
-                                    .child(current_time_date)
-                                    .font_family(primary_font)
-                                    .font_weight(FontWeight::NORMAL)
-                                    .line_height(px(1.3))
-                                    .text_size(px(20.))
-                                    .text_color(colors.foreground_200),
-                            )
+                            .justify_end()
+                            .items_end()
                             .child(self.render_power_button(cx)),
                     )
                     .child(
