@@ -99,3 +99,48 @@ class WifiStatusChanged extends WirelessSettingsEvent {
   @override
   List<Object> get props => [wifiStatus];
 }
+
+class UpdateNMDeviceState extends WirelessSettingsEvent {
+  final NetworkManagerDeviceState deviceState;
+
+  UpdateNMDeviceState(this.deviceState);
+
+  @override
+  List<Object?> get props => [deviceState];
+}
+
+class ActivatingNetworkEvent extends WirelessSettingsEvent {
+  final ActivatingNetwork activatingNetwork;
+
+  ActivatingNetworkEvent(this.activatingNetwork);
+
+  @override
+  List<Object> get props => [activatingNetwork];
+}
+
+class ActivatedNetworkEvent extends WirelessSettingsEvent {
+  final ActivatingNetwork activatingNetwork;
+
+  ActivatedNetworkEvent(this.activatingNetwork);
+
+  @override
+  List<Object> get props => [activatingNetwork];
+}
+
+class DeActivatedNetworkEvent extends WirelessSettingsEvent {
+  final ActivatingNetwork activatingNetwork;
+
+  DeActivatedNetworkEvent(this.activatingNetwork);
+
+  @override
+  List<Object> get props => [activatingNetwork];
+}
+
+class ActivationProcessEvent extends WirelessSettingsEvent {
+  final ActivationProcessState activationProcessState;
+
+  ActivationProcessEvent(this.activationProcessState);
+
+  @override
+  List<Object> get props => [activationProcessState];
+}
