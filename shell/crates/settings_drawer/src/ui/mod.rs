@@ -1,6 +1,6 @@
 mod modals;
 mod widgets;
-use commons::widgets::{WingSide, wing};
+use commons::widgets::{CornerRadii, WingSide, wing};
 use dispatcher::{Dispatcher, Message};
 use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
@@ -345,8 +345,9 @@ impl Render for SettingsDrawer {
         let settings = Settings::global(cx).settings_drawer.clone();
         let navbar_size = settings.navbar_size.clone();
         let input_regions = settings.input_regions.clone();
-        let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
+        let settings_drawer_size = settings.layer_shell.size;
 
+        let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
 
@@ -423,27 +424,33 @@ impl Render for SettingsDrawer {
                     .h_full()
                     .absolute()
                     .top(px(self.position))
-                    .child(
-                        div()
-                            .w_full()
+                    .child(div().id("right-wing").child({
+                        let mut w = wing()
+                            .w(settings_drawer_size.width)
+                            .h(settings_drawer_size.height)
+                            .border_color(colors.background_700)
                             .flex()
-                            .flex_row()
+                            .flex_col()
                             .justify_end()
-                            .h(navbar_size.height)
-                            .child(div().id("right-wing").child({
-                                let mut w = wing();
-                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
-                                w.upper_wing_side(WingSide::Right);
-                                w.w(navbar_size.width).h(navbar_size.height).bg(
-                                    if self.is_visible {
-                                        colors.background_1000
-                                    } else {
-                                        colors.background_800
-                                    },
-                                )
-                            })),
-                    )
-                    .child(self.drawer_items(window, cx)),
+                            .items_end()
+                            .bg(if self.is_visible {
+                                colors.background_1000
+                            } else {
+                                colors.background_800
+                            })
+                            .child(self.drawer_items(window, cx));
+
+                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                        w.upper_wing_side(WingSide::Right);
+                        w.border_width(px(1.0));
+                        w.corner_radii(CornerRadii {
+                            top_left: px(8.0),
+                            top_right: px(8.0),
+                            bottom_right: px(0.0),
+                            bottom_left: px(0.0),
+                        });
+                        w
+                    })),
             )
     }
 }
@@ -614,8 +621,9 @@ impl SettingsDrawer {
         div()
             .id("root")
             .relative()
-            .w(settings_drawer_size.width)
-            .h(settings_drawer_size.height)
+            .w(settings_drawer_size.width - px(1.5))
+            .h(settings_drawer_size.height - navbar_size.height - px(1.5))
+            .font_family(primary_font)
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|this, event: &MouseDownEvent, _, cx| {
