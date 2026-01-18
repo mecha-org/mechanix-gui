@@ -67,6 +67,7 @@ import 'package:mechanix_settings/src/features/sound/presentation/vibration_leve
 import 'package:mechanix_settings/src/features/system_update/presentation/system_updates.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
+
 import 'load_settings.dart';
 
 void main() async {
@@ -253,7 +254,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.vibrationLevel: (context) => const VibrationLevel(),
           AppRoutes.soundOutputDevices: (context) => const OutputDevices(),
           AppRoutes.soundInputDevices: (context) => const InputDevices(),
-          AppRoutes.notificationSound: (context) => const NotificationSounds(),
+          AppRoutes.notificationSound: (context) => const NotificationSound(),
 
           // Wireless Routes
           AppRoutes.wireless: (context) => BlocProvider(
