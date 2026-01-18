@@ -5,7 +5,10 @@ use gpui::*;
 use crate::{
     config::HomescreenConfig,
     state::HomescreenState,
-    utils::{grid_bounds_to_pixels, is_valid_grid_position, pixel_bounds_to_closest_grid_bounds, GridBounds},
+    utils::{
+        grid_bounds_to_pixels, is_valid_grid_position, pixel_bounds_to_closest_grid_bounds,
+        GridBounds,
+    },
     widgets::WidgetId,
 };
 
@@ -18,6 +21,14 @@ impl LayoutManagerState {
         Self {
             layout_nodes: HashMap::new(),
         }
+    }
+
+    pub fn get_layout_node(&self, widget_id: &WidgetId) -> Option<&LayoutNode> {
+        self.layout_nodes.get(widget_id)
+    }
+
+    pub fn iter_layout_nodes(&self) -> impl Iterator<Item = (&WidgetId, &LayoutNode)> {
+        self.layout_nodes.iter()
     }
 }
 
@@ -171,7 +182,6 @@ impl LayoutManager {
             // Usually, this case implies the drop failed to find room without moving fixed items.
             return false;
         }
-
 
         widget_infos.sort_by_key(|(_, _, origin)| (origin.y, origin.x));
 

@@ -20,11 +20,28 @@ impl HomescreenConfig {
         };
 
         // Set zero gaps for pages 0 and 4 (full-screen widgets)
-        config.grid.page_gaps.insert(0, GridGap { horizontal: 0.0, vertical: 0.0 });
-        config.grid.page_gaps.insert(4, GridGap { horizontal: 0.0, vertical: 0.0 });
+        config.grid.page_gaps.insert(
+            0,
+            GridGap {
+                horizontal: 0.0,
+                vertical: 0.0,
+            },
+        );
+        config.grid.page_gaps.insert(
+            4,
+            GridGap {
+                horizontal: 0.0,
+                vertical: 0.0,
+            },
+        );
 
         // Set padding for pages 1-3 (non-fullscreen pages)
-        let page_padding = GridPadding { top: 10.0, right: 10.0, bottom: 10.0, left: 10.0 };
+        let page_padding = GridPadding {
+            top: 10.0,
+            right: 10.0,
+            bottom: 10.0,
+            left: 10.0,
+        };
         config.grid.page_paddings.insert(1, page_padding);
         config.grid.page_paddings.insert(2, page_padding);
         config.grid.page_paddings.insert(3, page_padding);
@@ -59,11 +76,17 @@ pub struct GridConfig {
 
 impl GridConfig {
     pub fn get_gap_for_page(&self, page_number: usize) -> GridGap {
-        self.page_gaps.get(&page_number).copied().unwrap_or(self.gap)
+        self.page_gaps
+            .get(&page_number)
+            .copied()
+            .unwrap_or(self.gap)
     }
 
     pub fn get_padding_for_page(&self, page_number: usize) -> GridPadding {
-        self.page_paddings.get(&page_number).copied().unwrap_or(self.padding)
+        self.page_paddings
+            .get(&page_number)
+            .copied()
+            .unwrap_or(self.padding)
     }
 }
 

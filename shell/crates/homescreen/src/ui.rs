@@ -1,4 +1,7 @@
-use crate::{state::HomescreenState, widgets::WidgetWrapper};
+use crate::{
+    state::HomescreenState,
+    widgets::{WidgetId, WidgetWrapper},
+};
 use gpui::*;
 use theme::prelude::Theme;
 
@@ -27,9 +30,9 @@ impl HomescreenUi {
             for widget_id in widgets.iter() {
                 let widget_data = state.widgets.get(widget_id).unwrap();
                 if !widget_data.is_being_dragged() {
-                    page = page.child(WidgetWrapper::render(widget_data));
+                    page = page.child(WidgetWrapper::render(*widget_id, widget_data, state, cx));
                 } else {
-                    dragged_widgets.push(widget_data);
+                    dragged_widgets.push((*widget_id, widget_data));
                 }
             }
             element = element.child(
@@ -44,8 +47,8 @@ impl HomescreenUi {
         }
 
         // Render dragged widgets last so they appear on top
-        for widget_data in dragged_widgets {
-            element = element.child(WidgetWrapper::render(widget_data));
+        for (widget_id, widget_data) in dragged_widgets {
+            element = element.child(WidgetWrapper::render(widget_id, widget_data, state, cx));
         }
 
         element
