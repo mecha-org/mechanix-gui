@@ -44,6 +44,7 @@ pub struct AppDrawer {
     drag_start_x: Pixels,
     is_dragging: bool,
     has_moved: bool,
+    is_vertical_scroll: bool,
     pub text_input: Entity<TextInput>,
     filtered: Vec<AppInfo>,
     is_searching: bool,
@@ -81,6 +82,7 @@ impl AppDrawer {
             drag_start_x: px(0.0),
             is_dragging: false,
             has_moved: false,
+            is_vertical_scroll: false,
             text_input: cx.new(|cx| TextInput::new(cx)),
             all_apps: Vec::new(),
             filtered: filtered_apps,
@@ -225,16 +227,17 @@ impl AppDrawer {
         &mut self,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        _cx: &mut Context<Self>
     ) {
         self.drag_start_y = event.position.y;
         self.drag_start_x = event.position.x;
         self.last_scroll_offset = self.scroll_offset;
         self.is_dragging = true;
         self.has_moved = false;
+        self.is_vertical_scroll = false;
         self.press_start_time = None;
         self.is_long_press = false;
-        cx.stop_propagation();
+        // Don't call cx.stop_propagation() - let horizontal swipes pass through to homescreen
     }
 
     fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
@@ -251,18 +254,35 @@ impl AppDrawer {
                 delta_y.abs().to_f64() * delta_y.abs().to_f64() +
                 delta_x.abs().to_f64() * delta_x.abs().to_f64();
 
-            // Set has_moved immediately when threshold is exceeded
+            // Determine scroll direction once threshold is exceeded
             if distance_squared > ((DRAG_THRESHOLD * DRAG_THRESHOLD) as f64) {
+                // Determine if this is a vertical scroll or horizontal swipe
+                if !self.has_moved {
+                    let abs_delta_y = delta_y.abs().to_f64();
+                    let abs_delta_x = delta_x.abs().to_f64();
+
+                    // If movement is primarily vertical, treat as scroll
+                    // Otherwise, let it pass through to homescreen for page swipe
+                    self.is_vertical_scroll = abs_delta_y > abs_delta_x;
+                }
+
                 self.has_moved = true;
                 // Cancel any pending long press
                 self.press_start_time = None;
             }
 
-            let new_scroll_offset = self.last_scroll_offset + delta_y;
-            let content_height = self.estimate_content_height();
-            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height, cx);
-            self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
-            cx.notify();
+            // Only scroll vertically if this is a vertical scroll gesture
+            if self.is_vertical_scroll {
+                let new_scroll_offset = self.last_scroll_offset + delta_y;
+                let content_height = self.estimate_content_height();
+                let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height, cx);
+                self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
+                cx.notify();
+
+                // Stop propagation only for vertical scrolls
+                cx.stop_propagation();
+            }
+            // For horizontal swipes, don't stop propagation - let homescreen handle it
         }
     }
 
@@ -275,6 +295,7 @@ impl AppDrawer {
             self.last_scroll_offset = px(0.0);
             self.is_dragging = false;
             self.has_moved = false;
+            self.is_vertical_scroll = false;
             self.last_search_query = query.clone();
         }
 
@@ -382,6 +403,7 @@ impl AppDrawer {
 
         self.has_moved = false;
         self.is_dragging = false;
+        self.is_vertical_scroll = false;
 
         self.is_searching = true;
         self.text_input.update(cx, |input, cx| {
@@ -482,6 +504,7 @@ impl AppDrawer {
                             this.drag_start_x = px(0.0);
                             this.is_dragging = false;
                             this.has_moved = false;
+                            this.is_vertical_scroll = false;
 
                             cx.notify();
                         })
