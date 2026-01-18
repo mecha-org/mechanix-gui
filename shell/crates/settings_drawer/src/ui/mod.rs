@@ -401,8 +401,8 @@ impl Render for SettingsDrawer {
                     div()
                         .id("input-region")
                         .absolute()
-                        .bottom(px(0.))
-                        .right(px(0.))
+                        .top(input_regions.minimized.origin.y)
+                        .left(input_regions.minimized.origin.x)
                         .w(input_regions.minimized.size.width)
                         .h(input_regions.minimized.size.height)
                         .on_mouse_down(

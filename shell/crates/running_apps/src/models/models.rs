@@ -38,4 +38,5 @@ pub struct RunningApps {
     pub bar_drag_start_y: Option<f32>,
     pub show_apps: bool,
     pub installed_apps: Entity<InstalledApps>,
+    pub _poll_task: Task<()>,
 }

@@ -56,7 +56,6 @@ impl PowerOptions {
     }
 
     fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
-        println!("update------region----{:?}", show);
         let size = window.bounds().size;
         let regions = if show {
             vec![Bounds {
@@ -69,10 +68,8 @@ impl PowerOptions {
 
         window.set_input_regions(Some(regions));
         cx.notify();
-        println!("Input regions updated: show={}", show);
     }
     fn handle_upward_swipe(&mut self, cx: &mut Context<Self>) {
-        println!("Go back - close power options");
         self.snap_to(0.0, cx);
         self.show = false;
         cx.notify();
@@ -179,7 +176,6 @@ impl Render for PowerOptions {
         self.update_input_regions(window, show, cx);
 
         // Self::update_input_regions(window, size, show);
-        println!("RENDERING power-options {:?}", show);
         if self.window_height == 0.0 {
             self.window_height = window_height;
             self.max_drag_distance = window_height;

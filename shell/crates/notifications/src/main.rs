@@ -9,6 +9,7 @@ use notifications::widgets::{
     DbNotification, NotificationCenter, NotificationList, NotificationUi, UserDismissedEvent,
 };
 use std::time::{SystemTime, UNIX_EPOCH};
+use theme::ActiveTheme;
 
 // Root view to compose NotificationCenter (background) and the toast NotificationList (overlay)
 struct Root {
@@ -273,6 +274,7 @@ fn main() {
                                                     // Render an actions bar similar to the mock:
                                                     // a top border and evenly-spaced action cells with optional icons.
                                                     let icons = Icons::global(cx).notifications.clone();
+                                                    let colors = cx.theme().colors.clone();
                                                     let default_icon = SharedString::from(icons.application.to_string_lossy().to_string());
                                                     let mut row = div()
                                                         .id("actions-row")

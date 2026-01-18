@@ -69,7 +69,7 @@ fn root_view(
 
         window.set_input_regions(Some(regions));
 
-        let running_apps = cx.new(|cx| RunningApps::new(installed_apps));
+        let running_apps = cx.new(|cx| RunningApps::new(installed_apps, cx));
 
         running_apps
     }
