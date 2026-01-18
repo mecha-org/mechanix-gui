@@ -37,13 +37,32 @@ impl HomescreenWidget for DemoWidget {
         div()
             .size_full()
             .flex()
+            .flex_col()
             .justify_center()
             .items_center()
+            .gap_2()
             .child(
                 div()
-                    .text_sm()
+                    .w(px(36.))
+                    .h(px(36.))
+                    .rounded(px(8.))
+                    .bg(rgba(0x4ecdc433))
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .child(
+                        div()
+                            .text_xl()
+                            .font_weight(FontWeight::BOLD)
+                            .text_color(rgb(0x4ecdc4))
+                            .child(self.name.chars().next().unwrap_or('D').to_string()),
+                    ),
+            )
+            .child(
+                div()
+                    .text_xs()
                     .font_weight(FontWeight::MEDIUM)
-                    .text_color(rgb(0xffffff))
+                    .text_color(rgba(0xffffffcc))
                     .child(self.name.clone()),
             )
             .into_any_element()
