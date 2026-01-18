@@ -30,9 +30,9 @@ pub struct HomescreenState {
 
 impl HomescreenState {
     pub fn new(config: HomescreenConfig) -> Self {
-        let layout_manager_state = LayoutManagerState::new(config);
-        let animation_manager_state = AnimationManagerState::new(config);
-        let input_manager_state = InputManagerState::new(config);
+        let layout_manager_state = LayoutManagerState::new(&config);
+        let animation_manager_state = AnimationManagerState::new(&config);
+        let input_manager_state = InputManagerState::new(&config);
 
         let widgets = Default::default();
         let pages = Default::default();
@@ -61,7 +61,7 @@ impl HomescreenState {
         page_number: usize,
         grid_bounds: GridBounds,
     ) {
-        let bounds = grid_bounds_to_pixels(grid_bounds, &self.config);
+        let bounds = grid_bounds_to_pixels(grid_bounds, &self.config, page_number);
         widget.set_bounds(bounds);
         let widget_id = WidgetId(self.next_widget_id);
         self.widgets.insert(
