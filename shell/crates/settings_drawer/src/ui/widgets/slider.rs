@@ -212,6 +212,7 @@ impl RenderOnce for Slider {
                                     window.listener_for(
                                         &self.state,
                                         move |state, e: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
                                             state.update_value_by_position(
                                                 e.position,
                                                 slider_width_copy,
@@ -228,6 +229,7 @@ impl RenderOnce for Slider {
                                 .on_drag_move(window.listener_for(
                                     &self.state,
                                     move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
+                                        cx.stop_propagation();
                                         match event.drag(cx) {
                                             DragThumb(id) => {
                                                 if *id != entity_id {
@@ -325,6 +327,7 @@ impl RenderOnce for Slider {
                                     window.listener_for(
                                         &self.state,
                                         move |state, e: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
                                             state.update_value_by_position(
                                                 e.position,
                                                 slider_width_copy,
@@ -346,6 +349,7 @@ impl RenderOnce for Slider {
                                                 if *id != entity_id {
                                                     return;
                                                 }
+                                                cx.stop_propagation();
                                                 state.update_value_by_position(
                                                     event.event.position,
                                                     slider_width_drag_copy,

@@ -85,6 +85,7 @@ pub struct SettingsDrawer {
     drag_offset: Option<f32>,
     drag_start_pos: f32,
     pub is_visible: bool,
+    pub drawer_moving: bool,
 
     pub wireless_modal_scroll: WirelessModalScroll,
     pub bluetooth_modal_scroll: BluetoothModalScroll,
@@ -165,6 +166,7 @@ impl SettingsDrawer {
             drag_offset: None,
             drag_start_pos: 0.0,
             is_visible: false,
+            drawer_moving: false,
 
             wireless_modal_scroll: WirelessModalScroll::new(),
             bluetooth_modal_scroll: BluetoothModalScroll::new(),
@@ -309,6 +311,7 @@ impl SettingsDrawer {
     }
 
     fn start_close_animation(&mut self, cx: &mut Context<Self>) {
+        cx.stop_propagation();
         self.animation_progress = 1.0;
         self.animation_state = ModalAnimationState::Closing;
         cx.notify();
@@ -361,6 +364,7 @@ impl Render for SettingsDrawer {
                 if let Some(offset) = this.drag_offset {
                     let new_y = event.position.y.to_f64() as f32 - offset;
                     this.position = new_y.clamp(open_y, closed_y);
+                    this.drawer_moving = true;
                     cx.notify();
                 }
             }))
@@ -386,6 +390,7 @@ impl Render for SettingsDrawer {
                                 target = open_y;
                             }
                         }
+                        this.drawer_moving = false;
                         this.snap_to(target, cx);
                         cx.notify();
                     }
@@ -530,6 +535,24 @@ impl SettingsDrawer {
         }
         window.set_input_regions(Some(regions));
         cx.notify();
+    }
+
+    // check if drawer is moving before executing click handler
+    fn click_listener<F>(
+        handler: F,
+    ) -> impl Fn(&mut SettingsDrawer, &ClickEvent, &mut Window, &mut Context<Self>)
+    where
+        F: Fn(&mut SettingsDrawer, &ClickEvent, &mut Window, &mut Context<Self>) + 'static,
+    {
+        move |this: &mut SettingsDrawer,
+              event: &ClickEvent,
+              window: &mut Window,
+              cx: &mut Context<Self>| {
+            if this.drawer_moving {
+                return;
+            }
+            handler(this, event, window, cx);
+        }
     }
 
     fn drawer_items(
@@ -791,6 +814,7 @@ impl SettingsDrawer {
                 return;
             }
 
+            cx.stop_propagation();
             if !this.open_modal {
                 this.current_modal = modal;
                 Self::start_animation(this, event, window, cx);
@@ -813,8 +837,8 @@ impl SettingsDrawer {
                     .w(px(24.))
                     .h(px(24.)),
             )
-            .on_click(cx.listener(
-                move |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     println!("power clicked");
                     let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
 
@@ -829,15 +853,9 @@ impl SettingsDrawer {
                         })
                         .detach();
 
-                    // cx.background_executor()
-                    //     .spawn(async move {
-                    //         let _ = dispatcher_tx.send(Message::ShowPowerOptions(true));
-                    //     })
-                    //     .detach();
-
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_rotation(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -859,15 +877,12 @@ impl SettingsDrawer {
             .active(self.rotation_on)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.rotation_on = !this.rotation_on;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_airplane_mode(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -885,16 +900,12 @@ impl SettingsDrawer {
             .active(self.airplane_mode)
             .active_icon_color(colors.foreground_0)
             .active_bg_color(colors.accent_200)
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
-                    println!("airplane button clicked");
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.airplane_mode = !this.airplane_mode;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_screen_mirroring(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -922,15 +933,12 @@ impl SettingsDrawer {
             .active(self.screen_mirroring)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.screen_mirroring = !this.screen_mirroring;
                     cx.notify();
-                },
-            ))
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::ScreenMirroring,
                 true,
@@ -951,12 +959,12 @@ impl SettingsDrawer {
             .icon_color(colors.foreground_600)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     Self::launch_app(this.terminal_info.clone(), cx);
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_microphone_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -970,15 +978,12 @@ impl SettingsDrawer {
             .active(self.microphone_recording)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.microphone_recording = !this.microphone_recording;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_screen_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -996,15 +1001,12 @@ impl SettingsDrawer {
             .active(self.screen_recording)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.screen_recording = !this.screen_recording;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1020,12 +1022,12 @@ impl SettingsDrawer {
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     Self::launch_app(this.settings_app_info.clone(), cx);
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1042,12 +1044,12 @@ impl SettingsDrawer {
             .icon_color(colors.foreground_600)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     Self::launch_app(this.camera_app_info.clone(), cx);
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1096,7 +1098,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
                     cx.background_executor()
@@ -1106,7 +1108,7 @@ impl SettingsDrawer {
                         .detach();
 
                     cx.notify();
-                }),
+                })),
             )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::WirelessModal,
@@ -1155,7 +1157,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
                     cx.background_executor()
@@ -1164,7 +1166,7 @@ impl SettingsDrawer {
                         })
                         .detach();
                     cx.notify();
-                }),
+                })),
             )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::BluetoothModal,
@@ -1201,15 +1203,12 @@ impl SettingsDrawer {
             .icon_color(power_mode_icon_color)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      _window: &mut Window,
-                      cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     // TODO: set power saving mode on click
                     cx.notify();
-                },
-            ))
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::PerformanceModal,
                 true,
@@ -1228,16 +1227,12 @@ impl SettingsDrawer {
             .active(self.cell_signal)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
-                    println!("cell_signal clicked");
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.cell_signal = !this.cell_signal;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_brightness_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1248,11 +1243,15 @@ impl SettingsDrawer {
             .flex()
             .items_center()
             .w_full()
-            .h_full() 
+            .h_full()
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(cx.listener(|_, _: &ClickEvent, _, _| {}))
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                    cx.stop_propagation();
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::DisplayModal,
                 true,
@@ -1318,11 +1317,15 @@ impl SettingsDrawer {
             .items_center()
             .justify_center()
             .w_full()
-            .h_full() 
+            .h_full()
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                    cx.stop_propagation();
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
             .child(self.render_volume_slider(cx))
     }
