@@ -4,6 +4,7 @@ use commons::prelude::InstalledApps;
 use gpui::foreign_toplevel_management::ForeignToplevelHandle;
 use gpui::prelude::*;
 use gpui::*;
+use settings::prelude::{InputRegions, Settings};
 use theme::prelude::*;
 
 const BAR_SIZE: (f32, f32) = (80.0, 29.0);
@@ -17,6 +18,7 @@ impl Render for RunningApps {
             cx.notify();
         }
 
+        let input_regions = Settings::global(cx).running_apps.input_regions.clone();
         let bar_fixed_pos = APP_SIZE.1 - BAR_SIZE.1;
         let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
         let colors = cx.theme().colors.clone();
@@ -49,7 +51,7 @@ impl Render for RunningApps {
                         if this.bar_drag_offset < -80.0 {
                             //long swipe
                             //Show running apps
-                            this.update_input_regions(window, !this.show_apps);
+                            this.update_input_regions(window, !this.show_apps, cx);
                             this.show_apps = !this.show_apps;
                             let initial_offset = -50.0 * this.apps.len() as f32;
                             this.animation_state = AppCardAnimation::Initial {
@@ -62,7 +64,7 @@ impl Render for RunningApps {
                             //short swipe
                             //Mimize all apps
                             this.show_apps = false;
-                            this.update_input_regions(window, false);
+                            this.update_input_regions(window, false, cx);
                             this.send_minimize_all_apps(cx);
                         }
                         this.bar_drag_start_y = None;
@@ -71,9 +73,27 @@ impl Render for RunningApps {
                     }
                 }),
             )
+            .when(true, |this| {
+                this.child(
+                    div()
+                        .id("input-region")
+                        .absolute()
+                        .left(input_regions.minimized.origin.x)
+                        .top(input_regions.minimized.origin.y)
+                        .w(input_regions.minimized.size.width)
+                        .h(input_regions.minimized.size.height)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                                cx.stop_propagation();
+                                this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
+                                cx.notify();
+                            }),
+                        ),
+                )
+            })
             .child(
                 div()
-                    .id("running-apps-navbar")
                     .w_full()
                     .flex()
                     .flex_row()
@@ -82,14 +102,6 @@ impl Render for RunningApps {
                     .absolute()
                     .top(px(current_bar_y))
                     .h(px(BAR_SIZE.1))
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
-                            cx.stop_propagation();
-                            this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
-                            cx.notify();
-                        }),
-                    )
                     .child(div().bg(colors.accent_400).w(px(BAR_SIZE.0)).h(px(4.0))),
             )
     }
@@ -191,28 +203,32 @@ impl RunningApps {
         .detach();
     }
 
-    fn update_input_regions(&self, window: &mut Window, open: bool) {
+    fn update_input_regions(&self, window: &mut Window, open: bool, cx: &mut Context<Self>) {
+        let InputRegions {
+            minimized,
+            maximized,
+        } = Settings::global(cx).running_apps.input_regions.clone();
         let mut regions = Vec::new();
 
         if open {
             regions.push(Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
+                origin: maximized.origin,
+                size: maximized.size,
             });
         } else {
             regions.push(Bounds {
-                origin: point(
-                    px((APP_SIZE.0 - BAR_SIZE.0) / 2.0),
-                    px(APP_SIZE.1 - BAR_SIZE.1),
-                ),
-                size: size(px(BAR_SIZE.0), px(BAR_SIZE.1)),
+                origin: minimized.origin,
+                size: minimized.size,
             });
         }
         window.set_input_regions(Some(regions));
+        cx.notify();
     }
 
     fn running_apps(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let has_apps = !self.apps.is_empty();
+        let colors = Theme::global(cx).colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         div()
             .flex()
@@ -227,11 +243,12 @@ impl RunningApps {
                 this.child(
                     div().flex().flex_col().items_center().gap_16().child(
                         div()
-                            .text_color(rgb(0x666666))
+                            .text_color(colors.foreground_800)
                             .text_size(px(16.0))
                             .line_height(px(24.0))
                             .text_center()
-                            .font_weight(FontWeight(400.0))
+                            .font_weight(FontWeight(500.0))
+                            .font_family(primary_font)
                             .max_w(px(300.0))
                             .child("There are no apps or droids")
                             .child(div().child("you are looking for.")),

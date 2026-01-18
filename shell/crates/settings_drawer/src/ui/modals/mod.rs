@@ -1,7 +1,6 @@
-use commons::widgets::wing;
 use gpui::*;
 use icons::prelude::*;
-use theme::prelude::{AlphaExt, Theme};
+use theme::prelude::{AlphaExt, Fonts, Theme};
 
 pub mod bluetooth_modal;
 pub mod display_modal;
@@ -24,42 +23,22 @@ impl SettingsDrawer {
         let colors = Theme::global(cx).colors.clone();
 
         div()
+            .child(title)
             .flex()
-            .flex_row()
-            .flex_shrink_0()
-            .relative()
             .w_full()
-            .h(px(MODAL_HEADER_HEIGHT))
-            .justify_center()
-            .items_center()
+            .justify_start()
+            .text_color(colors.foreground_200)
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                px(16.)
+                px(18.)
             } else {
-                px(20.)
+                px(24.)
             })
-            .child({
-                let mut w = wing()
-                    .absolute()
-                    .flex()
-                    .flex_col()
-                    .w_full()
-                    .h(px(56.0))
-                    .px_4()
-                    .py_2()
-                    .border_color(colors.accent_200.with_alpha(0.4))
-                    .border_b_0()
-                    .bg(colors.background_1000)
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(colors.foreground_300)
-                            .child(title),
-                    );
-                w.upper_wing_size(Size::new(px(239.0), px(33.0)));
-                w.border_width(px(1.0));
-                w.border_radius(px(8.0));
-                w
-            })
+            .font_weight(FontWeight::SEMIBOLD)
+            .pl(px(16.))
+            .pt(px(8.))
+            .border_b_1()
+            .border_color(colors.accent_200.with_alpha(0.4))
+            .h(px(MODAL_HEADER_HEIGHT))
             .into_any()
     }
 

@@ -27,6 +27,7 @@ dispatcher = { path = "../dispatcher" }
 shell_state = { path = "../shell_state" }
 volume_slider = { path = "../volume_slider" }
 hardware_buttons = { path = "../hardware_buttons" }
+lockscreen = { path = "../lockscreen" }
 icons = { path = "../icons" }
 
 [package.metadata.deb]
@@ -88,6 +89,11 @@ assets = [
         "usr/share/mechanix/shell/assets/icons/power-options/",
         "755",
     ],
+    [
+        "../../../assets/icons/lockscreen/*",
+        "usr/share/mechanix/shell/assets/icons/lockscreen/",
+        "755",
+    ],
 ]
 
 [package.metadata.generate-rpm]
@@ -126,6 +132,9 @@ assets = [
 
     # Power options icons
     { source = "../../../assets/icons/power-options/*", dest = "/usr/share/mechanix/shell/assets/icons/power-options/", mode = "755" },
+
+    # Lockscreen icons
+    { source = "../../../assets/icons/lockscreen/*", dest = "/usr/share/mechanix/shell/assets/icons/lockscreen/", mode = "755" },
 
 
 ]

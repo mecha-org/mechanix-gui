@@ -63,7 +63,7 @@ class FileHomePageState extends State<FileHomePage> {
                       title: "Home directory",
                       titleTextStyle: listItemTitleTextStyle(context),
                       onTap: () => onTap(context, homeDir, "Home"),
-                      leading: Image.asset(Images.home, height: 20, width: 20)),
+                      leading: Image.asset(Images.home, height: 24, width: 24)),
                   SectionListItems(
                       title: "Recents",
                       titleTextStyle: listItemTitleTextStyle(context),

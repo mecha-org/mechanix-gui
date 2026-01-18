@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:mechanix_music/load_settings.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/recently_played.dart';
 import 'package:mechanix_music/models/search_data.dart';
@@ -15,8 +17,7 @@ import 'package:mechanix_music/src/features/home/home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/theme/mechanix_theme.dart';
 import 'package:widgets/theme/variants.dart';
-import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
-import 'package:widgets/widgets/theme/theme_toggle.dart';
+import 'package:widgets/widgets/theme/theme_toggle.dart'; 
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -40,7 +41,7 @@ void main() async {
                     SongsBloc(songsRepository: context.read<SongsRepository>()),
           ),
         ],
-        child: MainApp(),
+        child: MechanixMusicApp(),
       ),
     ),
   );
@@ -62,47 +63,84 @@ Future<void> initializeHive() async {
   Hive.init(appDir.path);
 }
 
-class MainApp extends StatelessWidget with WatchItMixin {
-  MainApp({super.key});
+class MechanixMusicApp extends StatelessWidget with WatchItMixin {
+  MechanixMusicApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
-    final mechanixVariant = watchPropertyValue(
-      (ThemeToggle t) => t.mechanixVariant,
-    );
+    return _MechanixMusicAppContent(themeMode: themeMode);
+  }
+}
 
+class _MechanixMusicAppContent extends StatefulWidget {
+  const _MechanixMusicAppContent({required this.themeMode});
+
+  final ThemeMode themeMode;
+
+  @override
+  State<_MechanixMusicAppContent> createState() =>
+      _MechanixMusicAppContentState();
+}
+
+class _MechanixMusicAppContentState extends State<_MechanixMusicAppContent> {
+  late final DBusClient _bus;
+  late final ThemeSettingsService _themeService;
+
+  MechanixThemeData _currentThemeData = MechanixThemeData(
+    mechanixVariant: MechanixVariant.amber,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeThemeService();
+  }
+
+  void _initializeThemeService() {
+    _bus = DBusClient.session();
+    _themeService = ThemeSettingsService(_bus);
+
+    _themeService.listenForThemeChanges(_handleThemeChange);
+    _fetchInitialTheme();
+  }
+
+  Future<void> _fetchInitialTheme() async {
+    final colors = await _themeService.fetchCurrentTheme();
+    if (colors != null) {
+      _handleThemeChange(colors);
+    }
+  }
+
+  void _handleThemeChange(Map<String, String> colors) {
+    setState(() {
+      _currentThemeData = _themeService.colorsToThemeData(colors);
+    });
+  }
+
+  @override
+  void dispose() {
+    _themeService.dispose();
+    _bus.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MechanixTheme(
-      data: MechanixThemeData(
-        mechanixVariant: MechanixVariant.amber,
-        extensions: [
-          MechanixBottomSheetThemeData(
-            decoration: BoxDecoration(
-              color: Color(0xFF2E2E2E),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-          ),
-          // MechanixMenuThemeData(
-          //   decoration: BoxDecoration(color: context.colorScheme.tertiary),
-          //   itemBackgroundColor: context.colorScheme.tertiary,
-          // ),
-        ],
-      ),
+      data: _currentThemeData,
       builder:
-          (context, mechanix, child) => MusicApp(
+          (context, mechanix, child) => MainApp(
             darkTheme: mechanix.darkTheme,
             lightTheme: mechanix.lightTheme,
-            themeMode: themeMode,
+            themeMode: widget.themeMode,
           ),
     );
   }
 }
 
-class MusicApp extends StatelessWidget {
-  const MusicApp({
+class MainApp extends StatelessWidget {
+  const MainApp({
     super.key,
     required this.lightTheme,
     required this.darkTheme,

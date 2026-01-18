@@ -18,8 +18,7 @@ use std::{
     time::Duration,
 };
 use theme::ActiveTheme;
-use theme::prelude::AlphaExt;
-use theme::prelude::Theme;
+use theme::prelude::{AlphaExt, Fonts};
 
 use settings::prelude::Settings;
 
@@ -326,7 +325,11 @@ impl NotificationCenter {
         self.is_dragging = false;
     }
 
-    fn calculate_scroll_bounds(&self, cx: &Context<Self>, content_height: Pixels) -> (Pixels, Pixels) {
+    fn calculate_scroll_bounds(
+        &self,
+        cx: &Context<Self>,
+        content_height: Pixels,
+    ) -> (Pixels, Pixels) {
         let settings = Settings::global(cx).notifications.clone();
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
@@ -401,7 +404,7 @@ impl NotificationCenter {
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
         let content_height = self.estimated_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(cx,content_height);
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(cx, content_height);
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
         cx.notify();
@@ -769,6 +772,7 @@ impl Render for NotificationCenter {
         let settings = Settings::global(cx).notifications.clone();
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
+        let input_regions = settings.input_regions.clone();
 
         let colors = cx.theme().colors.clone();
 
@@ -780,6 +784,17 @@ impl Render for NotificationCenter {
         div()
             .w_full()
             .h_full()
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event: &MouseDownEvent, _window, cx| {
+                    if this.is_visible {
+                        cx.stop_propagation();
+                        this.drag_start_pos = this.position;
+                        this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
+                        cx.notify();
+                    }
+                }),
+            )
             .on_mouse_move(
                 cx.listener(move |this, event: &MouseMoveEvent, _window, cx| {
                     if let Some(offset) = this.drag_offset {
@@ -820,6 +835,27 @@ impl Render for NotificationCenter {
                     }
                 }),
             )
+            .when(!self.is_visible, |this| {
+                this.child(
+                    div()
+                        .id("input-region")
+                        .absolute()
+                        .bottom(px(0.))
+                        .left(px(0.))
+                        .w(input_regions.minimized.size.width)
+                        .h(input_regions.minimized.size.height)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, event: &MouseDownEvent, _window, cx| {
+                                cx.stop_propagation();
+                                this.drag_start_pos = this.position;
+                                this.drag_offset =
+                                    Some(event.position.y.to_f64() as f32 - this.position);
+                                cx.notify();
+                            }),
+                        ),
+                )
+            })
             .child(
                 div()
                     .w_full()
@@ -834,40 +870,22 @@ impl Render for NotificationCenter {
                             .flex_row()
                             .justify_start()
                             .h(navbar_size.height)
-                            .child(
-                                div()
-                                    .id("left-wing")
-                                    .child({
-                                        let mut w = wing();
-                                        w.upper_wing_size(size(
-                                            navbar_size.width,
-                                            navbar_size.height,
-                                        ));
-                                        // w.border_width(px(2.));
-                                        w.upper_wing_side(WingSide::Left);
-                                        w.w(navbar_size.width).h(navbar_size.height).bg(
-                                            if self.is_visible {
-                                                colors.background_1000
-                                            } else {
-                                                colors.background_800
-                                            },
-                                        )
-                                        // .when(!self.is_visible, |w| {
-                                        //     w.border_t_2().border_color(colors.background_700)
-                                        // })
-                                    })
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        cx.listener(|this, event: &MouseDownEvent, _window, cx| {
-                                            cx.stop_propagation();
-                                            this.drag_start_pos = this.position;
-                                            this.drag_offset = Some(
-                                                event.position.y.to_f64() as f32 - this.position,
-                                            );
-                                            cx.notify();
-                                        }),
-                                    ),
-                            ),
+                            .child(div().id("left-wing").child({
+                                let mut w = wing();
+                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                                // w.border_width(px(2.));
+                                w.upper_wing_side(WingSide::Left);
+                                w.w(navbar_size.width).h(navbar_size.height).bg(
+                                    if self.is_visible {
+                                        colors.background_1000
+                                    } else {
+                                        colors.background_800
+                                    },
+                                )
+                                // .when(!self.is_visible, |w| {
+                                //     w.border_t_2().border_color(colors.background_700)
+                                // })
+                            })),
                     )
                     .child(self.render_content(window, cx)),
             )
@@ -897,6 +915,7 @@ impl Render for NotificationWidget {
         let settings = Settings::global(cx).notifications.clone();
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
+        let input_regions = settings.input_regions.clone();
 
         let center_is_visible = self.center.read(cx).is_visible;
         let list_is_empty = self.notification_list.read(cx).notifications.is_empty();
@@ -933,19 +952,13 @@ impl Render for NotificationWidget {
 
         if center.is_visible || !list.notifications.is_empty() {
             regions.push(Bounds {
-                origin: point(px(0.), px(0.)),
-                size: size(
-                    notifications_center_size.width,
-                    notifications_center_size.height,
-                ),
+                origin: input_regions.maximized.origin,
+                size: input_regions.maximized.size,
             });
         } else {
             regions.push(Bounds {
-                origin: point(
-                    px(0.),
-                    notifications_center_size.height - navbar_size.height,
-                ),
-                size: size(navbar_size.width, navbar_size.height),
+                origin: input_regions.minimized.origin,
+                size: input_regions.minimized.size,
             });
         }
         window.set_input_regions(Some(regions));
@@ -961,8 +974,10 @@ impl Render for NotificationWidget {
 impl NotificationCenter {
     fn render_content(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
+
         let icons = Icons::global(cx).notifications.clone();
-         let settings = Settings::global(cx).notifications.clone();
+        let settings = Settings::global(cx).notifications.clone();
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
         // Header - updated styling
@@ -976,6 +991,7 @@ impl NotificationCenter {
             .px_4()
             .pt_4()
             .pb_3()
+            .font_family(primary_font)
             .child(
                 div()
                     .text_color(colors.foreground_300)

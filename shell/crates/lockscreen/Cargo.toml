@@ -1,0 +1,24 @@
+[package]
+name = "lockscreen"
+edition = "2024"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+system_dbus = { workspace = true }
+commons = { path = "../commons" }
+gpui = { workspace = true }
+rust-embed = { workspace = true }
+anyhow = { workspace = true }
+settings = { path = "../settings" }
+dispatcher = { path = "../dispatcher" }
+shell_state = { path = "../shell_state" }
+theme = { path = "../theme" }
+upower = { workspace = true }
+futures = "0.3.31"
+

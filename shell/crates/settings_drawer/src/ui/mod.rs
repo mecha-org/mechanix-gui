@@ -6,10 +6,10 @@ use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{Settings, SettingsDrawerSettings};
+use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings};
 use shell_state::DEFAULT_MIN_BRIGHTNESS;
 use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
-use theme::prelude::AlphaExt;
+use theme::prelude::{AlphaExt, Fonts};
 
 use crate::helper::get_wireless_strength_icon;
 use crate::ui::modals::{
@@ -85,6 +85,7 @@ pub struct SettingsDrawer {
     drag_offset: Option<f32>,
     drag_start_pos: f32,
     pub is_visible: bool,
+    pub drawer_moving: bool,
 
     pub wireless_modal_scroll: WirelessModalScroll,
     pub bluetooth_modal_scroll: BluetoothModalScroll,
@@ -165,6 +166,7 @@ impl SettingsDrawer {
             drag_offset: None,
             drag_start_pos: 0.0,
             is_visible: false,
+            drawer_moving: false,
 
             wireless_modal_scroll: WirelessModalScroll::new(),
             bluetooth_modal_scroll: BluetoothModalScroll::new(),
@@ -309,6 +311,7 @@ impl SettingsDrawer {
     }
 
     fn start_close_animation(&mut self, cx: &mut Context<Self>) {
+        cx.stop_propagation();
         self.animation_progress = 1.0;
         self.animation_state = ModalAnimationState::Closing;
         cx.notify();
@@ -340,10 +343,12 @@ impl SettingsDrawer {
 impl Render for SettingsDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let settings = Settings::global(cx).settings_drawer.clone();
-        let navbar_size = settings.navbar_size;
+        let navbar_size = settings.navbar_size.clone();
+        let input_regions = settings.input_regions.clone();
         let closed_pos_f32: f32 = Self::calculate_closed_position(&settings);
 
         let colors = cx.theme().colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         let open_y = 0.;
         let closed_y = closed_pos_f32;
@@ -354,10 +359,12 @@ impl Render for SettingsDrawer {
         div()
             .w_full()
             .h_full()
+            .font_family(primary_font)
             .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                 if let Some(offset) = this.drag_offset {
                     let new_y = event.position.y.to_f64() as f32 - offset;
                     this.position = new_y.clamp(open_y, closed_y);
+                    this.drawer_moving = true;
                     cx.notify();
                 }
             }))
@@ -383,11 +390,33 @@ impl Render for SettingsDrawer {
                                 target = open_y;
                             }
                         }
+                        this.drawer_moving = false;
                         this.snap_to(target, cx);
                         cx.notify();
                     }
                 }),
             )
+            .when(!self.is_visible, |this| {
+                this.child(
+                    div()
+                        .id("input-region")
+                        .absolute()
+                        .bottom(px(0.))
+                        .right(px(0.))
+                        .w(input_regions.minimized.size.width)
+                        .h(input_regions.minimized.size.height)
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                                cx.stop_propagation();
+                                this.drag_start_pos = this.position;
+                                this.drag_offset =
+                                    Some(event.position.y.to_f64() as f32 - this.position);
+                                cx.notify();
+                            }),
+                        ),
+                )
+            })
             .child(
                 div()
                     .w_full()
@@ -401,36 +430,18 @@ impl Render for SettingsDrawer {
                             .flex_row()
                             .justify_end()
                             .h(navbar_size.height)
-                            .child(
-                                div()
-                                    .id("right-wing")
-                                    .child({
-                                        let mut w = wing();
-                                        w.upper_wing_size(size(
-                                            navbar_size.width,
-                                            navbar_size.height,
-                                        ));
-                                        w.upper_wing_side(WingSide::Right);
-                                        w.w(navbar_size.width).h(navbar_size.height).bg(
-                                            if self.is_visible {
-                                                colors.background_1000
-                                            } else {
-                                                colors.background_800
-                                            },
-                                        )
-                                    })
-                                    .on_mouse_down(
-                                        MouseButton::Left,
-                                        cx.listener(|this, event: &MouseDownEvent, _, cx| {
-                                            cx.stop_propagation();
-                                            this.drag_start_pos = this.position;
-                                            this.drag_offset = Some(
-                                                event.position.y.to_f64() as f32 - this.position,
-                                            );
-                                            cx.notify();
-                                        }),
-                                    ),
-                            ),
+                            .child(div().id("right-wing").child({
+                                let mut w = wing();
+                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                                w.upper_wing_side(WingSide::Right);
+                                w.w(navbar_size.width).h(navbar_size.height).bg(
+                                    if self.is_visible {
+                                        colors.background_1000
+                                    } else {
+                                        colors.background_800
+                                    },
+                                )
+                            })),
                     )
                     .when(self.is_visible, |content_div| {
                         content_div.size_full().bg(colors.background_1000)
@@ -506,26 +517,42 @@ impl SettingsDrawer {
         let mut regions = Vec::new();
 
         let settings = Settings::global(cx).settings_drawer.clone();
-        let navbar_size = settings.navbar_size;
-        let settings_drawer_size = settings.layer_shell.size;
-        let closed_pos_px = Self::closed_pos(settings_drawer_size, navbar_size);
+        let InputRegions {
+            minimized,
+            maximized,
+        } = settings.input_regions;
 
         if open {
             regions.push(Bounds {
-                origin: point(px(0.), px(0.)),
-                size: settings_drawer_size,
+                origin: maximized.origin,
+                size: maximized.size,
             });
         } else {
             regions.push(Bounds {
-                origin: point(
-                    settings_drawer_size.width - navbar_size.width,
-                    closed_pos_px,
-                ),
-                size: navbar_size,
+                origin: minimized.origin,
+                size: minimized.size,
             });
         }
         window.set_input_regions(Some(regions));
         cx.notify();
+    }
+
+    // check if drawer is moving before executing click handler
+    fn click_listener<F>(
+        handler: F,
+    ) -> impl Fn(&mut SettingsDrawer, &ClickEvent, &mut Window, &mut Context<Self>)
+    where
+        F: Fn(&mut SettingsDrawer, &ClickEvent, &mut Window, &mut Context<Self>) + 'static,
+    {
+        move |this: &mut SettingsDrawer,
+              event: &ClickEvent,
+              window: &mut Window,
+              cx: &mut Context<Self>| {
+            if this.drawer_moving {
+                return;
+            }
+            handler(this, event, window, cx);
+        }
     }
 
     fn drawer_items(
@@ -534,8 +561,9 @@ impl SettingsDrawer {
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let current_time_date = ShellState::global(cx).current_time_date.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
+        let current_time_date = ShellState::global(cx).current_time_date.clone();
         let settings = Settings::global(cx).settings_drawer.clone();
         let navbar_size = settings.navbar_size;
         let settings_drawer_size = settings.layer_shell.size;
@@ -592,6 +620,15 @@ impl SettingsDrawer {
             .relative()
             .w(settings_drawer_size.width)
             .h(settings_drawer_size.height)
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                    cx.stop_propagation();
+                    this.drag_start_pos = this.position;
+                    this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
+                    cx.notify();
+                }),
+            )
             .child(
                 div()
                     .id("main_container")
@@ -616,8 +653,11 @@ impl SettingsDrawer {
                                     .flex()
                                     .flex_row()
                                     .child(current_time_date)
-                                    .text_xl()
-                                    .text_color(colors.foreground_100),
+                                    .font_family(primary_font)
+                                    .font_weight(FontWeight::NORMAL)
+                                    .line_height(px(1.3))
+                                    .text_size(px(20.))
+                                    .text_color(colors.foreground_200),
                             )
                             .child(self.render_power_button(cx)),
                     )
@@ -774,6 +814,7 @@ impl SettingsDrawer {
                 return;
             }
 
+            cx.stop_propagation();
             if !this.open_modal {
                 this.current_modal = modal;
                 Self::start_animation(this, event, window, cx);
@@ -796,8 +837,8 @@ impl SettingsDrawer {
                     .w(px(24.))
                     .h(px(24.)),
             )
-            .on_click(cx.listener(
-                move |_, _event: &ClickEvent, _window: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     println!("power clicked");
                     let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
 
@@ -812,15 +853,9 @@ impl SettingsDrawer {
                         })
                         .detach();
 
-                    // cx.background_executor()
-                    //     .spawn(async move {
-                    //         let _ = dispatcher_tx.send(Message::ShowPowerOptions(true));
-                    //     })
-                    //     .detach();
-
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_rotation(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -842,15 +877,12 @@ impl SettingsDrawer {
             .active(self.rotation_on)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.rotation_on = !this.rotation_on;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_airplane_mode(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -868,16 +900,12 @@ impl SettingsDrawer {
             .active(self.airplane_mode)
             .active_icon_color(colors.foreground_0)
             .active_bg_color(colors.accent_200)
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
-                    println!("airplane button clicked");
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.airplane_mode = !this.airplane_mode;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_screen_mirroring(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -905,15 +933,12 @@ impl SettingsDrawer {
             .active(self.screen_mirroring)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.screen_mirroring = !this.screen_mirroring;
                     cx.notify();
-                },
-            ))
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::ScreenMirroring,
                 true,
@@ -934,12 +959,12 @@ impl SettingsDrawer {
             .icon_color(colors.foreground_600)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     Self::launch_app(this.terminal_info.clone(), cx);
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_microphone_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -953,15 +978,12 @@ impl SettingsDrawer {
             .active(self.microphone_recording)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.microphone_recording = !this.microphone_recording;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_screen_recording(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -979,15 +1001,12 @@ impl SettingsDrawer {
             .active(self.screen_recording)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.screen_recording = !this.screen_recording;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_settings(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1003,12 +1022,12 @@ impl SettingsDrawer {
             .size((px(ICON_W), px(ROW_12_ICON_H)))
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     Self::launch_app(this.settings_app_info.clone(), cx);
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_camera(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1025,12 +1044,12 @@ impl SettingsDrawer {
             .icon_color(colors.foreground_600)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this, _: &ClickEvent, _: &mut Window, cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     Self::launch_app(this.camera_app_info.clone(), cx);
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_wireless(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1079,7 +1098,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
                     cx.background_executor()
@@ -1089,7 +1108,7 @@ impl SettingsDrawer {
                         .detach();
 
                     cx.notify();
-                }),
+                })),
             )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::WirelessModal,
@@ -1138,7 +1157,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(move |_: &mut SettingsDrawer, _: &ClickEvent, _window, cx| {
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
                     cx.background_executor()
@@ -1147,7 +1166,7 @@ impl SettingsDrawer {
                         })
                         .detach();
                     cx.notify();
-                }),
+                })),
             )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::BluetoothModal,
@@ -1184,15 +1203,12 @@ impl SettingsDrawer {
             .icon_color(power_mode_icon_color)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                move |this: &mut SettingsDrawer,
-                      _event: &ClickEvent,
-                      _window: &mut Window,
-                      cx: &mut Context<Self>| {
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     // TODO: set power saving mode on click
                     cx.notify();
-                },
-            ))
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::PerformanceModal,
                 true,
@@ -1211,16 +1227,12 @@ impl SettingsDrawer {
             .active(self.cell_signal)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(cx.listener(
-                |this: &mut SettingsDrawer,
-                 _event: &ClickEvent,
-                 _window: &mut Window,
-                 cx: &mut Context<Self>| {
-                    println!("cell_signal clicked");
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
                     this.cell_signal = !this.cell_signal;
                     cx.notify();
-                },
-            ))
+                })),
+            )
     }
 
     fn render_brightness_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1232,11 +1244,14 @@ impl SettingsDrawer {
             .items_center()
             .w_full()
             .h_full()
-            .text_lg()
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(cx.listener(|_, _: &ClickEvent, _, _| {}))
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                    cx.stop_propagation();
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::DisplayModal,
                 true,
@@ -1303,11 +1318,14 @@ impl SettingsDrawer {
             .justify_center()
             .w_full()
             .h_full()
-            .text_lg()
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(cx.listener(|_, _, _, _cx: &mut Context<Self>| {}))
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                    cx.stop_propagation();
+                })),
+            )
             .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
             .child(self.render_volume_slider(cx))
     }

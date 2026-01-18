@@ -47,22 +47,7 @@ impl SettingsDrawer {
                     .border_t_0()
                     .rounded(px(8.))
                     .overflow_hidden()
-                    .child(
-                        div()
-                            .child("Sound")
-                            .flex()
-                            .w_full()
-                            .justify_start()
-                            .text_color(colors.foreground_400)
-                            .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                px(18.)
-                            } else {
-                                px(24.)
-                            })
-                            .pl(px(16.))
-                            .pt(px(8.))
-                            .h(px(MODAL_HEADER_HEIGHT)),
-                    )
+                    .child(self.render_header_div(cx, "Sound"))
                     .child(
                         div()
                             .id("scrollable")

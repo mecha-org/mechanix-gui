@@ -48,7 +48,7 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: main
+      ref: 2c705bf278d8c1452796b5310210477894141a96
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
@@ -142,6 +142,8 @@ flutter:
     - assets/images/three_dot_icon.png
     - assets/images/circular_check_icon.png
     - assets/images/lock_icon.png
+    - assets/images/arrows_clock_wise.png
+    - assets/images/blog_image.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

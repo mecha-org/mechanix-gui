@@ -24,6 +24,18 @@
 [running_apps]
 "cleanup" = "/usr/share/mechanix/shell/assets/icons/running-apps/cleanup.svg"
 
+[lockscreen]
+"arrow" = "/usr/share/mechanix/shell/assets/icons/lockscreen/arrow.svg"
+"bell" = "/usr/share/mechanix/shell/assets/icons/lockscreen/bell.svg"
+"lock" = "/usr/share/mechanix/shell/assets/icons/lockscreen/lock.svg"
+"lock-open-full" = "/usr/share/mechanix/shell/assets/icons/lockscreen/lock-open-full.svg"
+"lock-open-half" = "/usr/share/mechanix/shell/assets/icons/lockscreen/lock-open-half.svg"
+"wedge-left" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_left.svg"
+"wedge-left-outline" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_left_outline.svg"
+"wedge-right" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_right.svg"
+"wedge-right-outline" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_right_outline.svg"
+"wallpaper" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wallpaper.png"
+
 [settings_drawer]
 "airplane" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/airplane.svg"
 "auto-brightness" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/auto-brightness.svg"

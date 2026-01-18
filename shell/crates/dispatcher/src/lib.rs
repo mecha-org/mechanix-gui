@@ -1,4 +1,4 @@
-use async_broadcast::{broadcast, Receiver, Sender};
+use async_broadcast::{Receiver, Sender, broadcast};
 use futures::StreamExt;
 use gpui::*;
 use mxconf_dbus::watch_setting;
@@ -24,10 +24,22 @@ pub struct ThemeColors {
 impl ThemeColors {
     pub fn parse(input: &str) -> Result<Self, String> {
         let get = |key: &str| {
-            input.split(',')
+            input
+                .split(',')
                 .find(|s| s.contains(key))
                 .and_then(|s| s.split_once('='))
-                .map(|(_, v)| v.trim().trim_matches(|c: char| !c.is_alphanumeric() && c != '(' && c != ')' && c != '.' && c != ' ' && c != '/').to_string())
+                .map(|(_, v)| {
+                    v.trim()
+                        .trim_matches(|c: char| {
+                            !c.is_alphanumeric()
+                                && c != '('
+                                && c != ')'
+                                && c != '.'
+                                && c != ' '
+                                && c != '/'
+                        })
+                        .to_string()
+                })
                 .ok_or_else(|| format!("Missing {}", key))
         };
 
@@ -47,8 +59,12 @@ pub enum Message {
         background: String,
         foreground: String,
     },
+    SetPrimaryFont(String),
+    SetSecondaryFont(String),
+    SetTertiaryFont(String),
     SetKeyboardAlwayson(bool),
     ShowPowerOptions(bool),
+    ShowLockscreen(bool),
     VolumeUp,
     VolumeDown,
     LaunchApp {
@@ -111,6 +127,16 @@ pub fn init(cx: &mut App) {
                                 }
                                 Err(err) => {
                                     eprintln!("Error while parsing theme colors: {}", err);
+                                }
+                            };
+                        }
+                        "settings.active_fonts.primary" => {
+                            match tx.broadcast(Message::SetPrimaryFont(value)).await {
+                                Ok(_) => {
+                                    println!("message broadcasted");
+                                }
+                                Err(_) => {
+                                    println!("message broadcasted failed");
                                 }
                             };
                         }

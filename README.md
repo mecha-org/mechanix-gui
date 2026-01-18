@@ -2,7 +2,6 @@
 
 This repository contains multiple components of Mechanix GUI developed in Rust and Flutter:
 
-
 | Component    | GitHub Folder Link                                                                                                     |
 | ------------ |------------------------------------------------------------------------------------------------------------------------|
 | Launcher     | [mechanix-gui/shell/crates/launcher](https://github.com/mecha-org/mechanix-gui/tree/pre-release/shell/crates/launcher) |
@@ -13,8 +12,8 @@ This repository contains multiple components of Mechanix GUI developed in Rust a
 | Music App    | [mechanix-gui/apps/music](https://github.com/mecha-org/mechanix-gui/tree/pre-release/apps/music)                       |
 | Notes App    | [mechanix-gui/apps/notes](https://github.com/mecha-org/mechanix-gui/tree/pre-release/apps/notes)                       |
 
-
 ## Repository Structure
+
 - **apps/** - Applications written in Flutter (files, settings, music, notes)
 - **shell/** - Layer shell applications written in Rust (launcher, keyboard, notification)
 - **services/** - Background services written in Rust (desktop, search, conf, system)
@@ -32,12 +31,13 @@ $ cargo run -p mechanix-launcher
 ```
 
 #### For running inside shell/crates/{package}
+
 ```
 $ cargo run
 ```
 
-
 #### Run the desktop services application
+
 ```
 $ cargo run -p mechanix-desktop-services
 ```

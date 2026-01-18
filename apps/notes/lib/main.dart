@@ -1,11 +1,12 @@
 import 'dart:io';
-
+import 'package:dbus/dbus.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
+import 'package:mechanix_notes/load_settings.dart';
 import 'package:mechanix_notes/models/note_hive.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
@@ -71,61 +72,72 @@ class NotesApp extends StatelessWidget with WatchItMixin {
   @override
   Widget build(BuildContext context) {
     final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
-    final mechanixVariant = watchPropertyValue(
-      (ThemeToggle t) => t.mechanixVariant,
-    );
 
+    return _MechanixNotesAppContent(themeMode: themeMode);
+  }
+}
+
+class _MechanixNotesAppContent extends StatefulWidget {
+  const _MechanixNotesAppContent({required this.themeMode});
+
+  final ThemeMode themeMode;
+
+  @override
+  State<_MechanixNotesAppContent> createState() =>
+      _MechanixNotesAppContentState();
+}
+
+class _MechanixNotesAppContentState extends State<_MechanixNotesAppContent> {
+  late final DBusClient _bus;
+  late final ThemeSettingsService _themeService;
+
+  MechanixThemeData _currentThemeData = MechanixThemeData(
+    mechanixVariant: MechanixVariant.amber,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeThemeService();
+  }
+
+  void _initializeThemeService() {
+    _bus = DBusClient.session();
+    _themeService = ThemeSettingsService(_bus);
+
+    _themeService.listenForThemeChanges(_handleThemeChange);
+    _fetchInitialTheme();
+  }
+
+  Future<void> _fetchInitialTheme() async {
+    final colors = await _themeService.fetchCurrentTheme();
+    if (colors != null) {
+      _handleThemeChange(colors);
+    }
+  }
+
+  void _handleThemeChange(Map<String, String> colors) {
+    setState(() {
+      _currentThemeData = _themeService.colorsToThemeData(colors);
+    });
+  }
+
+  @override
+  void dispose() {
+    _themeService.dispose();
+    _bus.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MechanixTheme(
-      data: MechanixThemeData(
-        mechanixVariant: mechanixVariant,
-        extensions: const [
-          // TODO: FIX THEME
-          MechanixFloatingActionBarThemeData(
-            padding: EdgeInsets.all(0),
-            width: double.infinity,
-            // decoration: BoxDecoration(
-            //   color: Colors.pink,
-            // borderRadius: BorderRadius.only(
-            //   topLeft: Radius.circular(12),
-            //   topRight: Radius.circular(12),
-            // ),
-            // ),
-          ),
-          MechanixSelectableListThemeData(
-            // backgroundColor: NotesColors.backgroundColor,
-            checkboxSpacing: EdgeInsets.only(right: 16, left: 6),
-            leadingIconPadding: EdgeInsets.zero,
-            itemPadding: EdgeInsets.only(
-              left: 16,
-              right: 12,
-              top: 10,
-              bottom: 10,
-            ),
-            titleTextStyle: TextStyle(
-              fontSize: 16,
-              color: NotesColors.titleTextColor,
-            ),
-          ),
-          MechanixNavigationBarThemeData(
-            scrolledUnderElevation: 0,
-            titleStyle: TextStyle(
-              fontSize: 32,
-              height: 1.3,
-              letterSpacing: -1.1,
-              fontWeight: FontWeight.w600,
-              color: NotesColors.highlightTextColor,
-            ),
-            titleSpacing: 16,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-          ),
-        ],
-      ),
+      data: _currentThemeData,
       builder:
           (context, mechanix, child) => MyApp(
             darkTheme: mechanix.darkTheme,
             lightTheme: mechanix.lightTheme,
-            themeMode: themeMode,
+            themeMode: widget.themeMode,
           ),
     );
   }
@@ -155,41 +167,22 @@ class MyApp extends StatelessWidget {
       ],
       title: 'Notes',
       theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
-
-      darkTheme: darkTheme.copyWith(
-        splashColor: Colors.transparent,
-        highlightColor: Colors.transparent,
-        hoverColor: Colors.transparent,
-        splashFactory: NoSplash.splashFactory,
-        iconButtonTheme: const IconButtonThemeData(
-          style: ButtonStyle(
-            splashFactory: NoSplash.splashFactory,
-            overlayColor: WidgetStatePropertyAll(Colors.transparent),
-          ),
-        ),
-        scrollbarTheme: const ScrollbarThemeData(
-          radius: Radius.circular(4),
-          thickness: WidgetStatePropertyAll(6),
-          thumbColor: WidgetStatePropertyAll(NotesColors.titleTextColor),
-        ),
-
-        scaffoldBackgroundColor: Colors.black,
-        textSelectionTheme: TextSelectionThemeData(
-          cursorColor: NotesColors.secondaryCardColor,
-          selectionColor: NotesColors.secondaryCardColor.withValues(alpha: 0.4),
-        ),
-        // this is temporary fix
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
-        ),
-      ),
+      darkTheme: _buildDarkTheme(),
       themeMode: themeMode,
-
       home: const HomePage(),
       routes: {
         AppRoutes.createEditNotes:
             (context) => const EditorBlocProvider(child: NotesEditor()),
       },
+    );
+  }
+
+  ThemeData _buildDarkTheme() {
+    return darkTheme.copyWith(
+      scaffoldBackgroundColor: Colors.black,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
+      ),
     );
   }
 }

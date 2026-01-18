@@ -48,7 +48,8 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: main
+      ref: 2c705bf278d8c1452796b5310210477894141a96
+
   watch_it: ^1.7.0
   sleek_circular_slider: ^2.1.0
   path_provider: ^2.1.5

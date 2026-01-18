@@ -279,7 +279,7 @@ fn main() {
                                                         .mt_2()
                                                         .pt_2()
                                                         .border_t_1()
-                                                        .border_color(rgb(0xff9500))
+                                                        .border_color(colors.background_700)
                                                         .flex()
                                                         .flex_row()
                                                         .items_center();
@@ -305,7 +305,7 @@ fn main() {
                                                                 .items_center()
                                                                 .gap_2()
                                                                 .py_2()
-                                                                .text_color(if is_last { rgb(0xff9500) } else { rgb(0xe9e9e9) })
+                                                                .text_color(if is_last { colors.accent_200 } else { colors.foreground_500 })
                                                                 .on_click(cx.listener(move |this, _, window, cx| {
                                                                     println!(
                                                                         "Action '{}' clicked for notification {}",
@@ -319,7 +319,7 @@ fn main() {
                                                                     this.dismiss(window, cx);
                                                                 }))
                                                                 // Placeholder icon, will be replaced by designer
-                                                                .child(svg().external_path(&default_icon).w(px(18.)).h(px(18.)).text_color(if is_last { rgb(0xff9500) } else { rgb(0xe9e9e9) }))
+                                                                .child(svg().external_path(&default_icon).w(px(18.)).h(px(18.)).text_color(if is_last { colors.accent_200 } else { colors.foreground_500 }))
                                                                 .child(action_label.clone())
                                                         );
 
@@ -329,7 +329,7 @@ fn main() {
                                                                 div()
                                                                     .w(px(1.0))
                                                                     .h(px(24.0))
-                                                                    .bg(rgb(0x3a3a3a))
+                                                                    .bg(colors.background_700)
                                                             );
                                                         }
                                                     }

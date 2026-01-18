@@ -1,3 +1,4 @@
+import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
@@ -63,12 +64,15 @@ import 'package:mechanix_settings/src/features/sound/presentation/notification_s
 import 'package:mechanix_settings/src/features/sound/presentation/output_devices.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/vibration_level.dart';
+import 'package:mechanix_settings/src/features/system_update/presentation/system_updates.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
+import 'load_settings.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
   WidgetsFlutterBinding.ensureInitialized();
+
   runApp(
     MultiRepositoryProvider(
       providers: [
@@ -102,20 +106,73 @@ class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
   @override
   Widget build(BuildContext context) {
     final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
-    final mechanixVariant =
-        watchPropertyValue((ThemeToggle t) => t.mechanixVariant);
 
+    return _MechanixSettingsAppContent(themeMode: themeMode);
+  }
+}
+
+class _MechanixSettingsAppContent extends StatefulWidget {
+  const _MechanixSettingsAppContent({required this.themeMode});
+
+  final ThemeMode themeMode;
+
+  @override
+  State<_MechanixSettingsAppContent> createState() =>
+      _MechanixSettingsAppContentState();
+}
+
+class _MechanixSettingsAppContentState
+    extends State<_MechanixSettingsAppContent> {
+  late final DBusClient _bus;
+  late final ThemeSettingsService _themeService;
+
+  MechanixThemeData _currentThemeData = MechanixThemeData(
+    mechanixVariant: MechanixVariant.amber,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeThemeService();
+  }
+
+  void _initializeThemeService() {
+    _bus = DBusClient.session();
+    _themeService = ThemeSettingsService(_bus);
+
+    _themeService.listenForThemeChanges(_handleThemeChange);
+    _fetchInitialTheme();
+  }
+
+  Future<void> _fetchInitialTheme() async {
+    final colors = await _themeService.fetchCurrentTheme();
+    if (colors != null) {
+      _handleThemeChange(colors);
+    }
+  }
+
+  void _handleThemeChange(Map<String, String> colors) {
+    setState(() {
+      _currentThemeData = _themeService.colorsToThemeData(colors);
+    });
+  }
+
+  @override
+  void dispose() {
+    _themeService.dispose();
+    _bus.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MechanixTheme(
-      data: const MechanixThemeData(
-        mechanixVariant: MechanixVariant.amber,
+      data: _currentThemeData,
+      builder: (context, mechanix, child) => MainApp(
+        darkTheme: mechanix.darkTheme,
+        lightTheme: mechanix.lightTheme,
+        themeMode: widget.themeMode,
       ),
-      builder: (ctx, mechanix, child) {
-        return MainApp(
-          darkTheme: mechanix.darkTheme,
-          lightTheme: mechanix.lightTheme,
-          themeMode: themeMode,
-        );
-      },
     );
   }
 }
@@ -188,12 +245,7 @@ class MainApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: const SettingMenu(),
         theme: lightTheme,
-        darkTheme: darkTheme.copyWith(
-          scaffoldBackgroundColor: Colors.black,
-          pageTransitionsTheme: const PageTransitionsTheme(
-            builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
-          ),
-        ),
+        darkTheme: _buildDarkTheme(),
         themeMode: themeMode,
         routes: {
           // Sound Routes
@@ -269,9 +321,21 @@ class MainApp extends StatelessWidget {
 
           // Other Routes
           AppRoutes.about: (context) => const About(),
+          AppRoutes.systemUpdates: (context) => const SystemUpdates(),
           AppRoutes.dateTime: (context) => const DateTimeSettings(),
           AppRoutes.timeSettings: (context) => const TimeSettings(),
           AppRoutes.dateSettings: (context) => const DateSettings(),
+        },
+      ),
+    );
+  }
+
+  ThemeData _buildDarkTheme() {
+    return darkTheme.copyWith(
+      scaffoldBackgroundColor: Colors.black,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.linux: CupertinoPageTransitionsBuilder(),
         },
       ),
     );

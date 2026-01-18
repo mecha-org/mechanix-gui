@@ -73,17 +73,14 @@ class DeleteBottomSheet extends StatelessWidget {
                   Expanded(
                     child: MechanixFilledButton(
                       label: "Delete",
-                      theme: MechanixFilledButtonThemeData(
+                      theme: const MechanixFilledButtonThemeData(
                         textStyle: const TextStyle(
                           fontSize: 18,
                           height: 1.25,
                           fontWeight: FontWeight.w400,
                           color: NotesColors.titleTextColor,
                         ),
-                        decoration: BoxDecoration(
-                          color: NotesColors.bottomSheetColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+                        buttonColor: NotesColors.bottomSheetColor,
                       ),
                       onPressed: () {
                         Navigator.pop(bottomSheetContext);
