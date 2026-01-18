@@ -90,7 +90,6 @@ impl Render for RunningApps {
                         div()
                             .id("input-region")
                             .absolute()
-                            .bg(gpui::yellow())
                             .left(input_regions.minimized.origin.x)
                             .top(input_regions.minimized.origin.y)
                             .w(input_regions.minimized.size.width)
