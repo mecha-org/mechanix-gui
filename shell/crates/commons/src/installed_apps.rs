@@ -23,7 +23,6 @@ impl App {
     }
 }
 
-#[derive(Default, Clone)]
 pub struct InstalledApps {
     apps: HashMap<String, App>,
     search_service: Option<MxSearchService>,
