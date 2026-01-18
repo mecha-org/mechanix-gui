@@ -9,6 +9,29 @@ pub enum WingSide {
     Right,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CornerRadii {
+    pub top_left: Pixels,
+    pub top_right: Pixels,
+    pub bottom_right: Pixels,
+    pub bottom_left: Pixels,
+}
+
+impl CornerRadii {
+    pub fn all(radius: Pixels) -> Self {
+        Self {
+            top_left: radius,
+            top_right: radius,
+            bottom_right: radius,
+            bottom_left: radius,
+        }
+    }
+
+    pub fn none() -> Self {
+        Self::all(px(0.0))
+    }
+}
+
 fn generate_fillet_arc(
     prev: Point<Pixels>,
     current: Point<Pixels>,
@@ -108,9 +131,9 @@ fn generate_fillet_arc(
     arc_points
 }
 
-fn apply_fillet_to_polygon(
+fn apply_fillet_to_polygon_with_radii(
     points: &[Point<Pixels>],
-    radius: Pixels,
+    radii: &[Pixels],
     resolution: u32,
 ) -> Vec<Point<Pixels>> {
     if points.len() < 3 {
@@ -124,6 +147,7 @@ fn apply_fillet_to_polygon(
         let prev = points[(i + n - 1) % n];
         let current = points[i];
         let next = points[(i + 1) % n];
+        let radius = radii[i.min(radii.len() - 1)];
 
         let arc = generate_fillet_arc(prev, current, next, radius, resolution);
         filleted_points.extend(arc);
@@ -135,7 +159,7 @@ fn apply_fillet_to_polygon(
 pub struct Wing {
     interactivity: Interactivity,
     border_width: Pixels,
-    border_radius: Pixels,
+    corner_radii: CornerRadii,
     border_resolution: u32,
     upper_wing_size: Size<Pixels>,
     lower_wing_size: Size<Pixels>,
@@ -150,7 +174,7 @@ pub fn wing() -> Wing {
     Wing {
         interactivity: Interactivity::new(),
         border_width: px(0.0),
-        border_radius: px(0.0),
+        corner_radii: CornerRadii::none(),
         border_resolution: 8,
         upper_wing_size: Size::new(px(0.0), px(0.0)),
         lower_wing_size: Size::new(px(0.0), px(0.0)),
@@ -167,8 +191,15 @@ impl Wing {
         self.border_width = width.into();
     }
 
+    // Set all corners to the same radius
     pub fn border_radius(&mut self, radius: impl Into<Pixels>) {
-        self.border_radius = radius.into();
+        let r = radius.into();
+        self.corner_radii = CornerRadii::all(r);
+    }
+
+    // Set individual corner radii
+    pub fn corner_radii(&mut self, radii: CornerRadii) {
+        self.corner_radii = radii;
     }
 
     pub fn border_resolution(&mut self, resolution: impl Into<u32>) {
@@ -197,6 +228,29 @@ impl Wing {
 
     pub fn include_lower_wing_in_bounds(&mut self, include: bool) {
         self.include_lower_wing_in_bounds = include;
+    }
+
+    // Helper to map corner radii to polygon points
+    fn get_radii_for_points(&self, points: &[Point<Pixels>], bounds: Bounds<Pixels>) -> Vec<Pixels> {
+        let width = bounds.size.width;
+        let height = bounds.size.height;
+        let origin = bounds.origin;
+
+        points.iter().map(|point| {
+            let rel_x = point.x - origin.x;
+            let rel_y = point.y - origin.y;
+
+            // Determine which corner this point is closest to
+            let is_top = rel_y < height / 2.0;
+            let is_left = rel_x < width / 2.0;
+
+            match (is_top, is_left) {
+                (true, true) => self.corner_radii.top_left,
+                (true, false) => self.corner_radii.top_right,
+                (false, false) => self.corner_radii.bottom_right,
+                (false, true) => self.corner_radii.bottom_left,
+            }
+        }).collect()
     }
 }
 
@@ -379,9 +433,15 @@ impl Element for Wing {
         points.extend(lower_corners);
         points.dedup();
 
-        // Apply fillet to corners if border_radius is set
-        let filleted_points = if self.border_radius > px(0.0) && points.len() >= 3 {
-            apply_fillet_to_polygon(&points, self.border_radius, self.border_resolution)
+        // Apply individual corner radii if any radius is > 0
+        let has_radius = self.corner_radii.top_left > px(0.0)
+            || self.corner_radii.top_right > px(0.0)
+            || self.corner_radii.bottom_right > px(0.0)
+            || self.corner_radii.bottom_left > px(0.0);
+
+        let filleted_points = if has_radius && points.len() >= 3 {
+            let radii = self.get_radii_for_points(&points, bounds);
+            apply_fillet_to_polygon_with_radii(&points, &radii, self.border_resolution)
         } else {
             points
         };
