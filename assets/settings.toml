@@ -16,7 +16,7 @@ exclusive_zone = -1.0
 size = { width = 540.0, height = 620.0 }
 
 [settings_drawer.input_regions]
-minimized = { origin = { x = 340.78, y = 541.5 }, size = { width = 199.22, height = 78.5 } }
+minimized = { origin = { x = 340.78, y = 591.0 }, size = { width = 199.22, height = 100.0 } }
 maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
 
 
