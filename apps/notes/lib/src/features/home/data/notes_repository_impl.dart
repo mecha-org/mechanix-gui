@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:dbus/dbus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:logger/logger.dart';
@@ -18,6 +20,60 @@ List<NoteMetaData> _processNotesInBackground(List<NoteMetaData> notes) {
 
 class NotesRepositoryImpl extends NotesRepository {
   final logger = Logger();
+
+  void _uploadToDBusAsync(NoteHive note) {
+    // Run on a separate isolate/thread without blocking
+    unawaited(
+      Future(() async {
+        try {
+          final client = DBusClient.session();
+          final object = DBusRemoteObject(
+            client,
+            name: 'org.mechanix.MxSearch',
+            path: DBusObjectPath('/org/mechanix/MxSearch'),
+          );
+          // Prepare UpsertMetadata as DBusDict entries
+          final metadataEntries = <String, DBusValue>{
+            'source': const DBusString('notes'),
+            'unique_id': DBusString(note.id),
+            'uri': DBusString('note://${note.id}'),
+            'title': DBusString(note.title),
+            'subtitle': const DBusString(''),
+            'description': const DBusString("Content of Notes"),
+            'keywords': DBusArray(
+              DBusSignature('s'),
+              [],
+              // _extractKeywords(note.title, note.plainText),
+            ),
+            'icon': const DBusString(''),
+            'thumbnail': const DBusString(''),
+            'last_modified': DBusUint64(note.updatedAt.millisecondsSinceEpoch),
+            'content': DBusString(note.content),
+            'source_entry_path': DBusString(''),
+          };
+
+          // Create DBusDict from the entries
+          final metadataDict = DBusDict.stringVariant(metadataEntries);
+
+          // Call UpsertSources with array of metadata dictionaries
+          final res = await object.callMethod(
+            'org.mechanix.MxSearch',
+            'UpsertSources',
+            [
+              DBusArray(DBusSignature('a{sv}'), [metadataDict]),
+            ],
+            replySignature: DBusSignature('b'),
+          );
+          print("res $res");
+          logger.i("Successfully uploaded note metadata to D-Bus: ${note.id}");
+
+          await client.close();
+        } catch (e) {
+          logger.w("Failed to upload to D-Bus (non-critical): $e");
+        }
+      }),
+    );
+  }
 
   @override
   Future<NoteMetaData> createNote(String title, content, plainText) async {
@@ -50,7 +106,7 @@ class NotesRepositoryImpl extends NotesRepository {
       );
 
       await Hive.box<NoteHive>(Constants.tableName).put(newNote.id, newNote);
-
+      _uploadToDBusAsync(newNote);
       return NoteMetaData(
         id: newNote.id,
         preview: preview,
@@ -292,6 +348,7 @@ class NotesRepositoryImpl extends NotesRepository {
           );
 
           await notesBox.put(key, updatedNote);
+          _uploadToDBusAsync(updatedNote);
           logger.i('Note updated successfully: $id');
         }
       } else {
