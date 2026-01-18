@@ -16,7 +16,7 @@ pub struct InputManagerState {
 }
 
 impl InputManagerState {
-    pub fn new(_config: HomescreenConfig) -> Self {
+    pub fn new(_config: &HomescreenConfig) -> Self {
         Self {
             is_mouse_pressed: false,
             mouse_press_position: None,
