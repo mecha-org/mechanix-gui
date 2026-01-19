@@ -57,6 +57,9 @@ jobs:
     runs-on: ubuntu-24.04-arm
     container:
       image: mechaorg/services-builder:arm64
+    defaults:
+      run:
+        shell: bash -l {0}
     environment: pre-release
     strategy:
       fail-fast: false
