@@ -70,7 +70,13 @@ pub fn init(cx: &mut App) -> SliderConfig {
             let slider_state = slider_state_for_overlay.clone();
             let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
             cx.new(move |cx| {
-                SliderOverlay::new(cx, slider_state.clone(), initial_value, min_volume_level, max_volume_level)
+                SliderOverlay::new(
+                    cx,
+                    slider_state.clone(),
+                    initial_value,
+                    min_volume_level,
+                    max_volume_level,
+                )
             })
         },
     )
@@ -101,17 +107,14 @@ impl SliderOverlay {
         min_volume: f32,
         max_volume: f32,
     ) -> Self {
-        let subscription = cx.subscribe(
-            &slider_state,
-            |this, _, event: &SliderEvent, cx| {
-                let SliderEvent::Change(value) = *event;
-                this.slider_value = value;
-                this.show_overlay(cx);
-                // Sync volume to ShellState and system when slider is changed via touch/drag
-                set_volume(cx, value);
-                sync_volume_to_system(value, cx);
-            },
-        );
+        let subscription = cx.subscribe(&slider_state, |this, _, event: &SliderEvent, cx| {
+            let SliderEvent::Change(value) = *event;
+            this.slider_value = value;
+            this.show_overlay(cx);
+            // Sync volume to ShellState and system when slider is changed via touch/drag
+            set_volume(cx, value);
+            sync_volume_to_system(value, cx);
+        });
 
         Self {
             slider_state,
@@ -134,19 +137,21 @@ impl SliderOverlay {
             return;
         }
 
-        cx.spawn(async move |this: WeakEntity<SliderOverlay>, cx: &mut AsyncApp| {
-            cx.background_executor()
-                .timer(Duration::from_millis(OVERLAY_TIMEOUT_MS))
-                .await;
+        cx.spawn(
+            async move |this: WeakEntity<SliderOverlay>, cx: &mut AsyncApp| {
+                cx.background_executor()
+                    .timer(Duration::from_millis(OVERLAY_TIMEOUT_MS))
+                    .await;
 
-            this.update(cx, |this, cx| {
-                if this.dismiss_generation == generation {
-                    this.visible = false;
-                    cx.notify();
-                }
-            })
-            .ok();
-        })
+                this.update(cx, |this, cx| {
+                    if this.dismiss_generation == generation {
+                        this.visible = false;
+                        cx.notify();
+                    }
+                })
+                .ok();
+            },
+        )
         .detach();
     }
 }
@@ -155,45 +160,49 @@ impl Render for SliderOverlay {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let icon_name =
             VolumeIconName::from_volume(self.slider_value, self.min_volume, self.max_volume);
-
-        div()
-            .flex()
-            .items_center()
-            .justify_center()
-            .w_full()
-            .h_full()
-            .child(
-                div()
-                    .id("slider-overlay")
-                    .flex()
-                    .flex_col()
-                    .items_center()
-                    .gap(px(OVERLAY_GAP))
-                    .p(px(OVERLAY_PADDING))
-                    .rounded(px(OVERLAY_RADIUS))
-                    .bg(rgb(OVERLAY_BACKGROUND))
-                    .opacity(if self.visible { 1.0 } else { 0.0 })
-                    .shadow_lg()
-                    .child(
-                        Slider::new("hardware-buttons-slider", &self.slider_state)
-                            .width(SLIDER_WIDTH)
-                            .height(SLIDER_HEIGHT),
-                    )
-                    // Volume mode indicator icon
-                    .child(
-                        div()
-                            .id("volume-mode-icon")
-                            .w(px(ICON_SIZE))
-                            .h(px(ICON_SIZE))
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .child(
-                                VolumeIcon::new(icon_name)
-                                    .size((px(ICON_SIZE), px(ICON_SIZE)))
-                                    .text_color(rgb(0xFFFFFF)),
-                            ),
-                    ),
-            )
+        if self.visible {
+            div()
+                .flex()
+                .items_center()
+                .justify_center()
+                .w_full()
+                .h_full()
+                .child(
+                    div()
+                        .id("slider-overlay")
+                        .flex()
+                        .flex_col()
+                        .items_center()
+                        .gap(px(OVERLAY_GAP))
+                        .p(px(OVERLAY_PADDING))
+                        .rounded(px(OVERLAY_RADIUS))
+                        .bg(rgb(OVERLAY_BACKGROUND))
+                        .opacity(if self.visible { 1.0 } else { 0.0 })
+                        .shadow_lg()
+                        .child(
+                            Slider::new("hardware-buttons-slider", &self.slider_state)
+                                .width(SLIDER_WIDTH)
+                                .height(SLIDER_HEIGHT),
+                        )
+                        // Volume mode indicator icon
+                        .child(
+                            div()
+                                .id("volume-mode-icon")
+                                .w(px(ICON_SIZE))
+                                .h(px(ICON_SIZE))
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .child(
+                                    VolumeIcon::new(icon_name)
+                                        .size((px(ICON_SIZE), px(ICON_SIZE)))
+                                        .text_color(rgb(0xFFFFFF)),
+                                ),
+                        ),
+                )
+                .into_any_element()
+        } else {
+            Empty.into_any_element()
+        }
     }
 }
