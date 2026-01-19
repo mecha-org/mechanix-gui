@@ -78,6 +78,20 @@ namespace = "mechanix.power.options"
 exclusive_zone = 0.0
 size = { width = 540.0, height = 620.0 }
 
+[lockscreen]
+wallpaper_path = "icons/lockscreen/wallpaper.png"
+
+[lockscreen.layer_shell]
+layer = "overlay"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.lockscreen"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+[lockscreen.input_regions]
+minimized = { origin = { x = 0.0, y = 0.0 }, size = { width = 0.0, height = 0.0 } }
+maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
+
 [app_drawer.layer_shell]
 layer = "top"
 anchor = ["top"]

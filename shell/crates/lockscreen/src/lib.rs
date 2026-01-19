@@ -14,7 +14,11 @@ pub mod prelude {
 }
 
 pub fn run_app(cx: &mut App) {
-    let LockscreenSettings { layer_shell } = Settings::global(cx).lockscreen.clone();
+    let LockscreenSettings {
+        layer_shell,
+        input_regions,
+        ..
+    } = Settings::global(cx).lockscreen.clone();
     let LayerShellSettings {
         size,
         layer,
@@ -40,6 +44,17 @@ pub fn run_app(cx: &mut App) {
         },
         |window, cx| {
             let regions = Vec::new();
+            let minimized = input_regions.minimized;
+            let regions = if f32::from(minimized.size.width) > 0.0
+                && f32::from(minimized.size.height) > 0.0
+            {
+                vec![Bounds {
+                    origin: minimized.origin,
+                    size: minimized.size,
+                }]
+            } else {
+                regions
+            };
             window.set_input_regions(Some(regions));
 
             cx.new(|cx| {

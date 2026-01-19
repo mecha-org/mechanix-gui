@@ -273,6 +273,10 @@ impl Default for PowerOptionsSettings {
 pub struct LockscreenSettings {
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub input_regions: InputRegions,
+    #[serde(default)]
+    pub wallpaper_path: String,
 }
 
 impl Default for LockscreenSettings {
@@ -285,6 +289,17 @@ impl Default for LockscreenSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(540.0), px(620.0)),
+                },
+            },
+            wallpaper_path: "icons/lockscreen/wallpaper.png".into(),
         }
     }
 }

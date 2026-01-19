@@ -1,11 +1,12 @@
 use gpui::{prelude::FluentBuilder, *};
+use settings::prelude::Settings;
 use shell_state::ShellState;
 mod wallpaper;
 mod wedges;
 use theme::ActiveTheme;
 use wallpaper::wallpaper;
 use wedges::{left_wedge, right_wedge, LockState};
-use theme::prelude::{AlphaExt, Fonts};
+use theme::prelude::Fonts;
 
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
@@ -62,17 +63,24 @@ impl Lockscreen {
             drag_start_mouse_y: 0.0,
             position_y: 0.0,
             window_height: 0.0,
-            show: false,
+            show: true,
             show_arrow_prompt: false,
         }
     }
 
     fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
-        let size = window.bounds().size;
+        let input_regions = Settings::global(cx).lockscreen.input_regions.clone();
         let regions = if show {
             vec![Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size,
+                origin: input_regions.maximized.origin,
+                size: input_regions.maximized.size,
+            }]
+        } else if f32::from(input_regions.minimized.size.width) > 0.0
+            && f32::from(input_regions.minimized.size.height) > 0.0
+        {
+            vec![Bounds {
+                origin: input_regions.minimized.origin,
+                size: input_regions.minimized.size,
             }]
         } else {
             vec![]
@@ -106,10 +114,12 @@ impl Render for Lockscreen {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
+        let lockscreen_settings = Settings::global(cx).lockscreen.clone();
         
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
+        let wallpaper_path = lockscreen_settings.wallpaper_path;
 
         if self.window_height == 0.0 {
             self.window_height = window_height;
@@ -159,7 +169,12 @@ impl Render for Lockscreen {
                             div()
                                 .absolute()
                                 .inset_0()
-                                .child(wallpaper(size.width, px(panel_height), &colors)),
+                                .child(wallpaper(
+                                    size.width,
+                                    px(panel_height),
+                                    &colors,
+                                    &wallpaper_path,
+                                )),
                         )
                         // Content overlay
                         .child(
