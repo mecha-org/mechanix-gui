@@ -1,7 +1,7 @@
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
-use std::time::Duration;
 use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
+use std::time::Duration;
 
 use crate::icon::{VolumeIcon, VolumeIconName};
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
@@ -130,6 +130,7 @@ impl SliderOverlay {
         }
     }
 
+    // This is to define the input region dimensions
     fn overlay_bounds(&self, window: &Window) -> Bounds<Pixels> {
         let window_size = window.bounds().size;
         let overlay_width = px(SLIDER_WIDTH.max(ICON_SIZE) + (OVERLAY_PADDING * 2.0));
@@ -144,7 +145,7 @@ impl SliderOverlay {
             size: size(overlay_width, overlay_height),
         }
     }
-
+    // This is to add and remove input regin
     fn update_input_regions(&mut self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
         let regions = if show {
             vec![self.overlay_bounds(window)]
