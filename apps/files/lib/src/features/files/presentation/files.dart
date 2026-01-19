@@ -316,7 +316,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(
-            padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+            padding: const EdgeInsets.only(top: 18, right: 16),
             child: MechanixNavigationBar(
               automaticallyImplyLeading: false,
               theme: const MechanixNavigationBarThemeData(
