@@ -571,6 +571,13 @@ impl SettingsDrawer {
         let navbar_size = settings.navbar_size;
         let settings_drawer_size = settings.layer_shell.size;
 
+        let closed_pos = Self::calculate_closed_position(&settings);
+        let opacity = if self.drawer_moving || self.drag_offset.is_some() {
+            1.0 - (self.position / closed_pos).clamp(0.0, 1.0)
+        } else {
+            if self.is_visible { 1.0 } else { 0.0 }
+        };
+
         if matches!(
             self.animation_state,
             ModalAnimationState::Opening | ModalAnimationState::Closing
@@ -633,6 +640,7 @@ impl SettingsDrawer {
                     cx.notify();
                 }),
             )
+            .opacity(opacity)
             .child(
                 div()
                     .id("main_container")
@@ -707,6 +715,9 @@ impl SettingsDrawer {
                                     .on_click(cx.listener(|this: &mut SettingsDrawer, _, _, cx| {
                                         Self::start_close_animation(this, cx);
                                     }))
+                                    .on_mouse_move(
+                                        cx.listener(move |_, _, _, cx| cx.stop_propagation()),
+                                    )
                                     .on_mouse_down(MouseButton::Left, |_, _, cx| {
                                         cx.stop_propagation()
                                     })
