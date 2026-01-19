@@ -102,6 +102,18 @@ jobs:
             librust-gdk-pixbuf-sys-dev \
             pipx \
             jq
+            
+      - name: Cache Cargo Data
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Install cargo tools
         run: |
           cargo install cargo-deb
