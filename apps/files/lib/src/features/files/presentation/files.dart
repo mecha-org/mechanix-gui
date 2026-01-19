@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_loading_dialog.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
@@ -90,6 +89,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   bool isCopyPressed = false;
   bool isSharePressed = false;
   bool isDeletePressed = false;
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -167,6 +167,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _fabController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -315,7 +316,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Padding(
-            padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+            padding: const EdgeInsets.only(top: 18, right: 16),
             child: MechanixNavigationBar(
               automaticallyImplyLeading: false,
               theme: const MechanixNavigationBarThemeData(
@@ -356,60 +357,59 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           children: [
             const SizedBox(height: 6),
             Expanded(
-              child: ContainerWidget(
-                child: ValueListenableBuilder<String>(
-                  valueListenable: searchQuery,
-                  builder: (context, query, _) {
-                    List<FileSystemEntity> filteredFilesRecent = [];
-                    List<FileItem> filteredFiles = [];
+              child: ValueListenableBuilder<String>(
+                valueListenable: searchQuery,
+                builder: (context, query, _) {
+                  List<FileSystemEntity> filteredFilesRecent = [];
+                  List<FileItem> filteredFiles = [];
 
-                    if (widget.title == 'Recent') {
-                      // Read the current file list from the bloc state synchronously
-                      final fileSystemList = BlocProvider.of<FilesBloc>(context)
-                          .state
-                          .fileSystemList;
-                      filteredFilesRecent = query.isEmpty
-                          ? fileSystemList
-                          : fileSystemList
-                              .where((file) => p
-                                  .basename(file.path)
-                                  .toLowerCase()
-                                  .contains(query.toLowerCase()))
-                              .toList();
-                    } else {
-                      // Normal directory
-                      filteredFiles = query.isEmpty
-                          ? displayedFiles
-                          : displayedFiles
-                              .where((file) => file.name
-                                  .toLowerCase()
-                                  .contains(query.toLowerCase()))
-                              .toList();
-                    }
+                  if (widget.title == 'Recent') {
+                    // Read the current file list from the bloc state synchronously
+                    final fileSystemList = BlocProvider.of<FilesBloc>(context)
+                        .state
+                        .fileSystemList;
+                    filteredFilesRecent = query.isEmpty
+                        ? fileSystemList
+                        : fileSystemList
+                            .where((file) => p
+                                .basename(file.path)
+                                .toLowerCase()
+                                .contains(query.toLowerCase()))
+                            .toList();
+                  } else {
+                    // Normal directory
+                    filteredFiles = query.isEmpty
+                        ? displayedFiles
+                        : displayedFiles
+                            .where((file) => file.name
+                                .toLowerCase()
+                                .contains(query.toLowerCase()))
+                            .toList();
+                  }
 
-                    return ValueListenableBuilder<bool>(
-                      valueListenable: viewModeNotifier,
-                      builder: (context, isGrid, _) {
-                        return isGrid
-                            ? widget.title == 'recent'
-                                ? buildGridViewForRecentFiles(
-                                    context, filteredFilesRecent)
-                                : buildGridView(
-                                    context, _scrollController, controller)
-                            : widget.title == 'Recent'
-                                ? buildListViewForRecentFiles(
-                                    context, filteredFilesRecent)
-                                : buildListView(
-                                    context, _scrollController, controller);
-                      },
-                    );
-                  },
-                ),
+                  return ValueListenableBuilder<bool>(
+                    valueListenable: viewModeNotifier,
+                    builder: (context, isGrid, _) {
+                      return isGrid
+                          ? widget.title == 'recent'
+                              ? buildGridViewForRecentFiles(
+                                  context, filteredFilesRecent)
+                              : buildGridView(
+                                  context, _scrollController, controller)
+                          : widget.title == 'Recent'
+                              ? buildListViewForRecentFiles(
+                                  context, filteredFilesRecent)
+                              : buildListView(
+                                  context, _scrollController, controller);
+                    },
+                  );
+                },
               ),
             ),
           ],
         ),
-        bottomSheet: isSearching ? null : _buildBottomActionMenuBar(context),
+        bottomNavigationBar:
+            isSearching ? null : _buildBottomActionMenuBar(context),
       ),
     );
   }
@@ -452,8 +452,19 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     _searchOverlayEntry?.remove();
 
-    _searchOverlayEntry = OverlayEntry(
-      builder: (ctx) => Positioned(
+    _searchOverlayEntry = OverlayEntry(builder: (ctx) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        if (!mounted) return;
+        if (!_focusNode.canRequestFocus) return;
+        if (_searchOverlayEntry == null) return; // overlay still exists
+
+        FocusManager.instance.primaryFocus?.unfocus();
+        _focusNode.requestFocus();
+      });
+
+      return Positioned(
         left: 0,
         right: 0,
         bottom: 0,
@@ -463,6 +474,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             height: 60,
             child: MechanixTextInput.search(
               autofocus: false,
+              canRequestFocus: true,
+              focusNode: _focusNode,
               prefixIcon: IconWidget(
                 iconPath: Images.search,
                 iconColor: context.colorScheme.onSurface,
@@ -484,8 +497,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             ),
           ),
         ),
-      ),
-    );
+      );
+    });
 
     overlay.insert(_searchOverlayEntry!);
   }
@@ -530,7 +543,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         iconHeight: 28,
         iconPath: Images.sortAscending,
         iconColor: isSortMenuOpen
-            ? context.colorScheme.primaryFixed
+            ? context.colorScheme.primaryContainer
             : context.colorScheme.onSurface,
       ),
       openMenu: () => setState(() => isSortMenuOpen = true),
@@ -585,9 +598,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         padding: const EdgeInsets.only(right: 14),
         child: Image.asset(
           icon,
-          width: 20,
-          height: 20,
-          color: context.colorScheme.primaryFixed,
+          width: 24,
+          height: 24,
+          color: context.colorScheme.primaryContainer,
         ),
       );
     }
@@ -623,7 +636,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
-            color: context.colorScheme.secondary,
+            color: context.colorScheme.secondaryContainer,
             borderRadius: selectionMode
                 ? null
                 : const BorderRadius.only(
@@ -693,7 +706,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             width: double.infinity,
             barSpacing: 46,
             decoration: BoxDecoration(
-              color: context.colorScheme.tertiary,
+              color: context.colorScheme.secondary,
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -703,13 +716,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           iconTheme: const MechanixBottomBarIconThemeData(),
           outsideClickDisabled: true,
           floatingActionBarController: _fabController,
-          offset: const Offset(-108, -4),
+          offset: const Offset(-112, -4),
           iconWidget: IconWidget(
             iconPath: Images.checkCircle,
             iconWidth: 28,
             iconHeight: 28,
             iconColor: selectionMode
-                ? context.colorScheme.primaryFixed
+                ? context.colorScheme.primaryContainer
                 : context.colorScheme.onSurface,
           ),
           isSelected: selectionMode,
@@ -778,7 +791,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       buttonIcon: IconWidget(
         iconPath: Images.dots,
         iconColor: isSelectionActionMenuOpen
-            ? context.colorScheme.primaryFixed
+            ? context.colorScheme.primaryContainer
             : context.colorScheme.onSurface,
         iconHeight: 28,
         iconWidth: 28,
@@ -795,7 +808,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             Images.extract,
             color: isZipFileSelected
                 ? context.colorScheme.onSurface
-                : context.colorScheme.surfaceContainerHigh,
+                : context.colorScheme.onSurfaceVariant,
             height: 20,
           ),
           title: 'Extract',
@@ -809,7 +822,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             Images.compress,
             color: hasSelection
                 ? context.colorScheme.onSurface
-                : context.colorScheme.surfaceContainerHigh,
+                : context.colorScheme.onSurfaceVariant,
             height: 20,
           ),
           title: 'Compress',
@@ -821,7 +834,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             Images.duplicate,
             color: isFileSelected
                 ? context.colorScheme.onSurface
-                : context.colorScheme.surfaceContainerHigh,
+                : context.colorScheme.onSurfaceVariant,
             height: 20,
           ),
           title: 'Duplicate',
@@ -837,7 +850,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             Images.rename,
             color: selectedPaths.length == 1
                 ? context.colorScheme.onSurface
-                : context.colorScheme.surfaceContainerHigh,
+                : context.colorScheme.onSurfaceVariant,
             height: 20,
           ),
           title: 'Rename',
@@ -879,7 +892,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             Images.info,
             color: selectedPaths.length == 1
                 ? context.colorScheme.onSurface
-                : context.colorScheme.surfaceContainerHigh,
+                : context.colorScheme.onSurfaceVariant,
             height: 20,
           ),
           title: 'Properties',
@@ -905,7 +918,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       buttonIcon: IconWidget(
         iconPath: Images.dots,
         iconColor: isFolderActionMenuOpen
-            ? context.colorScheme.primaryFixed
+            ? context.colorScheme.primaryContainer
             : context.colorScheme.onSurface,
         iconHeight: 28,
         iconWidth: 28,
@@ -922,7 +935,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           leading: Image.asset(
             Images.paste,
             color: isPasteDisabled
-                ? context.colorScheme.surfaceContainerHigh
+                ? context.colorScheme.onSurfaceVariant
                 : context.colorScheme.onSurface,
             height: mechanixIconSize,
           ),
@@ -1075,7 +1088,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       child: Container(
         height: screenHeight * 0.98,
         decoration: BoxDecoration(
-          color: context.colorScheme.secondary,
+          color: context.colorScheme.surfaceContainerHigh,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),
@@ -1105,7 +1118,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       enableDrag: true,
-      barrierColor: Colors.black54,
       builder: (_) {
         return BlocProvider.value(
           value: filesBloc, // keep same instance
@@ -1186,6 +1198,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     entry = OverlayEntry(
       builder: (ctx) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!_focusNode.canRequestFocus) return;
+          if (entry == null) return;
+
+          FocusManager.instance.primaryFocus?.unfocus();
+          _focusNode.requestFocus();
+        });
+
         return Positioned(
           left: 0,
           right: 0,
@@ -1205,7 +1225,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     height: 60,
                     child: MechanixTextInput.textInput(
                       autofocus: true,
-                      cursorColor: context.colorScheme.primaryFixed,
+                      canRequestFocus: true,
+                      focusNode: _focusNode,
+                      cursorColor: context.colorScheme.primaryContainer,
                       initialValue: defaultZipName,
                       onChanged: (v) {
                         setState(() {
@@ -1215,8 +1237,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       anchorWidget: showCheck
                           ? IconButton(
                               icon: Icon(Icons.check,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () async {
                                 final trimmed = currentName.trim();
 
@@ -1252,8 +1273,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             )
                           : IconButton(
                               icon: Icon(Icons.close,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () {
                                 entry?.remove();
                               },
@@ -1354,7 +1374,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       child: Container(
         height: screenHeight * 0.98,
         decoration: BoxDecoration(
-          color: context.colorScheme.secondary,
+          color: context.colorScheme.surfaceContainerHigh,
           borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(12),
             topRight: Radius.circular(12),
@@ -1384,7 +1404,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       enableDrag: true,
-      barrierColor: Colors.black54,
       builder: (_) {
         return BlocProvider.value(
           value: filesBloc, // keep same bloc instance
@@ -1518,6 +1537,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     entry = OverlayEntry(
       builder: (ctx) {
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!_focusNode.canRequestFocus) return;
+          if (entry == null) return;
+
+          FocusManager.instance.primaryFocus?.unfocus();
+          _focusNode.requestFocus();
+        });
+
         return Positioned(
           left: 0,
           right: 0,
@@ -1538,7 +1565,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     height: 60,
                     child: MechanixTextInput.textInput(
                       autofocus: true,
-                      cursorColor: context.colorScheme.primaryFixed,
+                      canRequestFocus: true,
+                      focusNode: _focusNode,
+                      cursorColor: context.colorScheme.primaryContainer,
                       onChanged: (v) {
                         setState(() {
                           folderName = v;
@@ -1550,8 +1579,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       anchorWidget: showCheck
                           ? IconButton(
                               icon: Icon(Icons.check,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                                  color: context.colorScheme.onSurface),
                               onPressed: () {
                                 entry?.remove();
 
@@ -1575,9 +1603,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                               },
                             )
                           : IconButton(
-                              icon: Icon(Icons.close,
-                                  color: context
-                                      .colorScheme.surfaceContainerLowest),
+                              icon: Icon(
+                                Icons.close,
+                                color: context.colorScheme.onSurface,
+                                size: 24,
+                              ),
                               onPressed: () {
                                 entry?.remove();
                                 controller.clearLiveRename();
@@ -1633,7 +1663,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             padding:
                 const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 32),
             decoration: BoxDecoration(
-              color: Colors.grey[850],
+              color: context.colorScheme.surfaceContainerHigh,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,

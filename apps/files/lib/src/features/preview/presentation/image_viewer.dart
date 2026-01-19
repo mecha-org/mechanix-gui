@@ -49,7 +49,8 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Padding(
-          padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+          padding:
+              const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
@@ -104,7 +105,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
           decoration: BoxDecoration(
-              color: context.colorScheme.secondary,
+              color: context.colorScheme.secondaryContainer,
               borderRadius: _isEditing
                   ? null
                   : const BorderRadius.only(
@@ -138,9 +139,9 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           iconWidget: IconWidget(
             iconPath: Images.crop,
             iconColor: isSvg
-                ? Colors.grey
+                ? context.colorScheme.outline
                 : _isEditing
-                    ? context.colorScheme.primaryFixed
+                    ? context.colorScheme.primaryContainer
                     : context.colorScheme.onSurface,
             iconHeight: 28.0,
             iconWidth: 28.0,

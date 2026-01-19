@@ -17,16 +17,15 @@ class CustomCircleCheckbox extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        width: 22,
-        height: 22,
+        width: 20.75,
+        height: 20.75,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color:
-              isChecked ? context.colorScheme.primaryFixed : Colors.transparent,
+          color: isChecked ? context.colorScheme.primary : Colors.transparent,
           border: Border.all(
             color: isChecked
-                ? context.colorScheme.primaryFixed
-                : context.colorScheme.surfaceContainerHigh,
+                ? context.colorScheme.primary
+                : context.colorScheme.outline,
             width: 2.5,
           ),
         ),

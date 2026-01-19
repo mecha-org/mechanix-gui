@@ -30,7 +30,7 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
       clipper: TabClipper(shift: sheetWidth * 0.65),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[850],
+          color: context.colorScheme.surfaceContainerHigh,
         ),
         padding: const EdgeInsets.only(
           left: 16,
@@ -81,7 +81,7 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'What would you like to do?',
+                'Would you like to replace?',
                 style: TextStyle(
                     color: context.colorScheme.onSurface, fontSize: 16),
               ),

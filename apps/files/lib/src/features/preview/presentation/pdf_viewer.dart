@@ -4,7 +4,6 @@ import 'dart:io' show FileSystemEntity, File;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
@@ -15,6 +14,7 @@ import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
@@ -174,39 +174,37 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: _buildNormalAppBar(),
-        body: ContainerWidget(
-          child: Stack(
-            children: [
-              // Display the PDF viewer
-              PdfViewer.file(
-                widget.filePath,
-                controller: _controller,
-                passwordProvider: _passwordProvider,
-                firstAttemptByEmptyPassword: true,
-                params: PdfViewerParams(
-                  backgroundColor: context.colorScheme.surface,
-                  enableTextSelection: true,
-                  maxScale: 4.0,
-                  minScale: 1.0,
-                  errorBannerBuilder: (context, error, stack, document) {
-                    return const SizedBox.shrink();
-                  },
-                  pageOverlaysBuilder: (context, pageRect, page) {
-                    return [
-                      CustomPaint(
-                        size: pageRect.size,
-                        painter: _PdfSearchHighlightPainter(
-                          searcher: _searcher,
-                          page: page,
-                        ),
+        body: Stack(
+          children: [
+            // Display the PDF viewer
+            PdfViewer.file(
+              widget.filePath,
+              controller: _controller,
+              passwordProvider: _passwordProvider,
+              firstAttemptByEmptyPassword: true,
+              params: PdfViewerParams(
+                backgroundColor: context.colorScheme.surface,
+                enableTextSelection: true,
+                maxScale: 4.0,
+                minScale: 1.0,
+                errorBannerBuilder: (context, error, stack, document) {
+                  return const SizedBox.shrink();
+                },
+                pageOverlaysBuilder: (context, pageRect, page) {
+                  return [
+                    CustomPaint(
+                      size: pageRect.size,
+                      painter: _PdfSearchHighlightPainter(
+                        searcher: _searcher,
+                        page: page,
                       ),
-                    ];
-                  },
-                ),
-                initialPageNumber: 1,
+                    ),
+                  ];
+                },
               ),
-            ],
-          ),
+              initialPageNumber: 1,
+            ),
+          ],
         ),
         bottomNavigationBar: _buildBottomBar(context));
   }
@@ -292,7 +290,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Padding(
-        padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+        padding: const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
         child: AppBar(
           automaticallyImplyLeading: false,
           scrolledUnderElevation: 0,
@@ -311,7 +309,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                             ? '${index + 1} of ${matches.length}'
                             : '0 of 0',
                         style: TextStyle(
-                          color: context.colorScheme.surfaceContainerHigh,
+                          color: context.colorScheme.onSurfaceVariant,
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
                         ),
@@ -361,65 +359,62 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   Widget _buildBottomBar(BuildContext context) {
     final state = widget.state;
 
-    return Container(
-      color: Colors.grey.shade900,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          MechanixBottomBar(
-            leadingWidget: [
-              BottomBarButton.widget(
-                  widget: Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: DecoratedPressableIcon(
-                  iconPath: Images.back,
-                  onTap: () => Navigator.pop(context),
-                ),
-              )),
-            ],
-            centerWidgetSpacing: 30,
-            centerWidget: [
-              BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.search,
-                  onTap: () {
-                    showPdfSearchBottomSheet(context);
-                  },
-                ),
-              ),
-              BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.copy,
-                  onTap: () {
-                    state?.selectedPaths = {widget.filePath};
-                    state?.handleCopy();
-                  },
-                ),
-              ),
-              BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.move,
-                  onTap: () {
-                    Navigator.pop(context);
-                    state?.selectedPaths = {widget.filePath};
-                    state?.handleMove();
-                  },
-                ),
-              ),
-              const BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.share,
-                  isDisabled: true, // TODO: add share functionality
-                  onTap: null,
-                ),
-              ),
-            ],
-            anchorWidget: [
-              BottomBarButton.widget(widget: buildActionsMenu(context)),
-            ],
+    return MechanixBottomBar(
+      theme: MechanixBottomBarThemeData(
+          decoration: BoxDecoration(
+              color: context.colorScheme.secondaryContainer,
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(8), topRight: Radius.circular(8)))),
+      leadingWidget: [
+        BottomBarButton.widget(
+            widget: Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: DecoratedPressableIcon(
+            iconPath: Images.back,
+            onTap: () => Navigator.pop(context),
           ),
-        ],
-      ),
+        )),
+      ],
+      centerWidgetSpacing: 30,
+      centerWidget: [
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.search,
+            onTap: () {
+              showPdfSearchBottomSheet(context);
+            },
+          ),
+        ),
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.copy,
+            onTap: () {
+              state?.selectedPaths = {widget.filePath};
+              state?.handleCopy();
+            },
+          ),
+        ),
+        BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.move,
+            onTap: () {
+              Navigator.pop(context);
+              state?.selectedPaths = {widget.filePath};
+              state?.handleMove();
+            },
+          ),
+        ),
+        const BottomBarButton.widget(
+          widget: DecoratedPressableIcon(
+            iconPath: Images.share,
+            isDisabled: true, // TODO: add share functionality
+            onTap: null,
+          ),
+        ),
+      ],
+      anchorWidget: [
+        BottomBarButton.widget(widget: buildActionsMenu(context)),
+      ],
     );
   }
 

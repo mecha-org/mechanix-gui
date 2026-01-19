@@ -324,7 +324,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
       return Scaffold(
         body: Center(
           child: CircularProgressIndicator(
-              color: context.colorScheme.surfaceContainerLowest),
+              color: context.colorScheme.primaryContainer),
         ),
       );
     }
@@ -373,7 +373,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
                               cropRect != null &&
                               _displayedImageRect != null)
                             CustomPaint(
-                              painter: AdvancedCropPainter(cropRect!),
+                              painter: AdvancedCropPainter(cropRect!, context),
                               size: _displayedImageRect!.size,
                             ),
                         ],
@@ -397,7 +397,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: context.colorScheme.tertiary,
+        color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(8), topRight: Radius.circular(8)),
       ),
@@ -503,11 +503,14 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
 // Crop painter
 class AdvancedCropPainter extends CustomPainter {
   final Rect rect;
-  AdvancedCropPainter(this.rect);
+  final BuildContext context;
+
+  AdvancedCropPainter(this.rect, this.context);
 
   @override
   void paint(Canvas canvas, Size size) {
-    final overlayPaint = Paint()..color = Colors.black.withOpacity(0.65);
+    final overlayPaint = Paint()
+      ..color = context.colorScheme.surface.withOpacity(0.65);
 
     final overlayPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
@@ -518,7 +521,7 @@ class AdvancedCropPainter extends CustomPainter {
 
     // Border
     final borderPaint = Paint()
-      ..color = Colors.white
+      ..color = context.colorScheme.onSecondaryFixedVariant
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
@@ -529,7 +532,7 @@ class AdvancedCropPainter extends CustomPainter {
     const handleLength = 18.0;
 
     final handlePaint = Paint()
-      ..color = Colors.white
+      ..color = context.colorScheme.onSecondaryFixedVariant
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.square
       ..style = PaintingStyle.stroke;
@@ -556,7 +559,8 @@ class AdvancedCropPainter extends CustomPainter {
     corner(r.bottomRight, false, false);
 
     // Side Handles
-    final sidePaint = Paint()..color = Colors.white;
+    final sidePaint = Paint()
+      ..color = context.colorScheme.onSecondaryFixedVariant;
 
     const sideLong = 22.0;
     const sideShort = 4.0;
