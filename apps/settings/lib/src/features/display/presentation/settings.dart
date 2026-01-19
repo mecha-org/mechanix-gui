@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/display/bloc/display_bloc.dart';
@@ -35,16 +36,20 @@ class ScreenOffTimeSettingsState extends State<ScreenOffTimeSettings> {
       builder: (context, state) {
         return Scaffold(
           body: ContainerWidget(
-              child: Column(
-            children: [
-              const CustomTitle(title: 'Screen Off Time'),
-              MechanixSelect(
-                options: screenOffOptions,
-                onChanged: onChanged,
-                value: getValue(state.screenTimeout),
-              ).padTop(8),
-            ],
-          )),
+            child: Column(
+              children: [
+                const CustomTitle(title: 'Screen Off Time'),
+                MechanixSelect(
+                  options: screenOffOptions,
+                  onChanged: onChanged,
+                  value: getValue(state.screenTimeout),
+                ).padTop(8),
+              ],
+            ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
+          ),
         );
       },
     );

@@ -67,13 +67,6 @@ class Sound extends StatelessWidget {
                     ),
                   ],
                 ),
-                MechanixSimpleList(
-                  listItems: [
-                    SimpleListItems(
-                      title: 'test Launcher Sound',
-                    ),
-                  ],
-                ),
               ],
             ).padTop(8),
           ),
