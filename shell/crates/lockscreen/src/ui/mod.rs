@@ -159,7 +159,7 @@ impl Render for Lockscreen {
                             div()
                                 .absolute()
                                 .inset_0()
-                                .child(wallpaper(size.width, px(panel_height))),
+                                .child(wallpaper(size.width, px(panel_height), &colors)),
                         )
                         // Content overlay
                         .child(
