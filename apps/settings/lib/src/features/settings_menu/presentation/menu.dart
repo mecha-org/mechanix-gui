@@ -33,6 +33,18 @@ class SettingMenu extends StatelessWidget {
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'Cellular',
+                      onTap: () {},
+                      iconPath: Images.cellularIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Airplane Mode',
+                      onTap: () {},
+                      iconPath: Images.wifi,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Bluetooth',
                       onTap: () => onTap(context, AppRoutes.bluetooth),
                       iconPath: Images.bluetooth,
@@ -43,15 +55,27 @@ class SettingMenu extends StatelessWidget {
                       onTap: () => onTap(context, AppRoutes.battery),
                       iconPath: Images.battery,
                     ),
-                  ]).padVertical(8),
+                  ]),
               MechanixSectionList(
                   physics: const NeverScrollableScrollPhysics(),
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'Extensions',
+                      onTap: () {},
+                      iconPath: Images.extensionIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Display & Brightness',
                       onTap: () => onTap(context, AppRoutes.display),
                       iconPath: Images.display,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Appearance',
+                      onTap: () {},
+                      iconPath: Images.appearance,
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
@@ -61,9 +85,27 @@ class SettingMenu extends StatelessWidget {
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'Notification',
+                      onTap: () {},
+                      iconPath: Images.notificationIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Language',
+                      onTap: () {},
+                      iconPath: Images.languageIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'Date & Time',
                       onTap: () => onTap(context, AppRoutes.dateTime),
                       iconPath: Images.dateTime,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Launcher',
+                      onTap: () {},
+                      iconPath: Images.languageIcon,
                     ),
                   ]),
               MechanixSectionList(
@@ -71,9 +113,21 @@ class SettingMenu extends StatelessWidget {
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
-                      title: 'System Updates',
+                      title: 'All Apps',
+                      onTap: () {},
+                      iconPath: Images.allAppsIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'Security',
+                      onTap: () {},
+                      iconPath: Images.searchIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
+                      title: 'System Update',
                       onTap: () => onTap(context, AppRoutes.systemUpdates),
-                      iconPath: Images.systemUpdateIcon,
+                      iconPath: Images.updateIcon,
                     ),
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
@@ -83,7 +137,24 @@ class SettingMenu extends StatelessWidget {
                     ),
                   ]),
             ],
-          ).padTop(8),
+          ).padOnly(top: 8, bottom: 0),
+        ),
+      ),
+      floatingActionButton: IconButton.filled(
+        onPressed: () {},
+        constraints: const BoxConstraints(
+          maxHeight: 44,
+          maxWidth: 44,
+        ),
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(context.surfaceContainer),
+        ),
+        icon: const IconWidget(
+          iconPath: Images.searchIcon,
+          boxWidth: 24,
+          boxHeight: 24,
+          iconWidth: 17,
+          iconHeight: 17,
         ),
       ),
     );

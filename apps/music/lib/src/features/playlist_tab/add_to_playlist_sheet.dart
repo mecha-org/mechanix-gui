@@ -5,7 +5,6 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_bottom_sheet_add.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_tile.dart';
@@ -74,7 +73,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                     height: 1.25,
                     letterSpacing: -1.1,
                     fontWeight: FontWeight.w600,
-                    color: MusicColors.primaryTextColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -102,7 +101,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                           "No playlists available",
                           style: TextStyle(
                             fontSize: 16,
-                            color: MusicColors.secondaryTextColor,
+                            color: context.onSecondaryFixedVariant,
                           ),
                         ),
                       );
@@ -180,7 +179,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
 
               // Footer actions
               Container(
-                color: MusicColors.backgroundColor,
+                color: context.secondaryContainer,
                 height: 60,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -215,8 +214,9 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                       spacing: 12,
                       children: [
                         MechanixFilledButton(
-                          theme: const MechanixFilledButtonThemeData(
+                          theme: MechanixFilledButtonThemeData(
                             buttonSize: Size(100, 40),
+                            buttonColor: context.surfaceContainerHighest,
                           ),
                           label: "Cancel",
                           onPressed: () {
@@ -226,8 +226,8 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
                             buttonSize: const Size(75, 40),
-                            buttonColor: MusicColors.buttonColor,
-                            pressedButtonColor: MusicColors.titleColor,
+                            buttonColor: context.primary,
+                            pressedButtonColor: context.primaryContainer,
                           ),
                           label: "Add",
                           onPressed:

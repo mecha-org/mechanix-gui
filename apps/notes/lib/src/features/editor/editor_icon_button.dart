@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:widgets/mechanix.dart';
 
 class EditorIconButton extends StatelessWidget {
   final bool isSelected;
@@ -30,14 +30,17 @@ class EditorIconButton extends StatelessWidget {
         onPressed: onPressed,
         icon:
             iconPath.isNotEmpty
-                ? Image.asset(
-                  iconPath,
-                  height: 24,
-                  width: 24,
-                  color:
-                      isSelected
-                          ? NotesColors.secondaryTextColor
-                          : Colors.white,
+                ? IconWidget(
+                  iconPath: iconPath,
+                  iconHeight: 24,
+                  iconWidth: 24,
+                  boxHeight: 24,
+                  boxWidth: 24,
+                  isActive: isSelected,
+                  activeIconColor: context.primaryContainer,
+                  // iconColor:
+                  //     isSelected
+                  //         ? NotesColors.secondaryTextColor
                 )
                 : icon!,
         padding: EdgeInsets.zero,

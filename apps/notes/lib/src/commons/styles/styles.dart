@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:widgets/extensions/color.dart';
 
 const borderSideStyle = BorderSide(color: Color(0xFF464646), width: 1);
 
-final titleStyle = const TextStyle(
-  color: NotesColors.titleTextColor,
+titleStyle(BuildContext context) => TextStyle(
+  color: context.onSurface,
   fontSize: 18,
   overflow: TextOverflow.ellipsis,
   fontWeight: FontWeight.w500,
   fontFamily: "Overused Grotesk",
 );
 
-final normalStyle = const TextStyle(
+normalStyle(BuildContext context) => TextStyle(
   fontSize: 18,
-  color: NotesColors.labelColor,
+  color: context.onSecondaryFixed,
   overflow: TextOverflow.ellipsis,
   fontWeight: FontWeight.w400,
   fontFamily: "Overused Grotesk",

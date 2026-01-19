@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:widgets/extensions/color.dart';
 
 class UpcomingSongProgressBar extends StatefulWidget {
   const UpcomingSongProgressBar({super.key});
@@ -58,10 +59,10 @@ class _UpcomingSongProgressBarState extends State<UpcomingSongProgressBar> {
                   overlayShape: const RoundSliderOverlayShape(
                     overlayRadius: 15,
                   ),
-                  activeTrackColor: Colors.white,
-                  inactiveTrackColor: Colors.white30,
+                  activeTrackColor: context.onSurface,
+                  inactiveTrackColor: context.surfaceContainer,
 
-                  thumbColor: Colors.white,
+                  thumbColor: context.onSecondaryFixedVariant,
                 ),
                 child: Slider(
                   value: sliderValue.clamp(0.0, 1.0),
@@ -95,8 +96,8 @@ class _UpcomingSongProgressBarState extends State<UpcomingSongProgressBar> {
               child: Text(
                 _format(_isDragging ? total * sliderValue : position),
                 textAlign: TextAlign.right,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.onSecondaryFixedVariant,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),

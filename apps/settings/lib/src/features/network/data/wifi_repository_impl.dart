@@ -61,11 +61,11 @@ class WifiRepositoryImpl implements WifiRepository {
     }
   }
 
+  @override
   Future<NetworkManagerDevice> getWifiDevice() async {
     final devices = _client.devices;
     NetworkManagerDevice wifiDevice = devices.firstWhere(
       (d) => d.deviceType == NetworkManagerDeviceType.wifi,
-      orElse: () => throw Exception("No Wi-Fi device found"),
     );
 
     return wifiDevice;
@@ -78,7 +78,6 @@ class WifiRepositoryImpl implements WifiRepository {
     final devices = _client.devices;
     NetworkManagerDevice wiredDevice = devices.firstWhere(
       (d) => d.deviceType == NetworkManagerDeviceType.ethernet,
-      orElse: () => throw Exception("No Wired device found"),
     );
     return wiredDevice;
   }
@@ -88,7 +87,7 @@ class WifiRepositoryImpl implements WifiRepository {
     try {
       await _client.setWirelessEnabled(enable);
     } catch (e) {
-      logger.e('Failed to set Wireless Enabled: $e');
+      print('Failed to set Wireless Enabled: $e');
     }
   }
 
@@ -99,8 +98,20 @@ class WifiRepositoryImpl implements WifiRepository {
   }
 
   @override
+  Future<Stream<List<String>>> streamWirelessDeviceStream() async {
+    final NetworkManagerDevice device = await getWifiDevice();
+    return device.wireless!.propertiesChanged;
+  }
+
+  @override
+  Future<List<NetworkManagerActiveConnection>> activatingConnection() async {
+    return _client.activeConnections;
+  }
+
+  @override
   Future<({AccessPoints? active, List<AccessPoints> available})>
-      availableAccessPoints(List<SavedNetworks>? savedNetworks) async {
+      availableAccessPoints(
+          List<SavedWirelessNetwork>? allSavedNetworks) async {
     try {
       NetworkManagerDevice? wifiDevice = await getWifiDevice();
 
@@ -123,11 +134,13 @@ class WifiRepositoryImpl implements WifiRepository {
       for (var nmAccessPoint in nmAccessPoints!) {
         final ssid =
             utf8.decode(nmAccessPoint.ssid); // Convert List<int> to String
+
         if (ssid.isNotEmpty && !seenSsids.contains(ssid)) {
           seenSsids.add(ssid); // mark this SSID as seen
           var isActive =
-              listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid);
-          var isSaved = savedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
+              listEquals(activeAccessPoint?.ssid, nmAccessPoint.ssid) &&
+                  wifiDevice.state == NetworkManagerDeviceState.activated;
+          var isSaved = allSavedNetworks?.any((sn) => sn.ssid == ssid) ?? false;
           var isSecure = nmAccessPoint.wpaFlags.isNotEmpty ||
               nmAccessPoint.rsnFlags.isNotEmpty;
 
@@ -141,18 +154,17 @@ class WifiRepositoryImpl implements WifiRepository {
               ip4Config: ip4Config,
               ip6Config: ip6Config,
             );
-          } else {
-            // active + saved
-            var accessPoint = AccessPoints(
-              nmAccessPoint: nmAccessPoint,
-              isActive: isActive,
-              isSaved: isSaved,
-              isSecure: isSecure,
-              ip4Config: ip4Config,
-              ip6Config: ip6Config,
-            );
-            accessPoints.add(accessPoint);
           }
+          // active + saved
+          var accessPoint = AccessPoints(
+            nmAccessPoint: nmAccessPoint,
+            isActive: isActive,
+            isSaved: isSaved,
+            isSecure: isSecure,
+            ip4Config: ip4Config,
+            ip6Config: ip6Config,
+          );
+          accessPoints.add(accessPoint);
         }
       }
       return (active: connectedAccessPoint, available: accessPoints);
@@ -230,12 +242,12 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<void> connectToNetwork(
       NetworkManagerAccessPoint accessPoint, String password) async {
-    logger.i("init connect to network");
+    print("init connect to network");
 
     NetworkManagerDevice wifiDevice = await getWifiDevice();
     if (wifiDevice == null ||
         wifiDevice.state == NetworkManagerDeviceState.unavailable) {
-      logger.e('connectToNetwork::No WiFi device found');
+      print('connectToNetwork::No WiFi device found');
       throw Exception('No WiFi device available');
     }
 
@@ -245,9 +257,8 @@ class WifiRepositoryImpl implements WifiRepository {
           accessPoint: accessPoint, ssid: null);
 
       if (existingConnection != null) {
-        logger.i('Found existing connection, activating it');
+        print('Found existing connection, activating it');
         existingConnection.delete();
-        return;
       }
 
       // Network requires password (WPA/WPA2)
@@ -258,8 +269,19 @@ class WifiRepositoryImpl implements WifiRepository {
         await _connectOpenNetwork(wifiDevice, accessPoint);
       }
     } catch (e) {
-      logger.e('Failed to connect to network: $e');
+      print('Failed to connect to network: $e');
       rethrow; // Properly propagate the error
+    }
+  }
+
+  @override
+  Future<void> deleteSavedNetwork(NetworkManagerAccessPoint accessPoint) async {
+    final existingConnection = await _findAndRemoveExistingConnection(
+        accessPoint: accessPoint, ssid: null);
+
+    if (existingConnection != null) {
+      logger.i('Found existing connection, activating it');
+      existingConnection.delete();
     }
   }
 
@@ -267,7 +289,7 @@ class WifiRepositoryImpl implements WifiRepository {
   Future<void> _connectSecureNetwork(NetworkManagerDevice wifiDevice,
       NetworkManagerAccessPoint accessPoint, String password) async {
     String? psk;
-    logger.i('Connecting to secure network: $accessPoint with $password');
+    print('Connecting to secure network: $accessPoint with $password');
 
     if (password.isEmpty) {
       psk = await getSavedWifiPsk(wifiDevice, accessPoint);
@@ -280,8 +302,7 @@ class WifiRepositoryImpl implements WifiRepository {
       psk = password;
     }
 
-    logger.i(
-        'Connecting to secure network with password $accessPoint with $psk ');
+    print('Connecting to secure network with password $accessPoint with $psk ');
     try {
       final result = await _client.addAndActivateConnection(
         device: wifiDevice,
@@ -294,9 +315,9 @@ class WifiRepositoryImpl implements WifiRepository {
         },
       );
 
-      logger.i('Connected to secure network: $result');
+      print('Connected to secure network: $result');
     } catch (e) {
-      logger.e('Failed to connect to secure network: $e');
+      print('Failed to connect to secure network: $e');
       rethrow;
     }
   }
@@ -304,16 +325,16 @@ class WifiRepositoryImpl implements WifiRepository {
   /// Connect to an open network (no password)
   Future<void> _connectOpenNetwork(NetworkManagerDevice wifiDevice,
       NetworkManagerAccessPoint accessPoint) async {
-    logger.i('Connecting to open network');
+    print('Connecting to open network');
 
     try {
       final result = await _client.addAndActivateConnection(
         device: wifiDevice,
         accessPoint: accessPoint,
       );
-      logger.i('Connected to open network: $result');
+      print('Connected to open network: $result');
     } catch (e) {
-      logger.e('Failed to connect to open network: $e');
+      print('Failed to connect to open network: $e');
       rethrow;
     }
   }
@@ -455,8 +476,6 @@ class WifiRepositoryImpl implements WifiRepository {
   @override
   Future<List<SavedWirelessNetwork>> getSavedNetworks() async {
     try {
-      logger.i('Fetching saved networks');
-
       final connections = _client.settings.connections;
 
       final List<SavedWirelessNetwork> savedNetworks = [];
@@ -474,9 +493,15 @@ class WifiRepositoryImpl implements WifiRepository {
 
           if (!seenBssids.contains(bssid)) {
             seenBssids.add(bssid); // mark this BSSID as seen
+
+            final macAddress =
+                flatSettings["802-11-wireless.seen-bssids"].toString() == 'null'
+                    ? ''
+                    : flatSettings["802-11-wireless.seen-bssids"].toString();
+
             SavedWirelessNetwork savedNetwork = SavedWirelessNetwork(
               ssid: flatSettings["connection.id"],
-              macAddress: flatSettings["802-11-wireless.mac-address"],
+              macAddress: macAddress.replaceAll(RegExp(r'[\[\]]'), ''),
               security: flatSettings["802-11-wireless-security.key-mgmt"],
               ipv4Method: flatSettings["ipv4.method"],
               autoConnect: flatSettings["connection.autoconnect"],
@@ -566,7 +591,7 @@ class WifiRepositoryImpl implements WifiRepository {
   Future<void> connectToSavedNetwork(
       NetworkManagerAccessPoint accessPoint) async {
     var accessPointSsid = utf8.decode(accessPoint.ssid);
-    logger.i("Connecting to saved network: $accessPointSsid");
+    print("Connecting to saved network: $accessPointSsid");
 
     // Find the WiFi device
     NetworkManagerDevice device = await getWifiDevice();
@@ -581,21 +606,15 @@ class WifiRepositoryImpl implements WifiRepository {
             // Activate the saved connection
             await _client.activateConnection(
                 device: device, connection: cn, accessPoint: accessPoint);
-            logger.i('Connection $accessPointSsid activated successfully');
+            print('Connection $accessPointSsid activated successfully');
           } catch (e) {
-            logger.e('Failed to connect to saved network: $e');
+            print('Failed to connect to saved network: $e');
             Future.error('Failed to connect to saved network: $e');
           }
           return;
         }
       }
     }
-  }
-
-  @override
-  Future<Stream<List<String>>> streamWirelessDeviceStream() async {
-    final NetworkManagerDevice device = await getWifiDevice();
-    return device.wireless!.propertiesChanged;
   }
 
   @override

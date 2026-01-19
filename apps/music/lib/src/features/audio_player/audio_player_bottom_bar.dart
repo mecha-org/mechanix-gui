@@ -3,11 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 
 class AudioPlayerBottomBar extends StatelessWidget {
@@ -25,15 +23,6 @@ class AudioPlayerBottomBar extends StatelessWidget {
       selector: (state) => state.isPlaying,
       builder:
           (context, isPlaying) => MechanixBottomBar(
-            theme: MechanixBottomBarThemeData(
-              decoration: BoxDecoration(
-                color: Color(0xFF2E2E2E),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(0),
-                  topRight: Radius.circular(0),
-                ),
-              ),
-            ),
             leadingWidget: [
               BottomBarButton(
                 disabledColor: Theme.of(context).disabledColor,
@@ -67,14 +56,14 @@ class AudioPlayerBottomBar extends StatelessWidget {
                         context.read<SongsBloc>().add(ToggleRepeat());
                       },
                       iconSize: 44,
-                      icon: Image.asset(
-                        icon,
-                        width: 24,
-                        height: 24,
-                        color:
-                            state != RepeatMode.none
-                                ? MusicColors.buttonColor
-                                : null,
+                      icon: IconWidget(
+                        iconHeight: 24,
+                        iconWidth: 24,
+                        boxHeight: 24,
+                        boxWidth: 24,
+                        iconPath: icon,
+                        isActive: state != RepeatMode.none,
+                        activeIconColor: context.primaryContainer,
                       ),
                     );
                   },
@@ -118,13 +107,16 @@ class AudioPlayerBottomBar extends StatelessWidget {
                         context.read<SongsBloc>().add(ShuffleToggle(!state));
                       },
                       iconSize: 44,
-                      icon: Image.asset(
-                        state
-                            ? MusicIcons.shuffleEnableIcon
-                            : MusicIcons.shuffleIcon,
-                        width: 24,
-                        height: 24,
-                        color: state ? MusicColors.buttonColor : null,
+                      icon: IconWidget(
+                        iconPath:
+                            state
+                                ? MusicIcons.shuffleEnableIcon
+                                : MusicIcons.shuffleIcon,
+                        iconHeight: 24,
+                        iconWidth: 24,
+                        boxHeight: 24,
+                        boxWidth: 24,
+                        isActive: state,
                       ),
                     );
                   },

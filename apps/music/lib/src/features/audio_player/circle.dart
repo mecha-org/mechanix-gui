@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
-import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:widgets/mechanix.dart';
 
 class SemiCircularAudioProgress extends StatefulWidget {
   final Duration currentDuration;
@@ -88,6 +88,9 @@ class _SemiCircularAudioProgressState extends State<SemiCircularAudioProgress> {
                   CustomPaint(
                     size: size,
                     painter: SemiCircularProgressPainter(
+                      thumbColor: context.colorScheme.onSecondaryFixedVariant,
+                      sliderColor: context.surfaceContainer,
+                      activeSliderColor: context.onSurface,
                       currentDuration: widget.currentDuration,
                       totalDuration: widget.totalDuration,
                       isDragging: _isDragging,
@@ -190,11 +193,17 @@ class SemiCircularProgressPainter extends CustomPainter {
   final Duration totalDuration;
   final bool isDragging;
   final bool showDebugHitArea;
+  final Color sliderColor;
+  final Color activeSliderColor;
+  final Color thumbColor;
 
   SemiCircularProgressPainter({
+    required this.sliderColor,
     required this.currentDuration,
     required this.totalDuration,
     required this.isDragging,
+    required this.activeSliderColor,
+    required this.thumbColor,
     this.showDebugHitArea = false,
   });
 
@@ -224,7 +233,7 @@ class SemiCircularProgressPainter extends CustomPainter {
     // Background track (inactive part)
     final backgroundPaint =
         Paint()
-          ..color = MusicColors.dividerColor
+          ..color = sliderColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round;
@@ -247,7 +256,7 @@ class SemiCircularProgressPainter extends CustomPainter {
     // Active track (progress part)
     final progressPaint =
         Paint()
-          ..color = MusicColors.primaryTextColor
+          ..color = activeSliderColor
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokeWidth
           ..strokeCap = StrokeCap.round;
@@ -269,7 +278,7 @@ class SemiCircularProgressPainter extends CustomPainter {
 
     final thumbPaint =
         Paint()
-          ..color = MusicColors.primaryTextColor
+          ..color = thumbColor
           ..style = PaintingStyle.fill;
 
     // Draw larger thumb when dragging
@@ -278,7 +287,7 @@ class SemiCircularProgressPainter extends CustomPainter {
 
     // Draw time labels
     final textStyle = TextStyle(
-      color: MusicColors.primaryTextColor,
+      color: activeSliderColor,
       fontSize: 12,
       fontWeight: FontWeight.w500,
     );
