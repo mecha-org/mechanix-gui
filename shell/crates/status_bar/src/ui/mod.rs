@@ -2,7 +2,7 @@ use gpui::{prelude::FluentBuilder, *};
 use icons::prelude::{Icons, StatusBarIcons};
 use shell_state::ShellState;
 use std::time::Duration;
-use theme::prelude::{Fonts, Theme};
+use theme::prelude::{AlphaExt, Fonts, Theme};
 use upower::interfaces::device::{BatteryLevel, BatteryState};
 
 pub struct StatusBar {
@@ -222,24 +222,8 @@ pub fn status_bar_components(
             |this| {
                 this.absolute().top(px(0.)).left(px(0.)).bg(linear_gradient(
                     0.,
-                    linear_color_stop(
-                        Rgba {
-                            r: 0.,
-                            g: 0.,
-                            b: 0.,
-                            a: 1.,
-                        },
-                        0.3,
-                    ),
-                    linear_color_stop(
-                        Rgba {
-                            r: 0.,
-                            g: 0.,
-                            b: 0.,
-                            a: 0.0,
-                        },
-                        0.5,
-                    ),
+                    linear_color_stop(colors.background_1000.with_alpha(1.), 1.),
+                    linear_color_stop(colors.background_1000.with_alpha(0.), 0.2),
                 )
                 .color_space(ColorSpace::default()))
             },
