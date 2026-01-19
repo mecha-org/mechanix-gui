@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_notes/app_routes.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:widgets/extensions/color.dart';
 import 'package:widgets/widgets.dart';
 
 class _NoteCard extends StatelessWidget {
@@ -24,7 +24,7 @@ class _NoteCard extends StatelessWidget {
     final container = Container(
       height: height,
       decoration: BoxDecoration(
-        color: isLoading ? null : NotesColors.cardColor,
+        color: isLoading ? null : context.secondary,
         borderRadius: BorderRadius.circular(8),
         gradient:
             isLoading && shimmerAnimation != null
@@ -111,10 +111,10 @@ class NotesGridLayout extends StatelessWidget {
                                         : null,
                                 child:
                                     isFirstCard
-                                        ? const Center(
+                                        ? Center(
                                           child: IconWidget(
-                                            iconColor:
-                                                NotesColors.secondaryCardColor,
+                                            iconColor: context.primaryContainer
+                                                .withValues(alpha: 0.8),
                                             iconPath: NotesIcon.addIcon,
                                             boxHeight: 48,
                                             boxWidth: 48,
@@ -162,7 +162,7 @@ class NotesGridLayout extends StatelessWidget {
     );
   }
 }
- 
+
 // GRADIENT TRANSFORM - Reusable for shimmer effect
 class _SlideGradientTransform extends GradientTransform {
   final double slidePercent;

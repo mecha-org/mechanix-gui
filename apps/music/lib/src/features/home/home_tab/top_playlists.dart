@@ -4,9 +4,11 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_card.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/extensions/build_context.dart';
+import 'package:widgets/extensions/color.dart';
 
 class TopPlaylists extends StatefulWidget {
   const TopPlaylists({super.key});
@@ -107,7 +109,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                     Text(
                       'Playlists',
                       style: TextStyle(
-                        color: MusicColors.textColor,
+                        color: context.onSurfaceVariant,
                         fontSize: 18,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
@@ -117,28 +119,29 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                       spacing: 12,
                       children: [
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.previousPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.previousPageIcon,
+                            iconSize: 24,
+                            boxSize: 24,
+                            iconColor:
                                 canScrollLeft
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
                           onPressed: canScrollLeft ? _scrollLeft : null,
                         ),
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.nextPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.nextPageIcon,
+                            iconSize: 24,
+                            boxSize: 24,
+                            iconColor:
                                 canScrollRight
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
+
                           iconSize: 40,
                           onPressed: canScrollRight ? _scrollRight : null,
                         ),
@@ -154,8 +157,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                 child: SingleChildScrollView(
                   controller: _scrollController,
                   scrollDirection: Axis.horizontal,
-                  physics:
-                      const PageScrollPhysics(), // Disable manual scroll
+                  physics: const PageScrollPhysics(), // Disable manual scroll
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(

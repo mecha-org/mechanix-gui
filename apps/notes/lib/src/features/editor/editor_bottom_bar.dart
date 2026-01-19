@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 import 'package:mechanix_notes/src/commons/icons.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_event.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_state.dart';
@@ -15,6 +14,7 @@ import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button
 import 'package:mechanix_notes/src/features/editor/toolbar/text_editor_toolbar.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
+import 'package:widgets/extensions/color.dart';
 import 'package:widgets/widgets.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
@@ -146,37 +146,39 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
         return MechanixBottomBar(
           theme:
               toolbarSelected != ToolbarEnum.none
-                  ? const MechanixBottomBarThemeData(
+                  ? MechanixBottomBarThemeData(
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Color(0xFF2E2E2E),
-                      borderRadius: BorderRadius.all(Radius.circular(0)),
-                      boxShadow: [
-                        BoxShadow(
-                          offset: Offset(0, 0),
-                          color: Color(0x99000000),
-                        ),
-                        BoxShadow(
-                          offset: Offset(0, 0),
-                          color: Color(0x40000000),
-                        ),
-                        BoxShadow(
-                          offset: Offset(0, 0),
-                          color: Color(0x40000000),
-                        ),
-                      ],
+                      color: context.secondaryContainer,
+                      borderRadius: const BorderRadius.all(Radius.circular(0)),
+                      // boxShadow: [
+                      //   BoxShadow(
+                      //     offset: Offset(0, 0),
+                      //     color: Color(0x99000000),
+                      //   ),
+                      //   BoxShadow(
+                      //     offset: Offset(0, 0),
+                      //     color: Color(0x40000000),
+                      //   ),
+                      //   BoxShadow(
+                      //     offset: Offset(0, 0),
+                      //     color: Color(0x40000000),
+                      //   ),
+                      // ],
                     ),
                   )
                   : null,
           leadingWidget: [
             BottomBarButton(
+              iconTheme: const MechanixBottomBarIconThemeData(
+                buttonMargin: EdgeInsets.only(left: 5),
+              ),
               iconWidget: const IconWidget(
                 iconPath: NotesIcon.backIcon,
                 iconHeight: 28,
                 iconWidth: 28,
                 boxHeight: 30,
                 boxWidth: 30,
-                iconColor: Colors.white,
               ),
               onPressed: () => _saveNotes(context),
             ),
@@ -188,11 +190,11 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
           centerWidget: [
             BottomBarButton.extension(
               outsideClickDisabled: true,
-
-              floatingActionBarTheme: const MechanixFloatingActionBarThemeData(
+              floatingActionBarTheme: MechanixFloatingActionBarThemeData(
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: NotesColors.floatingMenuColor,
-                  borderRadius: BorderRadius.only(
+                  color: context.secondary,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     topRight: Radius.circular(12),
                   ),
@@ -208,7 +210,7 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
               isSelected: toolbarSelected == ToolbarEnum.text,
               iconTheme: MechanixBottomBarIconThemeData(
                 activeButtonDecoration: BoxDecoration(
-                  color: NotesColors.cardColor.withValues(alpha: 0.5),
+                  color: context.secondary,
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
@@ -221,9 +223,8 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 iconWidth: 28,
                 boxHeight: 44,
                 boxWidth: 44,
-                activeIconColor: NotesColors.secondaryTextColor,
+                activeIconColor: context.primaryContainer,
                 isActive: toolbarSelected == ToolbarEnum.text,
-                iconColor: Colors.white,
               ),
 
               extensionWidgets: [
@@ -237,10 +238,11 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
             ),
 
             BottomBarButton.extension(
-              floatingActionBarTheme: const MechanixFloatingActionBarThemeData(
+              floatingActionBarTheme: MechanixFloatingActionBarThemeData(
+                width: double.infinity,
                 decoration: BoxDecoration(
-                  color: NotesColors.floatingMenuColor,
-                  borderRadius: BorderRadius.only(
+                  color: context.secondary,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     topRight: Radius.circular(12),
                   ),
@@ -256,7 +258,7 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
               floatingActionBarController: alignEditorController,
               iconTheme: MechanixBottomBarIconThemeData(
                 activeButtonDecoration: BoxDecoration(
-                  color: NotesColors.cardColor.withValues(alpha: 0.5),
+                  color: context.secondary,
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
@@ -266,9 +268,8 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 iconWidth: 28,
                 boxHeight: 44,
                 boxWidth: 44,
-                activeIconColor: NotesColors.secondaryTextColor,
+                activeIconColor: context.primaryContainer,
                 isActive: toolbarSelected == ToolbarEnum.align,
-                iconColor: Colors.white,
               ),
               extensionWidgets: [
                 BottomBarButton.widget(
@@ -285,14 +286,14 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 builder:
                     (context, isUndo) => FocusPreserveButton(
                       child: IconButton(
-                        icon: Image.asset(
-                          NotesIcon.undoIcon,
-                          width: 28,
-                          height: 28,
-                          color:
-                              isUndo
-                                  ? Colors.white
-                                  : Theme.of(context).disabledColor,
+                        icon: IconWidget(
+                          iconPath: NotesIcon.undoIcon,
+                          iconHeight: 28,
+                          iconWidth: 28,
+                          boxHeight: 28,
+                          boxWidth: 28,
+                          iconColor:
+                              isUndo ? null : Theme.of(context).disabledColor,
                         ),
                         iconSize: 44,
                         onPressed: isUndo ? _undoCall : null,
@@ -306,14 +307,14 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 builder:
                     (context, isRedo) => FocusPreserveButton(
                       child: IconButton(
-                        icon: Image.asset(
-                          NotesIcon.redoIcon,
-                          width: 28,
-                          height: 28,
-                          color:
-                              isRedo
-                                  ? Colors.white
-                                  : Theme.of(context).disabledColor,
+                        icon: IconWidget(
+                          iconPath: NotesIcon.redoIcon,
+                          iconHeight: 28,
+                          iconWidth: 28,
+                          boxHeight: 28,
+                          boxWidth: 28,
+                          iconColor:
+                              isRedo ? null : Theme.of(context).disabledColor,
                         ),
                         iconSize: 44,
                         onPressed: isRedo ? _redoCall : null,

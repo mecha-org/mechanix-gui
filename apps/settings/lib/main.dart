@@ -67,6 +67,7 @@ import 'package:mechanix_settings/src/features/sound/presentation/vibration_leve
 import 'package:mechanix_settings/src/features/system_update/presentation/system_updates.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
+
 import 'load_settings.dart';
 
 void main() async {

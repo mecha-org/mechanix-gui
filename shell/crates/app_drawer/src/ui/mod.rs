@@ -748,6 +748,12 @@ impl AppDrawer {
                                 w.upper_wing_size(Size::new(px(150.0), px(15.0)));
                                 w.border_width(px(1.0));
                                 w.border_radius(px(8.0));
+                                w.corner_radii(commons::widgets::CornerRadii {
+                                    top_left: px(0.0),
+                                    top_right: px(0.0),
+                                    bottom_right: px(8.0),
+                                    bottom_left: px(8.0),
+                                });
                                 w
                             })
                             .child(

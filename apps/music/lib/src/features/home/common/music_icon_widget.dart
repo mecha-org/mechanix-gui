@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:widgets/mechanix.dart';
 
 class MusicIconButton extends StatelessWidget {
   final VoidCallback? onPressed;
@@ -13,7 +13,7 @@ class MusicIconButton extends StatelessWidget {
   final EdgeInsetsGeometry padding;
 
   // Styling
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final BorderRadius borderRadius;
   final Color? iconColor;
 
@@ -27,7 +27,7 @@ class MusicIconButton extends StatelessWidget {
     this.iconSize = 28,
     this.buttonSize = 44,
     this.padding = EdgeInsets.zero,
-    this.backgroundColor = MusicColors.buttonBackgroundColor,
+    this.backgroundColor,
     this.borderRadius = const BorderRadius.all(Radius.circular(8)),
     this.enabled = true,
     this.iconColor,
@@ -43,16 +43,20 @@ class MusicIconButton extends StatelessWidget {
       splashColor: Colors.transparent,
       style: ButtonStyle(
         fixedSize: WidgetStatePropertyAll(Size(buttonSize, buttonSize)),
-        backgroundColor: WidgetStatePropertyAll(backgroundColor),
+        backgroundColor: WidgetStatePropertyAll(
+          backgroundColor ?? context.secondary,
+        ),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: borderRadius),
         ),
       ),
-      icon: Image.asset(
-        icon,
-        width: iconSize,
-        height: iconSize,
-        color: iconColor,
+      icon: IconWidget(
+        iconPath: icon,
+        iconWidth: iconSize,
+        iconHeight: iconSize,
+        iconColor: iconColor,
+        boxWidth: iconSize,
+        boxHeight: iconSize,
       ),
     );
   }

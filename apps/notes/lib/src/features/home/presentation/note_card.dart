@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/commons/common_helper.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
@@ -54,14 +53,12 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
-            color: NotesColors.cardColor,
+            color: context.secondary,
             borderRadius: BorderRadius.circular(12),
             border:
                 widget.isSelected
                     ? Border.all(
-                      color: NotesColors.secondaryCardColor.withValues(
-                        alpha: 0.8,
-                      ),
+                      color: context.primaryContainer.withValues(alpha: 0.8),
                       width: 1,
                     )
                     : null,
@@ -81,9 +78,9 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
                         widget.note.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
-                          color: NotesColors.titleTextColor,
+                          color: context.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -104,8 +101,8 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
                         height: 18,
                         child: Text(
                           CommonHelper.formatDateTime(widget.note.updatedAt),
-                          style: const TextStyle(
-                            color: NotesColors.labelColor,
+                          style: TextStyle(
+                            color: context.onSecondaryFixed,
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
                           ),
@@ -132,7 +129,7 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
                         child: MechanixCircleCheckbox(
                           value: widget.isSelected,
                           onChanged: (a) {},
-                          activeColor: NotesColors.secondaryCardColor,
+                          activeColor: context.primaryContainer,
                           width: 24,
                           height: 24,
                         ),
@@ -152,7 +149,7 @@ void _openNote(BuildContext context, String noteId) {
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => EditorBlocProvider(child: NotesEditor(noteId:noteId)),
+      builder: (_) => EditorBlocProvider(child: NotesEditor(noteId: noteId)),
     ),
   );
 }

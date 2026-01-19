@@ -32,18 +32,11 @@ class _BottomMenuState extends State<BottomMenu> {
 
     final message =
         "This action will delete ${isSingle ? 'this note' : 'these notes'} permanently.";
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (bottomSheetContext) {
-        return DeleteBottomSheet(
-          title: title,
-          message: message,
-          bottomSheetContext: bottomSheetContext,
-        );
-      },
+    MechanixBottomSheet.show(
+      topTabWidth: 370,
+      topTabRightSideShiftLength: 40,
+      context,
+      child: DeleteBottomSheet(title: title, message: message),
     );
   }
 
@@ -70,6 +63,7 @@ class _BottomMenuState extends State<BottomMenu> {
       leadingWidget: [
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(
+            buttonMargin: EdgeInsets.only(left: 5),
             iconSize: Size(28, 28),
             iconBoxSize: Size(44, 44),
           ),

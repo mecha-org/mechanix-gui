@@ -6,6 +6,7 @@ import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
 import 'package:widgets/mechanix.dart';
 
 class PlaylistBottomSheetAdd extends StatefulWidget {
@@ -147,11 +148,12 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
                         : () => setState(() {
                           _activeMode = ActiveMode.add;
                         }),
-                icon: Image.asset(
-                  MusicIcons.addIcon,
-                  width: 28,
-                  height: 28,
-                  color: isLimitReached ? Colors.grey : null,
+                icon: SongsIcon(
+                  iconPath: MusicIcons.addIcon,
+                  boxSize: 28,
+                  iconSize: 28,
+                  iconColor:
+                      isLimitReached ? Theme.of(context).disabledColor : null,
                 ),
               ),
         ),
@@ -160,7 +162,11 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
           child: IconButton(
             iconSize: 44,
             onPressed: () => setState(() => _activeMode = ActiveMode.search),
-            icon: Image.asset(MusicIcons.searchIcon, width: 28, height: 28),
+            icon: SongsIcon(
+              iconPath: MusicIcons.searchIcon,
+              boxSize: 28,
+              iconSize: 28,
+            ),
           ),
         ),
       ],

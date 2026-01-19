@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/commons/common_helper.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/editor/bloc/editor_bloc_provider.dart';
 import 'package:mechanix_notes/src/features/editor/notes_editor.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
@@ -12,6 +11,7 @@ import 'package:mechanix_notes/src/features/home/bloc/notes_state.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_bar.dart';
 import 'package:mechanix_notes/src/features/search_notes/presentation/search_highlight.dart';
+import 'package:widgets/mechanix.dart';
 
 class SearchNotes extends StatefulWidget {
   const SearchNotes({super.key});
@@ -68,18 +68,21 @@ class _SearchNotesState extends State<SearchNotes> {
             Expanded(
               child:
                   searchedNotes.isEmpty
-                      ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 80),
-                          child: Text(
-                            searchQuery.trim().length < 2
-                                ? "Start typing to search notes..."
-                                : "No Notes Found.",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: NotesColors.labelColor,
-                              fontWeight: FontWeight.w400,
-                            ),
+                      ? Container(
+                        alignment: Alignment.topLeft,
+                        padding: const EdgeInsets.only(
+                          left: 16,
+                          bottom: 80,
+                          top: 10,
+                        ),
+                        child: Text(
+                          searchQuery.trim().length < 2
+                              ? "Start typing to search notes..."
+                              : "No Notes Found.",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: context.onSurfaceVariant,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                       )
@@ -117,7 +120,7 @@ class _SearchNotesState extends State<SearchNotes> {
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(8),
-                                      color: NotesColors.cardColor,
+                                      color: context.secondary,
                                     ),
                                     child: Row(
                                       crossAxisAlignment:
@@ -136,9 +139,8 @@ class _SearchNotesState extends State<SearchNotes> {
                                             horizontal: 6,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: NotesColors
-                                                .highlightTextColor
-                                                .withValues(alpha: 0.65),
+                                            color: context.primaryContainer
+                                                .withValues(alpha: 0.8),
                                             borderRadius: BorderRadius.circular(
                                               3,
                                             ),
@@ -154,8 +156,8 @@ class _SearchNotesState extends State<SearchNotes> {
                                               note.updatedAt,
                                             ),
                                             textAlign: TextAlign.end,
-                                            style: const TextStyle(
-                                              color: NotesColors.labelColor,
+                                            style: TextStyle(
+                                              color: context.onSecondaryFixed,
                                               fontSize: 14,
                                               fontWeight: FontWeight.w400,
                                             ),

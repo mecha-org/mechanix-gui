@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 
 class PlayerSideControls extends StatelessWidget {
@@ -47,6 +47,7 @@ class PlayerSideControls extends StatelessWidget {
               );
             },
             backgroundColor: Colors.transparent,
+            iconColor: isFavorited ? context.primary : null,
             icon:
                 isFavorited
                     ? MusicIcons.filledFavouriteIcon
@@ -67,7 +68,7 @@ class PlayerSideControls extends StatelessWidget {
               return Container(
                 padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: MusicColors.tapColor,
+                  color: context.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text("$minutes:$seconds"),

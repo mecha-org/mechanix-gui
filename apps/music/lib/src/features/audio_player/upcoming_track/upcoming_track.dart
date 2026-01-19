@@ -5,7 +5,6 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/audio_player/upcoming_track/upcoming_artwork_circular_progress.dart';
 import 'package:mechanix_music/src/features/audio_player/upcoming_track/upcoming_song_progress_bar.dart';
@@ -13,6 +12,7 @@ import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 import 'package:tuple/tuple.dart';
+import 'package:widgets/extensions/color.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 
 class UpcomingTrack extends StatelessWidget {
@@ -39,7 +39,6 @@ class UpcomingTrack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -74,8 +73,8 @@ class UpcomingTrack extends StatelessWidget {
                                 Text(
                                   songDetails.title,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: MusicColors.headingTextColor,
+                                  style: TextStyle(
+                                    color: context.onSecondaryFixedVariant,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     height: 1.2,
@@ -86,8 +85,8 @@ class UpcomingTrack extends StatelessWidget {
                                 Text(
                                   songDetails.artist,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
+                                  style: TextStyle(
+                                    color: context.onSecondaryFixedVariant,
                                     fontSize: 14,
                                   ),
                                   maxLines: 1,
@@ -110,6 +109,7 @@ class UpcomingTrack extends StatelessWidget {
                                   );
                                 },
                                 backgroundColor: Colors.transparent,
+                                iconColor: isFavorited ? context.primary : null,
                                 icon:
                                     isFavorited
                                         ? MusicIcons.filledFavouriteIcon
@@ -157,7 +157,7 @@ class UpcomingTrack extends StatelessWidget {
                   Text(
                     'Upcoming tracks',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: context.onSurface,
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                     ),
