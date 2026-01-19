@@ -28,6 +28,7 @@ class AppRoutes {
   static const dateTime = '/date_time';
   static const timeSettings = '/date_time/time_settings';
   static const dateSettings = '/date_time/date_settings';
+  static const timeZone = '/date_time/time_zone';
   static const appearance = '/appearance';
   static const applyWallpaper = '/appearance/apply_wallpaper';
   static const bluetoothDeviceInfo = '/bluetooth/info';
