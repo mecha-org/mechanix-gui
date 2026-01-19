@@ -55,6 +55,8 @@ jobs:
     name: ${{ matrix.name }}
     needs: detect-changes
     runs-on: ubuntu-24.04-arm
+    container:
+      image: mechaorg/services-builder:arm64
     environment: pre-release
     strategy:
       fail-fast: false
@@ -83,26 +85,8 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4      
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-
-      - name: Install system dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            fakeroot \
-            libdbus-1-dev \
-            libpulse-dev \
-            libpam0g-dev \
-            libclang-dev \
-            librust-gdk-pixbuf-sys-dev \
-            pipx \
-            jq
-            
       - name: Cache Cargo Data
         uses: actions/cache@v4
         with:
@@ -114,20 +98,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Install cargo tools
-        run: |
-          cargo install cargo-deb
-          cargo install cargo-generate-rpm
-      - name: Install Nushell
-        run: |
-          curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
-          echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
-          sudo apt update
-          sudo apt install nushell
       - name: Setup | Pulp CLI
         run: |
-          pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb pulp_rpm
           PULP_API_URL="${MECHA_PULP_API_URL}:8080"
           pulp config create --username "$MECHA_PULP_USERNAME" --password "$MECHA_PULP_PASSWORD" \
             --base-url "$PULP_API_URL" --overwrite
@@ -253,7 +225,7 @@ jobs:
             --name="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_RPMS_REPOSITORY_NAME }}" \
             --publication="$PUB_HREF"
-            
+
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
