@@ -5,6 +5,8 @@ import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/mechanix.dart';
 
 class PlaylistMenu extends StatefulWidget {
   final PlaylistInfo playlistInfo;
@@ -15,6 +17,7 @@ class PlaylistMenu extends StatefulWidget {
   final bool isBackgroundRequired;
   final Size iconSize;
   final bool enabled;
+  final Color? backgroundColor;
   const PlaylistMenu({
     super.key,
     required this.playlistInfo,
@@ -25,6 +28,7 @@ class PlaylistMenu extends StatefulWidget {
     this.isBackgroundRequired = false,
     this.iconSize = const Size(40, 40),
     this.enabled = true,
+    this.backgroundColor,
   });
 
   @override
@@ -51,7 +55,7 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
           overlayColor: WidgetStatePropertyAll(Colors.transparent),
         ),
         offset: const Offset(-45, 10),
-        color: MusicColors.tapColor,
+        color: context.surfaceContainerHighest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
 
         // ✅ MENU OPEN / CLOSE TRACKING
@@ -109,23 +113,23 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
           decoration: BoxDecoration(
             color:
                 widget.isBackgroundRequired
-                    ? MusicColors.buttonBackgroundColor
+                    ? widget.backgroundColor ?? context.secondaryContainer
                     : isMenuOpen
-                    ? MusicColors.backgroundColor
+                    ? widget.backgroundColor ?? context.secondaryContainer
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
-            child: Image.asset(
-              MusicIcons.threeDotIcon,
-              width: 28,
-              height: 28,
-              color:
+            child: SongsIcon(
+              iconPath: MusicIcons.threeDotIcon,
+              iconSize: 28,
+              boxSize: 28,
+              iconColor:
                   widget.enabled
                       ? isMenuOpen
-                          ? MusicColors.borderColor
-                          : Colors.white
-                      : Colors.grey,
+                          ? context.primary
+                          : null
+                      : Theme.of(context).disabledColor,
             ),
           ),
         ),
@@ -155,6 +159,8 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
                       widget.playlistInfo.isLiked
                           ? 'Remove from Like'
                           : 'Add to liked',
+                  color: widget.playlistInfo.isLiked ? context.primary : null,
+
                   icon:
                       widget.playlistInfo.isLiked
                           ? MusicIcons.filledFavouriteIcon
@@ -182,19 +188,24 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
     required _PlaylistMenuAction value,
     required String title,
     required String icon,
-    Color color = MusicColors.primaryTextColor,
+    Color? color,
   }) {
     return PopupMenuItem<_PlaylistMenuAction>(
       value: value,
       height: 42,
       child: Row(
         children: [
-          Image.asset(icon, width: 20, height: 20, color: color),
+          SongsIcon(
+            iconPath: icon,
+            boxSize: 20,
+            iconSize: 20,
+            iconColor: color,
+          ),
           const SizedBox(width: 12),
           Text(
             title,
             style: TextStyle(
-              color: color,
+              color: color ?? context.colorScheme.onSurface,
               fontFamily: 'Overused Grotesk',
               fontSize: 18,
             ),

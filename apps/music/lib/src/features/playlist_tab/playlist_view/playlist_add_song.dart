@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/add_music_sheet.dart';
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 
@@ -61,12 +61,13 @@ class PlaylistAddSong extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  backgroundColor: WidgetStatePropertyAll(
-                    MusicColors.buttonBackgroundColor,
-                  ),
+                  backgroundColor: WidgetStatePropertyAll(context.secondary),
                 ),
                 icon: IconWidget(
-                  iconColor: isEditMode ? Colors.grey : MusicColors.borderColor,
+                  iconColor:
+                      isEditMode
+                          ? Theme.of(context).disabledColor
+                          : context.primary,
                   iconPath: MusicIcons.plusIcon,
                   iconHeight: 24,
                   boxHeight: 24,
@@ -78,7 +79,7 @@ class PlaylistAddSong extends StatelessWidget {
                 "Add a track",
                 style: TextStyle(
                   fontSize: 18,
-                  color: MusicColors.disabledColor,
+                  color: context.colorScheme.onSurfaceVariant,
                   height: 1.3,
                   // letterSpacing: -1.1,
                   fontWeight: FontWeight.w500,

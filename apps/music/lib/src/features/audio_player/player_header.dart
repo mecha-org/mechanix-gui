@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/song_info.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:widgets/extensions/build_context.dart';
 
 class PlayerHeader extends StatelessWidget {
   final SongInfo songDetails;
-  const PlayerHeader({
-    super.key,
-    required this.songDetails,
-  });
+  const PlayerHeader({super.key, required this.songDetails});
 
   @override
   Widget build(BuildContext context) {
@@ -18,8 +15,8 @@ class PlayerHeader extends StatelessWidget {
         children: [
           Text(
             '${songDetails.title}${songDetails.album != null ? ' (${songDetails.album})' : ''}',
-            style: const TextStyle(
-              color: MusicColors.headingTextColor,
+            style: TextStyle(
+              color: context.colorScheme.onSecondaryFixedVariant,
               fontSize: 24,
               height: 1.25,
               fontWeight: FontWeight.w500,
@@ -31,8 +28,8 @@ class PlayerHeader extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             songDetails.artist,
-            style: const TextStyle(
-              color: MusicColors.headingTextColor,
+            style: TextStyle(
+              color: context.colorScheme.onSecondaryFixedVariant,
               fontSize: 16,
               height: 1.25,
             ),

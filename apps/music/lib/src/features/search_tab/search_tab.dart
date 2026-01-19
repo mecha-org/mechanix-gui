@@ -7,13 +7,14 @@ import 'package:mechanix_music/models/search_data.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_tile.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 import 'package:tuple/tuple.dart';
+import 'package:widgets/extensions/build_context.dart';
+import 'package:widgets/extensions/color.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 
@@ -71,11 +72,9 @@ class _SearchTabState extends State<SearchTab> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const TitleWidget(
+                        TitleWidget(
                           title: "Search Music",
-                          textStyle: TextStyle(
-                            color: MusicColors.primaryTextColor,
-                          ),
+                          textStyle: TextStyle(color: context.onSurface),
                         ),
 
                         if (showClearButton)
@@ -98,7 +97,7 @@ class _SearchTabState extends State<SearchTab> {
                 /// 🔹 QUERY < 3 → RECENT SEARCHES / HINT
                 if (queryLength < 3)
                   if (searchItems.isEmpty)
-                    const SliverToBoxAdapter(
+                    SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.symmetric(
                           horizontal: 16,
@@ -107,7 +106,7 @@ class _SearchTabState extends State<SearchTab> {
                         child: Text(
                           "Search for Tracks, Playlists and Artists",
                           style: TextStyle(
-                            color: MusicColors.disabledColor,
+                            color: context.colorScheme.onSurfaceVariant,
                             fontSize: 18,
                             height: 1.45,
                           ),
@@ -212,7 +211,7 @@ class _SearchTabState extends State<SearchTab> {
 
                 /// 🔹 QUERY ≥ 3 BUT NO RESULTS
                 if (queryLength >= 3 && !hasResults)
-                  const SliverToBoxAdapter(
+                  SliverToBoxAdapter(
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: 16,
@@ -221,7 +220,7 @@ class _SearchTabState extends State<SearchTab> {
                       child: Text(
                         "No Results Found",
                         style: TextStyle(
-                          color: MusicColors.disabledColor,
+                          color: context.colorScheme.onSurfaceVariant,
                           fontSize: 18,
                           height: 1.45,
                         ),

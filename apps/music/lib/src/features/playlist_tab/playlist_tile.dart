@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_menu.dart';
+import 'package:widgets/mechanix.dart';
 
 class PlaylistTile extends StatelessWidget {
   final PlaylistInfo playlistInfo;
@@ -35,7 +35,7 @@ class PlaylistTile extends StatelessWidget {
       opacity: isDisabled ? 0.5 : 1.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        color: isSelected ? MusicColors.backgroundColor : Colors.transparent,
+        color: isSelected ? context.secondaryContainer: Colors.transparent,
         child: ListTile(
           enabled: !isDisabled, // 👈 disables ripple & gestures
           onTap: isDisabled ? null : onTap,
@@ -55,10 +55,10 @@ class PlaylistTile extends StatelessWidget {
               height: 1.25,
               color:
                   isActive
-                      ? MusicColors.borderColor
+                      ? context.primary
                       : isDisabled
-                      ? MusicColors.secondaryTextColor
-                      : MusicColors.primaryTextColor,
+                      ? context.onSecondaryFixedVariant
+                      : context.colorScheme.onSurface,
             ),
           ),
           subtitle:
@@ -81,7 +81,7 @@ class PlaylistTile extends StatelessWidget {
                       fontWeight: FontWeight.w300,
                       fontSize: 16,
                       height: 1.25,
-                      color: MusicColors.secondaryTextColor,
+                      color: context.onSecondary,
                     ),
                   ),
 

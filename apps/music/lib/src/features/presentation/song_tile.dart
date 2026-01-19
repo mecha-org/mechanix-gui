@@ -4,11 +4,11 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
 import 'package:mechanix_music/src/features/presentation/equalizer.dart';
 import 'package:mechanix_music/src/features/presentation/song_menu.dart';
+import 'package:widgets/mechanix.dart';
 
 class SongTile extends StatelessWidget {
   final SongInfo song;
@@ -42,7 +42,7 @@ class SongTile extends StatelessWidget {
             isPaddingRequired
                 ? EdgeInsets.symmetric(horizontal: 16)
                 : EdgeInsets.all(0),
-        color: isSelected ? MusicColors.backgroundColor : Colors.transparent,
+        color: isSelected ? context.secondaryContainer : Colors.transparent,
         child: ListTile(
           onTap:
               isDisabled || isEditMode
@@ -73,8 +73,8 @@ class SongTile extends StatelessWidget {
                 height: 1.25,
                 color:
                     isCurrentSong
-                        ? MusicColors.borderColor
-                        : MusicColors.primaryTextColor,
+                        ? context.primaryContainer
+                        : context.onSurface,
               ),
             ),
           ),
@@ -86,7 +86,7 @@ class SongTile extends StatelessWidget {
               fontWeight: FontWeight.w300,
               fontSize: 16,
               height: 1.25,
-              color: MusicColors.secondaryTextColor,
+              color: context.onSecondary,
             ),
           ),
 
@@ -103,7 +103,7 @@ class SongTile extends StatelessWidget {
                           builder:
                               (context, isPlaying) => SegmentedBarEqualizer(
                                 isPlaying: isPlaying,
-                                color: MusicColors.titleColor,
+                                color: context.primary,
                               ),
                         ),
                       const SizedBox(width: 12),

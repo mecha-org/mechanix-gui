@@ -4,12 +4,13 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/audio_player/audio_player.dart';
 import 'package:mechanix_music/src/features/home/widgets/artwork_duration_border.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
 import 'package:tuple/tuple.dart';
+import 'package:widgets/mechanix.dart';
 
 class MiniPlayer extends StatelessWidget {
   final VoidCallback? onTap;
@@ -33,8 +34,8 @@ class MiniPlayer extends StatelessWidget {
             bottom: 8,
             top: 6,
           ),
-          decoration: const BoxDecoration(
-            color: MusicColors.backgroundColor,
+          decoration: BoxDecoration(
+            color: context.secondary,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(8),
               topRight: Radius.circular(8),
@@ -57,7 +58,7 @@ class MiniPlayer extends StatelessWidget {
                     player: context.read<SongsBloc>().player,
                     size: 52,
                     strokeWidth: 2.18,
-                    progressColor: MusicColors.borderColor,
+                    progressColor: context.primaryContainer,
                     backgroundColor: Colors.transparent,
                     child: ArtworkIcon(
                       size: 35,
@@ -88,8 +89,8 @@ class MiniPlayer extends StatelessWidget {
                         Text(
                           overflow: TextOverflow.ellipsis,
                           currentSong.title,
-                          style: const TextStyle(
-                            color: MusicColors.primaryTextColor,
+                          style: TextStyle(
+                            color: context.onSecondaryFixedVariant,
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                           ),
@@ -97,8 +98,8 @@ class MiniPlayer extends StatelessWidget {
                         Text(
                           overflow: TextOverflow.ellipsis,
                           currentSong.artist,
-                          style: const TextStyle(
-                            color: MusicColors.secondaryTextColor,
+                          style: TextStyle(
+                            color: context.colorScheme.onSecondary,
                             fontSize: 16,
                             fontWeight: FontWeight.w300,
                           ),
@@ -112,22 +113,31 @@ class MiniPlayer extends StatelessWidget {
               IconButton(
                 onPressed:
                     () => {context.read<SongsBloc>().add(PlayPrevious())},
-                icon: Image.asset(MusicIcons.prevIcon, width: 20, height: 20),
+                icon: SongsIcon(
+                  iconPath: MusicIcons.prevIcon,
+                  iconSize: 20,
+                  boxSize: 20,
+                ),
               ),
 
               IconButton(
                 onPressed:
                     () => context.read<SongsBloc>().add(TogglePlayPause()),
-                icon: Image.asset(
-                  isPlaying ? MusicIcons.pauseIcon : MusicIcons.playIcon,
-                  width: 28,
-                  height: 28,
+                icon: SongsIcon(
+                  iconPath:
+                      isPlaying ? MusicIcons.pauseIcon : MusicIcons.playIcon,
+                  iconSize: 28,
+                  boxSize: 28,
                 ),
               ),
 
               IconButton(
                 onPressed: () => {context.read<SongsBloc>().add(PlayNext())},
-                icon: Image.asset(MusicIcons.nextIcon, width: 20, height: 20),
+                icon: SongsIcon(
+                  iconPath: MusicIcons.nextIcon,
+                  iconSize: 20,
+                  boxSize: 20,
+                ),
               ),
             ],
           ),
