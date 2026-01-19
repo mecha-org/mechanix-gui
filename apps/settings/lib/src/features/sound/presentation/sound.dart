@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
@@ -9,7 +11,7 @@ import 'package:mechanix_settings/src/features/sound/blocs/sound_state.dart';
 import 'package:mechanix_settings/src/features/sound/data/types.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/volume.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/section_list/section_list_items_type.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 
 class Sound extends StatelessWidget {
@@ -23,19 +25,17 @@ class Sound extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<SoundBloc, SoundState>(builder: (context, state) {
       return Scaffold(
-        appBar: MechanixNavigationBar(title: 'Sound'),
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: ContainerWidget(
             child: Column(
               children: [
-                VolumeWidget(),
-                MechanixSectionList(
-                  title: 'Sound Options',
-                  sectionListItems: [
-                    SectionListItems(
+                const CustomTitle(title: "Sound"),
+                const VolumeWidget(),
+                MechanixSimpleList(
+                  listItems: [
+                    SimpleListItems(
                       title: 'Launcher Sound',
-                      defaultTrailingIcon: false,
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
@@ -45,9 +45,8 @@ class Sound extends StatelessWidget {
                             .add(SetEnableLauncherSoundsEvent(v)),
                       ),
                     ),
-                    SectionListItems(
+                    SimpleListItems(
                       title: 'Vibration',
-                      defaultTrailingIcon: false,
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
@@ -57,7 +56,7 @@ class Sound extends StatelessWidget {
                             .add(SetEnableVibrationEvent(v)),
                       ),
                     ),
-                    SectionListItems(
+                    SimpleListItems(
                       title: 'Notification Sound',
                       onTap: () => Navigator.pushNamed(
                           context, AppRoutes.notificationSound),
@@ -66,19 +65,21 @@ class Sound extends StatelessWidget {
                                   state.notificationSound))
                           .padRight(8),
                     ),
-                    SectionListItems(
-                      title: 'Vibration Level',
-                      onTap: () => Navigator.pushNamed(
-                          context, AppRoutes.vibrationLevel),
-                      trailing: CustomTrailingText(
-                              title: vibrationLabel(state.vibrationLevel))
-                          .padRight(8),
+                  ],
+                ),
+                MechanixSimpleList(
+                  listItems: [
+                    SimpleListItems(
+                      title: 'test Launcher Sound',
                     ),
                   ],
                 ),
               ],
             ).padTop(8),
           ),
+        ),
+        bottomNavigationBar: MechanixBottomBar(
+          leadingWidget: [context.backButton],
         ),
       );
     });

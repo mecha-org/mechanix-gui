@@ -13,7 +13,7 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
   StreamSubscription? soundEventsSubscription;
 
   SoundBloc({required this.soundRepository})
-      : super(SoundState(
+      : super(const SoundState(
           inputDevices: [],
           outputDevices: [],
           loading: false,
@@ -24,6 +24,11 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     on<InitializeSound>(_onInitializeSound);
     on<GetInputDeviceList>(_onGetInputDeviceList);
     on<GetOutputDeviceList>(_onGetOutputDeviceList);
+
+    on<RefreshOutputDevicesList>(_refreshOutputDevicesList);
+    on<RefreshInputDevicesList>(_refreshInputDevicesList);
+
+    on<UpdateAvailableDevices>(_updateAvailableDevices);
 
     on<SetInputDevice>(_setInputDevice);
     on<SetOutputDevice>(_setOutputDevice);
@@ -45,6 +50,8 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     _initializeServerInfoStream();
     _initializeSourceStream();
     _initializeSinkStream();
+    _initializeSinkRemoveStream();
+    _initializeSourceRemoveStream();
   }
 
   @override
@@ -145,14 +152,91 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     }
   }
 
+  Future<void> _initializeSinkRemoveStream() async {
+    try {
+      final serverStream = await soundRepository.streamSoundSinkRemovedEvents();
+      soundEventsSubscription = serverStream.listen((event) {
+        print("Sound SINK removed event received: $event");
+        if (!isClosed) {
+          add(UpdateAvailableDevices(index: event));
+        }
+      });
+    } catch (e) {
+      print("Error initializing sound stream: $e");
+    }
+  }
+
+  Future<void> _initializeSourceRemoveStream() async {
+    try {
+      final serverStream =
+          await soundRepository.streamSoundSourceRemovedEvents();
+      soundEventsSubscription = serverStream.listen((event) {
+        print("Sound SOURCE removed event received: $event");
+        if (!isClosed) {
+          add(UpdateAvailableDevices(index: event, isSinkRemove: false));
+        }
+      });
+    } catch (e) {
+      print("Error initializing sound stream: $e");
+    }
+  }
+
+  Future<void> _updateAvailableDevices(
+      UpdateAvailableDevices event, Emitter<SoundState> emit) async {
+    if (event.isSinkRemove) {
+      final outputDevices = state.outputDevices;
+
+      final updatedDevices =
+          outputDevices.where((device) => device.index != event.index).toList();
+
+      emit(state.copyWith(outputDevices: updatedDevices));
+    } else {
+      final inputDevices = state.inputDevices;
+
+      final updatedDevices =
+          inputDevices.where((device) => device.index != event.index).toList();
+
+      emit(state.copyWith(inputDevices: updatedDevices));
+    }
+  }
+
   Future<void> _onGetInputDeviceList(
       GetInputDeviceList event, Emitter<SoundState> emit) async {
     try {
       final sources = await soundRepository.getSourceList();
-      emit(state.copyWith(inputDevices: sources));
+
+      // For Refresh Device List only add new devices
+      if (state.inputDevices.isNotEmpty) {
+        final oldDevices =
+            state.inputDevices.map((device) => device.name).toSet();
+
+        final newDeviceList = sources
+            .where((device) => !oldDevices.contains(device.name))
+            .toList();
+
+        if (newDeviceList.isNotEmpty) {
+          emit(state.copyWith(
+              inputDevices: [...state.inputDevices, ...newDeviceList]));
+        }
+      } else {
+        emit(state.copyWith(inputDevices: sources));
+      }
     } catch (e) {
-      logger.i("Error fetching source list: $e");
+      print("Error fetching source list: $e");
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  Future<void> _refreshInputDevicesList(
+      RefreshInputDevicesList event, Emitter<SoundState> emit) async {
+    try {
+      print('Refreshing input device list');
+
+      emit(state.copyWith(inputDevices: []));
+
+      add(GetInputDeviceList());
+    } catch (error) {
+      print('Error refreshing Output Devices $error');
     }
   }
 
@@ -160,10 +244,38 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
       GetOutputDeviceList event, Emitter<SoundState> emit) async {
     try {
       final sinks = await soundRepository.getSinkList();
-      emit(state.copyWith(outputDevices: sinks));
+
+      // For Refresh Device List only add new devices
+      if (state.outputDevices.isNotEmpty) {
+        final oldDevices =
+            state.outputDevices.map((device) => device.name).toSet();
+
+        final newDeviceList =
+            sinks.where((device) => !oldDevices.contains(device.name)).toList();
+
+        if (newDeviceList.isNotEmpty) {
+          emit(state.copyWith(
+              outputDevices: [...state.outputDevices, ...newDeviceList]));
+        }
+      } else {
+        emit(state.copyWith(outputDevices: sinks));
+      }
     } catch (e) {
       logger.i("Error fetching sink list: $e");
       emit(state.copyWith(error: e.toString()));
+    }
+  }
+
+  Future<void> _refreshOutputDevicesList(
+      RefreshOutputDevicesList event, Emitter<SoundState> emit) async {
+    try {
+      print('Refreshing output device list');
+
+      emit(state.copyWith(outputDevices: []));
+
+      add(GetOutputDeviceList());
+    } catch (error) {
+      print('Error refreshing Output Devices $error');
     }
   }
 

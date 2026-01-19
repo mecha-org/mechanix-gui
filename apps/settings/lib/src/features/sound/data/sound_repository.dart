@@ -5,6 +5,8 @@ abstract class SoundRepository {
   Future<Stream<PulseAudioServerInfo>> streamSoundServerEvents();
   Future<Stream<PulseAudioSource>> streamSoundSourceEvents();
   Future<Stream<PulseAudioSink>> streamSoundSinkEvents();
+  Future<Stream<int>> streamSoundSourceRemovedEvents();
+  Future<Stream<int>> streamSoundSinkRemovedEvents();
 
   Future<String> getDefaultSourceName();
   Future<String> getDefaultSinkName();
