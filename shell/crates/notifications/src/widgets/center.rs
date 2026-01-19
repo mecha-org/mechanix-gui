@@ -24,7 +24,7 @@ use settings::prelude::Settings;
 
 const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
 const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
-const EXPANDED_ITEM_HEIGHT: f32 = 72.0; // body-only cards
+const EXPANDED_ITEM_HEIGHT: f32 = 100.0; // body-only cards
 const CARD_GAP: f32 = 8.0; // mt_2()
 const GROUP_GAP: f32 = 10.0; // gap_2p5()
 const LIST_PADDING_TOP: f32 = 12.0;
@@ -334,7 +334,7 @@ impl NotificationCenter {
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
 
-        let container_height = notifications_center_size.height - navbar_size.height;
+        let container_height = notifications_center_size.height - navbar_size.height - px(1.5);
 
         // let container_height = px(0.0);
         if content_height <= container_height {
