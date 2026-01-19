@@ -104,8 +104,16 @@ class _HomePageState extends State<HomePage> {
             duration: const Duration(milliseconds: 300),
             switchInCurve: Curves.easeInOut,
             switchOutCurve: Curves.easeInOut,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: <Widget>[
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
             transitionBuilder: (Widget child, Animation<double> animation) {
-              // Fade transition
               return FadeTransition(opacity: animation, child: child);
             },
             child: KeyedSubtree(
