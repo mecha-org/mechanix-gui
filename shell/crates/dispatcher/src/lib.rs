@@ -101,10 +101,8 @@ pub fn init(cx: &mut App) {
                             };
                         }
                         "settings.active_theme.theme_colors" => {
-                            println!("BEFORE PARSING THE THEME COLORS ARE: {}", &value);
                             match ThemeColors::parse(&value) {
                                 Ok(theme) => {
-                                    println!("theme colors: {:?}", theme);
                                     match tx
                                         .broadcast(Message::SetThemeColors {
                                             accent: theme.accent,
