@@ -252,7 +252,7 @@ impl Render for PowerOptions {
                                 .id("power-off-swipe-area")
                                 .h(px(amber_card_height))
                                 .w_full()
-                                .bg(colors.accent_400.with_alpha(0.4))
+                                .bg(colors.accent_200.with_alpha(0.2))
                                 .rounded_b(px(20.0))
                                 .flex()
                                 .items_center()
