@@ -49,7 +49,7 @@ assets = [
 [package.metadata.generate-rpm]
 summary = "Service for running system services"
 license = "MIT" # or workspace override if you have one
-auto-req = "yes"
+auto-req = "no"
 assets = [
     # Binary
     { source = "../../target/release/mechanix-system-service", dest = "/usr/bin/mechanix-system-service", mode = "755" },
