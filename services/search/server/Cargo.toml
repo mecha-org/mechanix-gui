@@ -46,11 +46,30 @@ assets = [
 
 [package.metadata.generate-rpm]
 summary = "Search service for the Mechanix shell"
-license = "MIT" # or workspace override if you have one
+license = "MIT"
 auto-req = "yes"
+
 assets = [
-    # Binary
     { source = "../../../target/release/mxsearch", dest = "/usr/bin/mxsearch", mode = "755" },
     { source = "../server/settings.toml.example", dest = "/usr/share/mechanix/mxsearch/settings.toml", mode = "644" },
-    { source = "../systemd.service", dest = "/etc/systemd/user/mxsearch.service", mode = "644" },
+    { source = "../systemd.service", dest = "/usr/lib/systemd/user/mxsearch.service", mode = "644" },
 ]
+
+post_install_script = """
+systemctl --user daemon-reload || true
+systemctl --global daemon-reload || true
+
+if [ "$1" -eq 1 ]; then
+    systemctl --global enable mxsearch.service || true
+fi
+"""
+
+pre_uninstall_script = """
+if [ "$1" -eq 0 ]; then
+    systemctl --global disable mxsearch.service || true
+fi
+"""
+
+post_uninstall_script = """
+systemctl --global daemon-reload || true
+"""
