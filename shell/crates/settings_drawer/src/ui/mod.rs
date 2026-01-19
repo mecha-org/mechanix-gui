@@ -559,6 +559,30 @@ impl SettingsDrawer {
         }
     }
 
+    fn launch_app(&mut self, app_info: Option<AppInfo>, cx: &mut Context<Self>) {
+        if app_info.is_none() {
+            return;
+        }
+        let sender = Dispatcher::global(cx).0.clone();
+        let app_info = app_info.clone().unwrap();
+
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: app_info.possible_app_id,
+                        exec: app_info.exec,
+                    })
+                    .await;
+            })
+            .detach();
+
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let closed_pos: f32 = Self::calculate_closed_position(&settings);
+        self.position = 100.;
+        self.snap_to(closed_pos, cx);
+    }
+
     fn drawer_items(
         &mut self,
         window: &mut Window,
@@ -790,30 +814,6 @@ impl SettingsDrawer {
             )
     }
 
-    fn launch_app(&mut self, app_info: Option<AppInfo>, cx: &mut Context<Self>) {
-        if app_info.is_none() {
-            return;
-        }
-        let sender = Dispatcher::global(cx).0.clone();
-        let app_info = app_info.clone().unwrap();
-
-        cx.background_executor()
-            .spawn(async move {
-                _ = sender
-                    .broadcast(dispatcher::Message::LaunchApp {
-                        app_id: app_info.possible_app_id,
-                        exec: app_info.exec,
-                    })
-                    .await;
-            })
-            .detach();
-
-        let settings = Settings::global(cx).settings_drawer.clone();
-        let closed_pos: f32 = Self::calculate_closed_position(&settings);
-        self.position = 100.;
-        self.snap_to(closed_pos, cx);
-    }
-
     fn open_modal_on_long_press(
         modal: ModalKind,
         is_enabled: bool,
@@ -970,7 +970,7 @@ impl SettingsDrawer {
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
                 cx.listener(Self::click_listener(|this, _event, _window, cx| {
-                    Self::launch_app(this, this.terminal_info.clone(), cx);
+                    this.launch_app(this.terminal_info.clone(), cx);
                     cx.notify();
                 })),
             )
@@ -1033,7 +1033,7 @@ impl SettingsDrawer {
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
                 cx.listener(Self::click_listener(|this, _event, _window, cx| {
-                    Self::launch_app(this, this.settings_app_info.clone(), cx);
+                    this.launch_app(this.settings_app_info.clone(), cx);
                     cx.notify();
                 })),
             )
@@ -1055,7 +1055,7 @@ impl SettingsDrawer {
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
                 cx.listener(Self::click_listener(|this, _event, _window, cx| {
-                    Self::launch_app(this, this.camera_app_info.clone(), cx);
+                    this.launch_app(this.camera_app_info.clone(), cx);
                     cx.notify();
                 })),
             )
