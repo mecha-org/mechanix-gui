@@ -98,6 +98,7 @@ impl RunningApps {
                         // println!("CLICK: Card {:?} - '{:?}'", top_level.app_id(), app.name);
                         self.show_apps = false;
                         self.update_input_regions(window, false, cx);
+                        top_level.set_maximized();
                         top_level.activate();
                         cx.notify();
                     }
