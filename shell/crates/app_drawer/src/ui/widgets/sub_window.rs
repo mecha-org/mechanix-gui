@@ -142,7 +142,10 @@ impl SubWindow {
             if self.is_vertical_scroll {
                 let content_height = self.estimate_content_height();
                 let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
-                self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(min_scroll, max_scroll);
+                self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(
+                    min_scroll,
+                    max_scroll
+                );
                 cx.notify();
 
                 // Stop propagation only for vertical scrolls
@@ -277,16 +280,18 @@ impl SubWindow {
             .left_0()
             .h(px(36.0))
             .w(px(CARD_WIDTH))
-            .flex()
-            .flex_col()
-            .justify_start()
-            .items_start()
             .bg(colors.accent_200.with_alpha(0.1))
             .border_color(colors.accent_200.with_alpha(0.6));
 
         w.upper_wing_size(Size::new(px(150.0), px(15.0)));
         w.border_width(px(1.0));
-        w.border_radius(px(12.0));
+        w.border_radius(px(8.0));
+        w.corner_radii(commons::widgets::CornerRadii {
+            top_left: px(0.0),
+            top_right: px(0.0),
+            bottom_right: px(8.0),
+            bottom_left: px(8.0),
+        });
         w
     }
 }

@@ -339,9 +339,24 @@ impl AppDrawer {
                             .max_w(px(200.0))
                             .child(app.name.clone())
                     ),
-                self.properties_row("Kind", "Terminal", colors.foreground_400).mt_5(),
+
+                {
+                    let kind = app.categories
+                        .first()
+                        .and_then(|s| {
+                            let t = s.trim();
+                            if t.is_empty() {
+                                None
+                            } else {
+                                Some(t)
+                            }
+                        })
+                        .unwrap_or("Application");
+
+                    self.properties_row("Kind", kind, colors.foreground_400).mt_5()
+                },
                 self.properties_row("Size", "20 mb on disk", colors.foreground_400),
-                self.properties_row("Location", "Comet (user-mecha)", colors.foreground_400),
+                self.properties_row("Location", app.app_path.as_str(), colors.foreground_400),
                 self.properties_row("Accessed", "25-12-2025, 12.30pm", colors.foreground_400),
                 self.properties_row("Created", "25-12-2025, 12.30pm", colors.foreground_400),
                 self.properties_row("Modified", "25-12-2025, 12.30pm", colors.foreground_400),
@@ -361,6 +376,15 @@ impl AppDrawer {
             .justify_between()
 
             .child(div().text_size(px(18.0)).text_color(text_color).child(row_label))
-            .child(div().text_size(px(18.0)).text_color(text_color).child(value.to_string()))
+            .child(
+                div()
+                    .flex()
+                    .justify_end()
+                    .text_size(px(18.0))
+                    .text_color(text_color)
+                    .child(value.to_string())
+                    .w(px(200.0))
+                    .text_ellipsis()
+            )
     }
 }
