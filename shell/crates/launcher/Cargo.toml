@@ -99,7 +99,7 @@ assets = [
 [package.metadata.generate-rpm]
 summary = "Launcher application"
 license = "MIT"                  # or workspace override if you have one
-auto-req = "yes"
+auto-req = "no"
 
 assets = [
     # Binary
