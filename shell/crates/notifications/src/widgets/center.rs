@@ -1059,52 +1059,52 @@ impl NotificationCenter {
             let mut row = div().relative().overflow_hidden().flex().flex_col();
 
             // TODO: Show multiple wings (only show when NOT expanded)
-            // if !is_expanded {
-            //     // Back layer (third card hint) - only if count > 2
-            //     if g.count > 2 {
-            //         let mut w = wing();
-            //         w.upper_wing_size(size(px(20.0), navbar_size.height));
-            //         w.upper_wing_side(WingSide::Left);
-            //         // w.include_upper_wing_in_bounds(false);
-            //         let mut w = w
-            //             .absolute()
-            //                 .w(px(20.0))
-            //                 .h(navbar_size.height)
-            //                 .left(navbar_size.width)
-            //                 .bg(if self.is_visible {
-            //                     colors.accent_200.with_alpha(0.2)
-            //                 } else {
-            //                     colors.accent_200.with_alpha(0.1)
-            //                 });
-            //                 w.border_width(px(1.0));
+            if !is_expanded {
+                // Back layer (third card hint) - only if count > 2
+                if g.count > 2 {
+                    let mut w = wing();
+                    w.upper_wing_size(size(px(20.0), navbar_size.height));
+                    w.upper_wing_side(WingSide::Left);
+                    // w.include_upper_wing_in_bounds(false);
+                    let mut w = w
+                        .absolute()
+                            .w(px(20.0))
+                            .h(navbar_size.height)
+                            .left(navbar_size.width)
+                            .bg(if self.is_visible {
+                                colors.accent_200.with_alpha(0.2)
+                            } else {
+                                colors.accent_200.with_alpha(0.1)
+                            });
+                            w.border_width(px(1.0));
 
-            //         row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+                    row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
 
-            //     }
+                }
 
-            //     // Middle layer (second card hint) - only if count > 1
-            //     if !is_expanded && g.count > 1 {
-            //         let mut w = wing();
+                // Middle layer (second card hint) - only if count > 1
+                if !is_expanded && g.count > 1 {
+                    let mut w = wing();
 
-            //         w.upper_wing_size(size(navbar_size.width + px(20.0), navbar_size.height));
-            //         w.upper_wing_side(WingSide::Left);
-            //         w.include_upper_wing_in_bounds(true);
-            //         let mut w = w
-            //         .absolute()
-            //             .w(px(20.0))
-            //             .h(navbar_size.height)
-            //             // .tab_index(1)
-            //             //.left(navbar_size.width - 20.0)
-            //             .bg(if self.is_visible {
-            //                 colors.accent_200.with_alpha(0.2)
-            //             } else {
-            //                 colors.accent_200.with_alpha(0.1)
-            //             });
-            //             w.border_width(px(1.0));
-
-            //         row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
-            //     }
-            // }
+                    w.upper_wing_size(size(navbar_size.width + px(20.0), navbar_size.height));
+                    w.upper_wing_side(WingSide::Left);
+                    w.include_upper_wing_in_bounds(true);
+                    let mut w = w
+                    .absolute()
+                        .w(px(20.0))
+                        .h(navbar_size.height)
+                        // .tab_index(1)
+                        //.left(navbar_size.width - 20.0)
+                        .bg(if self.is_visible {
+                            colors.accent_200.with_alpha(0.2)
+                        } else {
+                            colors.accent_200.with_alpha(0.1)
+                        });
+                        w.border_width(px(1.0));
+                        
+                    row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+                }
+            }
 
             // Calculate top margin for main card based on stack count (only when not expanded)
             let card_top_offset = px(0.0);
