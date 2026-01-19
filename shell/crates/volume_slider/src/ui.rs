@@ -66,9 +66,10 @@ pub fn init(cx: &mut App) -> SliderConfig {
             }),
             ..Default::default()
         },
-        move |_window, cx| {
+        move |window, cx| {
             let slider_state = slider_state_for_overlay.clone();
             let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
+            window.set_input_regions(Some(Vec::new()));
             cx.new(move |cx| {
                 SliderOverlay::new(
                     cx,
@@ -95,6 +96,7 @@ struct SliderOverlay {
     min_volume: f32,
     max_volume: f32,
     visible: bool,
+    last_visible: bool,
     dismiss_generation: u64,
     _subscription: Subscription,
 }
@@ -122,9 +124,37 @@ impl SliderOverlay {
             min_volume,
             max_volume,
             visible: false,
+            last_visible: false,
             dismiss_generation: 0,
             _subscription: subscription,
         }
+    }
+
+    fn overlay_bounds(&self, window: &Window) -> Bounds<Pixels> {
+        let window_size = window.bounds().size;
+        let overlay_width = px(SLIDER_WIDTH.max(ICON_SIZE) + (OVERLAY_PADDING * 2.0));
+        let overlay_height = px(SLIDER_HEIGHT + ICON_SIZE + OVERLAY_GAP + (OVERLAY_PADDING * 2.0));
+        let origin = point(
+            (window_size.width - overlay_width) / 2.0,
+            (window_size.height - overlay_height) / 2.0,
+        );
+
+        Bounds {
+            origin,
+            size: size(overlay_width, overlay_height),
+        }
+    }
+
+    fn update_input_regions(&mut self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
+        let regions = if show {
+            vec![self.overlay_bounds(window)]
+        } else {
+            Vec::new()
+        };
+
+        window.set_input_regions(Some(regions));
+        self.last_visible = show;
+        cx.notify();
     }
 
     fn show_overlay(&mut self, cx: &mut Context<Self>) {
@@ -154,39 +184,16 @@ impl SliderOverlay {
         )
         .detach();
     }
-
-    fn overlay_bounds(&self, window: &Window) -> Bounds<Pixels> {
-        let window_size = window.bounds().size;
-        let overlay_width = SLIDER_WIDTH.max(ICON_SIZE) + (OVERLAY_PADDING * 2.0);
-        let overlay_height = SLIDER_HEIGHT + ICON_SIZE + OVERLAY_GAP + (OVERLAY_PADDING * 2.0);
-        let overlay_size = size(px(overlay_width), px(overlay_height));
-        let origin = point(
-            (window_size.width - overlay_size.width) / 2.0,
-            (window_size.height - overlay_size.height) / 2.0,
-        );
-
-        Bounds {
-            origin,
-            size: overlay_size,
-        }
-    }
-
-    fn update_input_regions(&self, window: &mut Window, show: bool) {
-        let regions = if show {
-            vec![self.overlay_bounds(window)]
-        } else {
-            vec![]
-        };
-
-        window.set_input_regions(Some(regions));
-    }
 }
 
 impl Render for SliderOverlay {
-    fn render(&mut self, window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let icon_name =
             VolumeIconName::from_volume(self.slider_value, self.min_volume, self.max_volume);
-        self.update_input_regions(window, self.visible);
+
+        if self.visible != self.last_visible {
+            self.update_input_regions(window, self.visible, cx);
+        }
         if self.visible {
             div()
                 .flex()
