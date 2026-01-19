@@ -3,7 +3,7 @@ layer = "overlay"
 anchor = ["right", "left", "top"]
 namespace = "mechanix.status.bar"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 300.0 }
+size = { width = 540.0, height = 180.0 }
 
 [settings_drawer]
 navbar_size = { width = 199.22, height = 28.5 }
