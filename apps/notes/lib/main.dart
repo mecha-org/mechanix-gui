@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:mechanix_notes/app_routes.dart';
@@ -15,12 +14,8 @@ import 'package:mechanix_notes/src/features/home/data/notes_repository_impl.dart
 import 'package:mechanix_notes/src/features/home/home.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:watch_it/watch_it.dart';
-import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
-import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
-import 'package:widgets/widgets/pressable_list/mechanix_pressable_list_theme.dart';
 
 void main() async {
   di.registerSingleton(ThemeToggle());
@@ -58,7 +53,6 @@ Future<void> initializeHive() async {
 
   final baseDir = xdgConfig ?? '$home/.config';
   final appDir = Directory('$baseDir/mechanix_notes');
-  print(appDir.path);
   if (!await appDir.exists()) {
     await appDir.create(recursive: true);
   }
@@ -166,7 +160,7 @@ class MyApp extends StatelessWidget {
         FlutterQuillLocalizations.delegate,
       ],
       title: 'Notes',
-      theme: darkTheme.copyWith(scaffoldBackgroundColor: Colors.black),
+      theme: darkTheme,
       darkTheme: _buildDarkTheme(),
       themeMode: themeMode,
       home: const HomePage(),
@@ -179,7 +173,6 @@ class MyApp extends StatelessWidget {
 
   ThemeData _buildDarkTheme() {
     return darkTheme.copyWith(
-      scaffoldBackgroundColor: Colors.black,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
       ),

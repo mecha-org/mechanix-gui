@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_notes/src/commons/common_helper.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_bloc.dart';
 import 'package:mechanix_notes/src/features/home/bloc/notes_event.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 import 'package:mechanix_notes/src/features/home/widgets/section_dots.dart';
+import 'package:widgets/mechanix.dart';
 
 class LabelScrollBar extends StatefulWidget {
   final ScrollController scrollController;
@@ -362,7 +362,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 width: 6,
                                 height: scrollbarHeight,
                                 decoration: BoxDecoration(
-                                  color: NotesColors.titleTextColor,
+                                  color: context.onSurface,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -387,13 +387,13 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: NotesColors.titleTextColor,
+                                color: context.onSurface,
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: Text(
                                 sections[currentSection].label,
-                                style: const TextStyle(
-                                  color: NotesColors.cardColor,
+                                style: TextStyle(
+                                  color: context.secondary,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 0,
