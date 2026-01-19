@@ -96,6 +96,10 @@ size = { width = 37.0, height = 277.0 }
 min_volume_level = 0.0
 max_volume_level = 100.0
 
+[volume_slider.input_regions]
+minimized = { origin = { x = 0.0, y = 0.0 }, size = { width = 0.0, height = 0.0 } }
+maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 52.0, height = 297.0 } }
+
 [launcher.layer_shell]
 layer = "bottom"
 anchor = ["top", "left", "right", "bottom"]

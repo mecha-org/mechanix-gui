@@ -1,6 +1,6 @@
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
-use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
+use settings::prelude::{InputRegions, LayerShellSettings, Settings, VolumeSliderSettings};
 use std::time::Duration;
 
 use crate::icon::{VolumeIcon, VolumeIconName};
@@ -30,6 +30,7 @@ pub fn init(cx: &mut App) -> SliderConfig {
         layer_shell,
         min_volume_level,
         max_volume_level,
+        input_regions,
     } = Settings::global(cx).volume_slider.clone();
     let LayerShellSettings {
         size,
@@ -70,6 +71,7 @@ pub fn init(cx: &mut App) -> SliderConfig {
             let slider_state = slider_state_for_overlay.clone();
             let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
             window.set_input_regions(Some(Vec::new()));
+            let input_regions = input_regions.clone();
             cx.new(move |cx| {
                 SliderOverlay::new(
                     cx,
@@ -77,6 +79,7 @@ pub fn init(cx: &mut App) -> SliderConfig {
                     initial_value,
                     min_volume_level,
                     max_volume_level,
+                    input_regions.clone(),
                 )
             })
         },
@@ -98,6 +101,7 @@ struct SliderOverlay {
     visible: bool,
     last_visible: bool,
     dismiss_generation: u64,
+    input_regions: InputRegions,
     _subscription: Subscription,
 }
 
@@ -108,6 +112,7 @@ impl SliderOverlay {
         initial_value: f32,
         min_volume: f32,
         max_volume: f32,
+        input_regions: InputRegions,
     ) -> Self {
         let subscription = cx.subscribe(&slider_state, |this, _, event: &SliderEvent, cx| {
             let SliderEvent::Change(value) = *event;
@@ -126,29 +131,18 @@ impl SliderOverlay {
             visible: false,
             last_visible: false,
             dismiss_generation: 0,
+            input_regions,
             _subscription: subscription,
         }
     }
 
-    // This is to define the input region dimensions
-    fn overlay_bounds(&self, window: &Window) -> Bounds<Pixels> {
-        let window_size = window.bounds().size;
-        let overlay_width = px(SLIDER_WIDTH.max(ICON_SIZE) + (OVERLAY_PADDING * 2.0));
-        let overlay_height = px(SLIDER_HEIGHT + ICON_SIZE + OVERLAY_GAP + (OVERLAY_PADDING * 2.0));
-        let origin = point(
-            (window_size.width - overlay_width) / 2.0,
-            (window_size.height - overlay_height) / 2.0,
-        );
-
-        Bounds {
-            origin,
-            size: size(overlay_width, overlay_height),
-        }
-    }
-    // This is to add and remove input regin
+    // This is to add and remove input region
     fn update_input_regions(&mut self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
         let regions = if show {
-            vec![self.overlay_bounds(window)]
+            vec![Bounds {
+                origin: self.input_regions.maximized.origin,
+                size: self.input_regions.maximized.size,
+            }]
         } else {
             Vec::new()
         };
