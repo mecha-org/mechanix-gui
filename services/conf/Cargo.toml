@@ -67,12 +67,32 @@ assets = [
 
 [package.metadata.generate-rpm]
 summary = "Configuration system for the Mechanix shell, services and gui apps"
-license = "MIT" # or workspace override if you have one
+license = "MIT"
 auto-req = "yes"
+
 assets = [
-    # Binary
     { source = "../../target/release/mxconf", dest = "/usr/bin/mxconf", mode = "755" },
     { source = "../conf/schemas/default_profile.toml", dest = "/etc/mxconf/profile/default_profile.toml", mode = "644" },
     { source = "../conf/schemas/org.mechanix.desktop.toml", dest = "/usr/share/mxconf/schemas/org.mechanix.desktop.toml", mode = "644" },
-    { source = "../conf/systemd.service", dest = "/etc/systemd/user/mxconf.service", mode = "644" },
+    { source = "../conf/systemd.service", dest = "/usr/lib/systemd/user/mxconf.service", mode = "644" },
 ]
+
+post_install_script = """
+systemctl --user daemon-reload || true
+systemctl --global daemon-reload || true
+
+if [ "$1" -eq 1 ]; then
+    systemctl --global enable mxconf.service || true
+fi
+"""
+
+pre_uninstall_script = """
+if [ "$1" -eq 0 ]; then
+    systemctl --global disable mxconf.service || true
+fi
+"""
+
+post_uninstall_script = """
+systemctl --global daemon-reload || true
+"""
+

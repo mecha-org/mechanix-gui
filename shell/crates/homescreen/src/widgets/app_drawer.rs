@@ -1,7 +1,7 @@
+use crate::Homescreen;
 use crate::widgets::HomescreenWidget;
 use app_drawer::prelude::*;
 use gpui::*;
-use crate::Homescreen;
 
 pub struct AppDrawerWidget {
     bounds: Bounds<Pixels>,
@@ -20,7 +20,10 @@ impl AppDrawerWidget {
 
 impl HomescreenWidget for AppDrawerWidget {
     fn render(&self) -> AnyElement {
-        div().size_full().child(self.drawer_handle.clone()).into_any_element()
+        div()
+            .size_full()
+            .child(self.drawer_handle.clone())
+            .into_any_element()
     }
 
     fn set_bounds(&mut self, bounds: Bounds<Pixels>) {

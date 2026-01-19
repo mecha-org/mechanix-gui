@@ -1,7 +1,7 @@
+use crate::Homescreen;
 use crate::widgets::HomescreenWidget;
 use gpui::*;
 use universal_search::prelude::UniversalSearch;
-use crate::Homescreen;
 
 pub struct UniversalSearchWidget {
     bounds: Bounds<Pixels>,

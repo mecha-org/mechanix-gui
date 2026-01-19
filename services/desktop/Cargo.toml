@@ -60,5 +60,5 @@ auto-req = "yes"
 assets = [
     # Binary
     { source = "../../target/release/mechanix-session-service", dest = "/usr/bin/mechanix-session-service", mode = "755" },
-    { source = "../desktop/systemd.service", dest = "/etc/systemd/user/mechanix-session-service.service", mode = "644" },
+    { source = "../desktop/systemd.service", dest = "/usr/lib/systemd/user/mechanix-session-service.service", mode = "644" },
 ]

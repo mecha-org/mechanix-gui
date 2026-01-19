@@ -71,6 +71,12 @@ class SettingMenu extends StatelessWidget {
                   sectionListItems: [
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
+                      title: 'System Updates',
+                      onTap: () => onTap(context, AppRoutes.systemUpdates),
+                      iconPath: Images.systemUpdateIcon,
+                    ),
+                    SectionListItems.leadingIcon(
+                      iconColor: context.primary,
                       title: 'System Info',
                       onTap: () => onTap(context, AppRoutes.about),
                       iconPath: Images.cometIcon,

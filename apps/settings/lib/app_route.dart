@@ -24,6 +24,7 @@ class AppRoutes {
   static const soundOutputDevices = '/sound/output_devices';
   static const soundInputDevices = '/sound/input_devices';
   static const about = '/about';
+  static const systemUpdates = '/system_updates';
   static const dateTime = '/date_time';
   static const timeSettings = '/date_time/time_settings';
   static const dateSettings = '/date_time/date_settings';

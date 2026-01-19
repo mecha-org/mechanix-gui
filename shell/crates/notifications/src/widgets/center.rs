@@ -6,7 +6,7 @@ use crate::helper::{
 use crate::widgets::notification::{
     DbNotification, NotificationId, NotificationUi, UserDismissedEvent,
 };
-use commons::widgets::{WingSide, wing};
+use commons::widgets::{CornerRadii, WingSide, wing};
 use gpui::prelude::FluentBuilder;
 use gpui::*;
 use icons::prelude::Icons;
@@ -840,8 +840,8 @@ impl Render for NotificationCenter {
                     div()
                         .id("input-region")
                         .absolute()
-                        .bottom(px(0.))
-                        .left(px(0.))
+                        .top(input_regions.minimized.origin.y)
+                        .left(input_regions.minimized.origin.x)
                         .w(input_regions.minimized.size.width)
                         .h(input_regions.minimized.size.height)
                         .on_mouse_down(
@@ -862,32 +862,33 @@ impl Render for NotificationCenter {
                     .h_full()
                     .absolute()
                     .top(px(self.position))
-                    .child(
-                        div()
-                            .w_full()
-                            .h_full()
+                    .child(div().id("left-wing").child({
+                        let mut w = wing()
+                            .w(notifications_center_size.width)
+                            .h(notifications_center_size.height)
+                            .border_color(colors.background_700)
                             .flex()
-                            .flex_row()
-                            .justify_start()
-                            .h(navbar_size.height)
-                            .child(div().id("left-wing").child({
-                                let mut w = wing();
-                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
-                                // w.border_width(px(2.));
-                                w.upper_wing_side(WingSide::Left);
-                                w.w(navbar_size.width).h(navbar_size.height).bg(
-                                    if self.is_visible {
-                                        colors.background_1000
-                                    } else {
-                                        colors.background_800
-                                    },
-                                )
-                                // .when(!self.is_visible, |w| {
-                                //     w.border_t_2().border_color(colors.background_700)
-                                // })
-                            })),
-                    )
-                    .child(self.render_content(window, cx)),
+                            .flex_col()
+                            .justify_end()
+                            .items_end()
+                            .bg(if self.is_visible {
+                                colors.background_1000
+                            } else {
+                                colors.background_800
+                            })
+                            .child(self.render_content(window, cx));
+
+                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                        w.upper_wing_side(WingSide::Left);
+                        w.border_width(px(1.0));
+                        w.corner_radii(CornerRadii {
+                            top_left: px(8.0),
+                            top_right: px(8.0),
+                            bottom_right: px(0.0),
+                            bottom_left: px(0.0),
+                        });
+                        w
+                    })),
             )
     }
 }
@@ -1741,8 +1742,10 @@ impl NotificationCenter {
         // Main container
         div()
             .relative()
-            .w(notifications_center_size.width)
-            .h(notifications_center_size.height)
+            // .w(notifications_center_size.width)
+            // .h(notifications_center_size.height)
+            .w(notifications_center_size.width - px(1.5))
+            .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)
             .child(
                 div()

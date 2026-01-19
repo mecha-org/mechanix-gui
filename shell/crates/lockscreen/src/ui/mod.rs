@@ -4,7 +4,7 @@ mod wallpaper;
 mod wedges;
 use theme::ActiveTheme;
 use wallpaper::wallpaper;
-use wedges::{LockState, left_wedge, right_wedge};
+use wedges::{left_wedge, right_wedge, LockState};
 use theme::prelude::{AlphaExt, Fonts};
 
 
@@ -20,8 +20,6 @@ const WEDGE_TARGET_GAP: f32 = 110.0;
 const LOCK_ICONS_FADE_THRESHOLD: f32 = 310.0;
 
 // Unlock prompt styling
-// const UNLOCK_PROMPT_TEXT_COLOR: u32 = 0xC57600FF; // #C57600
-// const UNLOCK_PROMPT_BG_COLOR: u32 = 0x000000FF;   // #000000
 const UNLOCK_PROMPT_RADIUS: f32 = 12.0;
 const UNLOCK_PROMPT_ARROW_SIZE: f32 = 40.0;
 const UNLOCK_PROMPT_ICON_PATH: &str = "icons/lockscreen/arrow.svg";
@@ -275,7 +273,7 @@ impl Render for Lockscreen {
                                 .absolute()
                                 .bottom(px(-left_wedge_offset))
                                 .left(px(-left_wedge_gap))
-                                .child(left_wedge(lock_state, left_icon_opacity)),
+                                .child(left_wedge(&colors, lock_state, left_icon_opacity)),
                         )
                         // Right wedge (overlaps left wedge, rendered on top, with status icons)
                         .child(
@@ -283,7 +281,7 @@ impl Render for Lockscreen {
                                 .absolute()
                                 .bottom(px(-right_wedge_offset))
                                 .right(px(-right_wedge_gap))
-                                .child(right_wedge(cx, right_icon_opacity)),
+                                .child(right_wedge(cx, &colors, right_icon_opacity)),
                         )
                 })
         })
