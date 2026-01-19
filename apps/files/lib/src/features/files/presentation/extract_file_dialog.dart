@@ -17,12 +17,14 @@ import 'package:path/path.dart' as p;
 import 'package:widgets/extension.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button.dart';
 import 'package:widgets/widgets/icon_widget.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/text_input/mechanix_text_input.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 var totalExtractedCount = 0;
 
@@ -124,7 +126,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
     return TextStyle(
       fontSize: 18,
       color: context.colorScheme.onSurface,
-      fontWeight: FontWeight.w500,
+      fontWeight: FontWeight.w400,
     );
   }
 
@@ -160,7 +162,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   ? "Root"
                   : getCurrentFolderName(currentPath),
               style: TextStyle(
-                color: context.colorScheme.onSurface,
+                color: context.colorScheme.primary,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
               ),
@@ -178,7 +180,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         const SizedBox(height: 18),
         Divider(
           height: 1,
-          color: context.colorScheme.surfaceContainerLow,
+          color: context.colorScheme.surfaceContainer,
         ),
         // Navigation bar
         SizedBox(
@@ -188,7 +190,13 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
               if (isSearching) ...[
                 Expanded(
                   child: MechanixTextInput.search(
-                    cursorColor: context.colorScheme.primaryFixed,
+                    theme: MechanixTextInputThemeData(
+                      widgetDecoration: BoxDecoration(
+                        color: context.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(0),
+                      ),
+                    ),
+                    cursorColor: context.colorScheme.primaryContainer,
                     prefixIcon: IconWidget(
                       iconPath: Images.search,
                       iconColor: context.colorScheme.onSurface,
@@ -218,6 +226,10 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 // Entire MechanixBottomBar must be inside Row children
                 Expanded(
                   child: MechanixBottomBar(
+                    theme: MechanixBottomBarThemeData(
+                      decoration: BoxDecoration(
+                          color: context.colorScheme.surfaceContainerHigh),
+                    ),
                     leadingWidget: [
                       BottomBarButton(
                         iconPath: Images.back,
@@ -242,8 +254,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         iconWidget: IconWidget(
                           iconPath: Images.home,
                           iconColor: context.colorScheme.onSurface,
-                          iconHeight: 24,
-                          iconWidth: 24,
+                          iconHeight: 28,
+                          iconWidth: 28,
                         ),
                         onPressed: () {
                           setState(() => showHomeView = true);
@@ -273,7 +285,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
           height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: context.colorScheme.tertiary,
+            color: context.colorScheme.secondaryContainer,
             borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(12)),
           ),
@@ -379,7 +391,13 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
 
     return Expanded(
       child: MechanixTextInput.textInput(
-        cursorColor: context.colorScheme.primaryFixed,
+        theme: MechanixTextInputThemeData(
+          widgetDecoration: BoxDecoration(
+            color: context.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(0),
+          ),
+        ),
+        cursorColor: context.colorScheme.primaryContainer,
         autofocus: true,
         initialValue: renameText,
         onChanged: (v) => setState(() => renameText = v),
@@ -424,9 +442,9 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
               child: Text(
                 "Files",
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurface,
+                  color: context.colorScheme.primary,
                 ),
               ),
             ),
@@ -444,8 +462,9 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         setState(() => showHomeView = false);
                         controller.openDirectory(Directory(homeDir));
                       },
-                      iconColor: context.colorScheme.primary,
-                      iconPath: Images.home),
+                      iconColor: context.colorScheme.primaryContainer,
+                      iconPath: Images.home,
+                      iconSize: const Size(24, 24)),
                   // Downloads
                   SectionListItems.leadingIcon(
                       title: "Downloads",
@@ -454,7 +473,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         setState(() => showHomeView = false);
                         controller.openDirectory(Directory(downloadsDir));
                       },
-                      iconColor: context.colorScheme.primary,
+                      iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.downloads,
                       iconSize: const Size(24, 24)),
 
@@ -466,7 +485,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         setState(() => showHomeView = false);
                         controller.openDirectory(Directory(documentsDir));
                       },
-                      iconColor: context.colorScheme.primary,
+                      iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.homeDocuments,
                       iconSize: const Size(24, 24)),
                 ]),
@@ -478,7 +497,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: context.colorScheme.onSurfaceVariant,
+                    color: context.colorScheme.onSecondaryFixed,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -490,7 +509,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                       setState(() => showHomeView = false);
                       controller.openDirectory(Directory("/"));
                     },
-                    iconColor: context.colorScheme.primary,
+                    iconColor: context.colorScheme.primaryContainer,
                     iconPath: Images.hardDrive,
                     iconSize: const Size(24, 24),
                   ),

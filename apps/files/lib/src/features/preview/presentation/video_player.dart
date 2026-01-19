@@ -113,7 +113,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
     return PreferredSize(
       preferredSize: const Size.fromHeight(60),
       child: Padding(
-        padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+        padding: const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
         child: AppBar(
           automaticallyImplyLeading: false,
           scrolledUnderElevation: 0,
@@ -160,7 +160,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.colorScheme.tertiary,
+        color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(8), topRight: Radius.circular(8)),
       ),
@@ -206,9 +206,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
                           value: _position.inMilliseconds
                               .toDouble()
                               .clamp(0, _duration.inMilliseconds.toDouble()),
-                          activeColor: context.colorScheme.primaryFixed,
-                          inactiveColor:
-                              context.colorScheme.surfaceContainerHigh,
+                          activeColor: context.colorScheme.primaryContainer,
+                          inactiveColor: context.colorScheme.surfaceContainer,
                           thumbColor: context.colorScheme.onSurface,
                           onChanged: (v) {
                             player.seek(Duration(milliseconds: v.toInt()));
@@ -246,7 +245,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 ),
               ),
               Positioned(
-                top: -42,
+                top: -36,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -260,7 +259,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
           MechanixBottomBar(
             theme: MechanixBottomBarThemeData(
                 decoration: BoxDecoration(
-              color: context.colorScheme.secondary,
+              color: context.colorScheme.secondaryContainer,
               borderRadius: null,
             )),
             leadingWidget: [
@@ -324,7 +323,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
           iconHeight: 28,
           iconWidth: 28,
           iconColor: isMenuOpen
-              ? context.colorScheme.primaryFixed
+              ? context.colorScheme.primaryContainer
               : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
@@ -384,15 +383,15 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
   Widget _buildTimeBubble() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color.fromRGBO(70, 70, 70, 0.6),
+        color: context.colorScheme.surfaceContainer.withOpacity(0.6),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
         style: TextStyle(
-            color: context.colorScheme.surfaceContainerLowest, fontSize: 16),
+            color: context.colorScheme.onSecondaryFixedVariant, fontSize: 16),
       ),
     );
   }

@@ -31,13 +31,6 @@ import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/notification/notification_type.dart';
 
-final pureBlackTheme = {
-  ...monokaiTheme,
-  'root': const TextStyle(
-    backgroundColor: Colors.black,
-  ),
-};
-
 class CodeEditorPage extends StatefulWidget {
   final BuildContext rootContext;
   String filePath;
@@ -299,6 +292,13 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       );
     }
 
+    final pureBlackTheme = {
+      ...monokaiTheme,
+      'root': TextStyle(
+        backgroundColor: context.colorScheme.surface,
+      ),
+    };
+
     final explorerState = widget.state;
 
     final controller = explorerState?.controller;
@@ -316,7 +316,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 12, right: 16),
+              padding: const EdgeInsets.only(top: 6, left: 16, right: 16),
               child: AppBar(
                 automaticallyImplyLeading: false,
                 scrolledUnderElevation: 0,
@@ -332,7 +332,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                             child: Text(
                               '${index + 1} of ${_matchIndexes.length}',
                               style: TextStyle(
-                                color: context.colorScheme.surfaceContainerHigh,
+                                color: context.colorScheme.onSurfaceVariant,
                                 fontSize: 18,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -358,7 +358,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             Divider(
               height: 1,
               thickness: 1,
-              color: context.colorScheme.tertiary,
+              color: context.colorScheme.secondaryContainer,
             ),
           ],
         ),
@@ -432,7 +432,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
-            color: context.colorScheme.secondary,
+            color: context.colorScheme.secondaryContainer,
             borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8), topRight: Radius.circular(8))),
       ),
@@ -515,7 +515,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           iconHeight: 28,
           iconWidth: 28,
           iconColor: isMenuOpen
-              ? context.colorScheme.primaryFixed
+              ? context.colorScheme.primaryContainer
               : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
@@ -561,11 +561,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         ),
         MechanixMenuItemsType(
           title: "Share",
-          leading: Image.asset(
-            Images.share,
-            height: mechanixIconSize,
-            color: Colors.grey.shade600,
-          ),
+          leading: Image.asset(Images.share,
+              height: mechanixIconSize,
+              color: context.colorScheme.onSurfaceVariant),
           disabled: true,
           onTap: null,
         ),
@@ -749,7 +747,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             child: MechanixTextInput.search(
               autofocus: false,
               hintText: "Search in file",
-              cursorColor: context.colorScheme.primaryFixed,
+              cursorColor: context.colorScheme.primaryContainer,
               prefixIcon: IconWidget(
                 iconPath: Images.search,
                 iconColor: context.colorScheme.onSurface,
@@ -808,7 +806,7 @@ class _SearchHighlightPainter extends CustomPainter {
     final query = search.toLowerCase();
     final lineHeight = textStyle.fontSize! * textStyle.height!;
 
-    double y = padding.top - scrollOffset; // ✅ FIX
+    double y = padding.top - scrollOffset;
 
     for (final line in lines) {
       final lower = line.toLowerCase();
@@ -851,72 +849,6 @@ class _SearchHighlightPainter extends CustomPainter {
         old.scrollOffset != scrollOffset;
   }
 }
-
-// class _SearchHighlightPainter extends CustomPainter {
-//   final String code;
-//   final String search;
-//   final TextStyle textStyle;
-//   final EdgeInsets padding;
-
-//   _SearchHighlightPainter({
-//     required this.code,
-//     required this.search,
-//     required this.textStyle,
-//     required this.padding,
-//   });
-
-//   @override
-//   void paint(Canvas canvas, Size size) {
-//     if (search.isEmpty) return;
-
-//     final paint = Paint()..color = Colors.yellow.withOpacity(0.35);
-
-//     final textPainter = TextPainter(
-//       textDirection: TextDirection.ltr,
-//       textScaleFactor: 1.0,
-//     );
-
-//     final lines = code.split('\n');
-//     final query = search.toLowerCase();
-//     final lineHeight = textStyle.fontSize! * textStyle.height!;
-
-//     double y = padding.top;
-
-//     for (final line in lines) {
-//       final lower = line.toLowerCase();
-//       int start = 0;
-
-//       while (true) {
-//         final index = lower.indexOf(query, start);
-//         if (index == -1) break;
-
-//         final before = line.substring(0, index);
-//         final match = line.substring(index, index + search.length);
-
-//         textPainter.text = TextSpan(text: before, style: textStyle);
-//         textPainter.layout();
-
-//         final x = padding.left + textPainter.width;
-
-//         textPainter.text = TextSpan(text: match, style: textStyle);
-//         textPainter.layout();
-
-//         canvas.drawRect(
-//           Rect.fromLTWH(x, y, textPainter.width, lineHeight),
-//           paint,
-//         );
-
-//         start = index + search.length;
-//       }
-
-//       y += lineHeight;
-//     }
-//   }
-
-//   @override
-//   bool shouldRepaint(covariant _SearchHighlightPainter old) =>
-//       old.search != search || old.code != code;
-// }
 
 class _EditorSnapshot {
   final String text;

@@ -26,6 +26,11 @@ import 'package:intl/intl.dart';
 String formatModifiedTime(DateTime modified) {
   final now = DateTime.now();
 
+  // If modified just now (within last 30 seconds)
+  if (now.difference(modified).inSeconds.abs() < 30) {
+    return "Now";
+  }
+
   final isSameDay = now.year == modified.year &&
       now.month == modified.month &&
       now.day == modified.day;
@@ -377,16 +382,17 @@ MechanixFilledButtonThemeData buttonThemeData(
       break;
 
     case MechanixButtonType.cancel:
-      backgroundColor = context.colorScheme.secondaryContainer; // dark grey
+      backgroundColor =
+          context.colorScheme.surfaceContainerHighest; // dark grey
       break;
 
     case MechanixButtonType.disable:
-      backgroundColor = context.colorScheme.surfaceContainerHigh; // dark grey
+      backgroundColor = context.colorScheme.outline; // dark grey
       break;
 
     case MechanixButtonType.action:
     default:
-      backgroundColor = context.colorScheme.primaryFixed; // theme primary
+      backgroundColor = context.colorScheme.primary; // theme primary
       break;
   }
 
@@ -396,8 +402,8 @@ MechanixFilledButtonThemeData buttonThemeData(
       pressedButtonColor: Color.lerp(backgroundColor, Colors.white, 0.12)!,
       textStyle: TextStyle(
         color: isDisabled
-            ? context.colorScheme.onSurface
-            : context.colorScheme.surfaceContainerLowest,
+            ? context.colorScheme.onSecondaryFixed
+            : context.colorScheme.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w400,
       ));
@@ -426,28 +432,7 @@ Widget searchNavButton({
   required VoidCallback? onTap,
   required BuildContext context,
 }) {
-  final isEnabled = onTap != null;
-  final primary = context.colorScheme.primaryFixed;
-
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      padding: const EdgeInsets.all(6),
-      decoration: isEnabled
-          ? BoxDecoration(
-              color: isEnabled
-                  ? context.colorScheme.onPrimary
-                  : context.colorScheme.tertiary,
-              borderRadius: BorderRadius.circular(6),
-            )
-          : null,
-      child: Icon(icon,
-          size: 24,
-          color:
-              isEnabled ? primary : context.colorScheme.surfaceContainerHigh),
-    ),
-  );
+  return _SearchNavButton(icon: icon, onTap: onTap);
 }
 
 Future<String> generateUniqueZipName({
@@ -475,4 +460,53 @@ double textWidth(String text, TextStyle style) {
   )..layout();
 
   return painter.width;
+}
+
+class _SearchNavButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _SearchNavButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  State<_SearchNavButton> createState() => _SearchNavButtonState();
+}
+
+class _SearchNavButtonState extends State<_SearchNavButton> {
+  bool isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isEnabled = widget.onTap != null;
+    final primary = context.colorScheme.primaryFixed;
+
+    final baseColor = context.colorScheme.secondaryContainer;
+    final pressedColor = Color.lerp(baseColor, Colors.white, 0.12)!;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: widget.onTap,
+      onTapDown: isEnabled ? (_) => setState(() => isPressed = true) : null,
+      onTapUp: isEnabled ? (_) => setState(() => isPressed = false) : null,
+      onTapCancel: isEnabled ? () => setState(() => isPressed = false) : null,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.all(6),
+        decoration: isEnabled
+            ? BoxDecoration(
+                color: isPressed ? pressedColor : baseColor,
+                borderRadius: BorderRadius.circular(6),
+              )
+            : null,
+        child: Icon(
+          widget.icon,
+          size: 24,
+          color: isEnabled ? primary : context.colorScheme.outline,
+        ),
+      ),
+    );
+  }
 }

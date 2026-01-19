@@ -33,9 +33,9 @@ class _PressableIconState extends State<PressableIcon> {
       child: IconWidget(
         iconPath: widget.iconPath,
         iconColor: disabled
-            ? context.colorScheme.surfaceContainerHigh
+            ? context.colorScheme.outline
             : pressed
-                ? context.colorScheme.primary
+                ? context.colorScheme.primaryContainer
                 : context.colorScheme.onSurface,
       ),
     );
@@ -75,7 +75,7 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
         decoration: pressed
             ? BoxDecoration(
                 borderRadius: const BorderRadius.all(Radius.circular(8)),
-                color: context.colorScheme.secondaryContainer,
+                color: context.colorScheme.secondary,
               )
             : null,
         padding: const EdgeInsets.all(12),
@@ -84,9 +84,9 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
           iconHeight: 28,
           iconWidth: 28,
           iconColor: disabled
-              ? context.colorScheme.surfaceContainerHigh
+              ? context.colorScheme.outline
               : pressed
-                  ? context.colorScheme.primary
+                  ? context.colorScheme.primaryContainer
                   : context.colorScheme.onSurface,
         ),
       ),

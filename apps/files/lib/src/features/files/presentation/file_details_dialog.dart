@@ -63,7 +63,7 @@ class FileDetailsDialog extends StatelessWidget {
                     clipper: TabClipper(shift: screenWidth * 0.50 * 0.70),
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.grey[850],
+                        color: context.colorScheme.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.all(18),
@@ -77,7 +77,8 @@ class FileDetailsDialog extends StatelessWidget {
                               Text(
                                 "Properties",
                                 style: TextStyle(
-                                  color: context.colorScheme.onSurface,
+                                  color: context
+                                      .colorScheme.onSecondaryFixedVariant,
                                   fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -93,7 +94,8 @@ class FileDetailsDialog extends StatelessWidget {
                                         fileItem.name,
                                         textAlign: TextAlign.right,
                                         style: TextStyle(
-                                          color: context.colorScheme.onSurface,
+                                          color: context
+                                              .colorScheme.onSecondaryContainer,
                                           fontSize: 20,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -104,6 +106,8 @@ class FileDetailsDialog extends StatelessWidget {
                                       fileItem.iconPath,
                                       width: 24,
                                       height: 24,
+                                      color:
+                                          context.colorScheme.primaryContainer,
                                     ),
                                   ],
                                 ),
@@ -139,13 +143,13 @@ Widget buildDetailRow(
         Text(title,
             style: TextStyle(
               color: context.colorScheme.onSurface,
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
             )),
         Text(value,
             style: TextStyle(
               color: context.colorScheme.onSurface,
-              fontSize: 14,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
             )),
       ],

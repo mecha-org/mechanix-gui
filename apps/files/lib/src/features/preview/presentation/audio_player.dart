@@ -97,7 +97,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Padding(
-          padding: const EdgeInsets.only(top: 18, left: 16, right: 16),
+          padding:
+              const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
@@ -112,12 +113,13 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           width: 200,
           height: 200,
           decoration: BoxDecoration(
-            color: Colors.grey.shade900,
+            color: context.colorScheme.secondary,
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.all(60),
           child: Image.asset(
             Images.musicNote,
+            color: context.colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -126,7 +128,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           : Padding(
               padding: const EdgeInsets.all(20),
               child: CircularProgressIndicator(
-                  color: context.colorScheme.surfaceContainerLowest),
+                  color: context.colorScheme.primaryContainer),
             ),
     );
   }
@@ -136,7 +138,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
     return Container(
       decoration: BoxDecoration(
-        color: context.colorScheme.tertiary,
+        color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(8), topRight: Radius.circular(8)),
       ),
@@ -180,8 +182,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                         value: _position.inMilliseconds
                             .toDouble()
                             .clamp(0, _duration.inMilliseconds.toDouble()),
-                        activeColor: context.colorScheme.primaryFixed,
-                        inactiveColor: context.colorScheme.surfaceContainerHigh,
+                        activeColor: context.colorScheme.primaryContainer,
+                        inactiveColor: context.colorScheme.surfaceContainer,
                         thumbColor: context.colorScheme.onSurface,
                         onChanged: (v) {
                           player.seek(Duration(milliseconds: v.toInt()));
@@ -217,7 +219,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                 ),
               ),
               Positioned(
-                top: -42, // float upward
+                top: -36, // float upward
                 left: 0,
                 right: 0,
                 child: Center(
@@ -229,7 +231,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           MechanixBottomBar(
             theme: MechanixBottomBarThemeData(
                 decoration: BoxDecoration(
-              color: context.colorScheme.secondary,
+              color: context.colorScheme.secondaryContainer,
               borderRadius: null,
             )),
             leadingWidget: [
@@ -293,7 +295,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           iconWidth: 28,
           iconHeight: 28,
           iconColor: isMenuOpen
-              ? context.colorScheme.primaryFixed
+              ? context.colorScheme.primaryContainer
               : context.colorScheme.onSurface),
       openMenu: () {
         setState(() => isMenuOpen = true);
@@ -353,16 +355,16 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
   Widget _buildTimeBubble() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: const Color.fromRGBO(70, 70, 70, 0.6),
+        color: context.colorScheme.surfaceContainer.withOpacity(0.6),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
         style: TextStyle(
           fontSize: 16,
-          color: context.colorScheme.surfaceContainerLowest,
+          color: context.colorScheme.onSecondaryFixedVariant,
           fontWeight: FontWeight.w500,
         ),
       ),

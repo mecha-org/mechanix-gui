@@ -35,7 +35,7 @@ Widget buildGridView(
           child: Text(
             isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey,
+                  color: context.colorScheme.onSecondaryFixed,
                 ),
           ),
         );
@@ -109,11 +109,12 @@ Widget buildGridView(
                               width: size,
                               height: size,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade900,
+                                color: context.colorScheme.secondary,
                                 borderRadius: BorderRadius.circular(14),
                                 border: isSelected
                                     ? Border.all(
-                                        color: context.colorScheme.primaryFixed,
+                                        color: context.colorScheme.primaryFixed
+                                            .withOpacity(0.8),
                                         width: 1,
                                       )
                                     : null,
@@ -124,7 +125,7 @@ Widget buildGridView(
                                   width: size * 0.5,
                                   height: size * 0.5,
                                   fit: BoxFit.contain,
-                                  color: context.colorScheme.primary,
+                                  color: context.colorScheme.primaryContainer,
                                 ),
                               ),
                             ),
@@ -227,7 +228,7 @@ Widget buildGridViewForRecentFiles(
                     width: size,
                     height: size,
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade900,
+                      color: context.colorScheme.secondary,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Stack(
@@ -238,7 +239,7 @@ Widget buildGridViewForRecentFiles(
                             width: size * 0.5,
                             height: size * 0.5,
                             fit: BoxFit.contain,
-                            color: context.colorScheme.primary,
+                            color: context.colorScheme.primaryContainer,
                           ),
                         ),
                         if (isSelectionMode)
@@ -258,7 +259,7 @@ Widget buildGridViewForRecentFiles(
                     child: MiddleEllipsisText(
                       file.name,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         color: context.colorScheme.onSurface,
                         fontWeight: FontWeight.w400,
                       ),

@@ -32,7 +32,7 @@ Widget buildListView(
           child: Text(
             isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey,
+                  color: context.colorScheme.onSecondaryFixed,
                 ),
           ),
         );
@@ -72,9 +72,9 @@ Widget buildListView(
               child: Container(
                 decoration: BoxDecoration(
                   color: isNew
-                      ? context.colorScheme.tertiary
+                      ? context.colorScheme.secondaryContainer
                       : isSelected
-                          ? context.colorScheme.tertiary
+                          ? context.colorScheme.secondaryContainer
                           : Colors.transparent,
                 ),
                 child: ListTile(
@@ -102,7 +102,7 @@ Widget buildListView(
                             fit: BoxFit.contain,
                             width: 28,
                             height: 28,
-                            color: context.colorScheme.primary,
+                            color: context.colorScheme.primaryContainer,
                           ),
                         ),
                       ),
@@ -120,7 +120,7 @@ Widget buildListView(
                     formatModifiedTime(modified),
                     style: TextStyle(
                       fontSize: 16,
-                      color: context.colorScheme.surfaceContainer,
+                      color: context.colorScheme.onSecondaryFixed,
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -227,7 +227,7 @@ Widget buildListViewForRecentFiles(
                       fit: BoxFit.contain,
                       width: 28,
                       height: 28,
-                      color: context.colorScheme.primary,
+                      color: context.colorScheme.primaryContainer,
                     ),
                   ),
                 ),
@@ -246,7 +246,7 @@ Widget buildListViewForRecentFiles(
                     formatModifiedTime(file.modified!),
                     style: TextStyle(
                       fontSize: 16,
-                      color: context.colorScheme.surfaceContainerHigh,
+                      color: context.colorScheme.onSecondaryFixed,
                       fontWeight: FontWeight.w400,
                     ),
                   )
@@ -287,7 +287,7 @@ Widget buildListViewMoveAndExtract(
           child: Text(
             isSearching ? "No results found" : "Folder is empty",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: Colors.grey,
+                  color: context.colorScheme.onSecondaryFixed,
                 ),
           ),
         );
@@ -335,7 +335,7 @@ Widget buildListViewMoveAndExtract(
                   child: Container(
                     decoration: BoxDecoration(
                       color: isNew
-                          ? context.colorScheme.surfaceContainerLow
+                          ? context.colorScheme.surfaceContainerHighest
                           : Colors.transparent,
                     ),
                     child: ListTile(
@@ -364,7 +364,7 @@ Widget buildListViewMoveAndExtract(
                                 fit: BoxFit.contain,
                                 width: 28,
                                 height: 28,
-                                color: context.colorScheme.primary,
+                                color: context.colorScheme.primaryContainer,
                               ),
                             ),
                           ),
@@ -382,7 +382,7 @@ Widget buildListViewMoveAndExtract(
                         formatModifiedTime(modified),
                         style: TextStyle(
                           fontSize: 16,
-                          color: context.colorScheme.surfaceContainerHigh,
+                          color: context.colorScheme.onSecondaryFixed,
                           fontWeight: FontWeight.w400,
                         ),
                       ),
@@ -410,15 +410,5 @@ Widget buildListViewMoveAndExtract(
         ),
       );
     },
-  );
-}
-
-Widget trailingIcon() {
-  return SizedBox(
-    child: const Icon(
-      size: 14,
-      Icons.arrow_forward_ios,
-      color: Colors.grey,
-    ).padAll(4),
   );
 }
