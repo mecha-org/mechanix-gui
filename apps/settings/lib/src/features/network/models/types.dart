@@ -80,3 +80,25 @@ final List<SelectOption<WirelessProtocol>> wirelessProtocolOptions = [
 ];
 
 enum SignalLevel { high, medium, low, none }
+
+class ActivatingNetwork {
+  final List<int> ssid;
+  final bool isActivate;
+  final NetworkManagerActiveConnectionState deviceState;
+
+  const ActivatingNetwork({
+    required this.ssid,
+    required this.isActivate,
+    required this.deviceState,
+  });
+}
+
+class ActivationProcessState {
+  final List<int> ssid;
+  final NetworkManagerActiveConnectionState deviceState;
+
+  const ActivationProcessState({
+    required this.ssid,
+    required this.deviceState,
+  });
+}

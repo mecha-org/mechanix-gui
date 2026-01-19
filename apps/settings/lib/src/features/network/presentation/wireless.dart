@@ -8,23 +8,20 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dar
 import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
-import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:mechanix_settings/src/features/network/models/security_protocols.dart';
-import 'package:mechanix_settings/src/features/network/models/types.dart';
-import 'package:mechanix_settings/src/features/network/presentation/add_network.dart';
-import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/available_networks.dart';
+import 'package:mechanix_settings/src/features/network/presentation/widgets/saved_networks.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_strength_icon.dart';
 import 'package:mechanix_settings/src/features/network/presentation/wireless_advance_settings.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
-import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 
@@ -65,9 +62,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             .add(ToggleWifi(val)),
                       ),
                     ),
-                    if (state.wifiState == WifiStatus.connected &&
-                        state.wifiOn &&
-                        state.connectedNetwork != null)
+                    if (state.wifiOn && state.connectedNetwork != null)
                       SimpleListItems(
                         // onTap: () =>
                         //     onInfoTap(state.connectedNetwork!, context),
@@ -109,6 +104,23 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   ],
                 ),
                 if (state.wifiOn &&
+                    !state.availableSavedNetworksLoading &&
+                    state.availableOtherNetworks.isEmpty)
+                  MechanixSectionList(
+                    physics: const BouncingScrollPhysics(),
+                    title: 'My Networks',
+                    sectionListItems: [
+                      SectionListItems(
+                        title: '',
+                        backgroundColor: Colors.transparent,
+                        defaultTrailingIcon: false,
+                        leading: const CustomLoader(),
+                      ),
+                    ],
+                  ),
+                if (state.wifiOn && state.availableSavedNetworks.isNotEmpty)
+                  const SavedNetworks(),
+                if (state.wifiOn &&
                     !state.availableOtherNetworksLoading &&
                     state.availableOtherNetworks.isEmpty)
                   MechanixSectionList(
@@ -124,15 +136,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                     ],
                   ),
                 if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
-                  MechanixSectionList(
-                    physics: const BouncingScrollPhysics(),
-                    title: 'Available Networks',
-                    theme: const MechanixSectionListThemeData(
-                      widgetPadding: EdgeInsets.zero,
-                    ),
-                    sectionListItems: getWifiList(
-                        context, state.availableOtherNetworks, true),
-                  ),
+                  const AvailableNetworks(),
                 const WirelessAdvanceSettings().padTop(36)
               ],
             ),
@@ -160,37 +164,6 @@ class _WirelessSettingsState extends State<WirelessSettings> {
   }
 }
 
-void onNetworkTap(AccessPoints item, BuildContext context) {
-  context.read<WirelessSettingsBloc>().add(SelectNetwork(item));
-  context
-      .read<WirelessSettingsBloc>()
-      .add(SelectNetworkPoint(item.nmAccessPoint));
-
-  if (item.isSaved && !item.isActive) {
-    context
-        .read<WirelessSettingsBloc>()
-        .add(ConnectSavedNetwork('', item.nmAccessPoint));
-  } else if (!item.isSecure && !item.isActive) {
-    context
-        .read<ConnectNetworkBloc>()
-        .add(ConnectToNetwork(item.nmAccessPoint));
-  } else {
-    final connectNetworkBloc = context.read<ConnectNetworkBloc>();
-    final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
-
-    MechanixBottomSheet.show(
-      context,
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: connectNetworkBloc),
-          BlocProvider.value(value: wirelessSettingsBloc),
-        ],
-        child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
-      ),
-    );
-  }
-}
-
 void onInfoTap(AccessPoints item, BuildContext context) {
   final connectNetworkBloc = context.read<ConnectNetworkBloc>();
   final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
@@ -212,80 +185,4 @@ void onInfoTap(AccessPoints item, BuildContext context) {
       ),
     ),
   );
-}
-
-String getNetworkIcon(String security, int? signalStrength) {
-  // Set base icon based on WPA
-  String icon = security.contains('WPA')
-      ? Images.securedWirelessStrong
-      : Images.wirelessStrong;
-
-  // Update based on signal strength
-  if (signalStrength != null) {
-    if (signalStrength < 30) {
-      icon = icon.replaceAll('strong', 'low');
-    } else if (signalStrength < 70) {
-      icon = icon.replaceAll('strong', 'weak');
-    }
-  }
-
-  return icon;
-}
-
-List<SectionListItems> getWifiList(
-    BuildContext context, List<AccessPoints> accessPoints, bool showAddOption) {
-  final wifi = accessPoints.map((ap) {
-    return SectionListItems(
-      title: utf8.decode(ap.nmAccessPoint.ssid),
-      onTap: () => onNetworkTap(ap, context),
-      leading: getWirelessStrengthIcon(
-        strength: ap.nmAccessPoint.strength,
-        isSecure: ap.isSecure,
-        isActive: ap.isActive,
-      ),
-      defaultTrailingIcon: false,
-      trailing: IconButton(
-        onPressed: () => onInfoTap(ap, context),
-        icon: SizedBox(
-          height: 24,
-          width: 24,
-          child: IconWidget(
-            iconPath: Images.settings,
-            iconColor: context.onSurfaceVariant,
-          ),
-        ),
-      ),
-    );
-  }).toList();
-
-  if (showAddOption) {
-    wifi.add(
-      SectionListItems.leadingIcon(
-        title: 'Add Wireless',
-        titleTextStyle:
-            context.textTheme.labelMedium?.copyWith(color: context.primary),
-        defaultTrailingIcon: false,
-        onTap: () {
-          final connectNetworkBloc = context.read<ConnectNetworkBloc>();
-          final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
-
-          MechanixBottomSheet.show(
-            context,
-            child: MultiBlocProvider(
-              providers: [
-                BlocProvider.value(value: connectNetworkBloc),
-                BlocProvider.value(value: wirelessSettingsBloc),
-              ],
-              child: const AddNetwork(),
-            ),
-          );
-        },
-        // leading: const IconWidget(iconPath: Images.wirelessAdd),
-        iconPath: Images.wirelessAdd,
-        isActive: true,
-      ),
-    );
-  }
-
-  return wifi;
 }
