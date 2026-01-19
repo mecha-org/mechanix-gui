@@ -3,9 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/extensions/build_context.dart';
+import 'package:widgets/extensions/color.dart';
 
 class TopMusic extends StatefulWidget {
   const TopMusic({super.key});
@@ -78,7 +80,7 @@ class _TopMusicState extends State<TopMusic> {
                     Text(
                       'My Music',
                       style: TextStyle(
-                        color: MusicColors.textColor,
+                        color: context.onSurfaceVariant,
                         fontSize: 18,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
@@ -88,27 +90,23 @@ class _TopMusicState extends State<TopMusic> {
                       spacing: 12,
                       children: [
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.previousPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.previousPageIcon,
+                            iconColor:
                                 currentPage > 0
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
                           onPressed: currentPage > 0 ? _scrollLeft : null,
                         ),
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.nextPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.nextPageIcon,
+                            iconColor:
                                 currentPage < pages.length - 1
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
                           onPressed:

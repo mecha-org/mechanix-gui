@@ -68,7 +68,7 @@ assets = [
 [package.metadata.generate-rpm]
 summary = "Configuration system for the Mechanix shell, services and gui apps"
 license = "MIT"
-auto-req = "yes"
+auto-req = "no"
 
 assets = [
     { source = "../../target/release/mxconf", dest = "/usr/bin/mxconf", mode = "755" },

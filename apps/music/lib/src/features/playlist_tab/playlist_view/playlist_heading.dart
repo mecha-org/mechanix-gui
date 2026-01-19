@@ -5,8 +5,8 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_playlist_bar.dart';
+import 'package:widgets/extension.dart';
 import 'package:widgets/extensions/edge_insets.dart';
 
 class PlaylistHeading extends StatefulWidget {
@@ -109,8 +109,8 @@ class _PlaylistHeadingState extends State<PlaylistHeading> {
 
             child: Text(
               playlistName,
-              style: const TextStyle(
-                color: MusicColors.primaryTextColor,
+              style: TextStyle(
+                color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 24,
                 letterSpacing: -1.1,

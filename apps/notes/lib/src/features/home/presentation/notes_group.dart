@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:widgets/extensions/color.dart';
 
 class GroupHeaderName extends SliverPersistentHeaderDelegate {
   final String title;
@@ -22,9 +22,9 @@ class GroupHeaderName extends SliverPersistentHeaderDelegate {
       alignment: Alignment.centerLeft,
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
-          color: NotesColors.labelColor,
+          color: context.onSecondaryFixed,
           fontWeight: FontWeight.w500,
           height: 1.45,
         ),

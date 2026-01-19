@@ -4,7 +4,6 @@ import 'package:mechanix_music/models/models.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/favourites_tab/favourites_tab.dart';
 import 'package:mechanix_music/src/features/home/bottom_bar.dart';
@@ -16,6 +15,7 @@ import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_
 import 'package:mechanix_music/src/features/search_tab/search_tab.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:tuple/tuple.dart';
+import 'package:widgets/extension.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -51,7 +51,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
       bottomNavigationBar: const BottomBar(),
       floatingActionButton:
           BlocSelector<SongsBloc, SongsState, Tuple2<MusicTabs, bool>>(
@@ -83,7 +82,7 @@ class _HomePageState extends State<HomePage> {
                     child: IgnorePointer(
                       ignoring: !isVisible,
                       child: MusicIconButton(
-                        backgroundColor: MusicColors.disabledColor,
+                        backgroundColor: context.colorScheme.surfaceContainer,
                         icon: MusicIcons.searchIcon,
                         onPressed: () {
                           context.read<SongsBloc>().add(
@@ -105,8 +104,16 @@ class _HomePageState extends State<HomePage> {
             duration: const Duration(milliseconds: 300),
             switchInCurve: Curves.easeInOut,
             switchOutCurve: Curves.easeInOut,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: <Widget>[
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
             transitionBuilder: (Widget child, Animation<double> animation) {
-              // Fade transition
               return FadeTransition(opacity: animation, child: child);
             },
             child: KeyedSubtree(

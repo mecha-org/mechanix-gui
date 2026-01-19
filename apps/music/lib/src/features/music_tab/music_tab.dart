@@ -33,13 +33,11 @@ class _MusicTabState extends State<MusicTab> {
   void _onScroll() {
     final bloc = context.read<SongsBloc>();
 
-    // 🔹 Scroll start (fire once)
     if (!_isScrolling) {
       _isScrolling = true;
       bloc.add(const ToggleScrolling(true));
     }
 
-    // 🔹 Scroll end debounce
     _scrollEndTimer?.cancel();
     _scrollEndTimer = Timer(const Duration(milliseconds: 300), () {
       if (!mounted) return;

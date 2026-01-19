@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
+import 'package:widgets/extensions/color.dart';
 
 class BulletListBuilder extends StatelessWidget {
   const BulletListBuilder({super.key});
@@ -11,8 +11,8 @@ class BulletListBuilder extends StatelessWidget {
       child: Container(
         width: 4,
         height: 4,
-        decoration: const BoxDecoration(
-          color: NotesColors.editorTextColor,
+        decoration: BoxDecoration(
+          color: context.onSurface,
           shape: BoxShape.circle,
         ),
       ),

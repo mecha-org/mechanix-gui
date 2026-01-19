@@ -68,7 +68,7 @@ class BottomBar extends StatelessWidget {
                     iconBoxSize: Size(44, 44),
                   ),
                   decoration: BoxDecoration(
-                    color: Color(0xFF2E2E2E),
+                    color: context.secondaryContainer,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(0),
                       topRight: Radius.circular(0),
@@ -143,7 +143,6 @@ class BottomBar extends StatelessWidget {
                         MusicTabSwitch(MusicTabs.favorites),
                       );
                     },
-
                     iconPath: MusicIcons.favouritesIcon,
                   ),
                 ],

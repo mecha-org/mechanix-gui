@@ -33,6 +33,7 @@ impl Launcher {
 
     fn launch_app(&self, app_id: String, exec: String) {
         if let Some(tl) = self.get_app_top_level(&app_id) {
+            tl.set_maximized();
             tl.activate();
             return;
         } else {

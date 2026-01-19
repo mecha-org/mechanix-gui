@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/audio_player/audio_player_bottom_bar.dart';
 import 'package:mechanix_music/src/features/audio_player/player_vinyl.dart';
 import 'package:mechanix_music/src/features/audio_player/upcoming_track/upcoming_track.dart';
+import 'package:widgets/mechanix.dart';
 import 'player_header.dart';
 import 'player_side_controls.dart';
 
@@ -30,7 +30,7 @@ class _AudioPlayerState extends State<AudioPlayer>
         final SongInfo song = currentSong ?? widget.songDetails;
 
         return Scaffold(
-          backgroundColor: MusicColors.buttonBackgroundColor,
+          backgroundColor: context.surface,
           bottomNavigationBar: AudioPlayerBottomBar(
             isUpcomingTrackWindow: isUpcomingTrackWindow,
             togglePlayer: (value) {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/commons/styles/quill_editor_styles.dart';
 import 'package:mechanix_notes/src/features/editor/leading_widget/bullet_list_builder.dart';
 import 'package:mechanix_notes/src/features/editor/leading_widget/number_list_builder.dart';
@@ -8,6 +7,7 @@ import 'package:mechanix_notes/src/features/editor/models/markdown_shortcuts/cha
 import 'package:mechanix_notes/src/features/editor/models/markdown_shortcuts/space_shortcuts.dart';
 import 'package:mechanix_notes/src/features/editor/selection_options.dart';
 import 'package:mechanix_notes/src/features/editor/toolbar/focus_preserve_button.dart';
+import 'package:widgets/extensions/color.dart';
 
 class ContentEditor extends StatelessWidget {
   final QuillController controller;
@@ -65,12 +65,15 @@ class ContentEditor extends StatelessWidget {
                           }
                           config.onCheckboxTap(state!);
                         },
-                        checkColor: NotesColors.titleTextColor,
+                        checkColor: context.onSurface,
+
                         fillColor: WidgetStateProperty.resolveWith<Color>((
                           Set<WidgetState> states,
                         ) {
                           if (states.contains(WidgetState.selected)) {
-                            return NotesColors.secondaryCardColor;
+                            return context.primaryContainer.withValues(
+                              alpha: 0.8,
+                            );
                           }
                           return Colors.transparent;
                         }),
@@ -110,12 +113,14 @@ class ContentEditor extends StatelessWidget {
                           }
                           config.onCheckboxTap(state!);
                         },
-                        checkColor: NotesColors.titleTextColor,
+                        checkColor: context.onSurface,
                         fillColor: WidgetStateProperty.resolveWith<Color>((
                           Set<WidgetState> states,
                         ) {
                           if (states.contains(WidgetState.selected)) {
-                            return NotesColors.secondaryCardColor;
+                            return context.primaryContainer.withValues(
+                              alpha: 0.8,
+                            );
                           }
                           return Colors.transparent;
                         }),
@@ -193,7 +198,7 @@ class ContentEditor extends StatelessWidget {
             formatDoubleAsterisksForBold,
             formatDoubleUnderScoreForUnderline,
           ],
-          customStyles: quillEditorStyle,
+          customStyles: quillEditorStyle(context),
           enableScribble: false,
           autoFocus: false,
           enableInteractiveSelection: true,

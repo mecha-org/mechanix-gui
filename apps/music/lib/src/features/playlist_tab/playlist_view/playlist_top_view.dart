@@ -6,6 +6,7 @@ import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
+import 'package:widgets/extension.dart';
 
 class PlaylistTopView extends StatelessWidget {
   final PlaylistInfo playlistInfo;
@@ -77,9 +78,9 @@ class PlaylistTopView extends StatelessWidget {
                     children: [
                       Text(
                         "${playlistSongs.length} tracks, $totalDuration",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
-                          color: MusicColors.primaryTextColor,
+                          color: context.colorScheme.onSurface,
                           height: 1.35,
                         ),
                       ),
@@ -92,7 +93,7 @@ class PlaylistTopView extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             height: 1.35,
-                            color: MusicColors.textColor,
+                            color: context.onSurfaceVariant,
                           ),
                         ),
                     ],

@@ -12,6 +12,7 @@ import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_b
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_state.dart';
 import 'package:mechanix_settings/src/features/network/models/access_points.dart';
+import 'package:mechanix_settings/src/features/network/models/types.dart';
 import 'package:mechanix_settings/src/features/network/presentation/configure_dns.dart';
 import 'package:mechanix_settings/src/features/network/presentation/configure_proxy.dart';
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
@@ -29,6 +30,8 @@ class NetworkDetails extends StatefulWidget {
 }
 
 class _NetworkDetailsState extends State<NetworkDetails> {
+  bool openPasswordWindow = false;
+
   void onForgetPressed(String ssid) {
     context.read<WirelessSettingsBloc>().add(ForgetNetwork(ssid));
     Navigator.pop(context);
@@ -38,7 +41,31 @@ class _NetworkDetailsState extends State<NetworkDetails> {
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
       builder: (context, state) {
-        final isActive = state.selectedAccessPoint?.isActive;
+        Future<void> onNetworkTap(AccessPoints? selectedAccessPoint) async {
+          if (selectedAccessPoint != null && selectedAccessPoint.isSaved) {
+            context.read<WirelessSettingsBloc>().add(
+                ConnectSavedNetwork('', selectedAccessPoint.nmAccessPoint));
+
+            Navigator.pop(context);
+          } else {
+            final connectNetworkBloc = context.read<ConnectNetworkBloc>();
+            final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
+
+            MechanixBottomSheet.show(
+              context,
+              child: MultiBlocProvider(
+                providers: [
+                  BlocProvider.value(value: connectNetworkBloc),
+                  BlocProvider.value(value: wirelessSettingsBloc),
+                ],
+                child: ConnectSecureNetwork(
+                  accessPoint: selectedAccessPoint?.nmAccessPoint,
+                  isFromDetailsRoute: true,
+                ),
+              ),
+            );
+          }
+        }
 
         return Scaffold(
           body: SingleChildScrollView(
@@ -256,7 +283,11 @@ class _NetworkDetailsState extends State<NetworkDetails> {
           bottomNavigationBar: MechanixBottomBar(
             leadingWidget: [context.backButton],
             centerWidget: [
-              isActive != null && isActive
+              (utf8.decode(state.selectedNMAccessPoint?.ssid ?? []) ==
+                          (utf8.decode(
+                              state.connectedNetwork?.nmAccessPoint.ssid ??
+                                  [])) &&
+                      state.wifiState == WifiStatus.connected)
                   ? BottomBarButton.widget(
                       widget: TextButton.icon(
                         onPressed: () {
@@ -283,7 +314,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                   : BottomBarButton.widget(
                       widget: TextButton.icon(
                         onPressed: () {
-                          onNetworkTap(context, state.selectedAccessPoint);
+                          onNetworkTap(state.selectedAccessPoint);
                         },
                         icon: IconWidget(
                           iconPath: Images.addRoundedSquare,
@@ -304,31 +335,6 @@ class _NetworkDetailsState extends State<NetworkDetails> {
           ),
         );
       },
-    );
-  }
-}
-
-Future<void> onNetworkTap(
-    BuildContext context, AccessPoints? selectedAccessPoint) async {
-  if (selectedAccessPoint != null && selectedAccessPoint.isSaved) {
-    context
-        .read<WirelessSettingsBloc>()
-        .add(ConnectSavedNetwork('', selectedAccessPoint.nmAccessPoint));
-    Navigator.pop(context);
-  } else {
-    final connectNetworkBloc = context.read<ConnectNetworkBloc>();
-    final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
-
-    MechanixBottomSheet.show(
-      context,
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: connectNetworkBloc),
-          BlocProvider.value(value: wirelessSettingsBloc),
-        ],
-        child: ConnectSecureNetwork(
-            accessPoint: selectedAccessPoint?.nmAccessPoint),
-      ),
     );
   }
 }
