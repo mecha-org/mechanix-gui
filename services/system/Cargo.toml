@@ -57,3 +57,25 @@ assets = [
     { source = "../system/systemd.service", dest = "/usr/lib/systemd/system/mechanix-system-service.service", mode = "644" },
 
 ]
+
+
+post_install_script = """
+systemctl daemon-reload || true
+if [ "$1" -eq 1 ]; then
+    systemctl enable mechanix-system-service.service
+    systemctl start mechanix-system-service.service
+elif [ "$1" -eq 2 ]; then
+    systemctl restart mechanix-system-service.service
+fi
+"""
+
+pre_uninstall_script = """
+if [ "$1" -eq 0 ]; then
+    systemctl stop mechanix-system-service.service || true
+    systemctl disable mechanix-system-service.service || true
+fi
+"""
+
+post_uninstall_script = """
+systemctl daemon-reload || true
+"""
