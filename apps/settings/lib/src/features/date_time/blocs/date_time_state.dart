@@ -31,7 +31,7 @@ class DateTimeState extends Equatable {
     required this.selectedMinute,
     required this.selectedWeekDay,
     this.selectedMeridiem = '',
-    this.selectedTimezone = '',
+    this.selectedTimezone = "Asia/Kolkata",
   });
 
   DateTimeState copyWith({
