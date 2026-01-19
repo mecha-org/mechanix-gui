@@ -56,7 +56,8 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                       ),
                       SimpleListItems(
                         title: 'Device Status',
-                        trailing: state.selectedDevice!.connected
+                        trailing: state.selectedDevice != null &&
+                                state.selectedDevice!.connected
                             ? Text(
                                 "Connected",
                                 style: TextStyle(color: context.primary),
@@ -107,6 +108,7 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                               context.read<BluetoothBloc>().add(PairDevice(
                                   state.selectedDevice?.address ?? ''));
                             }
+                            Navigator.pop(context);
                           },
                           icon: const IconWidget(
                             iconPath: Images.connectIcon,
