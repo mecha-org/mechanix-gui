@@ -6,14 +6,16 @@ use universal_search::prelude::UniversalSearch;
 pub struct UniversalSearchWidget {
     bounds: Bounds<Pixels>,
     search_handle: Entity<UniversalSearch>,
+    has_border: bool,
 }
 
 impl UniversalSearchWidget {
-    pub fn new(cx: &mut Context<Homescreen>) -> Self {
+    pub fn new(cx: &mut Context<Homescreen>, has_border: bool) -> Self {
         let search_handle = cx.new(|cx| UniversalSearch::new(cx));
         Self {
             bounds: Bounds::default(),
             search_handle,
+            has_border,
         }
     }
 }
@@ -39,6 +41,6 @@ impl HomescreenWidget for UniversalSearchWidget {
     }
 
     fn has_border(&self) -> bool {
-        false
+        self.has_border
     }
 }
