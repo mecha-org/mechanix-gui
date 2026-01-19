@@ -154,12 +154,39 @@ impl SliderOverlay {
         )
         .detach();
     }
+
+    fn overlay_bounds(&self, window: &Window) -> Bounds<Pixels> {
+        let window_size = window.bounds().size;
+        let overlay_width = SLIDER_WIDTH.max(ICON_SIZE) + (OVERLAY_PADDING * 2.0);
+        let overlay_height = SLIDER_HEIGHT + ICON_SIZE + OVERLAY_GAP + (OVERLAY_PADDING * 2.0);
+        let overlay_size = size(px(overlay_width), px(overlay_height));
+        let origin = point(
+            (window_size.width - overlay_size.width) / 2.0,
+            (window_size.height - overlay_size.height) / 2.0,
+        );
+
+        Bounds {
+            origin,
+            size: overlay_size,
+        }
+    }
+
+    fn update_input_regions(&self, window: &mut Window, show: bool) {
+        let regions = if show {
+            vec![self.overlay_bounds(window)]
+        } else {
+            vec![]
+        };
+
+        window.set_input_regions(Some(regions));
+    }
 }
 
 impl Render for SliderOverlay {
-    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         let icon_name =
             VolumeIconName::from_volume(self.slider_value, self.min_volume, self.max_volume);
+        self.update_input_regions(window, self.visible);
         if self.visible {
             div()
                 .flex()
@@ -177,7 +204,6 @@ impl Render for SliderOverlay {
                         .p(px(OVERLAY_PADDING))
                         .rounded(px(OVERLAY_RADIUS))
                         .bg(rgb(OVERLAY_BACKGROUND))
-                        .opacity(if self.visible { 1.0 } else { 0.0 })
                         .shadow_lg()
                         .child(
                             Slider::new("hardware-buttons-slider", &self.slider_state)
