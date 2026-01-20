@@ -1,3 +1,4 @@
+use std::{thread, time::Duration};
 use crate::messages::ShellStateMessage;
 use bluez::service::BluetoothService;
 use chrono::Local;
@@ -90,6 +91,7 @@ pub async fn get_sound_device_info(
     tx: &mut mpsc::Sender<ShellStateMessage>,
     pulse_service: &PulseAudioService,
 ) {
+            let _ = thread::sleep(Duration::from_millis(5));
     if let Ok(device_info) = pulse_service.handle.get_default_sink().await {
         let _ = tx
             .send(ShellStateMessage::OutputSoundDevice { device_info })
