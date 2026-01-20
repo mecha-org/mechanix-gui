@@ -7,6 +7,8 @@ use theme::ActiveTheme;
 use wallpaper::wallpaper;
 use wedges::{left_wedge, right_wedge, LockState};
 use theme::prelude::Fonts;
+use commons::assets::Assets;
+use std::path::Path;
 
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
@@ -41,6 +43,19 @@ const RIGHT_WEDGE_BOTTOM_LIMIT: f32 = 38.0;
 // How quickly icons fade relative to slider movement (left fades slower than right)
 const LEFT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.1;
 const RIGHT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.8;
+
+fn wallpaper_exists(path: &str) -> bool {
+    if path.trim().is_empty() {
+        return false;
+    }
+
+    if Path::new(path).exists() {
+        return true;
+    }
+
+    let normalized_path = path.strip_prefix("assets/").unwrap_or(path);
+    Assets::get(normalized_path).is_some()
+}
 
 pub struct Lockscreen {
     drag_offset: Option<f32>,
@@ -119,7 +134,14 @@ impl Render for Lockscreen {
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
-        let wallpaper_path = lockscreen_settings.wallpaper_path;
+
+        // To check if a valid wallpaper path from settings.toml and if not use default wallpaper
+        let settings_wallpaper_path = lockscreen_settings.wallpaper_path;
+        let wallpaper_path = if wallpaper_exists(&settings_wallpaper_path) {
+            settings_wallpaper_path
+        } else {
+            "icons/lockscreen/wallpaper.png".to_string()
+        };
 
         if self.window_height == 0.0 {
             self.window_height = window_height;
