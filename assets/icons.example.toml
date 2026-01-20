@@ -86,6 +86,7 @@
 "settings" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/settings.svg"
 "slider-gray-dot-column" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/slider-gray-dot-column.png"
 "slider-orange-dot-column" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/slider-orange-dot-column.png"
+"slider-accent-dots-column" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/slider-accent-dots-column.svg"
 "system-speaker" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/system-speaker.svg"
 "terminal" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/terminal.svg"
 "volume-high" = "/usr/share/mechanix/shell/assets/icons/settings-drawer/volume-high.svg"

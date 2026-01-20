@@ -86,6 +86,7 @@
 "settings" = "assets/icons/settings-drawer/settings.svg"
 "slider-gray-dot-column" = "assets/icons/settings-drawer/slider-gray-dot-column.png"
 "slider-orange-dot-column" = "assets/icons/settings-drawer/slider-orange-dot-column.png"
+"slider-accent-dots-column" = "assets/icons/settings-drawer/slider-accent-dots-column.svg"
 "system-speaker" = "assets/icons/settings-drawer/system-speaker.svg"
 "terminal" = "assets/icons/settings-drawer/terminal.svg"
 "volume-high" = "assets/icons/settings-drawer/volume-high.svg"

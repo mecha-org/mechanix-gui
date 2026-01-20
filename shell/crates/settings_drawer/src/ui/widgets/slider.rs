@@ -1,4 +1,5 @@
 use gpui::*;
+use icons::prelude::Icons;
 use theme::prelude::Theme;
 
 const DOT_SIZE: f32 = 3.0;
@@ -6,9 +7,6 @@ const DOT_GAP: f32 = 6.0;
 const BAR_SEGMENT_WIDTH: f32 = 2.2;
 const BAR_GAP_WIDTH: f32 = 5.0;
 
-const DOTS_COLUMN_IMAGE_PATH: &str = "icons/settings-drawer/slider-gray-dot-column.png";
-const DOTS_COLUMN_FILLED_IMAGE_PATH: &str = "icons/settings-drawer/slider-orange-dot-column.png";
-// const GRAY_DOT_GRID_IMAGE_PATH: &str = "icons/settings-drawer/gray-dot-grid.png";
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum SliderPattern {
@@ -163,6 +161,16 @@ impl RenderOnce for Slider {
         let slider_width_copy = width;
         let slider_width_drag_copy = width;
 
+        let accent_dots_column = Icons::global(cx)
+            .settings_drawer
+            .slider_accent_dots_column
+            .clone();
+
+        let slider_gray_dot_column = Icons::global(cx)
+            .settings_drawer
+            .slider_gray_dot_column
+            .clone();
+
         div()
             .id(self.id.clone())
             .w(px(width))
@@ -177,7 +185,7 @@ impl RenderOnce for Slider {
                     // Use repeating dots column image instead of generating individual dots
                     let dot_grid = (0..columns).map(|_| {
                         div().w(px(DOT_SIZE)).h_full().child(
-                            img(DOTS_COLUMN_IMAGE_PATH)
+                            img(slider_gray_dot_column.clone())
                                 .w_full()
                                 .h_full()
                                 .object_fit(gpui::ObjectFit::None),
@@ -274,10 +282,13 @@ impl RenderOnce for Slider {
                                 // Repeat the colored dots column images for active fill
                                 .children((0..columns).map(|_| {
                                     div().w(px(DOT_SIZE)).h_full().child(
-                                        img(DOTS_COLUMN_FILLED_IMAGE_PATH)
-                                            .w_full()
-                                            .h_full()
-                                            .object_fit(gpui::ObjectFit::None),
+                                        svg()
+                                            .external_path(SharedString::from(
+                                                accent_dots_column.to_string_lossy().to_string(),
+                                            ))
+                                            .text_color(colors.accent_200)
+                                            .w(px(3.))
+                                            .h(px(66.)),
                                     )
                                 })),
                         )
