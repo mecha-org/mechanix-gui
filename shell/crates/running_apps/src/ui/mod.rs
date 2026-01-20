@@ -117,7 +117,14 @@ impl Render for RunningApps {
                         .absolute()
                         .top(px(current_bar_y))
                         .h(px(BAR_SIZE.1))
-                        .child(div().bg(colors.accent_400).w(px(BAR_SIZE.0)).h(px(4.0))),
+                        .child(
+                            div()
+                            .id("center-bar")
+                            .bg(colors.accent_200)
+                            .w(px(BAR_SIZE.0))
+                            .h(px(4.0))
+                            .rounded(px(4.0)),
+                        ),
                 )
                 .priority(1000),
             )
