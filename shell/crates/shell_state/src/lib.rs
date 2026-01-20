@@ -1,4 +1,3 @@
-use std::thread;
 use std::time::Duration;
 use bluez::{interfaces::device::BluetoothDevice, service::{BluetoothEvent, BluetoothService, InterfaceEvent}};
 use pulseaudio::service::{DeviceInfo, PulseAudioService};
@@ -219,7 +218,8 @@ impl ShellStateManager {
                             }
                         }
                         ShellStateMessage::OutputSoundDevice { device_info } => {
-                            ShellState::global_mut(cx).default_sound_device = device_info;
+                            ShellState::global_mut(cx).default_sound_device = device_info.clone();
+                            ShellState::global_mut(cx).volume = device_info.clone().volume as f32;
                         }
                         ShellStateMessage::OutputSounds { list } => {
                             ShellState::global_mut(cx).sound_devices = list;
@@ -422,7 +422,9 @@ impl ShellStateManager {
                             match volume_event {
                                 Some(VolumeMessage::VolumeChanged { name, value }) => {
                                     match pulse_manager.handle.set_sink_volume_by_name(&name, &value).await {
-                                        Ok(_) => (),
+                                        Ok(_) => {
+                                            get_sound_device_info(&mut message_tx, &pulse_manager).await;
+                                        },
                                         Err(e) => {
                                             eprintln!("Failed to set volume: {}", e);
                                         }
@@ -461,7 +463,6 @@ impl ShellStateManager {
                                  Some(VolumeMessage::SetDefaultOutputSoundDevice { name }) => {
                                     match pulse_manager.handle.set_default_sink_by_name(&name).await {
                                         Ok(_) => {
-                                            let _ = thread::sleep(Duration::from_millis(5));
                                             let _= get_sound_device_info(&mut message_tx, &pulse_manager).await;
                                         }
                                         Err(e) => {
