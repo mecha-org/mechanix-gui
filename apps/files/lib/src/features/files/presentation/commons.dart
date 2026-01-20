@@ -422,7 +422,7 @@ TextStyle boldStyle(BuildContext context) => TextStyle(
     );
 
 TextStyle previewTitleStyle(BuildContext context) => TextStyle(
-      color: context.colorScheme.primary,
+      color: context.colorScheme.onSurface,
       fontSize: 20,
       fontWeight: FontWeight.w600,
     );
