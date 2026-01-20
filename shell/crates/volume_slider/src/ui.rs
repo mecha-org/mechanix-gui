@@ -11,7 +11,6 @@ const OVERLAY_PADDING: f32 = 16.0;
 const OVERLAY_GAP: f32 = 12.0;
 const OVERLAY_RADIUS: f32 = 15.0;
 const OVERLAY_BACKGROUND: u32 = 0x101010;
-const OVERLAY_TIMEOUT_MS: u64 = 2_000;
 // Vertical slider dimensions (bars area)
 const SLIDER_WIDTH: f32 = 20.0;
 const SLIDER_HEIGHT: f32 = 233.0;
@@ -30,7 +29,8 @@ pub fn init(cx: &mut App) -> SliderConfig {
         layer_shell,
         min_volume_level,
         max_volume_level,
-        input_regions,
+        overlay_timeout_ms,
+        input_regions: _,
     } = Settings::global(cx).volume_slider.clone();
     let LayerShellSettings {
         size,
@@ -71,7 +71,6 @@ pub fn init(cx: &mut App) -> SliderConfig {
             let slider_state = slider_state_for_overlay.clone();
             let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
             window.set_input_regions(Some(Vec::new()));
-            let input_regions = input_regions.clone();
             cx.new(move |cx| {
                 SliderOverlay::new(
                     cx,
@@ -79,7 +78,7 @@ pub fn init(cx: &mut App) -> SliderConfig {
                     initial_value,
                     min_volume_level,
                     max_volume_level,
-                    input_regions.clone(),
+                    overlay_timeout_ms,
                 )
             })
         },
@@ -98,10 +97,10 @@ struct SliderOverlay {
     slider_value: f32,
     min_volume: f32,
     max_volume: f32,
+    overlay_timeout_ms: u64,
     visible: bool,
     last_visible: bool,
     dismiss_generation: u64,
-    input_regions: InputRegions,
     _subscription: Subscription,
 }
 
@@ -112,7 +111,7 @@ impl SliderOverlay {
         initial_value: f32,
         min_volume: f32,
         max_volume: f32,
-        input_regions: InputRegions,
+        overlay_timeout_ms: u64,
     ) -> Self {
         let subscription = cx.subscribe(&slider_state, |this, _, event: &SliderEvent, cx| {
             let SliderEvent::Change(value) = *event;
@@ -128,10 +127,10 @@ impl SliderOverlay {
             slider_value: initial_value,
             min_volume,
             max_volume,
+            overlay_timeout_ms,
             visible: false,
             last_visible: false,
             dismiss_generation: 0,
-            input_regions,
             _subscription: subscription,
         }
     }
@@ -139,9 +138,10 @@ impl SliderOverlay {
     // This is to add and remove input region
     fn update_input_regions(&mut self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
         let regions = if show {
+            let input_regions = Settings::global(cx).volume_slider.input_regions.clone();
             vec![Bounds {
-                origin: self.input_regions.maximized.origin,
-                size: self.input_regions.maximized.size,
+                origin: input_regions.maximized.origin,
+                size: input_regions.maximized.size,
             }]
         } else {
             Vec::new()
@@ -156,16 +156,17 @@ impl SliderOverlay {
         self.visible = true;
         self.dismiss_generation = self.dismiss_generation.wrapping_add(1);
         let generation = self.dismiss_generation;
+        let overlay_timeout_ms = self.overlay_timeout_ms;
         cx.notify();
 
-        if OVERLAY_TIMEOUT_MS == 0 {
+        if overlay_timeout_ms == 0 {
             return;
         }
 
         cx.spawn(
             async move |this: WeakEntity<SliderOverlay>, cx: &mut AsyncApp| {
                 cx.background_executor()
-                    .timer(Duration::from_millis(OVERLAY_TIMEOUT_MS))
+                    .timer(Duration::from_millis(overlay_timeout_ms))
                     .await;
 
                 this.update(cx, |this, cx| {
