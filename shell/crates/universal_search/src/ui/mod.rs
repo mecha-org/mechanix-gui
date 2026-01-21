@@ -12,9 +12,9 @@ use icons::prelude::*;
 use models::{DragInfo, SearchResults, UniversalSearch};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{Settings, UniversalSearchSettings};
+use settings::prelude::Settings;
 use theme::ActiveTheme;
-use theme::prelude::{AlphaExt, Theme, Fonts};
+use theme::prelude::{AlphaExt, Fonts, Theme};
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 52.0;
@@ -44,8 +44,6 @@ impl Render for DragInfo {
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let files_app_name = Settings::global(cx).system_apps.clone().files;
-        let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
-        let navbar_size = Settings::global(cx).universal_search.clone().navbar_size;
 
         cx.spawn(async move |this, cx| {
             if let Ok(service) = MxSearchService::new().await {
@@ -93,7 +91,6 @@ impl UniversalSearch {
             text_input: cx.new(|cx| TextInput::new(cx)),
             last_search_query: String::new(),
             is_searching: false,
-            position: Self::closed_pos(app_size, navbar_size),
             drag_offset: None,
             drag_start_pos: 0.0,
             search_service: None,
@@ -165,8 +162,12 @@ impl UniversalSearch {
         self.is_dragging = false;
     }
 
-    fn calculate_scroll_bounds(&self, app_size: Size<Pixels>, content_height: Pixels) -> (Pixels, Pixels) {
-        let container_height = app_size.height - px(SEARCH_BAR_HEIGHT);
+    fn calculate_scroll_bounds(
+        &self,
+        content_height: Pixels,
+        search_screen_size: Size<Pixels>,
+    ) -> (Pixels, Pixels) {
+        let container_height = search_screen_size.height - px(SEARCH_BAR_HEIGHT);
 
         if content_height <= container_height {
             return (px(0.0), px(0.0));
@@ -187,8 +188,12 @@ impl UniversalSearch {
         icon_section_height + file_section_height + px(16.0)
     }
 
+    fn is_search_result_empty(&self) -> bool {
+        self.app_search_results.is_empty() && self.file_search_results.is_empty()
+    }
+
     fn build_search_results(&self) -> Vec<SearchResults> {
-        if self.app_search_results.is_empty() && self.file_search_results.is_empty() {
+        if self.is_search_result_empty() {
             return Vec::new();
         }
 
@@ -224,19 +229,27 @@ impl UniversalSearch {
     fn on_drag_move(
         &mut self,
         event: &DragMoveEvent<DragInfo>,
-        _: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         if !self.is_dragging {
             return;
         }
-
-         let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
+        if !self.is_search_result_empty() {
+            cx.stop_propagation();
+        }
 
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
         let content_height = self.estimate_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(
+            content_height,
+            gpui::size(
+                window.bounds().size.width,
+                window.bounds().size.height
+                    - Settings::global(cx).homescreen.status_bar_size.height,
+            ),
+        );
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
         cx.notify();
@@ -277,49 +290,8 @@ impl Render for UniversalSearch {
 }
 
 impl UniversalSearch {
- 
     fn closed_pos(app_size: Size<Pixels>, navbar_size: Size<Pixels>) -> f32 {
         (app_size.height - navbar_size.height).into()
-    }
-
-    fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
-        let start = self.position;
-        let change = target - start;
-        let duration_ms = 250.0; // Animation speed
-        let start_time = std::time::Instant::now();
-
-        cx.spawn(
-            async move |this: WeakEntity<UniversalSearch>, cx: &mut AsyncApp| {
-                loop {
-                    let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
-
-                    // Check if animation is done
-                    if elapsed >= duration_ms {
-                        this.update(cx, |this, cx| {
-                            this.position = target;
-                            cx.notify();
-                        })
-                        .ok();
-                        break;
-                    }
-
-                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
-                    let ease = 1.0 - (1.0 - t).powi(3);
-                    let current = start + (change * ease);
-
-                    this.update(cx, |this, cx| {
-                        this.position = current;
-                        cx.notify();
-                    })
-                    .ok();
-
-                    cx.background_executor()
-                        .timer(std::time::Duration::from_millis(16))
-                        .await;
-                }
-            },
-        )
-        .detach();
     }
 
     fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
@@ -394,12 +366,31 @@ impl UniversalSearch {
                                                                     .to_string_lossy()
                                                                     .to_string(),
                                                             ))
-                                                            .text_color(colors.accent_500)
-                                                            .size(px(22.26)),
+                                                            .text_color(colors.foreground_900)
+                                                            .size(px(22.00)),
                                                     )
                                                 })
                                                 .when_some(search.path.clone(), |this, path| {
-                                                    this.child(img(path).w(px(22.26)).h(px(22.26)))
+                                                    if path.is_empty() {
+                                                        this.child(
+                                                            svg()
+                                                                .external_path(SharedString::from(
+                                                                    icons
+                                                                        .default_app
+                                                                        .to_string_lossy()
+                                                                        .to_string(),
+                                                                ))
+                                                                .text_color(colors.foreground_900)
+                                                                .size(px(22.00)),
+                                                        )
+                                                    } else {
+                                                        this.child(
+                                                            img(PathBuf::from(path))
+                                                                .w(px(22.26))
+                                                                .h(px(22.26))
+                                                                .object_fit(ObjectFit::Cover),
+                                                        )
+                                                    }
                                                 })
                                             })
                                             .when(search.file_type == FileType::File, |this| {
@@ -422,7 +413,8 @@ impl UniversalSearch {
                             .child(
                                 div()
                                     .id(("us-app-name-", index))
-                                    .font_weight(FontWeight(500.0))
+                                    .font_weight(FontWeight::MEDIUM)
+                                    .line_height(px(1.2))
                                     .text_size(px(16.0))
                                     .text_color(colors.foreground_400)
                                     .child(search.name.to_string())
@@ -496,10 +488,10 @@ impl UniversalSearch {
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
-        let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
 
         // Initialize text input
         self.text_input.update(cx, |input, _| {
+            input.placeholder_color = Some(colors.accent_300.with_alpha(0.4));
             input.placeholder = "Search here".into();
         });
 
@@ -516,7 +508,15 @@ impl UniversalSearch {
 
         // Calculate scroll bounds
         let content_height = self.estimate_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(
+            content_height,
+            gpui::size(
+                window.bounds().size.width,
+                window.bounds().size.height
+                    - Settings::global(cx).homescreen.status_bar_size.height,
+            ),
+        );
+
         self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
 
         // Build content children
@@ -532,7 +532,7 @@ impl UniversalSearch {
             .flex()
             .flex_col()
             .bg(colors.background_1000)
-            .font_family(primary_font)
+            .font_family(primary_font.clone())
             .on_drop(cx.listener(Self::on_drop))
             .on_drag_move(cx.listener(Self::on_drag_move))
             .child(
@@ -554,8 +554,11 @@ impl UniversalSearch {
                                 .h_full()
                                 .child(
                                     div()
-                                        .text_size(px(20.0))
-                                        .text_color(colors.foreground_600)
+                                        .font_family(primary_font)
+                                        .font_weight(FontWeight::MEDIUM)
+                                        .text_size(px(24.0))
+                                        .line_height(px(1.2))
+                                        .text_color(colors.foreground_200)
                                         .child("Search"),
                                 )
                                 .child(
@@ -579,10 +582,12 @@ impl UniversalSearch {
                     )
                     .when(content_children.len() == 0, |content_div| {
                         content_div.child(
-                            div().flex().flex_col().h(px(39.)).child(
+                            div().flex().flex_col().h(px(16.)).py(px(10.)).child(
                                 div()
+                                    .font_weight(FontWeight::LIGHT)
+                                    .line_height(px(1.2))
                                     .text_size(px(16.0))
-                                    .text_color(colors.background_500)
+                                    .text_color(colors.foreground_900)
                                     .child("Search an app, a file, a word or anything literally"),
                             ),
                         )
@@ -676,8 +681,10 @@ impl UniversalSearch {
                                             )
                                             .child(
                                                 div()
-                                                    .text_size(px(20.0))
-                                                    .text_color(colors.foreground_300)
+                                                    .font_weight(FontWeight::MEDIUM)
+                                                    .line_height(px(1.25))
+                                                    .text_size(px(18.0))
+                                                    .text_color(colors.foreground_200)
                                                     .child(text_input),
                                             ),
                                     ),
