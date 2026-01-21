@@ -181,9 +181,6 @@ impl RenderOnce for Slider {
                     let unit_size = DOT_SIZE + DOT_GAP;
                     let total_columns = (width / unit_size).floor() as usize;
 
-                    let active_columns = ((active_width.max(0.0)) / unit_size).ceil() as usize;
-                    let active_columns = active_columns.min(total_columns);
-
                     let active_dot_path =
                         SharedString::from(accent_dots_column.to_string_lossy().to_string());
                     let inactive_dot_path =
@@ -205,11 +202,12 @@ impl RenderOnce for Slider {
                             .h(px(height))
                     };
 
-                    let track_dots = (0..total_columns)
-                        .map(|_| div().w(px(DOT_SIZE)).h_full().child(render_dot(false)));
+                    let dots = (0..total_columns).map(|idx| {
+                        let dot_end_pos = (idx as f32 * unit_size) + DOT_SIZE;
+                        let is_active = dot_end_pos <= active_width;
 
-                    let active_dots = (0..active_columns)
-                        .map(|_| div().w(px(DOT_SIZE)).h_full().child(render_dot(true)));
+                        div().w(px(DOT_SIZE)).h_full().child(render_dot(is_active))
+                    });
 
                     div()
                         .flex()
@@ -227,7 +225,7 @@ impl RenderOnce for Slider {
                                 .flex_row()
                                 .gap(px(DOT_GAP))
                                 .bg(theme_bg_color)
-                                .children(track_dots)
+                                .children(dots)
                                 .on_mouse_down(
                                     MouseButton::Left,
                                     window.listener_for(
@@ -251,7 +249,6 @@ impl RenderOnce for Slider {
                                     &self.state,
                                     move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
                                         let DragThumb(id) = event.drag(cx);
-
                                         if *id != entity_id {
                                             return;
                                         }
@@ -276,20 +273,6 @@ impl RenderOnce for Slider {
                                     .absolute()
                                     .size_full()
                                 }),
-                        )
-                        .child(
-                            div()
-                                .id("active-fill")
-                                .absolute()
-                                .left_0()
-                                .top_0()
-                                .h_full()
-                                .w(px(active_width.max(0.0)))
-                                .overflow_hidden()
-                                .flex()
-                                .flex_row()
-                                .gap(px(DOT_GAP))
-                                .children(active_dots),
                         )
                 }
                 SliderPattern::Bars => {
