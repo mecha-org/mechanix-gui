@@ -116,7 +116,7 @@ impl Homescreen {
             0,
             Bounds {
                 origin: point(0, 0),
-                size: size(4, 4), // Adjust size as needed for a search bar
+                size: size(3, 3), // Adjust size as needed for a search bar
             },
         );
 
@@ -327,7 +327,7 @@ impl Homescreen {
 
         state.create_widget(
             AppDrawerWidget::new(cx, false),
-            4,
+            2,
             Bounds {
                 origin: point(0, 0),
                 size: size(3, 3), // Full screen widget
