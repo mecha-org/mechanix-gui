@@ -60,12 +60,24 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
-      
-      # Pulp CLI setup
-      - name: Setup | Pulp CLI
+
+      - name: Setup | Add comet RPM repo
         run: |
-          pipx install --force pulp-cli[pygments]
-          pipx inject pulp-cli pulp-cli-deb pulp_rpm
+          set -euo pipefail
+
+          sudo tee /etc/yum.repos.d/comet-rpm.repo > /dev/null <<'EOF'
+          [comet-rpm]
+          name=comet-rpm
+          baseurl=http://pkg.mecha.so/rpm
+          repo_gpgcheck=0
+          gpgcheck=0
+          enabled=1
+          EOF
+
+          sudo dnf clean all
+          sudo dnf makecache
+    
+      # Pulp CLI setup
       - name: Setup | Pulp CLI Configuration
         run: |
           set -euo pipefail
@@ -82,6 +94,7 @@ jobs:
             --password "$MECHA_PULP_PASSWORD" \
             --base-url "$PULP_API_URL" \
             --overwrite
+
       - name: Get Upstream Version ${{ matrix.package }}
         id: cargo_version
         shell: bash
@@ -94,11 +107,13 @@ jobs:
           fi
           echo "Detected Version: $VERSION"
           echo "upstream=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Build ${{ matrix.package }}
         run: |
           cargo --config net.git-fetch-with-cli=true fetch
           cargo build --release --package ${{ matrix.package }}
           ls -la target/release
+
       - name: Resolve versions [${{ matrix.package }}]
         id: version_info
         run: |
@@ -121,11 +136,13 @@ jobs:
           # Set outputs for subsequent steps
           echo "deb_revision=$DEB_REV" >> "$GITHUB_OUTPUT"
           echo "rpm_revision=$RPM_REV" >> "$GITHUB_OUTPUT"
+
       - name: Package deb ${{ matrix.package }}
         run: |
           sudo apt install -y fakeroot
           fakeroot cargo deb --deb-revision "${{ steps.version_info.outputs.deb_revision }}" --no-build --package ${{ matrix.package }}
           ls -la target/debian
+
       - name: Repack DEB natively [${{ matrix.package }}]
         run: |
           set -euo pipefail
@@ -137,6 +154,7 @@ jobs:
           fakeroot dpkg-deb -R "$DEB_FILE" "$TMPDIR/pkg"
           fakeroot dpkg-deb -b "$TMPDIR/pkg" "$DEB_FILE"  
           echo "[INFO] ✅ Repacked: $DEB_FILE"
+
       - name: Generate RPM [${{ matrix.package }}]
         run: |
           # Use the resolved RPM revision for the 'release' field
@@ -144,6 +162,7 @@ jobs:
             -s 'release = "${{ steps.version_info.outputs.rpm_revision }}"' \
             -p "$(pwd)/${{ matrix.path }}"
           ls -la target/generate-rpm
+
       - name: Prepare artifacts ${{ matrix.package }}
         run: |
           mkdir -p build/deb build/rpm
@@ -151,6 +170,7 @@ jobs:
           cp target/debian/${{ matrix.package }}_*.deb ./build/deb/
           # Copy RPM
           cp target/generate-rpm/${{ matrix.package }}*.rpm ./build/rpm/
+          
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -177,6 +197,7 @@ jobs:
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
+            
       - name: Publish RPM [${{ matrix.package }}]
         run: |
           set -euo pipefail
