@@ -7,7 +7,6 @@ const DOT_GAP: f32 = 6.0;
 const BAR_SEGMENT_WIDTH: f32 = 2.2;
 const BAR_GAP_WIDTH: f32 = 5.0;
 
-
 #[derive(Clone, Copy, PartialEq)]
 pub enum SliderPattern {
     Dots,
@@ -180,17 +179,37 @@ impl RenderOnce for Slider {
             .child(match pattern {
                 SliderPattern::Dots => {
                     let unit_size = DOT_SIZE + DOT_GAP;
-                    let columns = (width / unit_size).floor() as usize;
+                    let total_columns = (width / unit_size).floor() as usize;
 
-                    // Use repeating dots column image instead of generating individual dots
-                    let dot_grid = (0..columns).map(|_| {
-                        div().w(px(DOT_SIZE)).h_full().child(
-                            img(slider_gray_dot_column.clone())
-                                .w_full()
-                                .h_full()
-                                .object_fit(gpui::ObjectFit::None),
-                        )
-                    });
+                    let active_columns = ((active_width.max(0.0)) / unit_size).ceil() as usize;
+                    let active_columns = active_columns.min(total_columns);
+
+                    let active_dot_path =
+                        SharedString::from(accent_dots_column.to_string_lossy().to_string());
+                    let inactive_dot_path =
+                        SharedString::from(slider_gray_dot_column.to_string_lossy().to_string());
+
+                    let render_dot = |is_active: bool| {
+                        svg()
+                            .external_path(if is_active {
+                                active_dot_path.clone()
+                            } else {
+                                inactive_dot_path.clone()
+                            })
+                            .text_color(if is_active {
+                                colors.accent_200
+                            } else {
+                                colors.background_600
+                            })
+                            .w(px(DOT_SIZE))
+                            .h(px(height))
+                    };
+
+                    let track_dots = (0..total_columns)
+                        .map(|_| div().w(px(DOT_SIZE)).h_full().child(render_dot(false)));
+
+                    let active_dots = (0..active_columns)
+                        .map(|_| div().w(px(DOT_SIZE)).h_full().child(render_dot(true)));
 
                     div()
                         .flex()
@@ -208,13 +227,7 @@ impl RenderOnce for Slider {
                                 .flex_row()
                                 .gap(px(DOT_GAP))
                                 .bg(theme_bg_color)
-                                .children(dot_grid)
-                                // .child(
-                                //       img(GRAY_DOT_GRID_IMAGE_PATH)
-                                //     .w_full()
-                                //     .h_full()
-                                //     .object_fit(gpui::ObjectFit::None),
-                                // )
+                                .children(track_dots)
                                 .on_mouse_down(
                                     MouseButton::Left,
                                     window.listener_for(
@@ -237,20 +250,19 @@ impl RenderOnce for Slider {
                                 .on_drag_move(window.listener_for(
                                     &self.state,
                                     move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
-                                        match event.drag(cx) {
-                                            DragThumb(id) => {
-                                                if *id != entity_id {
-                                                    return;
-                                                }
-                                                cx.stop_propagation();
-                                                state.update_value_by_position(
-                                                    event.event.position,
-                                                    slider_width_drag_copy,
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
+                                        let DragThumb(id) = event.drag(cx);
+
+                                        if *id != entity_id {
+                                            return;
                                         }
+
+                                        cx.stop_propagation();
+                                        state.update_value_by_position(
+                                            event.event.position,
+                                            slider_width_drag_copy,
+                                            window,
+                                            cx,
+                                        );
                                     },
                                 ))
                                 .child({
@@ -273,24 +285,11 @@ impl RenderOnce for Slider {
                                 .top_0()
                                 .h_full()
                                 .w(px(active_width.max(0.0)))
-                                // .rounded(px(2.))
-                                // .bg(rgb(ACTIVE_FILL_COLOR)),
                                 .overflow_hidden()
                                 .flex()
                                 .flex_row()
                                 .gap(px(DOT_GAP))
-                                // Repeat the colored dots column images for active fill
-                                .children((0..columns).map(|_| {
-                                    div().w(px(DOT_SIZE)).h_full().child(
-                                        svg()
-                                            .external_path(SharedString::from(
-                                                accent_dots_column.to_string_lossy().to_string(),
-                                            ))
-                                            .text_color(colors.accent_200)
-                                            .w(px(3.))
-                                            .h(px(66.)),
-                                    )
-                                })),
+                                .children(active_dots),
                         )
                 }
                 SliderPattern::Bars => {
