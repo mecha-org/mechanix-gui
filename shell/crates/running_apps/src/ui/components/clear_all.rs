@@ -3,6 +3,8 @@ use crate::ui::RunningApps;
 use gpui::prelude::*;
 use gpui::*;
 use icons::prelude::Icons;
+use theme::ActiveTheme;
+use theme::prelude::{AlphaExt, Fonts};
 
 impl RunningApps {
     pub fn clear_all_cards(&mut self, _window: &mut Window, cx: &mut Context<Self>) {
@@ -23,6 +25,8 @@ impl RunningApps {
 
     pub fn render_clear_all(&self, cx: &mut Context<'_, Self>) -> impl IntoElement {
         let cleanup = Icons::global(cx).running_apps.cleanup.clone();
+        let colors = cx.theme().colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         div()
             .w_full()
@@ -38,19 +42,21 @@ impl RunningApps {
             )
             .child(
                 div()
-                    .bg(rgb(0x151515))
+                    .bg(colors.background_800)
                     .p_2()
                     .rounded_md()
-                    .text_color(gpui::white())
+                    .text_color(colors.foreground_0)
+                    .font_family(primary_font)
+                    .text_size(px(18.0))
                     .flex()
                     .flex_row()
                     .gap_2()
                     .items_center()
                     .justify_center()
                     .child(img(cleanup))
-                    .child("Close All")
+                    .child("Close all")
                     .cursor_pointer()
-                    .hover(|s| s.bg(rgb(0x252525)))
+                    .hover(|s| s.bg(colors.background_600))
                     .on_mouse_up(
                         MouseButton::Left,
                         cx.listener(|this, _event, window, cx| {

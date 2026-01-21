@@ -223,6 +223,20 @@ impl SourceSearchService {
         Ok(())
     }
 
+    pub async fn upsert_metadata(&mut self, payload: Vec<UpsertMetadata>) -> anyhow::Result<bool> {
+        debug!("Upserting metadata: {:?}", payload);
+        let ids: Vec<String> = payload.iter().map(|m| m.unique_id.clone()).collect();
+        if let Some(tx) = &self.cmd_tx {
+            tx.send(IndexCmd::RemoveByUniqueIds(ids, false)).await.ok();
+        }
+        if let Some(tx) = &self.cmd_tx {
+            tx.send(IndexCmd::Upsert(payload)).await.ok();
+            Ok(true)
+        } else {
+            anyhow::bail!("Indexer not running")
+        }
+    }
+
     pub async fn delete_by_ids(&mut self, ids: Vec<String>) -> anyhow::Result<bool> {
         debug!("delete by ids, length: {:?}", ids.len());
         if let Some(tx) = &self.cmd_tx {
