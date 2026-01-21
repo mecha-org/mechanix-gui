@@ -4,9 +4,11 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_card.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/extensions/build_context.dart';
+import 'package:widgets/extensions/color.dart';
 
 class TopPlaylists extends StatefulWidget {
   const TopPlaylists({super.key});
@@ -16,58 +18,41 @@ class TopPlaylists extends StatefulWidget {
 }
 
 class _TopPlaylistsState extends State<TopPlaylists> {
-  final ScrollController _scrollController = ScrollController();
-  bool canScrollLeft = false;
-  bool canScrollRight = true;
+  final PageController _pageController = PageController(viewportFraction: 1);
+  int currentPage = 0;
+  static const int _itemsPerPage = 3;
+  static const double _cardHeight = 164;
+  static const double _cardWidth = 164;
+  static const double _horizontalSpacing = 8;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_updateScrollButtons);
-  }
+  List<List<PlaylistInfo>> _buildPages(List<PlaylistInfo> playlists) {
+    final List<List<PlaylistInfo>> pages = [];
 
-  @override
-  void dispose() {
-    _scrollController.removeListener(_updateScrollButtons);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _updateScrollButtons() {
-    if (!_scrollController.hasClients) return;
-
-    setState(() {
-      canScrollLeft = _scrollController.position.pixels > 0;
-      canScrollRight =
-          _scrollController.position.pixels <
-          _scrollController.position.maxScrollExtent;
-    });
+    for (int i = 0; i < playlists.length; i += _itemsPerPage) {
+      pages.add(
+        playlists.sublist(
+          i,
+          (i + _itemsPerPage < playlists.length)
+              ? i + _itemsPerPage
+              : playlists.length,
+        ),
+      );
+    }
+    return pages;
   }
 
   void _scrollLeft() {
-    if (canScrollLeft && _scrollController.hasClients) {
-      final double targetPosition = (_scrollController.offset - 300).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      );
-
-      _scrollController.animateTo(
-        targetPosition,
+    if (currentPage > 0) {
+      _pageController.previousPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     }
   }
 
-  void _scrollRight() {
-    if (canScrollRight && _scrollController.hasClients) {
-      final double targetPosition = (_scrollController.offset + 300).clamp(
-        0.0,
-        _scrollController.position.maxScrollExtent,
-      );
-
-      _scrollController.animateTo(
-        targetPosition,
+  void _scrollRight(int pageCount) {
+    if (currentPage < pageCount - 1) {
+      _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
@@ -83,31 +68,25 @@ class _TopPlaylistsState extends State<TopPlaylists> {
           return const SizedBox.shrink();
         }
 
-        // Update scroll button states after build
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_scrollController.hasClients) {
-            _updateScrollButtons();
-          }
-        });
+        final pages = _buildPages(playlists);
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 16),
+          margin: const EdgeInsets.only(bottom: 36),
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.only(left: 16, right: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Playlists',
                       style: TextStyle(
-                        color: MusicColors.textColor,
+                        color: context.onSurfaceVariant,
                         fontSize: 18,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
@@ -117,30 +96,33 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                       spacing: 12,
                       children: [
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.previousPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
-                                canScrollLeft
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.previousPageIcon,
+                            iconSize: 24,
+                            boxSize: 24,
+                            iconColor:
+                                currentPage > 0
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
-                          onPressed: canScrollLeft ? _scrollLeft : null,
+                          onPressed: currentPage > 0 ? _scrollLeft : null,
                         ),
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.nextPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
-                                canScrollRight
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.nextPageIcon,
+                            iconSize: 24,
+                            boxSize: 24,
+                            iconColor:
+                                currentPage < pages.length - 1
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
-                          onPressed: canScrollRight ? _scrollRight : null,
+                          onPressed:
+                              currentPage < pages.length - 1
+                                  ? () => _scrollRight(pages.length)
+                                  : null,
                         ),
                       ],
                     ),
@@ -148,48 +130,57 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                 ),
               ),
 
-              // Horizontal Scrollable List - Single Row
+              // Horizontal PageView - Single Row
               SizedBox(
-                height: 164, // Height for single row of cards
-                child: SingleChildScrollView(
-                  controller: _scrollController,
+                height: _cardHeight,
+                child: PageView.builder(
+                  controller: _pageController,
+                  padEnds: false,
                   scrollDirection: Axis.horizontal,
-                  physics:
-                      const PageScrollPhysics(), // Disable manual scroll
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        for (int i = 0; i < playlists.length; i++) ...[
-                          SizedBox(
-                            width: 164, // Fixed width for each card
-                            child: BlocSelector<SongsBloc, SongsState, bool>(
-                              selector:
-                                  (state) =>
-                                      state.currentPlaylist.playlistId ==
-                                      playlists[i].id,
-                              builder:
-                                  (context, isCurrentPlaylist) => PlaylistCard(
+                  itemCount: pages.length,
+                  onPageChanged: (index) {
+                    setState(() => currentPage = index);
+                  },
+                  itemBuilder: (context, pageIndex) {
+                    final pagePlaylists = pages[pageIndex];
+
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 16, right: 8),
+                      child: Row(
+                        children: [
+                          for (int i = 0; i < pagePlaylists.length; i++) ...[
+                            SizedBox(
+                              width: _cardWidth,
+                              height: _cardHeight,
+                              child: BlocSelector<SongsBloc, SongsState, bool>(
+                                selector:
+                                    (state) =>
+                                        state.currentPlaylist.playlistId ==
+                                        pagePlaylists[i].id,
+                                builder: (context, isCurrentPlaylist) {
+                                  return PlaylistCard(
                                     isDeletePlaylist: false,
                                     isLiked: true,
                                     isRenamePlaylist: false,
                                     isActive: isCurrentPlaylist,
                                     onRenameClick: (value) {},
-                                    playlistInfo: playlists[i],
+                                    playlistInfo: pagePlaylists[i],
                                     onPlaylistTap: () {
                                       context.read<SongsBloc>().add(
-                                        SelectedPlaylist(playlists[i].id),
+                                        SelectedPlaylist(pagePlaylists[i].id),
                                       );
                                     },
-                                  ),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                          if (i < playlists.length - 1)
-                            const SizedBox(width: 8),
+                            if (i < pagePlaylists.length - 1)
+                              const SizedBox(width: _horizontalSpacing),
+                          ],
                         ],
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -197,5 +188,11 @@ class _TopPlaylistsState extends State<TopPlaylists> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 }

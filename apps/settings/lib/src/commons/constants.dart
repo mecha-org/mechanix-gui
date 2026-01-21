@@ -80,4 +80,35 @@ class Images {
   static const String circularCheckIcon =
       'assets/images/circular_check_icon.png';
   static const String lockIcon = 'assets/images/lock_icon.png';
+  static const String allAppsIcon = 'assets/images/all_apps_icon.png';
+  static const String cellularIcon = 'assets/images/cellular_icon.png';
+  static const String extensionIcon = 'assets/images/extension_icon.png';
+  static const String launcherIcon = 'assets/images/launcher_icon.png';
+  static const String securityIcon = 'assets/images/security_icon.png';
+  static const String updateIcon = 'assets/images/update_icon.png';
+  static const String systemUpdateIcon = 'assets/images/arrows_clock_wise.png';
+  static const String blogImage = 'assets/images/blog_image.png';
+  static const String blockIcon = 'assets/images/block_icon.png';
+  static const String wallpaper1 = "assets/images/wallpaper_1.png";
+  static const String wallpaper2 = "assets/images/wallpaper_2.png";
+  static const String wallpaper3 = "assets/images/wallpaper_3.png";
+  static const String wallpaper4 = "assets/images/wallpaper_4.png";
+  static const String wallpaper5 = "assets/images/wallpaper_5.png";
+  static const String wallpaper6 = "assets/images/wallpaper_6.png";
+  static const String themeAmber = "assets/images/theme_preview_amber.png";
+  static const String themeBlue = 'assets/images/theme_preview_blue.png';
+  static const String themeCoral = 'assets/images/theme_preview_coral.png';
+  static const String themeMint = 'assets/images/theme_preview_mint.png';
+  static const String themeOrange = 'assets/images/theme_preview_orange.png';
+  static const String themeMagenta = 'assets/images/theme_preview_magenta.png';
+  static const String themePurple = 'assets/images/theme_preview_purple.png';
+  static const String themeYellow = 'assets/images/theme_preview_yellow.png';
+  static const String wallpaperAmber = "assets/images/wallpaper_amber.png";
+  static const String wallpaperBlue = "assets/images/wallpaper_blue.png";
+  static const String wallpaperCoral = "assets/images/wallpaper_coral.png";
+  static const String wallpaperMint = "assets/images/wallpaper_mint.png";
+  static const String wallpaperOrange = "assets/images/wallpaper_orange.png";
+  static const String wallpaperMagenta = "assets/images/wallpaper_magenta.png";
+  static const String wallpaperPurple = "assets/images/wallpaper_purple.png";
+  static const String wallpaperYellow = "assets/images/wallpaper_yellow.png";
 }

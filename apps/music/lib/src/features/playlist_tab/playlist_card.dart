@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_menu.dart';
+import 'package:widgets/mechanix.dart';
 
 class PlaylistCard extends StatelessWidget {
   final VoidCallback onPlaylistTap;
@@ -125,19 +125,16 @@ class _CardContent extends StatelessWidget {
               fontWeight: FontWeight.w600,
               fontSize: 18,
               height: 1.25,
-              color:
-                  isActive
-                      ? MusicColors.borderColor
-                      : Colors.white, // force readable
+              color: isActive ? context.primary : null,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             '${playlistInfo.songIds.length} Tracks',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w400,
               fontSize: 14,
-              color: Colors.white70,
+              color: context.onSecondary,
             ),
           ),
         ],

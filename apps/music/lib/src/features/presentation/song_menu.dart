@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
-import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/mechanix.dart';
 
 class SongMenu extends StatefulWidget {
   final SongInfo song;
@@ -45,8 +45,7 @@ class _SongMenuState extends State<SongMenu> {
         padding: EdgeInsets.zero,
         // offset: const Offset(0, 36),
         offset: const Offset(-45, 10),
-
-        color: MusicColors.tapColor,
+        color: context.surfaceContainerHighest,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         style: ButtonStyle(
           splashFactory: NoSplash.splashFactory,
@@ -84,16 +83,15 @@ class _SongMenuState extends State<SongMenu> {
           height: 40,
           width: 40,
           decoration: BoxDecoration(
-            color:
-                isMenuOpen ? MusicColors.backgroundColor : Colors.transparent,
+            color: isMenuOpen ? context.secondaryContainer : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
-            child: Image.asset(
-              MusicIcons.threeDotIcon,
-              width: 28,
-              height: 28,
-              color: isMenuOpen ? MusicColors.borderColor : Colors.white,
+            child: SongsIcon(
+              iconPath: MusicIcons.threeDotIcon,
+              boxSize: 28,
+              iconSize: 28,
+              isActive: isMenuOpen,
             ),
           ),
         ),
@@ -125,8 +123,8 @@ class _SongMenuState extends State<SongMenu> {
                         : MusicIcons.favouritesIcon,
                 color:
                     widget.song.isFavourite
-                        ? MusicColors.borderColor
-                        : MusicColors.primaryTextColor,
+                        ? context.primaryContainer
+                        : context.onSurface,
               ),
             ],
       ),
@@ -137,19 +135,25 @@ class _SongMenuState extends State<SongMenu> {
     required _SongMenuAction value,
     required String title,
     required String icon,
-    Color color = MusicColors.primaryTextColor,
+    Color? color,
+    // Color color = context.onSurface,
   }) {
     return PopupMenuItem<_SongMenuAction>(
       value: value,
       height: 42,
       child: Row(
         children: [
-          Image.asset(icon, width: 20, height: 20, color: color),
+          SongsIcon(
+            iconPath: icon,
+            boxSize: 20,
+            iconSize: 20,
+            iconColor: color,
+          ),
           const SizedBox(width: 12),
           Text(
             title,
             style: TextStyle(
-              color: color,
+              color: color ?? context.onSurface,
               fontFamily: 'Overused Grotesk',
               fontSize: 18,
             ),

@@ -6,11 +6,11 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_menu.dart';
 import 'package:tuple/tuple.dart';
+import 'package:widgets/extension.dart';
 
 class PlaylistActionsView extends StatefulWidget {
   final VoidCallback onEdit;
@@ -56,11 +56,8 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
             children: [
               MusicIconButton(
                 enabled: !widget.isEditMode && playlistSongs.isNotEmpty,
-                iconColor: widget.isEditMode ? Colors.grey : null,
-                icon:
-                    isFavourite
-                        ? MusicIcons.filledFavouriteIcon
-                        : MusicIcons.favouritesIcon,
+                iconColor: isFavourite ? context.primary : null,
+                icon: MusicIcons.searchIcon,
                 onPressed:
                     playlistSongs.isNotEmpty
                         ? () {
@@ -92,9 +89,9 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
                         : MusicIcons.shuffleIcon,
                 iconColor:
                     widget.isEditMode
-                        ? Colors.grey
+                        ? Theme.of(context).disabledColor
                         : isShuffle
-                        ? MusicColors.titleColor
+                        ? context.primary
                         : null,
               ),
 
@@ -112,7 +109,10 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
 
                   return MusicIconButton(
                     enabled: !widget.isEditMode && playlistSongs.isNotEmpty,
-                    iconColor: widget.isEditMode ? Colors.grey : null,
+                    iconColor:
+                        widget.isEditMode
+                            ? Theme.of(context).disabledColor
+                            : context.primary,
                     onPressed: () {
                       context.read<SongsBloc>().add(
                         isPlaying
@@ -129,18 +129,21 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
                             : MusicIcons.playlistPlayIcon,
                     iconSize: 32,
                     buttonSize: 52,
+                    backgroundColor: context.secondaryContainer,
                   );
                 },
               ),
               MusicIconButton(
                 enabled: !widget.isEditMode && playlistSongs.isNotEmpty,
-                iconColor: widget.isEditMode ? Colors.grey : null,
+                iconColor:
+                    widget.isEditMode ? Theme.of(context).disabledColor : null,
 
                 onPressed: widget.onEdit,
                 icon: MusicIcons.editIcon,
               ),
               PlaylistMenu(
                 isBackgroundRequired: true,
+                backgroundColor: context.secondary,
                 enabled: !widget.isEditMode,
                 iconSize: Size(44, 44),
                 isDeletePlaylist: true,

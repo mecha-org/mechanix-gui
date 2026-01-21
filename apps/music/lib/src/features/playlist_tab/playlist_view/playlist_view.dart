@@ -8,7 +8,6 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_actions_view.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/playlist_add_song.dart';
@@ -115,8 +114,8 @@ class _PlaylistViewState extends State<PlaylistView> {
                     children: [
                       Text(
                         "Edit Playlist",
-                        style: const TextStyle(
-                          color: MusicColors.primaryTextColor,
+                        style: TextStyle(
+                          color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
                           fontSize: 24,
                           letterSpacing: -1.1,
@@ -176,7 +175,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                           SliverToBoxAdapter(
                             child: Container(
                               height: 1,
-                              color: MusicColors.dividerColor,
+                              color: context.surfaceContainerHigh,
                               margin: EdgeInsets.all(16),
                             ),
                           ),

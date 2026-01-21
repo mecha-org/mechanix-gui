@@ -1,12 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:widgets/mechanix.dart';
 
 class AnimatedCircularProgress extends StatefulWidget {
   final Player player;
   final double size;
   final double strokeWidth;
-  final Color progressColor;
+  final Color? progressColor;
   final Color backgroundColor;
   final Widget? child;
 
@@ -15,7 +16,7 @@ class AnimatedCircularProgress extends StatefulWidget {
     required this.player,
     this.size = 48.0,
     this.strokeWidth = 2.18,
-    this.progressColor = const Color(0xFF1DB954), // Spotify green
+    this.progressColor,
     this.backgroundColor = Colors.transparent,
     this.child,
   });
@@ -110,7 +111,7 @@ class _AnimatedCircularProgressState extends State<AnimatedCircularProgress> {
                     strokeWidth: widget.strokeWidth,
                     backgroundColor: widget.backgroundColor,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      widget.progressColor,
+                      widget.progressColor ?? context.primary,
                     ),
                   ),
                 ),

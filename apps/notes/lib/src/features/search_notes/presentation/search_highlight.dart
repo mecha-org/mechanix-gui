@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/commons/styles/styles.dart';
+import 'package:widgets/extensions/color.dart';
 
 class SearchHighlight extends StatelessWidget {
   final String text;
@@ -13,12 +13,14 @@ class SearchHighlight extends StatelessWidget {
     required this.isTitle,
   });
 
-
   @override
   Widget build(BuildContext context) {
     // Helper Widget to build highlighted text
     if (query.isEmpty) {
-      return Text(text, style: isTitle ? titleStyle : normalStyle);
+      return Text(
+        text,
+        style: isTitle ? titleStyle(context) : normalStyle(context),
+      );
     }
 
     final lowerText = text.toLowerCase();
@@ -34,7 +36,7 @@ class SearchHighlight extends StatelessWidget {
           spans.add(
             TextSpan(
               text: text.substring(start),
-              style: isTitle ? titleStyle : normalStyle,
+              style: isTitle ? titleStyle(context) : normalStyle(context),
             ),
           );
         }
@@ -46,7 +48,7 @@ class SearchHighlight extends StatelessWidget {
         spans.add(
           TextSpan(
             text: text.substring(start, index),
-            style: isTitle ? titleStyle : normalStyle,
+            style: isTitle ? titleStyle(context) : normalStyle(context),
           ),
         );
       }
@@ -57,14 +59,14 @@ class SearchHighlight extends StatelessWidget {
           text: text.substring(index, index + query.length),
           style:
               isTitle
-                  ? titleStyle.copyWith(
-                    backgroundColor: NotesColors.highlightTextColor.withValues(
-                      alpha: 0.65,
+                  ? titleStyle(context).copyWith(
+                    backgroundColor: context.primaryContainer.withValues(
+                      alpha: 0.8,
                     ),
                   )
-                  : normalStyle.copyWith(
-                    backgroundColor: NotesColors.highlightTextColor.withValues(
-                      alpha: 0.65,
+                  : normalStyle(context).copyWith(
+                    backgroundColor: context.primaryContainer.withValues(
+                      alpha: 0.8,
                     ),
                   ),
         ),

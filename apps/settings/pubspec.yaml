@@ -48,7 +48,7 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: 2c705bf278d8c1452796b5310210477894141a96
+      ref: 6ad64eb2b04f129e34bf0a47bca93519aaf6d79a
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
@@ -132,7 +132,7 @@ flutter:
     - assets/images/wifi_medium_locked.png
     - assets/images/wifi_low_locked.png
     - assets/images/wifi_none.png
-    - assets/images/wifi_high_locked.png
+    - assets/images/wifi_high_open.png
     - assets/images/wifi_medium_locked.png
     - assets/images/wifi_low_locked.png
     - assets/images/wifi_not_found.png
@@ -142,6 +142,41 @@ flutter:
     - assets/images/three_dot_icon.png
     - assets/images/circular_check_icon.png
     - assets/images/lock_icon.png
+    - assets/images/arrows_clock_wise.png
+    - assets/images/blog_image.png
+    - assets/images/all_apps_icon.png
+    - assets/images/cellular_icon.png
+    - assets/images/extension_icon.png
+    - assets/images/launcher_icon.png
+    - assets/images/security_icon.png
+    - assets/images/update_icon.png
+    - assets/images/block_icon.png
+    - assets/images/amber_view_1.png
+    - assets/images/amber_view_2.png
+    - assets/images/amber_view_3.png
+    - assets/images/wallpaper_1.png
+    - assets/images/wallpaper_2.png
+    - assets/images/wallpaper_3.png
+    - assets/images/wallpaper_4.png
+    - assets/images/wallpaper_5.png
+    - assets/images/wallpaper_6.png
+    - assets/images/theme_preview_amber.png
+    - assets/images/theme_preview_blue.png
+    - assets/images/theme_preview_coral.png
+    - assets/images/theme_preview_mint.png
+    - assets/images/theme_preview_orange.png
+    - assets/images/theme_preview_magenta.png
+    - assets/images/theme_preview_purple.png
+    - assets/images/theme_preview_yellow.png
+    - assets/images/wallpaper_amber.png
+    - assets/images/wallpaper_amber.png
+    - assets/images/wallpaper_blue.png
+    - assets/images/wallpaper_coral.png
+    - assets/images/wallpaper_mint.png
+    - assets/images/wallpaper_orange.png
+    - assets/images/wallpaper_magenta.png
+    - assets/images/wallpaper_purple.png
+    - assets/images/wallpaper_yellow.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

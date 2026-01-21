@@ -5,7 +5,6 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:tuple/tuple.dart';
@@ -37,27 +36,15 @@ class BottomMenu extends StatelessWidget {
           dropdownPosition: DropdownPosition.topRight,
           padding: const EdgeInsets.only(top: 0),
 
-          // theme: MechanixMenuThemeData(
-          //   decoration: BoxDecoration(
-          //     color: context.tertiary,
-          //     borderRadius: BorderRadius.circular(8),
-          //   ),
-          //   itemBackgroundColor: context.tertiary,
+          offset: const Offset(0, -12),
+          // buttonIcon: IconWidget(
+          //   boxHeight: 24,
+          //   boxWidth: 24,
+          //   iconHeight: 24,
+          //   iconWidth: 24,
+          //   iconPath: MusicIcons.threeDotIcon,
+          //   activeIconColor: context.primary,
           // ),
-
-          // theme: const MechanixMenuThemeData(
-          //   buttonMargin: EdgeInsets.only(right: 12),
-          // ),
-          offset: const Offset(5, -15),
-          buttonIcon: IconWidget(
-            boxHeight: 24,
-            boxWidth: 24,
-            iconHeight: 24,
-            iconWidth: 24,
-            iconColor: Colors.white,
-            iconPath: MusicIcons.threeDotIcon,
-            activeIconColor: MusicColors.borderColor,
-          ),
           items: [
             MechanixMenuItemsType(
               disabled: playlists.length >= Constants.playlistLimit,
@@ -71,8 +58,8 @@ class BottomMenu extends StatelessWidget {
                 iconPath: MusicIcons.addToPlaylistIcon,
                 iconColor:
                     playlists.length >= Constants.playlistLimit
-                        ? Colors.grey
-                        : Colors.white,
+                        ? Theme.of(context).disabledColor
+                        : null,
               ),
             ),
             MechanixMenuItemsType(
@@ -87,10 +74,7 @@ class BottomMenu extends StatelessWidget {
               },
               title:
                   "${playlistView == PlaylistViewEnum.list ? "Grid" : "List"} View",
-              leading: const IconWidget(
-                iconPath: MusicIcons.listViewIcon,
-                iconColor: Colors.white,
-              ),
+              leading: const IconWidget(iconPath: MusicIcons.listViewIcon),
             ),
           ],
         ).padRight(12);

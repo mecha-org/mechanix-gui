@@ -4,6 +4,7 @@ import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.da
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_state.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 
 class ApplyButton extends StatefulWidget {
   const ApplyButton({
@@ -35,21 +36,11 @@ class _ApplyButtonState extends State<ApplyButton> {
   Widget build(BuildContext context) {
     return BlocBuilder<DateTimeBloc, DateTimeState>(
       builder: (context, state) {
-        return SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: () => onPressed(state),
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all<Color>(
-                context.colorScheme.secondary,
-              ),
-            ),
-            child: Text(
-              'Apply',
-              style: TextStyle(color: context.colorScheme.onSurface),
-            ).padVertical(16),
-          ).padOnly(top: 87, left: 84, right: 84),
-        );
+        return MechanixFilledButton(
+          label: "Save",
+          theme: const MechanixFilledButtonThemeData(buttonSize: Size(64, 44)),
+          onPressed: () => onPressed(state),
+        ).padOnly(right: 20);
       },
     );
   }

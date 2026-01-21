@@ -106,7 +106,7 @@ pub struct AnimationManagerState {
 }
 
 impl AnimationManagerState {
-    pub fn new(_config: HomescreenConfig) -> Self {
+    pub fn new(_config: &HomescreenConfig) -> Self {
         Self {
             last_frame_time: None,
         }

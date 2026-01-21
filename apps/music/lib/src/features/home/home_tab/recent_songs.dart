@@ -3,9 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
+import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/extension.dart';
 
 class RecentSong extends StatefulWidget {
   const RecentSong({super.key});
@@ -17,6 +18,8 @@ class RecentSong extends StatefulWidget {
 class _RecentSongState extends State<RecentSong> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int currentPage = 0;
+  static const double _songTileHeight = 80;
+  static const double _maxHeight = 240;
 
   List<List<SongInfo>> _buildPages(List<SongInfo> songs) {
     const pageSize = 3;
@@ -51,6 +54,11 @@ class _RecentSongState extends State<RecentSong> {
     }
   }
 
+  double _calculatePageHeight(int itemCount) {
+    final height = itemCount * _songTileHeight;
+    return height.clamp(0, _maxHeight);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
@@ -62,16 +70,14 @@ class _RecentSongState extends State<RecentSong> {
 
         final pages = _buildPages(songs);
 
-        return SizedBox(
+        return Container(
+          margin: const EdgeInsets.only(bottom: 36),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 0,
-                ),
+                padding: const EdgeInsets.only(left: 16, right: 10),
                 child: Row(
                   spacing: 12,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -79,7 +85,7 @@ class _RecentSongState extends State<RecentSong> {
                     Text(
                       'Recently Played',
                       style: TextStyle(
-                        color: MusicColors.textColor,
+                        color: context.onSurfaceVariant,
                         fontSize: 18,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
@@ -89,27 +95,23 @@ class _RecentSongState extends State<RecentSong> {
                       spacing: 12,
                       children: [
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.previousPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.previousPageIcon,
+                            iconColor:
                                 currentPage > 0
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
                           onPressed: currentPage > 0 ? _scrollLeft : null,
                         ),
                         IconButton(
-                          icon: Image.asset(
-                            MusicIcons.nextPageIcon,
-                            height: 24,
-                            width: 24,
-                            color:
+                          icon: SongsIcon(
+                            iconPath: MusicIcons.nextPageIcon,
+                            iconColor:
                                 currentPage < pages.length - 1
-                                    ? MusicColors.primaryTextColor
-                                    : MusicColors.disabledColor,
+                                    ? context.colorScheme.onSurface
+                                    : context.colorScheme.onSurfaceVariant,
                           ),
                           iconSize: 40,
                           onPressed:
@@ -125,7 +127,7 @@ class _RecentSongState extends State<RecentSong> {
 
               // Pages
               SizedBox(
-                height: 240,
+                height: _calculatePageHeight(pages[0].length),
                 child: PageView.builder(
                   controller: _pageController,
                   padEnds: false,

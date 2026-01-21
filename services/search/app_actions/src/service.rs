@@ -268,7 +268,8 @@ impl AppActionsService {
         );
         let watch_path: PathBuf = self.config.schema_dir.clone().into();
         if !watch_path.exists() {
-            anyhow::bail!("Watch path does not exist: {}", watch_path.display());
+            error!("Watch path does not exist: {}", watch_path.display());
+            return Ok(());
         }
 
         let (event_tx, mut event_rx) = mpsc::channel::<Event>(100);

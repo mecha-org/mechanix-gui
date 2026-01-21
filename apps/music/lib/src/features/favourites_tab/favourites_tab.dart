@@ -10,6 +10,7 @@ import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/features/home/widgets/title_widget.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
+import 'package:widgets/mechanix.dart';
 
 class FavouritesTab extends StatefulWidget {
   const FavouritesTab({super.key});
@@ -86,7 +87,7 @@ class _FavouritesTabState extends State<FavouritesTab> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white70,
+                            color: context.onSurface,
                           ),
                         ),
                       ),

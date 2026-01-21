@@ -1,26 +1,31 @@
 use crate::widgets::HomescreenWidget;
+use crate::Homescreen;
 use app_drawer::prelude::*;
 use gpui::*;
-use crate::Homescreen;
 
 pub struct AppDrawerWidget {
     bounds: Bounds<Pixels>,
     drawer_handle: Entity<AppDrawer>,
+    has_border: bool,
 }
 
 impl AppDrawerWidget {
-    pub fn new(cx: &mut Context<Homescreen>) -> Self {
+    pub fn new(cx: &mut Context<Homescreen>, has_border: bool) -> Self {
         let drawer_handle = cx.new(|cx| AppDrawer::new(cx));
         Self {
             bounds: Bounds::default(),
             drawer_handle,
+            has_border,
         }
     }
 }
 
 impl HomescreenWidget for AppDrawerWidget {
     fn render(&self) -> AnyElement {
-        div().size_full().child(self.drawer_handle.clone()).into_any_element()
+        div()
+            .size_full()
+            .child(self.drawer_handle.clone())
+            .into_any_element()
     }
 
     fn set_bounds(&mut self, bounds: Bounds<Pixels>) {
@@ -36,6 +41,6 @@ impl HomescreenWidget for AppDrawerWidget {
     }
 
     fn has_border(&self) -> bool {
-        false
+        self.has_border
     }
 }

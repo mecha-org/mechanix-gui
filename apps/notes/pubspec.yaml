@@ -45,9 +45,8 @@ dependencies:
   widgets:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
-      # url: https://github.com/DhanishMecha/mechanix-ui.git
       path: flutter/widgets
-      ref: 2c705bf278d8c1452796b5310210477894141a96
+      ref: 6ad64eb2b04f129e34bf0a47bca93519aaf6d79a
   watch_it: ^1.7.0
   # image_picker: ^1.2.0
   # media_kit: ^1.2.0

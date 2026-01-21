@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/home/widgets/artwork_duration_border.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/features/presentation/artwork_icon.dart';
+import 'package:widgets/mechanix.dart';
 
 class UpcomingArtworkCircularProgress extends StatelessWidget {
   final SongInfo songInfo;
@@ -21,7 +21,7 @@ class UpcomingArtworkCircularProgress extends StatelessWidget {
       player: player,
       size: 115,
       strokeWidth: 3,
-      progressColor: MusicColors.borderColor,
+      progressColor: context.primaryContainer,
       child: ArtworkIcon(artworkPath: songInfo.artworkPath, size: 100),
     );
   }

@@ -11,6 +11,14 @@ class GetInputDeviceList extends SoundEvent {}
 
 class GetOutputDeviceList extends SoundEvent {}
 
+class RefreshInputDevicesList extends SoundEvent {}
+
+class RefreshOutputDevicesList extends SoundEvent {}
+
+class RemoveInputDevice extends SoundEvent {}
+
+class RemoveOutputDevice extends SoundEvent {}
+
 class SetEnableLauncherSoundsEvent extends SoundEvent {
   final bool enableLauncherSounds;
   SetEnableLauncherSoundsEvent(this.enableLauncherSounds);
@@ -69,4 +77,14 @@ class SetOutputDeviceMute extends SoundEvent {
   final bool mute;
 
   SetOutputDeviceMute(this.device, this.mute);
+}
+
+class UpdateAvailableDevices extends SoundEvent {
+  final int index;
+  final bool isSinkRemove;
+
+  UpdateAvailableDevices({required this.index, this.isSinkRemove = true});
+
+  @override
+  List<Object> get props => [index];
 }

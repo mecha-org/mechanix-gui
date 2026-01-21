@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
+import 'package:widgets/mechanix.dart';
 
 class TitleWidget extends StatelessWidget {
   final String title;
@@ -13,7 +13,7 @@ class TitleWidget extends StatelessWidget {
       child: Text(
         title,
         style: TextStyle(
-          color: MusicColors.titleColor,
+          color: context.primary,
           fontSize: 24,
           height: 1.25,
           letterSpacing: -1.1,

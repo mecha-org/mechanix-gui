@@ -1,14 +1,11 @@
 use gpui::*;
+use icons::prelude::Icons;
 use theme::prelude::Theme;
 
 const DOT_SIZE: f32 = 3.0;
 const DOT_GAP: f32 = 6.0;
 const BAR_SEGMENT_WIDTH: f32 = 2.2;
 const BAR_GAP_WIDTH: f32 = 5.0;
-
-const DOTS_COLUMN_IMAGE_PATH: &str = "icons/settings-drawer/slider-gray-dot-column.png";
-const DOTS_COLUMN_FILLED_IMAGE_PATH: &str = "icons/settings-drawer/slider-orange-dot-column.png";
-// const GRAY_DOT_GRID_IMAGE_PATH: &str = "icons/settings-drawer/gray-dot-grid.png";
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum SliderPattern {
@@ -163,6 +160,16 @@ impl RenderOnce for Slider {
         let slider_width_copy = width;
         let slider_width_drag_copy = width;
 
+        let accent_dots_column = Icons::global(cx)
+            .settings_drawer
+            .slider_accent_dots_column
+            .clone();
+
+        let slider_gray_dot_column = Icons::global(cx)
+            .settings_drawer
+            .slider_gray_dot_column
+            .clone();
+
         div()
             .id(self.id.clone())
             .w(px(width))
@@ -172,16 +179,34 @@ impl RenderOnce for Slider {
             .child(match pattern {
                 SliderPattern::Dots => {
                     let unit_size = DOT_SIZE + DOT_GAP;
-                    let columns = (width / unit_size).floor() as usize;
+                    let total_columns = (width / unit_size).floor() as usize;
 
-                    // Use repeating dots column image instead of generating individual dots
-                    let dot_grid = (0..columns).map(|_| {
-                        div().w(px(DOT_SIZE)).h_full().child(
-                            img(DOTS_COLUMN_IMAGE_PATH)
-                                .w_full()
-                                .h_full()
-                                .object_fit(gpui::ObjectFit::None),
-                        )
+                    let active_dot_path =
+                        SharedString::from(accent_dots_column.to_string_lossy().to_string());
+                    let inactive_dot_path =
+                        SharedString::from(slider_gray_dot_column.to_string_lossy().to_string());
+
+                    let render_dot = |is_active: bool| {
+                        svg()
+                            .external_path(if is_active {
+                                active_dot_path.clone()
+                            } else {
+                                inactive_dot_path.clone()
+                            })
+                            .text_color(if is_active {
+                                colors.accent_200
+                            } else {
+                                colors.background_600
+                            })
+                            .w(px(DOT_SIZE))
+                            .h(px(height))
+                    };
+
+                    let dots = (0..total_columns).map(|idx| {
+                        let dot_end_pos = (idx as f32 * unit_size) + DOT_SIZE;
+                        let is_active = dot_end_pos <= active_width;
+
+                        div().w(px(DOT_SIZE)).h_full().child(render_dot(is_active))
                     });
 
                     div()
@@ -200,18 +225,13 @@ impl RenderOnce for Slider {
                                 .flex_row()
                                 .gap(px(DOT_GAP))
                                 .bg(theme_bg_color)
-                                .children(dot_grid)
-                                // .child(
-                                //       img(GRAY_DOT_GRID_IMAGE_PATH)
-                                //     .w_full()
-                                //     .h_full()
-                                //     .object_fit(gpui::ObjectFit::None),
-                                // )
+                                .children(dots)
                                 .on_mouse_down(
                                     MouseButton::Left,
                                     window.listener_for(
                                         &self.state,
                                         move |state, e: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
                                             state.update_value_by_position(
                                                 e.position,
                                                 slider_width_copy,
@@ -228,19 +248,18 @@ impl RenderOnce for Slider {
                                 .on_drag_move(window.listener_for(
                                     &self.state,
                                     move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
-                                        match event.drag(cx) {
-                                            DragThumb(id) => {
-                                                if *id != entity_id {
-                                                    return;
-                                                }
-                                                state.update_value_by_position(
-                                                    event.event.position,
-                                                    slider_width_drag_copy,
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
+                                        let DragThumb(id) = event.drag(cx);
+                                        if *id != entity_id {
+                                            return;
                                         }
+
+                                        cx.stop_propagation();
+                                        state.update_value_by_position(
+                                            event.event.position,
+                                            slider_width_drag_copy,
+                                            window,
+                                            cx,
+                                        );
                                     },
                                 ))
                                 .child({
@@ -254,30 +273,6 @@ impl RenderOnce for Slider {
                                     .absolute()
                                     .size_full()
                                 }),
-                        )
-                        .child(
-                            div()
-                                .id("active-fill")
-                                .absolute()
-                                .left_0()
-                                .top_0()
-                                .h_full()
-                                .w(px(active_width.max(0.0)))
-                                // .rounded(px(2.))
-                                // .bg(rgb(ACTIVE_FILL_COLOR)),
-                                .overflow_hidden()
-                                .flex()
-                                .flex_row()
-                                .gap(px(DOT_GAP))
-                                // Repeat the colored dots column images for active fill
-                                .children((0..columns).map(|_| {
-                                    div().w(px(DOT_SIZE)).h_full().child(
-                                        img(DOTS_COLUMN_FILLED_IMAGE_PATH)
-                                            .w_full()
-                                            .h_full()
-                                            .object_fit(gpui::ObjectFit::None),
-                                    )
-                                })),
                         )
                 }
                 SliderPattern::Bars => {
@@ -325,6 +320,7 @@ impl RenderOnce for Slider {
                                     window.listener_for(
                                         &self.state,
                                         move |state, e: &MouseDownEvent, window, cx| {
+                                            cx.stop_propagation();
                                             state.update_value_by_position(
                                                 e.position,
                                                 slider_width_copy,
@@ -346,6 +342,7 @@ impl RenderOnce for Slider {
                                                 if *id != entity_id {
                                                     return;
                                                 }
+                                                cx.stop_propagation();
                                                 state.update_value_by_position(
                                                     event.event.position,
                                                     slider_width_drag_copy,

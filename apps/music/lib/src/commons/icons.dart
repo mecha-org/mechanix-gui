@@ -42,4 +42,5 @@ class MusicIcons {
   static const repeatOnceIcon = 'assets/images/repeat_once.png';
   static const repeatPlaylistIcon = 'assets/images/repeat_playlist.png';
   static const emptyHomeScreenIcon = 'assets/images/empty_home_screen.png';
+  static const halfSliderIcon = 'assets/images/half_slider.png';
 }

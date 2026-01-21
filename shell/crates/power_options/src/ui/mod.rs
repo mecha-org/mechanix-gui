@@ -56,7 +56,6 @@ impl PowerOptions {
     }
 
     fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
-        println!("update------region----{:?}", show);
         let size = window.bounds().size;
         let regions = if show {
             vec![Bounds {
@@ -69,10 +68,8 @@ impl PowerOptions {
 
         window.set_input_regions(Some(regions));
         cx.notify();
-        println!("Input regions updated: show={}", show);
     }
     fn handle_upward_swipe(&mut self, cx: &mut Context<Self>) {
-        println!("Go back - close power options");
         self.snap_to(0.0, cx);
         self.show = false;
         cx.notify();
@@ -179,7 +176,6 @@ impl Render for PowerOptions {
         self.update_input_regions(window, show, cx);
 
         // Self::update_input_regions(window, size, show);
-        println!("RENDERING power-options {:?}", show);
         if self.window_height == 0.0 {
             self.window_height = window_height;
             self.max_drag_distance = window_height;
@@ -256,7 +252,13 @@ impl Render for PowerOptions {
                                 .id("power-off-swipe-area")
                                 .h(px(amber_card_height))
                                 .w_full()
-                                .bg(colors.accent_400.with_alpha(0.4))
+                                // .bg(colors.accent_400.with_alpha(0.4))
+                                .bg(linear_gradient(
+                                    180.,
+                                    linear_color_stop(colors.background_1000.with_alpha(0.5), 0.2),
+                                    linear_color_stop(colors.accent_500.with_alpha(0.3), 0.9),
+                                )
+                                .color_space(ColorSpace::default()))
                                 .rounded_b(px(20.0))
                                 .flex()
                                 .items_center()

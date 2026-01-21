@@ -26,6 +26,7 @@ pub struct SubWindow {
     pub drag_start_x: Pixels,
     pub is_dragging: bool,
     pub has_moved: bool,
+    pub is_vertical_scroll: bool,
 }
 
 impl SubWindow {
@@ -39,6 +40,7 @@ impl SubWindow {
             drag_start_x: px(0.0),
             is_dragging: false,
             has_moved: false,
+            is_vertical_scroll: false,
         }
     }
 
@@ -81,14 +83,15 @@ impl SubWindow {
         &mut self,
         event: &MouseDownEvent,
         _window: &mut Window,
-        cx: &mut Context<Self>
+        _cx: &mut Context<Self>
     ) {
         self.drag_start_y = event.position.y;
         self.drag_start_x = event.position.x;
         self.last_scroll_offset = self.scroll_offset;
         self.is_dragging = true;
         self.has_moved = false;
-        cx.stop_propagation();
+        self.is_vertical_scroll = false;
+        // Don't call cx.stop_propagation() - let horizontal swipes pass through to homescreen
     }
 
     pub fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
@@ -120,14 +123,35 @@ impl SubWindow {
             let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64() +
                 delta_x.abs().to_f64() * delta_x.abs().to_f64()) as f32;
 
+            // Determine scroll direction once threshold is exceeded
             if distance > DRAG_THRESHOLD {
+                // Determine if this is a vertical scroll or horizontal swipe
+                if !self.has_moved {
+                    let abs_delta_y = delta_y.abs().to_f64();
+                    let abs_delta_x = delta_x.abs().to_f64();
+
+                    // If movement is primarily vertical, treat as scroll
+                    // Otherwise, let it pass through to homescreen for page swipe
+                    self.is_vertical_scroll = abs_delta_y > abs_delta_x;
+                }
+
                 self.has_moved = true;
             }
 
-            let content_height = self.estimate_content_height();
-            let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
-            self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(min_scroll, max_scroll);
-            cx.notify();
+            // Only scroll vertically if this is a vertical scroll gesture
+            if self.is_vertical_scroll {
+                let content_height = self.estimate_content_height();
+                let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+                self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(
+                    min_scroll,
+                    max_scroll
+                );
+                cx.notify();
+
+                // Stop propagation only for vertical scrolls
+                cx.stop_propagation();
+            }
+            // For horizontal swipes, don't stop propagation - let homescreen handle it
         }
     }
 
@@ -256,16 +280,18 @@ impl SubWindow {
             .left_0()
             .h(px(36.0))
             .w(px(CARD_WIDTH))
-            .flex()
-            .flex_col()
-            .justify_start()
-            .items_start()
             .bg(colors.accent_200.with_alpha(0.1))
             .border_color(colors.accent_200.with_alpha(0.6));
 
         w.upper_wing_size(Size::new(px(150.0), px(15.0)));
         w.border_width(px(1.0));
-        w.border_radius(px(12.0));
+        w.border_radius(px(8.0));
+        w.corner_radii(commons::widgets::CornerRadii {
+            top_left: px(0.0),
+            top_right: px(0.0),
+            bottom_right: px(8.0),
+            bottom_left: px(8.0),
+        });
         w
     }
 }

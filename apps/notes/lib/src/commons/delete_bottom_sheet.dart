@@ -10,19 +10,17 @@ import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart'
 class DeleteBottomSheet extends StatelessWidget {
   final String title;
   final String message;
-  final BuildContext bottomSheetContext;
   const DeleteBottomSheet({
     super.key,
     required this.title,
     required this.message,
-    required this.bottomSheetContext,
   });
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned(child: Image.asset(NotesIcon.slider, fit: BoxFit.cover)),
+        // Positioned(child: Image.asset(NotesIcon.slider, fit: BoxFit.cover)),
         Container(
           padding: const EdgeInsets.only(
             left: 16,
@@ -36,17 +34,17 @@ class DeleteBottomSheet extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 24,
-                  color: NotesColors.titleTextColor,
+                  color: context.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 message,
-                style: const TextStyle(
-                  color: NotesColors.titleTextColor,
+                style: TextStyle(
+                  color: context.onSurface,
                   fontSize: 18,
                   height: 1.2,
                 ),
@@ -56,34 +54,34 @@ class DeleteBottomSheet extends StatelessWidget {
                 children: [
                   Expanded(
                     child: MechanixFilledButton(
-                      theme: const MechanixFilledButtonThemeData(
+                      theme: MechanixFilledButtonThemeData(
                         textStyle: TextStyle(
                           fontSize: 18,
                           height: 1.25,
                           fontWeight: FontWeight.w400,
-                          color: NotesColors.titleTextColor,
+                          color: context.onSurface,
                         ),
                       ),
                       label: "Cancel",
                       // backgroundColor: Colors.grey.shade800,
-                      onPressed: () => Navigator.pop(bottomSheetContext),
+                      onPressed: () => Navigator.pop(context),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: MechanixFilledButton(
                       label: "Delete",
-                      theme: const MechanixFilledButtonThemeData(
-                        textStyle: const TextStyle(
+                      theme: MechanixFilledButtonThemeData(
+                        textStyle: TextStyle(
                           fontSize: 18,
                           height: 1.25,
                           fontWeight: FontWeight.w400,
-                          color: NotesColors.titleTextColor,
+                          color: context.onSurface,
                         ),
                         buttonColor: NotesColors.bottomSheetColor,
                       ),
                       onPressed: () {
-                        Navigator.pop(bottomSheetContext);
+                        Navigator.pop(context);
                         context.read<NotesBloc>().add(
                           DeleteNotes(deleteIds: const []),
                         );

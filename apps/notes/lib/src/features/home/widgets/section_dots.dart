@@ -1,7 +1,6 @@
-// Separate widget for section dots
 import 'package:flutter/material.dart';
-import 'package:mechanix_notes/src/commons/styles/colors.dart';
 import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
+import 'package:widgets/mechanix.dart';
 
 class SectionDotsWidget extends StatelessWidget {
   final List<SectionInfo> sections;
@@ -31,11 +30,13 @@ class SectionDotsWidget extends StatelessWidget {
 
     return Stack(
       clipBehavior: Clip.none,
-      children: [for (int i = 0; i < sections.length; i++) _buildSectionDot(i)],
+      children: [
+        for (int i = 0; i < sections.length; i++) _buildSectionDot(i, context),
+      ],
     );
   }
 
-  Widget _buildSectionDot(int index) {
+  Widget _buildSectionDot(int index, BuildContext context) {
     final section = sections[index];
     final relativePosition = section.offset / totalContentHeight;
     final topPosition = relativePosition * availableHeight;
@@ -72,10 +73,14 @@ class SectionDotsWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color:
                         isActive
-                            ? NotesColors.secondaryCardColor
+                            ? context.primary
                             : isHovered
-                            ? NotesColors.labelColor.withValues(alpha: 0.7)
-                            : NotesColors.labelColor.withValues(alpha: 0.4),
+                            ? context.surfaceContainerHigh.withValues(
+                              alpha: 0.7,
+                            )
+                            : context.surfaceContainerHigh.withValues(
+                              alpha: 0.4,
+                            ),
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),

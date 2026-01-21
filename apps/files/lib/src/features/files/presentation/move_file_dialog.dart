@@ -17,9 +17,11 @@ import 'package:mechanix_files/src/features/files/presentation/list_view.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/notification/notification_type.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 final logger = Logger();
 var totalMovedCount = 0;
@@ -133,7 +135,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     return TextStyle(
       fontSize: 18,
       color: context.colorScheme.onSurface,
-      fontWeight: FontWeight.w500,
+      fontWeight: FontWeight.w400,
     );
   }
 
@@ -169,7 +171,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   ? "Root"
                   : getCurrentFolderName(currentPath),
               style: TextStyle(
-                color: context.colorScheme.onSurface,
+                color: context.colorScheme.primary,
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
               ),
@@ -187,7 +189,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         const SizedBox(height: 18),
         Divider(
           height: 1,
-          color: context.colorScheme.surfaceContainerLow,
+          color: context.colorScheme.surfaceContainer,
         ), // Navigation bar
         SizedBox(
           height: 60,
@@ -196,6 +198,12 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               if (isSearching) ...[
                 Expanded(
                   child: MechanixTextInput.search(
+                    theme: MechanixTextInputThemeData(
+                      widgetDecoration: BoxDecoration(
+                        color: context.surfaceContainerHigh,
+                        borderRadius: BorderRadius.circular(0),
+                      ),
+                    ),
                     cursorColor: context.colorScheme.primaryFixed,
                     prefixIcon: IconWidget(
                       iconPath: Images.search,
@@ -226,9 +234,18 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 // Entire MechanixBottomBar must be inside Row children
                 Expanded(
                   child: MechanixBottomBar(
+                    theme: MechanixBottomBarThemeData(
+                      decoration: BoxDecoration(
+                          color: context.colorScheme.surfaceContainerHigh),
+                    ),
                     leadingWidget: [
                       BottomBarButton(
-                        iconPath: Images.back,
+                        iconWidget: IconWidget(
+                          iconPath: Images.back,
+                          iconColor: context.colorScheme.onSurface,
+                          iconHeight: 28,
+                          iconWidth: 28,
+                        ),
                         onPressed: () {
                           (isHomePageDir ? homeNavigation() : handleBack());
                         },
@@ -250,8 +267,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         iconWidget: IconWidget(
                           iconPath: Images.home,
                           iconColor: context.colorScheme.onSurface,
-                          iconHeight: 24,
-                          iconWidth: 24,
+                          iconHeight: 28,
+                          iconWidth: 28,
                         ),
                         onPressed: () {
                           setState(() => showHomeView = true);
@@ -281,7 +298,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
           height: 60,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: context.colorScheme.tertiary,
+            color: context.colorScheme.secondaryContainer,
             borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(12)),
           ),
@@ -391,14 +408,19 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
     return Expanded(
       child: MechanixTextInput.textInput(
+        theme: MechanixTextInputThemeData(
+          widgetDecoration: BoxDecoration(
+            color: context.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(0),
+          ),
+        ),
         autofocus: true,
-        cursorColor: context.colorScheme.primaryFixed,
+        cursorColor: context.colorScheme.primaryContainer,
         initialValue: renameText,
         onChanged: (v) => setState(() => renameText = v),
         anchorWidget: showCheck
             ? IconButton(
-                icon: Icon(Icons.check,
-                    color: context.colorScheme.surfaceContainerLowest),
+                icon: Icon(Icons.check, color: context.colorScheme.onSurface),
                 onPressed: () {
                   final filesBloc = context.read<FilesBloc>();
                   filesBloc.add(
@@ -413,8 +435,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 },
               )
             : IconButton(
-                icon: Icon(Icons.close,
-                    color: context.colorScheme.surfaceContainerLowest),
+                icon: Icon(Icons.close, color: context.colorScheme.onSurface),
                 onPressed: () {
                   setState(() => showRenameBar = false);
                   controller.clearNewFolder();
@@ -438,9 +459,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               child: Text(
                 "Files",
                 style: TextStyle(
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.w600,
-                  color: context.colorScheme.onSurface,
+                  color: context.colorScheme.primary,
                 ),
               ),
             ),
@@ -451,39 +472,39 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                 ),
                 sectionListItems: [
-                  SectionListItems(
-                    title: "Home directory",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(homeDir));
-                    },
-                    leading: Image.asset(Images.home, height: 20, width: 20),
-                  ),
-
+                  SectionListItems.leadingIcon(
+                      title: "Home directory",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory(homeDir));
+                      },
+                      iconColor: context.colorScheme.primaryContainer,
+                      iconPath: Images.home,
+                      iconSize: const Size(24, 24)),
                   // Downloads
-                  SectionListItems(
-                    title: "Downloads",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(downloadsDir));
-                    },
-                    leading:
-                        Image.asset(Images.downloads, height: 24, width: 24),
-                  ),
+                  SectionListItems.leadingIcon(
+                      title: "Downloads",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory(downloadsDir));
+                      },
+                      iconColor: context.colorScheme.primaryContainer,
+                      iconPath: Images.downloads,
+                      iconSize: const Size(24, 24)),
 
                   // Documents
-                  SectionListItems(
-                    title: "Documents",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(documentsDir));
-                    },
-                    leading: Image.asset(Images.homeDocuments,
-                        height: 24, width: 24),
-                  ),
+                  SectionListItems.leadingIcon(
+                      title: "Documents",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory(documentsDir));
+                      },
+                      iconColor: context.colorScheme.primaryContainer,
+                      iconPath: Images.homeDocuments,
+                      iconSize: const Size(24, 24)),
                 ]),
 
             // Root dir
@@ -493,21 +514,21 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
                     fontSize: 18,
-                    color: context.colorScheme.onSurfaceVariant,
+                    color: context.colorScheme.onSecondaryFixed,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 sectionListItems: [
-                  SectionListItems(
-                    title: "Root (/)",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory("/"));
-                    },
-                    leading:
-                        Image.asset(Images.hardDrive, height: 24, width: 24),
-                  ),
+                  SectionListItems.leadingIcon(
+                      title: "Root (/)",
+                      titleTextStyle: listItemTitleTextStyle(context),
+                      onTap: () {
+                        setState(() => showHomeView = false);
+                        controller.openDirectory(Directory("/"));
+                      },
+                      iconColor: context.colorScheme.primaryContainer,
+                      iconPath: Images.hardDrive,
+                      iconSize: const Size(24, 24)),
                 ]),
           ],
         ),
@@ -579,7 +600,7 @@ Future<void> handleConflictsSequentially(
           clipper: TabClipper(shift: sheetWidth * 0.65),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.grey[850],
+              color: context.colorScheme.surfaceContainerHigh,
             ),
             padding: const EdgeInsets.only(
               left: 16,
@@ -632,7 +653,7 @@ Future<void> handleConflictsSequentially(
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'What would you like to do?',
+                    'Would you like to replace?',
                     style: TextStyle(
                         color: context.colorScheme.onSurface, fontSize: 16),
                   ),
@@ -716,7 +737,7 @@ Future<void> showInvalidMoveSheet(
         clipper: TabClipper(shift: sheetWidth * 0.65),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.grey[850],
+            color: context.colorScheme.surfaceContainerHigh,
           ),
           padding: const EdgeInsets.only(
             left: 16,

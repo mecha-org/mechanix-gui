@@ -39,7 +39,7 @@ impl Homescreen {
     ) -> Self {
         let mut state = HomescreenState::new(config);
         state.create_widget(
-            UniversalSearchWidget::new(_cx),
+            UniversalSearchWidget::new(_cx, false),
             0,
             Bounds {
                 origin: point(0, 0),
@@ -91,7 +91,7 @@ impl Homescreen {
         //     },
         // );
 
-        // PAGE 1 - New widgets
+        // PAGE 1 - First row: 2x1 + 1x1 + 1x1, then 4x3 widget
         state.create_widget(
             DemoWidget::new("Coral", rgb(0xff7f50), rgb(0xff6347), true),
             1,
@@ -114,8 +114,8 @@ impl Homescreen {
             DemoWidget::new("Amber", rgb(0xffa94d), rgb(0xff8c1a), true),
             1,
             Bounds {
-                origin: point(0, 1),
-                size: size(1, 2),
+                origin: point(3, 0),
+                size: size(1, 1),
             },
         );
 
@@ -123,27 +123,18 @@ impl Homescreen {
             DemoWidget::new("Plum", rgb(0xb565a7), rgb(0x9d5091), true),
             1,
             Bounds {
-                origin: point(1, 1),
-                size: size(2, 2),
+                origin: point(0, 1),
+                size: size(4, 3),
             },
         );
 
-        state.create_widget(
-            DemoWidget::new("Sage", rgb(0xa8c69f), rgb(0x8fb386), false),
-            1,
-            Bounds {
-                origin: point(1, 3),
-                size: size(1, 1),
-            },
-        );
-
-        // PAGE 2 - New widgets
+        // PAGE 2 - Two 4x2 widgets
         state.create_widget(
             DemoWidget::new("Rose", rgb(0xff6b9d), rgb(0xff5285), true),
             2,
             Bounds {
                 origin: point(0, 0),
-                size: size(1, 1),
+                size: size(4, 2),
             },
         );
 
@@ -151,54 +142,18 @@ impl Homescreen {
             DemoWidget::new("Teal", rgb(0x1abc9c), rgb(0x16a085), true),
             2,
             Bounds {
-                origin: point(1, 0),
-                size: size(2, 1),
+                origin: point(0, 2),
+                size: size(4, 2),
             },
         );
 
-        state.create_widget(
-            DemoWidget::new("Peach", rgb(0xffdab9), rgb(0xffc99f), false),
-            2,
-            Bounds {
-                origin: point(0, 1),
-                size: size(1, 2),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Indigo", rgb(0x6a5acd), rgb(0x5a4ab3), true),
-            2,
-            Bounds {
-                origin: point(1, 1),
-                size: size(1, 1),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Lime", rgb(0xcddc39), rgb(0xb3c427), true),
-            2,
-            Bounds {
-                origin: point(2, 1),
-                size: size(2, 2),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Blush", rgb(0xffb3ba), rgb(0xff99a1), false),
-            2,
-            Bounds {
-                origin: point(1, 3),
-                size: size(1, 1),
-            },
-        );
-
-        // PAGE 3 - Keep existing and add more
+        // PAGE 3 - Top row: 3x1 + 1x1, middle: 4x2, bottom row: 2x2 + 2x2
         state.create_widget(
             DemoWidget::new("Tangerine", rgb(0xff9500), rgb(0xe68200), true),
             3,
             Bounds {
                 origin: point(0, 0),
-                size: size(1, 2),
+                size: size(3, 1),
             },
         );
 
@@ -206,8 +161,8 @@ impl Homescreen {
             DemoWidget::new("Aqua", rgb(0x00bcd4), rgb(0x00a3ba), true),
             3,
             Bounds {
-                origin: point(1, 0),
-                size: size(2, 1),
+                origin: point(3, 0),
+                size: size(1, 1),
             },
         );
 
@@ -215,8 +170,8 @@ impl Homescreen {
             DemoWidget::new("Mauve", rgb(0xe0b0ff), rgb(0xc78fff), false),
             3,
             Bounds {
-                origin: point(3, 0),
-                size: size(1, 2),
+                origin: point(0, 1),
+                size: size(4, 2),
             },
         );
 
@@ -224,8 +179,8 @@ impl Homescreen {
             DemoWidget::new("Gold", rgb(0xffd700), rgb(0xe6c200), true),
             3,
             Bounds {
-                origin: point(1, 1),
-                size: size(1, 1),
+                origin: point(0, 3),
+                size: size(2, 1),
             },
         );
 
@@ -233,22 +188,13 @@ impl Homescreen {
             DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
             3,
             Bounds {
-                origin: point(1, 3),
+                origin: point(2, 3),
                 size: size(2, 1),
             },
         );
 
         state.create_widget(
-            DemoWidget::new("Olive", rgb(0x9aad7e), rgb(0x84976a), true),
-            3,
-            Bounds {
-                origin: point(0, 2),
-                size: size(1, 1),
-            },
-        );
-
-        state.create_widget(
-            AppDrawerWidget::new(_cx),
+            AppDrawerWidget::new(_cx, false),
             4,
             Bounds {
                 origin: point(0, 0),
@@ -328,9 +274,8 @@ pub mod prelude {
 
 pub fn run_app(cx: &mut App) {
     let HomescreenSettings {
-        navbar_height,
-        status_bar_size,
         layer_shell,
+        status_bar_size,
         ..
     } = Settings::global(cx).homescreen.clone();
 
@@ -341,10 +286,10 @@ pub fn run_app(cx: &mut App) {
         namespace,
         ..
     } = layer_shell;
-    let screen_size = gpui::size(size.width, size.height - navbar_height);
 
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, screen_size, cx));
-    let config = HomescreenConfig::new(screen_size);
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let config =
+        HomescreenConfig::new(gpui::size(size.width, size.height - status_bar_size.height));
 
     // Register key bindings for the text input
     cx.bind_keys([

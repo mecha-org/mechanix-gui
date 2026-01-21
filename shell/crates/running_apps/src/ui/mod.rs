@@ -1,26 +1,30 @@
 mod components;
+use std::time::Duration;
+
 use crate::prelude::models::*;
-use commons::prelude::InstalledApps;
+use commons::prelude::*;
+use dispatcher::Dispatcher;
 use gpui::foreign_toplevel_management::ForeignToplevelHandle;
 use gpui::prelude::*;
 use gpui::*;
 use settings::prelude::{InputRegions, Settings};
 use theme::prelude::*;
 
-const BAR_SIZE: (f32, f32) = (80.0, 29.0);
-const APP_SIZE: (f32, f32) = (540.0, 620.0);
-
 impl Render for RunningApps {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let settings = Settings::global(cx).running_apps.clone();
+        let running_apps_size = settings.layer_shell.size;
+        let bar_size = settings.navbar_size;
+
         let top_levels = window.foreign_toplevels();
         if self.apps.len() != top_levels.len() && !self.is_animating() {
             self.update_running_apps(top_levels, window, cx);
             cx.notify();
         }
 
-        let input_regions = Settings::global(cx).running_apps.input_regions.clone();
-        let bar_fixed_pos = APP_SIZE.1 - BAR_SIZE.1;
-        let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
+        let input_regions = settings.input_regions.clone();
+        let bar_fixed_pos = running_apps_size.height - bar_size.height;
+        let current_bar_y = bar_fixed_pos + px(self.bar_drag_offset);
         let colors = cx.theme().colors.clone();
 
         div()
@@ -65,7 +69,15 @@ impl Render for RunningApps {
                             //Mimize all apps
                             this.show_apps = false;
                             this.update_input_regions(window, false, cx);
-                            this.send_minimize_all_apps(cx);
+                            // this.send_minimize_all_apps(cx);
+                            let d_sender = Dispatcher::global(cx).clone().0;
+                            cx.background_executor()
+                                .spawn(async move {
+                                    _ = d_sender
+                                        .broadcast(dispatcher::Message::MinimizeToHome)
+                                        .await;
+                                })
+                                .detach();
                         }
                         this.bar_drag_start_y = None;
                         this.snap_bar_to(0.0, cx);
@@ -75,41 +87,67 @@ impl Render for RunningApps {
             )
             .when(true, |this| {
                 this.child(
-                    div()
-                        .id("input-region")
-                        .absolute()
-                        .left(input_regions.minimized.origin.x)
-                        .top(input_regions.minimized.origin.y)
-                        .w(input_regions.minimized.size.width)
-                        .h(input_regions.minimized.size.height)
-                        .on_mouse_down(
-                            MouseButton::Left,
-                            cx.listener(|this, event: &MouseDownEvent, _, cx| {
-                                cx.stop_propagation();
-                                this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
-                                cx.notify();
-                            }),
-                        ),
+                    deferred(
+                        div()
+                            .id("input-region")
+                            .absolute()
+                            .left(input_regions.minimized.origin.x)
+                            .top(input_regions.minimized.origin.y)
+                            .w(input_regions.minimized.size.width)
+                            .h(input_regions.minimized.size.height)
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                                    cx.stop_propagation();
+                                    this.bar_drag_start_y = Some(event.position.y.to_f64() as f32);
+                                    cx.notify();
+                                }),
+                            ),
+                    )
+                    .priority(1000),
                 )
             })
             .child(
-                div()
-                    .w_full()
-                    .flex()
-                    .flex_row()
-                    .justify_center()
-                    .items_center()
-                    .absolute()
-                    .top(px(current_bar_y))
-                    .h(px(BAR_SIZE.1))
-                    .child(div().bg(colors.accent_400).w(px(BAR_SIZE.0)).h(px(4.0))),
+                deferred(
+                    div()
+                        .w_full()
+                        .flex()
+                        .flex_row()
+                        .justify_center()
+                        .items_center()
+                        .absolute()
+                        .top(current_bar_y)
+                        .h(bar_size.height)
+                        .child(
+                            div()
+                            .id("center-bar")
+                            .bg(colors.accent_200)
+                            .w(bar_size.width)
+                            .h(px(4.0))
+                            .rounded(px(4.0)),
+                        ),
+                )
+                .priority(1000),
             )
     }
 }
 
 impl RunningApps {
-    pub fn new(installed_apps: Entity<InstalledApps>) -> Self {
+    pub fn new(installed_apps: Entity<InstalledApps>, cx: &mut Context<Self>) -> Self {
         let apps = Vec::new();
+        let _poll_task = cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
+            loop {
+                let executor = cx.background_executor().clone();
+                cx.background_spawn(async move {
+                    executor.timer(std::time::Duration::from_millis(100)).await;
+                })
+                .await;
+
+                let _ = this.update(cx, |_this, cx| {
+                    cx.notify();
+                });
+            }
+        });
 
         Self {
             scroll_offset: 0.0,
@@ -126,6 +164,7 @@ impl RunningApps {
             bar_drag_start_y: None,
             show_apps: false,
             installed_apps,
+            _poll_task,
         }
     }
 
@@ -237,22 +276,33 @@ impl RunningApps {
             .flex_col()
             .items_center()
             .justify_center()
-            .bg(rgb(0x000000))
+            .bg(colors.background_1000)
+            .font_family(primary_font)
             .when(has_apps, |this| this.child(self.scroller_container(cx)))
             .when(!has_apps, |this| {
                 this.child(
-                    div().flex().flex_col().items_center().gap_16().child(
-                        div()
-                            .text_color(colors.foreground_800)
-                            .text_size(px(16.0))
-                            .line_height(px(24.0))
-                            .text_center()
-                            .font_weight(FontWeight(500.0))
-                            .font_family(primary_font)
-                            .max_w(px(300.0))
-                            .child("There are no apps or droids")
-                            .child(div().child("you are looking for.")),
-                    ),
+                    div()
+                        .flex()
+                        .flex_col()
+                        .items_center()
+                        .gap_16()
+                        .child(
+                            div()
+                                .text_color(colors.foreground_800)
+                                .text_size(px(16.0))
+                                .line_height(px(24.0))
+                                .text_center()
+                                .font_weight(FontWeight(500.0))                                
+                                .max_w(px(300.0))
+                                .child("There are no apps or droids")
+                                .child(div().child("you are looking for.")),
+                        )
+                        .with_animation(
+                            "no-apps-animation",
+                            Animation::new(Duration::from_secs_f64(0.25))
+                                .with_easing(cubic_bezier(0.4, 0., 0.2, 1.)),
+                            move |this, delta| this.opacity(delta),
+                        ),
                 )
             })
     }

@@ -8,7 +8,6 @@ import 'package:mechanix_music/load_settings.dart';
 import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/recently_played.dart';
 import 'package:mechanix_music/models/search_data.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository.dart';
 import 'package:mechanix_music/src/features/home/data/songs_repository_impl.dart';
 import 'package:mechanix_music/models/song_info.dart';
@@ -17,9 +16,10 @@ import 'package:mechanix_music/src/features/home/home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/theme/mechanix_theme.dart';
 import 'package:widgets/theme/variants.dart';
-import 'package:widgets/widgets/theme/theme_toggle.dart'; 
+import 'package:widgets/widgets/theme/theme_toggle.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   di.registerSingleton(ThemeToggle());
   Hive.registerAdapter(SongInfoAdapter());
   Hive.registerAdapter(RecentlyPlayedAdapter());
@@ -170,12 +170,6 @@ class MainApp extends StatelessWidget {
           ),
         ),
 
-        scrollbarTheme: const ScrollbarThemeData(
-          radius: Radius.circular(4),
-          thickness: WidgetStatePropertyAll(6),
-          thumbColor: WidgetStatePropertyAll(MusicColors.primaryTextColor),
-        ),
-
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},
         ),
@@ -185,19 +179,6 @@ class MainApp extends StatelessWidget {
         highlightColor: Colors.transparent,
         hoverColor: Colors.transparent,
         splashFactory: NoSplash.splashFactory,
-
-        // iconButtonTheme: const IconButtonThemeData(
-        //   style: ButtonStyle(
-        //     splashFactory: NoSplash.splashFactory,
-
-        //     overlayColor: WidgetStatePropertyAll(Colors.transparent),
-        //   ),
-        // ),
-        scrollbarTheme: const ScrollbarThemeData(
-          radius: Radius.circular(4),
-          thickness: WidgetStatePropertyAll(6),
-          thumbColor: WidgetStatePropertyAll(MusicColors.primaryTextColor),
-        ),
 
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {TargetPlatform.linux: CupertinoPageTransitionsBuilder()},

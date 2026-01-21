@@ -7,6 +7,7 @@ use settings::prelude::*;
 
 struct Launcher {
     top_levels: Vec<ForeignToplevelHandle>,
+    refresh_windows_counter: usize,
     _poll_task: Task<()>,
 }
 
@@ -27,12 +28,14 @@ impl Launcher {
         });
         Self {
             top_levels: Vec::new(),
+            refresh_windows_counter: 10,
             _poll_task,
         }
     }
 
     fn launch_app(&self, app_id: String, exec: String) {
         if let Some(tl) = self.get_app_top_level(&app_id) {
+            tl.set_maximized();
             tl.activate();
             return;
         } else {
@@ -86,6 +89,11 @@ impl Render for Launcher {
         if top_levels.len() != self.top_levels.len() {
             self.top_levels = top_levels;
             cx.notify();
+        }
+
+        if self.refresh_windows_counter > 0 {
+            cx.refresh_windows(); 
+            self.refresh_windows_counter -= 1;
         }
 
         div().size_full()

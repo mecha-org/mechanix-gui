@@ -5,6 +5,7 @@ import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.da
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
 
 void forgetDeviceBottomSheet({
@@ -14,8 +15,11 @@ void forgetDeviceBottomSheet({
 }) {
   return MechanixBottomSheet.show(
     context,
+    theme: MechanixBottomSheetThemeData(
+        decoration: BoxDecoration(color: context.surfaceContainerHigh),
+        padding: const EdgeInsets.fromLTRB(16, 30, 16, 29)),
     child: SizedBox(
-      height: 160,
+      height: 130,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.start,

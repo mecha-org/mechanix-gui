@@ -5,7 +5,6 @@ import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/add_music_input.dart';
 import 'package:mechanix_music/src/features/presentation/song_tile.dart';
 import 'package:tuple/tuple.dart';
@@ -63,7 +62,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                     height: 1.25,
                     letterSpacing: -1.1,
                     fontWeight: FontWeight.w600,
-                    color: MusicColors.primaryTextColor,
+                    color: context.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -85,7 +84,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                           "No songs available",
                           style: TextStyle(
                             fontSize: 16,
-                            color: MusicColors.secondaryTextColor,
+                            color: context.onSecondaryFixedVariant,
                           ),
                         ),
                       );
@@ -96,7 +95,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                           "No songs found",
                           style: TextStyle(
                             fontSize: 16,
-                            color: MusicColors.secondaryTextColor,
+                            color: context.onSecondaryFixedVariant,
                           ),
                         ),
                       );
@@ -171,7 +170,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
               ),
 
               Container(
-                color: MusicColors.backgroundColor,
+                color: context.secondaryContainer,
                 height: 60,
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
@@ -206,7 +205,8 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
                             buttonSize: Size(100, 40),
-                            pressedButtonColor: MusicColors.bottomSheetColor,
+                            pressedButtonColor: context.surfaceContainerHighest,
+                            buttonColor: context.surfaceContainerHighest,
                           ),
                           label: "Cancel",
                           onPressed: () {
@@ -216,8 +216,8 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         MechanixFilledButton(
                           theme: MechanixFilledButtonThemeData(
                             buttonSize: Size(75, 40),
-                            buttonColor: MusicColors.buttonColor,
-                            pressedButtonColor: MusicColors.titleColor,
+                            buttonColor: context.primary,
+                            pressedButtonColor: context.primaryContainer,
                           ),
                           label: "Add",
                           onPressed: () {

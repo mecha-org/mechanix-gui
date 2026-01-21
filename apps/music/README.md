@@ -4,7 +4,24 @@ A lightweight and efficient music player application built with Flutter for Embe
 
 > **Your personal soundtrack for every moment!**
 
-## Install Guide
+## Install Guide (Linux)
+
+### Fedora
+
+Install MPV and required libraries:
+
+```bash
+sudo dnf install mpv mpv-libs
+```
+
+### Debian
+
+Install MPV development libraries:
+
+```bash
+sudo apt update
+sudo apt install libmpv-dev
+```
 
 ### Pre-requisites
 
@@ -109,5 +126,5 @@ To ensure **high performance on Embedded Linux devices**, the app includes inten
 
 ## TODO
 
--  Implementation of  search algorithm
--  Add support for multiple artwork icons
+- Implementation of search algorithm
+- Add support for multiple artwork icons

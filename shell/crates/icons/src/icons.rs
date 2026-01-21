@@ -219,6 +219,7 @@ pub struct SettingsDrawerIcons {
     pub wireless_none: PathBuf,
     pub wireless_off: PathBuf,
     pub wireless_warning: PathBuf,
+    pub slider_accent_dots_column: PathBuf
 }
 
 impl Default for SettingsDrawerIcons {
@@ -444,6 +445,10 @@ impl Default for SettingsDrawerIcons {
                 "{}settings-drawer/wireless-warning.svg",
                 ICONS_BASE_PATH
             )),
+            slider_accent_dots_column: PathBuf::from(format!(
+                "{}settings-drawer/slider-accent-dots-column.svg",
+                ICONS_BASE_PATH
+            ))
         }
     }
 }
