@@ -93,10 +93,11 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
       // final listTimezones =
       //     listTimezonesDBusValue.children.map((e) => e.asString()).toList();
 
-      logger.i("NTP Enabled: $ntpEnabled");
-      logger.i("Current Time Zone: $currentTimeZone");
+      print("NTP Enabled: $ntpEnabled");
+      print("currentTimeZone - ${currentTimeZone}");
 
       final meridiem = DateFormat('a').format(dateTimeUTC); // 'a' gives AM/PM
+      final timezoneString = meridiem.toString();
       // final timezoneOptions = getAllTimezoneAbbreviations(listTimezones);
 
       // if (ntpEnabled) {
@@ -109,7 +110,14 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
         autoDateTime: ntpEnabled,
         systemDateTime: dateTimeUTC,
         // listTimezones: timezoneOptions,
-        selectedMeridiem: meridiem,
+        selectedMeridiem: timezoneString,
+        selectedMinute: dateTimeUTC.minute,
+        selectedHour: dateTimeUTC.hour - 12,
+        selectedDate: dateTimeUTC.day,
+        selectedMonth: dateTimeUTC.month,
+        selectedYear: dateTimeUTC.year,
+        selectedWeekDay: dateTimeUTC.weekday,
+        // selectedTimezone: currentTimeZone,
       ));
     } catch (e) {
       logger.e("Error initializing date time data: $e");
@@ -381,6 +389,7 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
 
   Future<void> _setSelectedTimezone(
       SetSelectedTimezoneEvent event, Emitter<DateTimeState> emit) async {
+    add(SetTimeZone(event.selectedTimezone));
     emit(state.copyWith(selectedTimezone: event.selectedTimezone));
   }
 

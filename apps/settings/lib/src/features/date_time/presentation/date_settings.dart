@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_state.dart';
 import 'package:mechanix_settings/src/features/date_time/models/types.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/widgets/apply_button.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/wheel_scroll/mechanix_wheel_scroll_theme.dart';
 import 'package:widgets/widgets/wheel_scroll/wheel_scroll_options_type.dart';
 
@@ -28,37 +30,26 @@ class _DateSettingsState extends State<DateSettings> {
           selectedYear: state.selectedYear,
         );
 
-        final weekDay = longWeekdays
-            .firstWhere((e) => e.value == state.selectedWeekDay)
-            .label;
-
-        final month =
-            longMonths.firstWhere((e) => e.value == state.selectedMonth).label;
-
         return Scaffold(
-          appBar: MechanixNavigationBar(title: "Set Date"),
           body: SingleChildScrollView(
             child: ContainerWidget(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomTrailingText(
-                          title:
-                              '${state.selectedDate} $month ${state.selectedYear}, $weekDay')
-                      .padOnly(top: 8, bottom: 40),
+                  const CustomTitle(title: "Set Date"),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       SizedBox(
-                        width: 348,
-                        height: 284,
                         child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             MechanixWheelScroll(
-                              width: 116,
-                              height: 220,
-                              selectionWidth: 116,
-                              selectionHeight: 56,
+                              width: 74,
+                              squeeze: 0.75,
+                              height: 248,
+                              selectionWidth: 74,
+                              selectionHeight: 60,
                               value: state.selectedDate,
                               options: totalDays,
                               theme: MechanixWheelScrollThemeData(
@@ -69,12 +60,13 @@ class _DateSettingsState extends State<DateSettings> {
                                     .read<DateTimeBloc>()
                                     .add(SetSelectedDateEvent(value));
                               },
-                            ),
+                            ).padRight(24),
                             MechanixWheelScroll(
-                              width: 116,
-                              height: 220,
-                              selectionWidth: 116,
-                              selectionHeight: 56,
+                              width: 74,
+                              squeeze: 0.75,
+                              height: 248,
+                              selectionWidth: 74,
+                              selectionHeight: 60,
                               value: state.selectedMonth,
                               options: shortMonths,
                               theme: MechanixWheelScrollThemeData(
@@ -84,14 +76,15 @@ class _DateSettingsState extends State<DateSettings> {
                                     .read<DateTimeBloc>()
                                     .add(SetSelectedMonthEvent(value));
                               },
-                            ),
+                            ).padRight(24),
 
                             // // Year wheel (1975..now+10)
                             MechanixWheelScroll(
-                              width: 116,
-                              height: 220,
-                              selectionWidth: 116,
-                              selectionHeight: 56,
+                              width: 108,
+                              height: 248,
+                              squeeze: 0.75,
+                              selectionWidth: 108,
+                              selectionHeight: 60,
                               value: state.selectedYear,
                               theme: MechanixWheelScrollThemeData(
                                   selectionBorderRadius:
@@ -111,10 +104,11 @@ class _DateSettingsState extends State<DateSettings> {
 
                       // Weekday wheel (Mon..Sun)
                       MechanixWheelScroll(
-                        width: 116,
-                        height: 220,
-                        selectionWidth: 116,
-                        selectionHeight: 56,
+                        width: 74,
+                        squeeze: 0.75,
+                        height: 248,
+                        selectionWidth: 74,
+                        selectionHeight: 60,
                         value: state.selectedWeekDay,
                         options: shortWeekdays,
                         // scrollEnabled: false,
@@ -127,11 +121,14 @@ class _DateSettingsState extends State<DateSettings> {
                         },
                       ),
                     ],
-                  ),
-                  ApplyButton()
+                  ).padOnly(top: 100, right: 34, left: 34),
                 ],
               ).padTop(8),
             ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
+            anchorWidget: const [BottomBarButton.widget(widget: ApplyButton())],
           ),
         );
       },

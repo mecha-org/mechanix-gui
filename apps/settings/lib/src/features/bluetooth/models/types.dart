@@ -60,6 +60,16 @@ enum BluetoothStatus {
   unknown
 }
 
+class BluetoothConnection {
+  final String address;
+  final bool connectionLoading;
+
+  const BluetoothConnection({
+    required this.address,
+    required this.connectionLoading,
+  });
+}
+
 Map<BluetoothStatus, String> bluetoothStatusToString = {
   BluetoothStatus.unknown: '-',
   BluetoothStatus.connected: 'Connected',

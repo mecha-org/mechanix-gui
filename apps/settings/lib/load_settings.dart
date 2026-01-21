@@ -1,15 +1,17 @@
 import 'dart:async';
+
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/web.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:logger/web.dart';
 
 class ThemeSettingsService {
   static const String _busName = 'org.mechanix.MxConf';
   static const String _busPath = '/org/mechanix/MxConf';
   static const String _busInterface = 'org.mechanix.MxConf';
-  static const String _themeKey = 'org.mechanix.desktop.settings.active_theme.theme_colors';
+  static const String _themeKey =
+      'org.mechanix.desktop.settings.active_theme.theme_colors';
   static const String _schemaName = 'org.mechanix.desktop';
   static const String _schemaKey = 'settings.active_theme.theme_colors';
 
@@ -46,7 +48,6 @@ class ThemeSettingsService {
   }
 
   Future<Map<String, String>?> fetchCurrentTheme() async {
-    final logger = Logger();
     try {
       final remoteObj = DBusRemoteObject(
         _bus,
@@ -64,13 +65,45 @@ class ThemeSettingsService {
           response.returnValues[0] is DBusDict) {
         final dict = response.returnValues[0] as DBusDict;
         final dbusValue = dict.children[const DBusString(_themeKey)];
-        
+
         if (dbusValue is DBusString) {
           return _parseThemeColors(dbusValue.value);
         }
       }
     } catch (e) {
-      logger.e('Error fetching theme from DBus: $e');
+      print('Error fetching theme from DBus: $e');
+    }
+    return null;
+  }
+
+  Future<Map<String, String>?> setCurrentTheme(MechanixVariant variant) async {
+    try {
+      final remoteObj = DBusRemoteObject(
+        _bus,
+        name: _busName,
+        path: DBusObjectPath(_busPath),
+      );
+
+      final currentTheme = await fetchCurrentTheme();
+
+      final String accentString = variant.color.toOklchString();
+
+      final String backgroundString = currentTheme?["background"] ?? '';
+
+      final String foregroundString = currentTheme?["foreground"] ?? '';
+
+      final String body =
+          '{type = "object", default = { accent = "$accentString", background = "$backgroundString", foreground = "$foregroundString" }, description = "Theme color palette"}';
+
+      await remoteObj.callMethod(
+        _busInterface,
+        'SetSetting',
+        [
+          DBusStruct([DBusString(_themeKey), DBusString(body)])
+        ],
+      );
+    } catch (e) {
+      print('Error updating theme from app: $e');
     }
     return null;
   }
@@ -79,11 +112,16 @@ class ThemeSettingsService {
   Map<String, String>? _parseThemeColors(String description) {
     final logger = Logger();
 
-    final accentMatch = RegExp(r'accent\s*=\s*"([^"]+)"').firstMatch(description);
-    final backgroundMatch = RegExp(r'background\s*=\s*"([^"]+)"').firstMatch(description);
-    final foregroundMatch = RegExp(r'foreground\s*=\s*"([^"]+)"').firstMatch(description);
+    final accentMatch =
+        RegExp(r'accent\s*=\s*"([^"]+)"').firstMatch(description);
+    final backgroundMatch =
+        RegExp(r'background\s*=\s*"([^"]+)"').firstMatch(description);
+    final foregroundMatch =
+        RegExp(r'foreground\s*=\s*"([^"]+)"').firstMatch(description);
 
-    if (accentMatch == null || backgroundMatch == null || foregroundMatch == null) {
+    if (accentMatch == null ||
+        backgroundMatch == null ||
+        foregroundMatch == null) {
       logger.w('Failed to parse theme colors from: $description');
       return null;
     }
@@ -98,8 +136,14 @@ class ThemeSettingsService {
   /// Convert color map to MechanixThemeData
   MechanixThemeData colorsToThemeData(Map<String, String> colors) {
     final accent = colors['accent']?.toOKLCHStringToColor() ?? Colors.amber;
-    final background = colors['background']?.toOKLCHStringToColor() ?? defaultBackgroundColor;
-    final foreground = colors['foreground']?.toOKLCHStringToColor() ?? defaultForegroundColor;
+    final background =
+        colors['background']?.toOKLCHStringToColor() ?? defaultBackgroundColor;
+    final foreground =
+        colors['foreground']?.toOKLCHStringToColor() ?? defaultForegroundColor;
+
+    print("accent - $accent");
+    print("background - $background");
+    print("foreground - $foreground");
 
     return MechanixThemeData(
       mechanixVariant: MechanixVariant.custom(accent),

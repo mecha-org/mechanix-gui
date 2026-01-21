@@ -12,7 +12,7 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
   final BatteryRepository batteryRepository;
   StreamSubscription? changeStream;
 
-  BatteryBloc({required this.batteryRepository}) : super(BatteryState()) {
+  BatteryBloc({required this.batteryRepository}) : super(const BatteryState()) {
     on<SetBatteryMode>(_setBatteryMode);
     on<BatteryInfoRequested>(_getBatteryInfo);
   }
