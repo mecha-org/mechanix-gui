@@ -1,7 +1,7 @@
 use gpui::{Pixels, Size};
 use std::collections::HashMap;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct HomescreenConfig {
     pub window: WindowConfig,
     pub grid: GridConfig,
@@ -16,7 +16,9 @@ impl HomescreenConfig {
                 width: size.width.to_f64() as f32,
                 height: size.height.to_f64() as f32,
             },
-            ..Default::default()
+            grid: GridConfig::default(),
+            drag: DragConfig::default(),
+            animation: AnimationConfig::default(),
         };
 
         // Set zero gaps for pages 0 and 4 (full-screen widgets)
@@ -54,15 +56,6 @@ impl HomescreenConfig {
 pub struct WindowConfig {
     pub width: f32,
     pub height: f32,
-}
-
-impl Default for WindowConfig {
-    fn default() -> Self {
-        Self {
-            width: 540.0,
-            height: 504.0,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
-import 'package:widgets/widgets/filled_button/mechanix_filled_button.dart';
+import 'package:widgets/mechanix.dart';
 
 class ConfirmationBottomSheet extends StatelessWidget {
   final String filePath;
@@ -19,7 +19,7 @@ class ConfirmationBottomSheet extends StatelessWidget {
       clipper: TabClipper(shift: sheetWidth * 0.65),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.grey[850],
+          color: context.colorScheme.surfaceContainerHigh,
         ),
         padding: const EdgeInsets.only(
           left: 16,
