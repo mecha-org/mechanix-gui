@@ -19,6 +19,8 @@ class TopMusic extends StatefulWidget {
 class _TopMusicState extends State<TopMusic> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int currentPage = 0;
+  static const double _songTileHeight = 80;
+  static const double _maxHeight = 240;
 
   List<List<SongInfo>> _buildPages(List<SongInfo> songs) {
     const pageSize = 3;
@@ -33,6 +35,11 @@ class _TopMusicState extends State<TopMusic> {
       );
     }
     return pages;
+  }
+
+  double _calculatePageHeight(int itemCount) {
+    final height = itemCount * _songTileHeight;
+    return height.clamp(0, _maxHeight);
   }
 
   void _scrollLeft() {
@@ -70,10 +77,7 @@ class _TopMusicState extends State<TopMusic> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 0,
-                ),
+                padding: const EdgeInsets.only(left: 16, right: 10),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -122,7 +126,7 @@ class _TopMusicState extends State<TopMusic> {
 
               // Pages
               SizedBox(
-                height: 240,
+                height: _calculatePageHeight(pages[0].length),
                 child: PageView.builder(
                   controller: _pageController,
                   padEnds: false,
@@ -133,14 +137,9 @@ class _TopMusicState extends State<TopMusic> {
                   },
                   itemBuilder: (context, pageIndex) {
                     final pageSongs = pages[pageIndex];
-                    final isLastPage = pageIndex == pages.length - 1;
 
                     return Container(
-                      margin: EdgeInsets.symmetric(horizontal: 10),
-                      padding: EdgeInsets.only(
-                        left: 16,
-                        right: isLastPage ? 16 : 8, // Full padding on last page
-                      ),
+                      padding: EdgeInsets.only(left: 16, right: 8),
                       child: Column(
                         children:
                             pageSongs.map((song) {

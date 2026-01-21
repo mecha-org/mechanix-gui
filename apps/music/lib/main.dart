@@ -19,6 +19,7 @@ import 'package:widgets/theme/variants.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   di.registerSingleton(ThemeToggle());
   Hive.registerAdapter(SongInfoAdapter());
   Hive.registerAdapter(RecentlyPlayedAdapter());
