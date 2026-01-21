@@ -61,22 +61,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Setup | Add comet RPM repo
-        run: |
-          set -euo pipefail
+      - name: Install build dependencies
+        run: |              
+          apt-get update
+          apt-get install -y sudo unzip tar 
 
-          sudo tee /etc/yum.repos.d/comet-rpm.repo > /dev/null <<'EOF'
-          [comet-rpm]
-          name=comet-rpm
-          baseurl=http://pkg.mecha.so/rpm
-          repo_gpgcheck=0
-          gpgcheck=0
-          enabled=1
-          EOF
-
-          sudo dnf clean all
-          sudo dnf makecache
-    
       # Pulp CLI setup
       - name: Setup | Pulp CLI Configuration
         run: |
@@ -170,7 +159,7 @@ jobs:
           cp target/debian/${{ matrix.package }}_*.deb ./build/deb/
           # Copy RPM
           cp target/generate-rpm/${{ matrix.package }}*.rpm ./build/rpm/
-          
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -197,7 +186,7 @@ jobs:
             --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
             --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
-            
+
       - name: Publish RPM [${{ matrix.package }}]
         run: |
           set -euo pipefail
