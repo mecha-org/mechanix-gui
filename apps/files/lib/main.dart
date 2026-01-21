@@ -19,7 +19,7 @@ import 'package:widgets/mechanix.dart';
 Future<void> main(List<String> args) async {
   di.registerSingleton(ThemeToggle());
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   final configResult = await connectToMxconf();
   AppConfig().loadFromMap(configResult);
 
@@ -41,9 +41,12 @@ Future<void> main(List<String> args) async {
 }
 
 String _parseOpenPath() {
-  const compileTimeOpenPath = String.fromEnvironment('MECHANIX_FILES_OPEN_PATH');
+  const compileTimeOpenPath =
+      String.fromEnvironment('MECHANIX_FILES_OPEN_PATH');
   final runtimeOpenPath = Platform.environment['MECHANIX_FILES_OPEN_PATH'];
-  return compileTimeOpenPath.isNotEmpty ? compileTimeOpenPath : (runtimeOpenPath ?? '');
+  return compileTimeOpenPath.isNotEmpty
+      ? compileTimeOpenPath
+      : (runtimeOpenPath ?? '');
 }
 
 class MechanixFilesApp extends WatchingWidget {
@@ -78,7 +81,7 @@ class _MechanixFilesAppContent extends StatefulWidget {
 class _MechanixFilesAppContentState extends State<_MechanixFilesAppContent> {
   late final DBusClient _bus;
   late final ThemeSettingsService _themeService;
-  
+
   MechanixThemeData _currentThemeData = MechanixThemeData(
     mechanixVariant: MechanixVariant.amber,
   );
@@ -92,7 +95,7 @@ class _MechanixFilesAppContentState extends State<_MechanixFilesAppContent> {
   void _initializeThemeService() {
     _bus = DBusClient.session();
     _themeService = ThemeSettingsService(_bus);
-    
+
     _themeService.listenForThemeChanges(_handleThemeChange);
     _fetchInitialTheme();
   }
@@ -158,7 +161,7 @@ class MainApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: _buildCustomTheme(),
+        theme: darkTheme,
         darkTheme: _buildDarkTheme(),
         themeMode: themeMode,
         home: _buildHomePage(),
@@ -169,25 +172,8 @@ class MainApp extends StatelessWidget {
     );
   }
 
-  ThemeData _buildCustomTheme() {
-    return lightTheme.copyWith(
-      scaffoldBackgroundColor: Colors.black,
-    );
-  }
-
   ThemeData _buildDarkTheme() {
     return darkTheme.copyWith(
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      splashFactory: NoSplash.splashFactory,
-      iconButtonTheme: const IconButtonThemeData(
-        style: ButtonStyle(
-          splashFactory: NoSplash.splashFactory,
-          overlayColor: WidgetStatePropertyAll(Colors.transparent),
-        ),
-      ),
-      scaffoldBackgroundColor: Colors.black,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.linux: CupertinoPageTransitionsBuilder(),

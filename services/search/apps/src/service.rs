@@ -224,7 +224,8 @@ impl AppSearchService {
         );
         let watch_path: PathBuf = DESKTOP_APPS_DIR.into();
         if !watch_path.exists() {
-            anyhow::bail!("Watch path does not exist: {}", watch_path.display());
+            error!("Watch path does not exist: {}", watch_path.display());
+            return Ok(());
         }
 
         let (cmd_tx, mut cmd_rx) = mpsc::channel::<IndexCmd>(256);

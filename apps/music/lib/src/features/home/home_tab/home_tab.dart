@@ -93,8 +93,9 @@ class _HomeTabState extends State<HomeTab> {
 
                       if (!isEmpty) ...[
                         const RecentSong(),
+
                         const TopPlaylists(),
-                        const TopMusic(),
+                        TopMusic(),
                         const SizedBox(height: 40),
                       ] else
                         const EmptyHomeScreen(),

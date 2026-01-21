@@ -82,6 +82,7 @@ class _HomePageState extends State<HomePage> {
                     child: IgnorePointer(
                       ignoring: !isVisible,
                       child: MusicIconButton(
+                        iconSize: 24,
                         backgroundColor: context.colorScheme.surfaceContainer,
                         icon: MusicIcons.searchIcon,
                         onPressed: () {
@@ -104,8 +105,16 @@ class _HomePageState extends State<HomePage> {
             duration: const Duration(milliseconds: 300),
             switchInCurve: Curves.easeInOut,
             switchOutCurve: Curves.easeInOut,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: <Widget>[
+                  ...previousChildren,
+                  if (currentChild != null) currentChild,
+                ],
+              );
+            },
             transitionBuilder: (Widget child, Animation<double> animation) {
-              // Fade transition
               return FadeTransition(opacity: animation, child: child);
             },
             child: KeyedSubtree(

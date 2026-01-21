@@ -20,7 +20,7 @@ class DeleteBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned(child: Image.asset(NotesIcon.slider, fit: BoxFit.cover)),
+        // Positioned(child: Image.asset(NotesIcon.slider, fit: BoxFit.cover)),
         Container(
           padding: const EdgeInsets.only(
             left: 16,

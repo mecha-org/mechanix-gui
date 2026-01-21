@@ -53,6 +53,18 @@ class SoundRepositoryImpl implements SoundRepository {
   }
 
   @override
+  Future<Stream<int>> streamSoundSourceRemovedEvents() async {
+    await _ensureConnected();
+    return client.onSourceRemoved;
+  }
+
+  @override
+  Future<Stream<int>> streamSoundSinkRemovedEvents() async {
+    await _ensureConnected();
+    return client.onSinkRemoved;
+  }
+
+  @override
   Future<String> getDefaultSinkName() async {
     await _ensureConnected();
     try {
@@ -83,7 +95,8 @@ class SoundRepositoryImpl implements SoundRepository {
     await _ensureConnected();
     try {
       final sources = await client.getSourceList();
-      return sources;
+      final filteredSources = _PulseAudioHelper.getSourceDevices(sources);
+      return filteredSources;
     } catch (e) {
       logger.e("Error getting audio sources: $e");
       return [];
@@ -95,7 +108,8 @@ class SoundRepositoryImpl implements SoundRepository {
     await _ensureConnected();
     try {
       final sinks = await client.getSinkList();
-      return sinks;
+      final filteredSinks = _PulseAudioHelper.getSinkDevices(sinks);
+      return filteredSinks;
     } catch (e) {
       logger.e("Error getting audio sinks: $e");
       return [];
@@ -185,5 +199,18 @@ class SoundRepositoryImpl implements SoundRepository {
   @override
   setNotificationSound(String notificationSound) async {
     return await _dBusSoundService.setNotificationSound(notificationSound);
+  }
+}
+
+class _PulseAudioHelper {
+  static List<PulseAudioSource> getSourceDevices(
+      List<PulseAudioSource> sources) {
+    return sources
+        .where((source) => !source.name.contains('.monitor'))
+        .toList();
+  }
+
+  static List<PulseAudioSink> getSinkDevices(List<PulseAudioSink> sinks) {
+    return sinks.where((source) => !source.name.contains('.monitor')).toList();
   }
 }

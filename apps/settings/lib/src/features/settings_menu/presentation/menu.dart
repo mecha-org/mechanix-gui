@@ -74,7 +74,7 @@ class SettingMenu extends StatelessWidget {
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
                       title: 'Appearance',
-                      onTap: () {},
+                      onTap: () => onTap(context, AppRoutes.appearance),
                       iconPath: Images.appearance,
                     ),
                     SectionListItems.leadingIcon(

@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/switch_row.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/right_icon_arrow_widget.dart';
+import 'package:mechanix_settings/src/features/appearance/bloc/appearance_bloc.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
+import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class Appearance extends StatefulWidget {
   const Appearance({super.key});
@@ -13,64 +19,85 @@ class Appearance extends StatefulWidget {
 }
 
 class _AppearanceState extends State<Appearance> {
-  void backNavigation(BuildContext context) {
-    Navigator.pop(context);
+  void onThemeTap(BuildContext context) {
+    Navigator.pushNamed(context, AppRoutes.setTheme);
   }
 
-  void onThemeSelected(String imagePath) {
-    Navigator.pushNamed(
-      context,
-      AppRoutes.applyWallpaper,
-      arguments: {'imagePath': imagePath},
-    );
+  void onWallpaperTap(BuildContext context) {
+    Navigator.pushNamed(context, AppRoutes.setWallpaper);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MechanixNavigationBar(
-        title: 'Appearance',
-      ),
       body: ContainerWidget(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  buildRoundedImage(Images.theme1, true,
-                      () => onThemeSelected(Images.theme1)),
-                  buildRoundedImage(Images.theme2, false,
-                      () => onThemeSelected(Images.theme2)),
-                  buildRoundedImage(Images.theme3, false,
-                      () => onThemeSelected(Images.theme3)),
-                ],
-              ),
-            ),
-            // mid content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    SizedBox(height: 20),
-                  ],
+            const CustomTitle(title: 'Appearance'),
+            MechanixSimpleList(
+              listItems: [
+                SimpleListItems(
+                  title: 'Dark Mode',
+                  // disabled: true,
+                  trailing:
+                      BlocSelector<AppearanceBloc, AppearanceState, ThemeMode>(
+                    selector: (state) {
+                      return state.themeMode;
+                    },
+                    builder: (context, state) {
+                      return MechanixSwitch(
+                        value: state == ThemeMode.dark,
+                        activeText: "OFF",
+                        inactiveText: "ON",
+                        style: MechanixSwitchStyle(
+                            activeThumbColor:
+                                context.primary.withAlpha((0.4 * 255).toInt())),
+                        onChanged: (_) {
+                          // TODO: Implement dart/ light mode switch changes
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ),
-            FixedHeightRow(
-              showTopBorder: true,
-              showBottomBorder: false,
-              child: CustomSwitchListTile(
-                title: "Ambient mode",
-                value: true,
-                onChanged: (val) {
-                  // set mode
-                },
-              ),
-            ),
+                SimpleListItems(
+                  title: 'Set Wallpaper',
+                  onTap: () => onWallpaperTap(context),
+                  trailing: const RightIconArrowWidget(),
+                ),
+                SimpleListItems(
+                  title: 'Theme',
+                  onTap: () => onThemeTap(context),
+                  trailing: BlocSelector<AppearanceBloc, AppearanceState,
+                      MechanixVariant>(
+                    selector: (state) => state.appliedVariant,
+                    builder: (context, state) {
+                      return Row(
+                        children: [
+                          Container(
+                            width: 16.25,
+                            height: 16.25,
+                            margin: const EdgeInsets.only(right: 10),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: state.color,
+                            ),
+                          ).padRight(8),
+                          Text(
+                            state.name,
+                          ).padRight(8),
+                          const RightIconArrowWidget(),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ],
+            )
           ],
         ).padTop(8),
+      ),
+      bottomNavigationBar: MechanixBottomBar(
+        leadingWidget: [context.backButton],
       ),
     );
   }

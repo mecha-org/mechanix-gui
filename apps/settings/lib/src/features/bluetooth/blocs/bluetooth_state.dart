@@ -5,6 +5,7 @@ import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 class BluetoothState extends Equatable {
   final bool isPowered;
   final bool loading;
+  final BluetoothConnection? connection;
   final List<BlueZDevice> devices;
   final BlueZDevice? selectedDevice;
   final String? deviceState;
@@ -15,6 +16,7 @@ class BluetoothState extends Equatable {
   const BluetoothState({
     required this.isPowered,
     this.loading = false,
+    this.connection,
     required this.devices,
     this.selectedDevice,
     this.deviceState,
@@ -32,10 +34,12 @@ class BluetoothState extends Equatable {
     BlueZDevice? selectedDevice,
     BluetoothAdapter? bluetoothAdapter,
     bool? isDiscoveryEnabled,
+    BluetoothConnection? connection,
   }) {
     return BluetoothState(
       isPowered: isPowered ?? this.isPowered,
       loading: loading ?? this.loading,
+      connection: connection ?? this.connection,
       devices: devices ?? this.devices,
       error: error,
       deviceState: deviceState ?? this.deviceState,
@@ -47,13 +51,14 @@ class BluetoothState extends Equatable {
 
   @override
   List<Object?> get props => [
-    isPowered,
-    loading,
-    error,
-    selectedDevice,
-    deviceState,
-    bluetoothAdapter,
-    devices,
-    isDiscoveryEnabled,
-  ];
+        isPowered,
+        loading,
+        connection,
+        error,
+        selectedDevice,
+        deviceState,
+        bluetoothAdapter,
+        devices,
+        isDiscoveryEnabled,
+      ];
 }

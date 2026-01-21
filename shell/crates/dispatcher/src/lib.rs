@@ -1,8 +1,8 @@
-use async_broadcast::{Receiver, Sender, broadcast};
+use async_broadcast::{broadcast, Receiver, Sender};
 use futures::StreamExt;
 use gpui::*;
 use mxconf_dbus::watch_setting;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 pub struct Dispatcher(pub Sender<Message>, pub Receiver<Message>);
@@ -15,38 +15,32 @@ impl Dispatcher {
 
 impl Global for Dispatcher {}
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct ThemeColors {
     pub accent: String,
     pub background: String,
     pub foreground: String,
 }
+
 impl ThemeColors {
     pub fn parse(input: &str) -> Result<Self, String> {
-        let get = |key: &str| {
-            input
-                .split(',')
-                .find(|s| s.contains(key))
-                .and_then(|s| s.split_once('='))
-                .map(|(_, v)| {
-                    v.trim()
-                        .trim_matches(|c: char| {
-                            !c.is_alphanumeric()
-                                && c != '('
-                                && c != ')'
-                                && c != '.'
-                                && c != ' '
-                                && c != '/'
-                        })
-                        .to_string()
-                })
-                .ok_or_else(|| format!("Missing {}", key))
-        };
+        fn extract(input: &str, key: &str) -> Result<String, String> {
+            let start = input
+                .find(&format!("{key} ="))
+                .ok_or_else(|| format!("Missing {}", key))?;
+
+            let after_key = &input[start..];
+            let first_quote = after_key.find('"').ok_or("Missing opening quote")?;
+            let rest = &after_key[first_quote + 1..];
+            let end_quote = rest.find('"').ok_or("Missing closing quote")?;
+
+            Ok(rest[..end_quote].to_string())
+        }
 
         Ok(Self {
-            accent: get("accent")?,
-            background: get("background")?,
-            foreground: get("foreground")?,
+            accent: extract(input, "accent")?,
+            background: extract(input, "background")?,
+            foreground: extract(input, "foreground")?,
         })
     }
 }

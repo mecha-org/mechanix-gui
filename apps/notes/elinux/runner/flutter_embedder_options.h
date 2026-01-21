@@ -44,7 +44,7 @@ class FlutterEmbedderOptions {
     options_.AddInt("height", "h", "Window height", 720, false);
 #else  // FLUTTER_TARGET_BACKEND_WAYLAND
     options_.AddString("title", "t", "Window title", "Flutter", false);
-    options_.AddString("app-id", "a", "XDG App ID", "mechanix_notes",
+    options_.AddString("app-id", "a", "XDG App ID", "org.mechanix.notes",
                        false);
     options_.AddWithoutValue("onscreen-keyboard", "k",
                              "Enable on-screen keyboard", false);

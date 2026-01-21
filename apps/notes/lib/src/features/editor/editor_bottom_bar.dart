@@ -147,7 +147,7 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
           theme:
               toolbarSelected != ToolbarEnum.none
                   ? MechanixBottomBarThemeData(
-                    height: 60,
+                    height: 90,
                     decoration: BoxDecoration(
                       color: context.secondaryContainer,
                       borderRadius: const BorderRadius.all(Radius.circular(0)),

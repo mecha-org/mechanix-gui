@@ -39,7 +39,7 @@ impl Homescreen {
     ) -> Self {
         let mut state = HomescreenState::new(config);
         state.create_widget(
-            UniversalSearchWidget::new(_cx),
+            UniversalSearchWidget::new(_cx, false),
             0,
             Bounds {
                 origin: point(0, 0),
@@ -194,7 +194,7 @@ impl Homescreen {
         );
 
         state.create_widget(
-            AppDrawerWidget::new(_cx),
+            AppDrawerWidget::new(_cx, false),
             4,
             Bounds {
                 origin: point(0, 0),
@@ -274,9 +274,8 @@ pub mod prelude {
 
 pub fn run_app(cx: &mut App) {
     let HomescreenSettings {
-        navbar_height,
-        status_bar_size,
         layer_shell,
+        status_bar_size,
         ..
     } = Settings::global(cx).homescreen.clone();
 
@@ -287,10 +286,10 @@ pub fn run_app(cx: &mut App) {
         namespace,
         ..
     } = layer_shell;
-    let screen_size = gpui::size(size.width, size.height - navbar_height);
 
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, screen_size, cx));
-    let config = HomescreenConfig::new(screen_size);
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let config =
+        HomescreenConfig::new(gpui::size(size.width, size.height - status_bar_size.height));
 
     // Register key bindings for the text input
     cx.bind_keys([
