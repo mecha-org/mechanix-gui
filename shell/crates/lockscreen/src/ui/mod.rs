@@ -65,7 +65,7 @@ impl Lockscreen {
             drag_start_mouse_y: 0.0,
             position_y: 0.0,
             window_height: 0.0,
-            show: false,
+            show: true,
             show_arrow_prompt: false,
             wallpaper_path: None,
         }
