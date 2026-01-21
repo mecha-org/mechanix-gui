@@ -192,23 +192,24 @@ impl Homescreen {
         //         size: size(1, 1),
         //     },
         // );
+
         state.create_widget(
-            ExtensionWidget::new(icons.keyboard, rgb(0xb565a7), rgb(0x9d5091), false),
+            SystemUsage::new(rgb(0xb565a7), rgb(0x9d5091), true),
             1,
             Bounds {
                 origin: point(1, 0),
                 size: size(1, 1),
             },
         );
-
         state.create_widget(
-            SystemUsage::new(rgb(0xb565a7), rgb(0x9d5091), true),
+            ExtensionWidget::new(icons.keyboard, rgb(0xb565a7), rgb(0x9d5091), false),
             1,
             Bounds {
                 origin: point(2, 0),
-                size: size(2, 2),
+                size: size(1, 1),
             },
         );
+
         // state.create_widget(
         //     ExtensionWidget::new(icons.gpio, rgb(0xb565a7), rgb(0x9d5091), false),
         //     1,
@@ -227,8 +228,8 @@ impl Homescreen {
             ),
             1,
             Bounds {
-                origin: point(0, 2),
-                size: size(4, 2),
+                origin: point(0, 1),
+                size: size(3, 2),
             },
         );
 
@@ -260,76 +261,76 @@ impl Homescreen {
         // );
 
         // PAGE 2 - Two 4x2 widgets
-        state.create_widget(
-            DemoWidget::new("Rose", rgb(0xff6b9d), rgb(0xff5285), true),
-            2,
-            Bounds {
-                origin: point(0, 0),
-                size: size(4, 2),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Rose", rgb(0xff6b9d), rgb(0xff5285), true),
+        //     2,
+        //     Bounds {
+        //         origin: point(0, 0),
+        //         size: size(4, 2),
+        //     },
+        // );
 
-        state.create_widget(
-            DemoWidget::new("Teal", rgb(0x1abc9c), rgb(0x16a085), true),
-            2,
-            Bounds {
-                origin: point(0, 2),
-                size: size(4, 2),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Teal", rgb(0x1abc9c), rgb(0x16a085), true),
+        //     2,
+        //     Bounds {
+        //         origin: point(0, 2),
+        //         size: size(4, 2),
+        //     },
+        // );
 
         // PAGE 3 - Top row: 3x1 + 1x1, middle: 4x2, bottom row: 2x2 + 2x2
-        state.create_widget(
-            DemoWidget::new("Tangerine", rgb(0xff9500), rgb(0xe68200), true),
-            3,
-            Bounds {
-                origin: point(0, 0),
-                size: size(3, 1),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Tangerine", rgb(0xff9500), rgb(0xe68200), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(0, 0),
+        //         size: size(3, 1),
+        //     },
+        // );
 
-        state.create_widget(
-            DemoWidget::new("Aqua", rgb(0x00bcd4), rgb(0x00a3ba), true),
-            3,
-            Bounds {
-                origin: point(3, 0),
-                size: size(1, 1),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Aqua", rgb(0x00bcd4), rgb(0x00a3ba), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(3, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
 
-        state.create_widget(
-            DemoWidget::new("Mauve", rgb(0xe0b0ff), rgb(0xc78fff), false),
-            3,
-            Bounds {
-                origin: point(0, 1),
-                size: size(4, 2),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Mauve", rgb(0xe0b0ff), rgb(0xc78fff), false),
+        //     3,
+        //     Bounds {
+        //         origin: point(0, 1),
+        //         size: size(4, 2),
+        //     },
+        // );
 
-        state.create_widget(
-            DemoWidget::new("Gold", rgb(0xffd700), rgb(0xe6c200), true),
-            3,
-            Bounds {
-                origin: point(0, 3),
-                size: size(2, 1),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Gold", rgb(0xffd700), rgb(0xe6c200), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(0, 3),
+        //         size: size(2, 1),
+        //     },
+        // );
 
-        state.create_widget(
-            DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
-            3,
-            Bounds {
-                origin: point(2, 3),
-                size: size(2, 1),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(2, 3),
+        //         size: size(2, 1),
+        //     },
+        // );
 
         state.create_widget(
             AppDrawerWidget::new(cx, false),
             4,
             Bounds {
                 origin: point(0, 0),
-                size: size(4, 4), // Full screen widget
+                size: size(3, 3), // Full screen widget
             },
         );
 
