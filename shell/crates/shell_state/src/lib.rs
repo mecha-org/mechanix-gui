@@ -277,9 +277,10 @@ impl ShellStateManager {
 
                 let brightness_percent = if brightness_value > 0 {
                     u8_to_percent(brightness_value, MAX_DEVICE_BRIGHTNESS)
-                } else {
-                    MAX_DEVICE_BRIGHTNESS as f32
+                } else { 
+                    brightness_value as f32
                 };
+
                 let _ = message_tx.send(ShellStateMessage::Brightness { value: brightness_percent }).await;
 
 
