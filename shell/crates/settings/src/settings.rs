@@ -241,6 +241,10 @@ pub struct VolumeSliderSettings {
     pub min_volume_level: f32,
     #[serde(default)]
     pub max_volume_level: f32,
+    #[serde(default)]
+    pub overlay_timeout_ms: u64,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for VolumeSliderSettings {
@@ -255,6 +259,17 @@ impl Default for VolumeSliderSettings {
             },
             min_volume_level: 0.0,
             max_volume_level: 100.0,
+            overlay_timeout_ms: 2_000,
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(52.0), px(297.0)),
+                },
+            },
         }
     }
 }

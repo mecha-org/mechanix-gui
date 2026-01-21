@@ -12,7 +12,7 @@ use icons::prelude::*;
 use models::{DragInfo, SearchResults, UniversalSearch};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::Settings;
+use settings::prelude::{Settings, UniversalSearchSettings};
 use theme::ActiveTheme;
 use theme::prelude::{AlphaExt, Theme, Fonts};
 
@@ -20,8 +20,6 @@ const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 52.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
-const NAVBAR_SIZE: (f32, f32) = (199.22, 28.5);
-const APP_SIZE: (f32, f32) = (540., 620.);
 const MIN_SEARCH_QUERY_LEN: usize = 3;
 
 impl DragInfo {
@@ -46,6 +44,8 @@ impl Render for DragInfo {
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let files_app_name = Settings::global(cx).system_apps.clone().files;
+        let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
+        let navbar_size = Settings::global(cx).universal_search.clone().navbar_size;
 
         cx.spawn(async move |this, cx| {
             if let Ok(service) = MxSearchService::new().await {
@@ -93,7 +93,7 @@ impl UniversalSearch {
             text_input: cx.new(|cx| TextInput::new(cx)),
             last_search_query: String::new(),
             is_searching: false,
-            position: Self::closed_pos(),
+            position: Self::closed_pos(app_size, navbar_size),
             drag_offset: None,
             drag_start_pos: 0.0,
             search_service: None,
@@ -165,8 +165,8 @@ impl UniversalSearch {
         self.is_dragging = false;
     }
 
-    fn calculate_scroll_bounds(&self, content_height: Pixels) -> (Pixels, Pixels) {
-        let container_height = px(APP_SIZE.1 - SEARCH_BAR_HEIGHT);
+    fn calculate_scroll_bounds(&self, app_size: Size<Pixels>, content_height: Pixels) -> (Pixels, Pixels) {
+        let container_height = app_size.height - px(SEARCH_BAR_HEIGHT);
 
         if content_height <= container_height {
             return (px(0.0), px(0.0));
@@ -231,10 +231,12 @@ impl UniversalSearch {
             return;
         }
 
+         let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
+
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
         let content_height = self.estimate_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
         cx.notify();
@@ -275,8 +277,9 @@ impl Render for UniversalSearch {
 }
 
 impl UniversalSearch {
-    fn closed_pos() -> f32 {
-        APP_SIZE.1 - NAVBAR_SIZE.1
+ 
+    fn closed_pos(app_size: Size<Pixels>, navbar_size: Size<Pixels>) -> f32 {
+        (app_size.height - navbar_size.height).into()
     }
 
     fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
@@ -317,22 +320,6 @@ impl UniversalSearch {
             },
         )
         .detach();
-    }
-
-    fn update_input_regions(&self, window: &mut Window, open: bool) {
-        let regions = if open {
-            vec![Bounds {
-                origin: point(px(0.), px(APP_SIZE.1 - NAVBAR_SIZE.1)),
-                size: size(px(NAVBAR_SIZE.0), px(APP_SIZE.1)),
-            }]
-        } else {
-            vec![Bounds {
-                origin: point(px(0.), px(0.)),
-                size: size(px(APP_SIZE.0), px(APP_SIZE.1)),
-            }]
-        };
-
-        window.set_input_regions(Some(regions));
     }
 
     fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
@@ -509,6 +496,7 @@ impl UniversalSearch {
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
+        let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
 
         // Initialize text input
         self.text_input.update(cx, |input, _| {
@@ -528,7 +516,7 @@ impl UniversalSearch {
 
         // Calculate scroll bounds
         let content_height = self.estimate_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
         self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
 
         // Build content children

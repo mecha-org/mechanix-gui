@@ -3993,6 +3993,7 @@ dependencies = [
  "dispatcher",
  "futures",
  "gpui",
+ "mxconf_dbus",
  "rust-embed",
  "settings",
  "shell_state",
