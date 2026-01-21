@@ -61,10 +61,7 @@ class BottomBar extends StatelessWidget {
         const MiniPlayer(),
         BlocSelector<SongsBloc, SongsState, Tuple2<MusicTabs, bool>>(
           selector:
-              (state) => Tuple2(
-                state.musicTab,
-                state.isPlaying && state.currentSong != null,
-              ),
+              (state) => Tuple2(state.musicTab, state.currentSong != null),
           builder: (context, state) {
             final musicTab = state.item1;
             final isPlaying = state.item2;
