@@ -33,7 +33,7 @@ searchable_fields = [
 enable_search = true
 
 # Be careful watching "/home" recursively; consider narrowing later
-files_dir_to_watch = "/home/mecha/Downloads"
+files_dir_to_watch = "/home/mecha"
 
 index_dir = ".config/mxsearch/index/files"
 
