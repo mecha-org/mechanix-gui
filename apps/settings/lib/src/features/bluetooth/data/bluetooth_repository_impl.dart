@@ -35,6 +35,7 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
         _adapter = adapters.first;
 
         _adapter.propertiesChanged.listen((props) {
+          print('props ====== $props');
           if (props.contains('Powered')) {
             logger.i(
                 'IMPL:init:: Using adapter: power change ${_adapter.powered}');
@@ -76,9 +77,15 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
   @override
   Future<bool> setPower(bool enable) async {
-    final adapter = await getBluezAdapter();
-    await adapter.setPowered(enable);
-    return enable;
+    try {
+      final adapter = await getBluezAdapter();
+
+      await adapter.setPowered(enable);
+      return enable;
+    } catch (e) {
+      print("Error toggling bluetooth impl - $e");
+      return false;
+    }
   }
 
   @override
@@ -90,25 +97,34 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
   @override
   Future<void> startDiscovery() async {
-    final adapter = await getBluezAdapter();
-    final checkPowered = adapter.powered;
-    if (!checkPowered) await adapter.setPowered(true);
+    try {
+      final adapter = await getBluezAdapter();
+      final checkPowered = adapter.powered;
+      if (!checkPowered) await adapter.setPowered(true);
 
-    if (!adapter.discovering) await adapter.startDiscovery();
+      if (!adapter.discovering) await adapter.startDiscovery();
+    } catch (e) {
+      print("Start Discovery error $e");
+    }
   }
 
   @override
   Future<void> stopDiscovery() async {
-    final adapter = await getBluezAdapter();
-    if (adapter.discovering) await adapter.stopDiscovery();
+    try {
+      final adapter = await getBluezAdapter();
+      if (adapter.discovering) await adapter.stopDiscovery();
+    } catch (e) {
+      print("Stop Discovery error $e");
+    }
   }
 
   @override
   Future<List<BlueZDevice>> getDevices() async {
     try {
-      logger.i("IMPL:  getDevices - CHECK CLIENT $_client");
+      print("IMPL:  getDevices - CHECK CLIENT $_client");
       var devices = _client.devices;
-      logger.i("Devices: $devices");
+      print("Devices: ${devices.length}");
+
       return devices;
     } catch (e) {
       logger.e("Error getting devices $e");
@@ -125,10 +141,14 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   }
 
   @override
-  Future<void> connect(String address) async {
+  Future<bool> connect(String address) async {
     var device = _client.devices.firstWhere((d) => d.address == address);
-    await device.connect();
-    logger.i("Device connected: $address");
+    try {
+      await device.connect();
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   @override
@@ -153,6 +173,7 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
     // logger.i("Device added: ${device.name} --- ${device.address}");
     //   return true;
     // });
+
     return _client.deviceAdded;
   }
 

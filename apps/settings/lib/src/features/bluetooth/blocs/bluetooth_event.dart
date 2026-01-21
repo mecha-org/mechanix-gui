@@ -40,6 +40,8 @@ class StartDiscovery extends BluetoothEvent {}
 
 class StopDiscovery extends BluetoothEvent {}
 
+class GetDeviceList extends BluetoothEvent {}
+
 class RefreshDeviceList extends BluetoothEvent {}
 
 class RenameAdapterEvent extends BluetoothEvent {
@@ -94,4 +96,15 @@ class BluetoothDevicesRemoved extends BluetoothEvent {
 
   @override
   List<Object?> get props => [device];
+}
+
+class BluetoothConnectingEvent extends BluetoothEvent {
+  final String address;
+  final bool connectionLoading;
+
+  BluetoothConnectingEvent(
+      {required this.address, required this.connectionLoading});
+
+  @override
+  List<Object?> get props => [address, connectionLoading];
 }

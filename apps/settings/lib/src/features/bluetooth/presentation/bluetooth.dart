@@ -6,6 +6,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
@@ -16,7 +17,6 @@ import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
-import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class Bluetooth extends StatefulWidget {
   const Bluetooth({super.key});
@@ -67,10 +67,6 @@ class _BluetoothState extends State<Bluetooth> {
                         trailing: MechanixSwitch(
                           activeText: 'OFF',
                           inactiveText: 'ON',
-                          style: MechanixSwitchStyle(
-                            activeTrackColor: context.secondary,
-                            inactiveTrackColor: context.secondary,
-                          ),
                           value: state.isPowered,
                           onChanged: (val) => context
                               .read<BluetoothBloc>()
@@ -85,10 +81,12 @@ class _BluetoothState extends State<Bluetooth> {
                           trailing: Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Text(state.bluetoothAdapter != null &&
-                                          state.bluetoothAdapter!.discoverable
-                                      ? 'Yes'
-                                      : 'No')
+                              CustomTrailingText(
+                                      title: state.bluetoothAdapter != null &&
+                                              state.bluetoothAdapter!
+                                                  .discoverable
+                                          ? 'Yes'
+                                          : 'No')
                                   .padRight(8),
                               IconWidget(
                                 iconPath: Images.rightIconArrow,
@@ -102,7 +100,9 @@ class _BluetoothState extends State<Bluetooth> {
                           ),
                         )
                     ]),
-                if (state.isPowered && state.devices.isEmpty)
+                if (state.isPowered &&
+                    connectedAndPairedDevices.isEmpty &&
+                    state.loading)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
                     title: 'Paired Devices',
@@ -120,7 +120,7 @@ class _BluetoothState extends State<Bluetooth> {
                     isPaired: true,
                     devices: connectedAndPairedDevices,
                   ),
-                if (state.isPowered && state.devices.isEmpty)
+                if (state.isPowered && newDevices.isEmpty && state.loading)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
                     title: 'Available Devices',

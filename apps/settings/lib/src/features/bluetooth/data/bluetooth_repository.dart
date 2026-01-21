@@ -8,14 +8,14 @@ abstract class BluetoothRepository {
   Future<bool> isBluetoothEnabled();
   Future<bool> setPower(bool enable);
 
-  Future<BlueZAdapter> getBluezAdapter();  
+  Future<BlueZAdapter> getBluezAdapter();
   Future<String> setAdapterAlias(String alias);
 
   Future<void> startDiscovery();
   Future<void> stopDiscovery();
   Future<List<BlueZDevice>> getDevices();
   Future<void> pair(String address);
-  Future<void> connect(String address);
+  Future<bool> connect(String address);
   Future<void> disconnect(String address);
   Future<void> remove(String address);
 
@@ -24,5 +24,4 @@ abstract class BluetoothRepository {
   Future<void> setDiscoverable(bool value);
 
   Future<void> close();
-
 }

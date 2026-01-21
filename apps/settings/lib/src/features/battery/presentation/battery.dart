@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/app_route.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_state.dart';
@@ -9,7 +12,8 @@ import 'package:mechanix_settings/src/features/battery/models/types.dart';
 import 'package:mechanix_settings/src/features/battery/presentation/battery_indicator.dart';
 import 'package:upower/upower.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/section_list/section_list_items_type.dart';
+import 'package:widgets/widgets/list_items/mechanix_simple_list_theme.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 
 class Battery extends StatefulWidget {
   const Battery({super.key});
@@ -23,8 +27,6 @@ class BatteryScreenState extends State<Battery> {
   Widget build(BuildContext context) {
     return BlocBuilder<BatteryBloc, BatteryState>(
       builder: (context, state) {
-        print('state.batteryStatus');
-        print('${state.batteryStatus}');
         final batteryPercentageValue = state.batteryPercentage.toInt();
         final totalSeconds = UPowerDeviceState.charging == state.batteryStatus
             ? state.batteryChargingTime ?? 0
@@ -39,16 +41,12 @@ class BatteryScreenState extends State<Battery> {
         ].join(' ');
 
         return Scaffold(
-          appBar: const MechanixNavigationBar(
-            title: "Battery",
-          ),
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
-                // crossAxisAlignment: CrossAxisAlignment.start,
-                // spacing: 10,
                 children: [
+                  const CustomTitle(title: "Battery"),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -68,20 +66,44 @@ class BatteryScreenState extends State<Battery> {
                     isCharging:
                         UPowerDeviceState.charging == state.batteryStatus,
                   ),
-                  MechanixSectionList(title: 'Battery Mode', sectionListItems: [
-                    SectionListItems(
-                        title: 'Performance',
-                        onTap: () => Navigator.pushNamed(
-                            context, AppRoutes.batteryPerformance),
-                        trailing: CustomTrailingText(
-                                title:
-                                    getModeDetails(state.performanceMode ?? '')
-                                        .mode)
-                            .padRight(8))
-                  ]).padTop(40),
+                  MechanixSimpleList(
+                      theme: const MechanixSimpleListThemeData(
+                        widgetMargin: EdgeInsets.only(bottom: 12),
+                      ),
+                      listItems: [
+                        SimpleListItems(
+                            title: 'System Performance',
+                            onTap: () => Navigator.pushNamed(
+                                context, AppRoutes.batteryPerformance),
+                            trailing: Row(
+                              children: [
+                                CustomTrailingText(
+                                        title: getModeDetails(
+                                                state.performanceMode ?? '')
+                                            .mode)
+                                    .padRight(8),
+                                const IconWidget(
+                                  iconWidth: 9,
+                                  iconHeight: 18,
+                                  iconPath: Images.rightIconArrow,
+                                )
+                              ],
+                            ))
+                      ]).padTop(40),
+                  CustomTrailingText(
+                    title:
+                        getModeDetails(state.performanceMode ?? '').content ??
+                            '',
+                    textAlign: TextAlign.left,
+                    titleStyle: const TextStyle(
+                        fontWeight: FontWeight.w400, fontSize: 16),
+                  )
                 ],
               ).padTop(8),
             ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
           ),
         );
       },

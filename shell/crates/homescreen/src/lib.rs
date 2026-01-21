@@ -39,7 +39,7 @@ impl Homescreen {
     ) -> Self {
         let mut state = HomescreenState::new(config);
         state.create_widget(
-            UniversalSearchWidget::new(_cx),
+            UniversalSearchWidget::new(_cx, false),
             0,
             Bounds {
                 origin: point(0, 0),
@@ -194,7 +194,7 @@ impl Homescreen {
         );
 
         state.create_widget(
-            AppDrawerWidget::new(_cx),
+            AppDrawerWidget::new(_cx, false),
             4,
             Bounds {
                 origin: point(0, 0),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:developer';
 
 import 'package:dbus/dbus.dart';
@@ -34,7 +35,7 @@ class BatteryRepositoryImpl implements BatteryRepository {
   Future<BatteryInfo> getBatteryInfo() async {
     await _ensureConnected();
     // short delay (or wait for updates)
-    await Future.delayed(Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 150));
 
     String? batteryMode = await getBatteryModeViaDBus();
 
