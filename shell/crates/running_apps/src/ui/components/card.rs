@@ -4,6 +4,8 @@ use crate::ui::RunningApps;
 use commons::widgets::wing;
 use gpui::prelude::*;
 use gpui::*;
+use theme::ActiveTheme;
+use theme::prelude::AlphaExt;
 
 impl RunningApps {
     fn handle_card_mouse_move(&mut self, event: &MouseMoveEvent, cx: &mut Context<Self>) -> bool {
@@ -167,6 +169,8 @@ impl RunningApps {
     }
 
     pub fn render_card(&self, cx: &mut Context<'_, Self>, i: usize) -> impl IntoElement {
+        let colors = cx.theme().colors.clone();
+
         let (_top_level, app) = &self.apps[i];
         let app_icon_path = app.icon.clone();
         // println!("app_icon_path: {:?}", app_icon_path);
@@ -213,8 +217,8 @@ impl RunningApps {
                 opacity = (1.0 + local_pos).max(0.0);
             }
         } else {
-            offset_y = -160.0 * (1.0 - 0.7_f32.powf(local_pos));
-            scale_factor = 0.85_f32.powf(local_pos);
+            offset_y = -130.0 * (1.0 - 0.7_f32.powf(local_pos));
+            scale_factor = 0.92_f32.powf(local_pos);
         }
 
         let w = CARD_SIZE.width * scale_factor;
@@ -257,49 +261,92 @@ impl RunningApps {
                     }),
                 )
                 .child({
-                    let mut wing = wing();
-                    wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
-                    wing.border_radius(px(8.));
-                    wing.border_width(px(2.0));
-                    wing.border_color(rgb(0xC67600))
+                    let mut outer_wing = wing();
+                    outer_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
+                    outer_wing.border_radius(px(12.));
+                    outer_wing.border_width(px(2.0));
+                    outer_wing
+                        .border_color(colors.accent_200.with_alpha(0.6))
                         .size_full()
                         .flex()
-                        .bg(rgb(0x2A2217))
+                        .absolute()
+                        .bg(colors.background_900)
                         .child(
-                            div()
-                                .absolute()
-                                .top(px(0.))
-                                .left(px(0.))
-                                .h(upper_wing_height)
-                                .w_1_2()
-                                .pt(px(4. * scale_factor))
-                                .pl(px(10. * scale_factor))
-                                .flex()
-                                .flex_row()
-                                .gap_2()
-                                .text_color(gpui::white())
-                                .items_center()
-                                .text_size(px(22.0 * scale_factor))
-                                .font_weight(FontWeight::BOLD)
-                                .when_some(app_icon_path, |this, icon| {
-                                    this.child(
-                                        img(icon)
-                                            .w(px(22.0 * scale_factor))
-                                            .h(px(22.0 * scale_factor)),
-                                    )
+                             div()
+                                .id("inner-wing")   
+                                .flex_1()  
+                                .child({
+                                    let mut inner_wing = wing()
+                                        .size_full()
+                                        .bg(colors.accent_200.with_alpha(0.1))
+                                        .child(
+                                            div()
+                                                .absolute()
+                                                .top(px(0.))
+                                                .left(px(0.))
+                                                .h(upper_wing_height)
+                                                .w_1_2()
+                                                .pt(px(15. * scale_factor))
+                                                .pl(px(20. * scale_factor))
+                                                .flex()
+                                                .flex_row()
+                                                .gap_2()
+                                                .items_center()
+                                                .child(
+                                                    div()
+                                                    .flex_1()
+                                                        .text_color(colors.foreground_200)                                
+                                                        .text_size(px(20.0 * scale_factor))
+                                                        .font_weight(FontWeight::BOLD)
+                                                        .text_ellipsis()
+                                                        .w(upper_wing_width - px(40.0 * scale_factor))
+                                                        .child(app_name)
+                                                )
+                                        )
+                                        .child(
+                                            div()
+                                                .absolute()
+                                                .size_full()
+                                                .flex()
+                                                .items_center()
+                                                .justify_center()
+                                                .p_4()
+                                                .top(upper_wing_height)
+                                                .child(
+                                                    div()
+                                                        .size_full()
+                                                        .rounded_2xl()
+                                                        .bg(colors.background_1000)
+                                                        .flex()
+                                                        .p_8()
+                                                        .relative()
+                                                        .child(
+                                                            div()
+                                                                .rounded(px(20.0))
+                                                                .bg(colors.background_700)
+                                                                .flex()
+                                                                .w(w * 0.45)
+                                                                .h(h * 0.35)
+                                                                .top(upper_wing_height * 0.30)
+                                                                .left(w * 0.17)
+                                                                .p_6()
+                                                                .items_center()
+                                                                .justify_center()
+                                                                .when_some(app_icon_path, |this, icon| {
+                                                                    this.child(
+                                                                        img(icon)
+                                                                            .w(w * 0.40)
+                                                                            .h(h * 0.35)
+                                                                    )
+                                                                })
+                                                        )
+                                                )
+                                        );
+                                        inner_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
+                                        inner_wing.border_radius(px(12.));
+
+                                        inner_wing
                                 })
-                                .child(app_name),
-                        )
-                        .child(
-                            div()
-                                .absolute()
-                                .top(upper_wing_height)
-                                .size_full()
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .p_4()
-                                .child(div().size_full().rounded_2xl().bg(gpui::black())),
                         )
                 }),
         )
