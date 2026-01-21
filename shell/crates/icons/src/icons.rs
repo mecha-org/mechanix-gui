@@ -26,6 +26,8 @@ pub struct Icons {
     pub universal_search: UniversalSearchIcons,
     #[serde(default)]
     pub lockscreen: LockscreenIcons,
+    #[serde(default)]
+    pub homescreen: HomeScreenIcons,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -141,12 +143,24 @@ impl Default for LockscreenIcons {
             arrow: PathBuf::from(format!("{}lockscreen/arrow.svg", ICONS_BASE_PATH)),
             bell: PathBuf::from(format!("{}lockscreen/bell.svg", ICONS_BASE_PATH)),
             lock: PathBuf::from(format!("{}lockscreen/lock.svg", ICONS_BASE_PATH)),
-            lock_open_full: PathBuf::from(format!("{}lockscreen/lock-open-full.svg", ICONS_BASE_PATH)),
-            lock_open_half: PathBuf::from(format!("{}lockscreen/lock-open-half.svg", ICONS_BASE_PATH)),
+            lock_open_full: PathBuf::from(format!(
+                "{}lockscreen/lock-open-full.svg",
+                ICONS_BASE_PATH
+            )),
+            lock_open_half: PathBuf::from(format!(
+                "{}lockscreen/lock-open-half.svg",
+                ICONS_BASE_PATH
+            )),
             wedge_left: PathBuf::from(format!("{}lockscreen/wedge_left.svg", ICONS_BASE_PATH)),
-            wedge_left_outline: PathBuf::from(format!("{}lockscreen/wedge_left_outline.svg", ICONS_BASE_PATH)),
+            wedge_left_outline: PathBuf::from(format!(
+                "{}lockscreen/wedge_left_outline.svg",
+                ICONS_BASE_PATH
+            )),
             wedge_right: PathBuf::from(format!("{}lockscreen/wedge_right.svg", ICONS_BASE_PATH)),
-            wedge_right_outline: PathBuf::from(format!("{}lockscreen/wedge_right_outline.svg", ICONS_BASE_PATH)),
+            wedge_right_outline: PathBuf::from(format!(
+                "{}lockscreen/wedge_right_outline.svg",
+                ICONS_BASE_PATH
+            )),
             wallpaper: PathBuf::from(format!("{}lockscreen/wallpaper.png", ICONS_BASE_PATH)),
         }
     }
@@ -657,6 +671,23 @@ impl Default for UniversalSearchIcons {
             x: PathBuf::from(format!("{}universal-search/x.svg", ICONS_BASE_PATH)),
             xls_file: PathBuf::from(format!("{}universal-search/xls-file.svg", ICONS_BASE_PATH)),
             zip_file: PathBuf::from(format!("{}universal-search/zip-file.svg", ICONS_BASE_PATH)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct HomeScreenIcons {
+    pub gamepad: PathBuf,
+    pub keyboard: PathBuf,
+    pub gpio: PathBuf,
+}
+
+impl Default for HomeScreenIcons {
+    fn default() -> Self {
+        Self {
+            gamepad: PathBuf::from(format!("{}homescreen/gamepad.png", ICONS_BASE_PATH)),
+            keyboard: PathBuf::from(format!("{}homescreen/keyboard.png", ICONS_BASE_PATH)),
+            gpio: PathBuf::from(format!("{}homescreen/gpio.png", ICONS_BASE_PATH)),
         }
     }
 }

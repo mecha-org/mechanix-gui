@@ -159,3 +159,8 @@
 "x" = "assets/icons/universal-search/x.svg"
 "xls-file" = "assets/icons/universal-search/xls-file.svg"
 "zip-file" = "assets/icons/universal-search/zip-file.svg"
+
+[homescreen]
+"gamepad" = "assets/icons/homescreen/gamepad.png"
+"keyboard" = "assets/icons/homescreen/keyboard.png"
+"gpio" = "assets/icons/homescreen/gpio.png"

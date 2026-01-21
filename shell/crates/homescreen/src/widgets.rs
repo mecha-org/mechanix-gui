@@ -6,6 +6,10 @@ use crate::utils::GridBounds;
 
 pub mod app_drawer;
 pub mod demo_widget;
+pub mod extentions;
+pub mod pinned_apps;
+pub mod system_usage;
+pub mod time;
 pub mod universal_search;
 
 #[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
@@ -147,7 +151,7 @@ impl WidgetWrapper {
         widget_id: WidgetId,
         widget_data: &WidgetData,
         state: &crate::state::HomescreenState,
-        cx: &gpui::App,
+        cx: &mut gpui::App,
     ) -> impl IntoElement {
         let widget = widget_data.widget();
         let colors = theme::ActiveTheme::theme(cx).colors.clone();
@@ -284,12 +288,12 @@ impl WidgetWrapper {
             .w(widget.get_bounds().size.width + px(size_adjustment))
             .h(widget.get_bounds().size.height + px(upper_wing_height) + px(height_adjustment));
 
-        element.child(div().size_full().child(widget.render()))
+        element.child(div().size_full().child(widget.render(cx)))
     }
 }
 
 pub trait HomescreenWidget {
-    fn render(&self) -> AnyElement;
+    fn render(&self, cx: &mut gpui::App) -> AnyElement;
     fn set_bounds(&mut self, bounds: Bounds<Pixels>);
     fn get_bounds(&self) -> Bounds<Pixels>;
 
