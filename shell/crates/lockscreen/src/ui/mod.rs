@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use gpui::{prelude::FluentBuilder, *};
 use shell_state::ShellState;
 mod wallpaper;
@@ -41,6 +42,9 @@ const RIGHT_WEDGE_BOTTOM_LIMIT: f32 = 38.0;
 const LEFT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.1;
 const RIGHT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.8;
 
+// Wallpaper image path - use PNG for complex images (SVGs with masks/embedded images aren't fully supported)
+const DEFAULT_WALLPAPER_PATH: &str = "icons/lockscreen/wallpaper.png";
+
 pub struct Lockscreen {
     drag_offset: Option<f32>,
     drag_start_mouse_y: f32,
@@ -49,6 +53,7 @@ pub struct Lockscreen {
     window_height: f32,
     pub show: bool,
     show_arrow_prompt: bool,
+    pub wallpaper_path: PathBuf,
 }
 
 impl Lockscreen {
@@ -57,6 +62,7 @@ impl Lockscreen {
             cx.notify();
         })
         .detach();
+
         Self {
             drag_offset: None,
             drag_start_mouse_y: 0.0,
@@ -64,6 +70,7 @@ impl Lockscreen {
             window_height: 0.0,
             show: false,
             show_arrow_prompt: false,
+            wallpaper_path: std::path::PathBuf::from(DEFAULT_WALLPAPER_PATH),
         }
     }
 
@@ -142,6 +149,7 @@ impl Render for Lockscreen {
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
         // Additional fade for lock + bell icons so they vanish at the fade threshold
         let lock_icon_fade = 1.0 - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
+        let wallpaper_path = self.wallpaper_path.clone();
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
@@ -159,7 +167,7 @@ impl Render for Lockscreen {
                             div()
                                 .absolute()
                                 .inset_0()
-                                .child(wallpaper(size.width, px(panel_height))),
+                                .child(wallpaper(size.width, px(panel_height), wallpaper_path)),
                         )
                         // Content overlay
                         .child(
