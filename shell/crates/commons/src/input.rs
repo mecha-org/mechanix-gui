@@ -75,8 +75,8 @@ impl TextInput {
     }
 
     /// Focus the text input
-    pub fn focus(&self, window: &mut Window, app: &mut App) {
-        window.focus(&self.focus_handle, app);
+    pub fn focus(&self, window: &mut Window) {
+        window.focus(&self.focus_handle);
     }
 
     /// Check if the input is currently focused
@@ -621,15 +621,8 @@ impl Element for TextElement {
             window.paint_quad(selection)
         }
         let line = prepaint.line.take().unwrap();
-        line.paint(
-            bounds.origin,
-            window.line_height(),
-            window.text_style().text_align,
-            None,
-            window,
-            cx,
-        )
-        .unwrap();
+        line.paint(bounds.origin, window.line_height(), window, cx)
+            .unwrap();
 
         if focus_handle.is_focused(window) {
             if let Some(cursor) = prepaint.cursor.take() {
