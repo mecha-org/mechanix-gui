@@ -42,9 +42,6 @@ const RIGHT_WEDGE_BOTTOM_LIMIT: f32 = 38.0;
 const LEFT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.1;
 const RIGHT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.8;
 
-// Wallpaper image path - use PNG for complex images (SVGs with masks/embedded images aren't fully supported)
-const DEFAULT_WALLPAPER_PATH: &str = "icons/lockscreen/wallpaper.png";
-
 pub struct Lockscreen {
     drag_offset: Option<f32>,
     drag_start_mouse_y: f32,
@@ -53,7 +50,7 @@ pub struct Lockscreen {
     window_height: f32,
     pub show: bool,
     show_arrow_prompt: bool,
-    pub wallpaper_path: PathBuf,
+    pub wallpaper_path: Option<PathBuf>,
 }
 
 impl Lockscreen {
@@ -70,7 +67,7 @@ impl Lockscreen {
             window_height: 0.0,
             show: false,
             show_arrow_prompt: false,
-            wallpaper_path: std::path::PathBuf::from(DEFAULT_WALLPAPER_PATH),
+            wallpaper_path: None,
         }
     }
 

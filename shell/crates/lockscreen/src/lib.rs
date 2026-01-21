@@ -53,7 +53,7 @@ pub fn run_app(cx: &mut App) {
                         // The value is usually stored under the key name or "value"
                         if let Some(wallpaper_path) = settings.get(setting_key) {
                             this.update(cx, |this, cx| {
-                                this.wallpaper_path = std::path::PathBuf::from(wallpaper_path);
+                                this.wallpaper_path = Some(std::path::PathBuf::from(wallpaper_path));
                                 cx.notify();
                             }).ok();
                         }
@@ -94,7 +94,7 @@ pub fn listen_dispatcher(cx: &mut Context<Lockscreen>) {
                 dispatcher::Message::SetLockscreenWallpaper(wallpaper) => {
                     println!("wallpaper to set in lockscreen: {}", wallpaper);
                     let _ = this.update(cx, |this, cx| {
-                        this.wallpaper_path = std::path::PathBuf::from(wallpaper);
+                        this.wallpaper_path = Some(std::path::PathBuf::from(wallpaper));
                         cx.notify();
                     });
                 }
