@@ -90,13 +90,6 @@ impl Lockscreen {
                 origin: input_regions.maximized.origin,
                 size: input_regions.maximized.size,
             }]
-        } else if f32::from(input_regions.minimized.size.width) > 0.0
-            && f32::from(input_regions.minimized.size.height) > 0.0
-        {
-            vec![Bounds {
-                origin: input_regions.minimized.origin,
-                size: input_regions.minimized.size,
-            }]
         } else {
             vec![]
         };
