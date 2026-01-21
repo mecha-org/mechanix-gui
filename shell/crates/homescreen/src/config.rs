@@ -104,8 +104,8 @@ pub struct GridSize {
 impl Default for GridSize {
     fn default() -> Self {
         Self {
-            rows: 4,
-            columns: 4,
+            rows: 3,
+            columns: 3,
         }
     }
 }

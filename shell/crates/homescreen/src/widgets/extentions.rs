@@ -1,24 +1,26 @@
+use std::path::PathBuf;
+
 use crate::widgets::HomescreenWidget;
 use gpui::*;
 
-pub struct DemoWidget {
+pub struct ExtensionWidget {
     bounds: Bounds<Pixels>,
-    name: String,
+    icon: PathBuf,
     color: Hsla,
     border_color: Hsla,
     has_border: bool,
 }
 
-impl DemoWidget {
+impl ExtensionWidget {
     pub fn new(
-        name: impl Into<String>,
+        icon: impl Into<PathBuf>,
         color: impl Into<Hsla>,
         border_color: impl Into<Hsla>,
         has_border: bool,
     ) -> Self {
         Self {
             bounds: Bounds::default(),
-            name: name.into(),
+            icon: icon.into(),
             color: color.into(),
             border_color: border_color.into(),
             has_border,
@@ -26,45 +28,21 @@ impl DemoWidget {
     }
 }
 
-impl Default for DemoWidget {
+impl Default for ExtensionWidget {
     fn default() -> Self {
         Self::new("Demo", rgb(0x4ecdc4), rgb(0x45b7aa), true)
     }
 }
 
-impl HomescreenWidget for DemoWidget {
+impl HomescreenWidget for ExtensionWidget {
     fn render(&self, cx: &mut gpui::App) -> gpui::AnyElement {
+        println!("image path is {:?}", self.icon);
         div()
             .size_full()
             .flex()
-            .flex_col()
             .justify_center()
             .items_center()
-            .gap_2()
-            .child(
-                div()
-                    .w(px(36.))
-                    .h(px(36.))
-                    .rounded(px(8.))
-                    .bg(rgba(0x4ecdc433))
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .child(
-                        div()
-                            .text_xl()
-                            .font_weight(FontWeight::BOLD)
-                            .text_color(rgb(0x4ecdc4))
-                            .child(self.name.chars().next().unwrap_or('D').to_string()),
-                    ),
-            )
-            .child(
-                div()
-                    .text_xs()
-                    .font_weight(FontWeight::MEDIUM)
-                    .text_color(rgba(0xffffffcc))
-                    .child(self.name.clone()),
-            )
+            .child(img(self.icon.clone()).size_full())
             .into_any_element()
     }
 
