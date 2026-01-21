@@ -190,11 +190,9 @@ impl AppDrawer {
     fn calculate_scroll_bounds(
         &self,
         content_height: Pixels,
+        app_drawer_size: Size<Pixels>,
         cx: &mut Context<Self>,
     ) -> (Pixels, Pixels) {
-        let settings = Settings::global(cx).app_drawer.clone();
-        let app_drawer_size = settings.layer_shell.size;
-
         let container_height = if self.is_searching {
             app_drawer_size.height - px(16.0 - (SEARCH_BAR_HEIGHT + SEARCH_BAR_BOTTOM + 16.0))
         } else {
@@ -263,7 +261,12 @@ impl AppDrawer {
         self.last_scroll_offset = self.scroll_offset;
     }
 
-    fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
+    fn on_mouse_move(
+        &mut self,
+        event: &MouseMoveEvent,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
             let delta_x = event.position.x - self.drag_start_x;
@@ -292,7 +295,15 @@ impl AppDrawer {
             if self.is_vertical_scroll {
                 let new_scroll_offset = self.last_scroll_offset + delta_y;
                 let content_height = self.estimate_content_height();
-                let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height, cx);
+                let (min_scroll, max_scroll) = self.calculate_scroll_bounds(
+                    content_height,
+                    gpui::size(
+                        window.bounds().size.width,
+                        window.bounds().size.height
+                            - Settings::global(cx).homescreen.status_bar_size.height,
+                    ),
+                    cx,
+                );
                 self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
                 cx.notify();
 
@@ -577,10 +588,13 @@ impl AppDrawer {
                             .h(px(GRID_ROW_HEIGHT))
                             .cursor_pointer()
                             .on_click(
-                                cx.listener(move |this: &mut AppDrawer, _event, _window, cx| {
+                                cx.listener(move |this: &mut AppDrawer, _event, window, cx| {
                                     if !this.has_moved && !this.is_long_press {
-                                        let settings = Settings::global(cx).app_drawer.clone();
-                                        let app_drawer_size = settings.layer_shell.size;
+                                        let app_drawer_size = gpui::size(
+                        window.bounds().size.width,
+                        window.bounds().size.height
+                            - Settings::global(cx).homescreen.status_bar_size.height,
+                    );
 
                                         // Calculate card position
                                         let card_x = px(16.0);
@@ -882,10 +896,12 @@ impl AppDrawer {
         }
     }
 
-    fn render_subwindow_modal(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_subwindow_modal(
+        &mut self,
+        app_drawer_size: Size<Pixels>,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
-        let settings = Settings::global(cx).app_drawer.clone();
-        let app_drawer_size = settings.layer_shell.size;
 
         if self.subwindow.is_none() {
             let category = self.subwindow_category.clone();
@@ -971,8 +987,10 @@ impl AppDrawer {
 
 impl Render for AppDrawer {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let settings = Settings::global(cx).app_drawer.clone();
-        let app_drawer_size = settings.layer_shell.size;
+        let app_drawer_size = gpui::size(
+            window.bounds().size.width,
+            window.bounds().size.height - Settings::global(cx).homescreen.status_bar_size.height,
+        );
 
         let colors = Theme::global(cx).colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
@@ -1008,6 +1026,7 @@ impl Render for AppDrawer {
         div()
             .h(app_drawer_size.height)
             .w(app_drawer_size.width)
+            .child(self.render_floating_search_button(cx))
             .child(
                 div()
                     .flex()
@@ -1055,7 +1074,14 @@ impl Render for AppDrawer {
                     })
                     // SUBWINDOW MODAL
                     .when(self.show_subwindow_modal, |modal_div| {
-                        modal_div.child(self.render_subwindow_modal(cx))
+                        modal_div.child(self.render_subwindow_modal(
+                            gpui::size(
+                                window.bounds().size.width,
+                                window.bounds().size.height
+                                    - Settings::global(cx).homescreen.status_bar_size.height,
+                            ),
+                            cx,
+                        ))
                     })
                     // BOTTOM SHEET
                     .when(self.show_bottom_sheet, |menu_div| {
