@@ -292,14 +292,6 @@ impl RunningApps {
                                                 .flex_row()
                                                 .gap_2()
                                                 .items_center()
-                                                .when_some(app_icon_path, |this, icon| {
-                                                    this.child(
-                                                        img(icon)
-                                                            .w(px(22.0 * scale_factor))
-                                                            .h(px(22.0 * scale_factor))
-                                                            .flex_none()
-                                                    )
-                                                })
                                                 .child(
                                                     div()
                                                     .flex_1()
@@ -314,13 +306,19 @@ impl RunningApps {
                                         .child(
                                             div()
                                                 .absolute()
-                                                .top(upper_wing_height)
                                                 .size_full()
                                                 .flex()
                                                 .items_center()
                                                 .justify_center()
                                                 .p_4()
-                                                .child(div().size_full().rounded_2xl().bg(colors.background_1000)),
+                                                .when_some(app_icon_path, |this, icon| {
+                                                    this.child(
+                                                        img(icon)                                                            
+                                                            .w(w)
+                                                            .h(h)
+                                                    )
+                                                })
+                                                // .child(div().size_full().rounded_2xl().bg(colors.background_1000)),
                                         );
                                         inner_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
                                         inner_wing.border_radius(px(12.));
