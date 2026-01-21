@@ -92,8 +92,6 @@ pub struct RunningAppsSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
-     #[serde(default)]
-    pub center_bar_size: Size<Pixels>,
     #[serde(default)]
     pub input_regions: InputRegions,
 }
@@ -108,8 +106,7 @@ impl Default for RunningAppsSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(199.22), px(28.5)),
-            center_bar_size: Size::new(px(80.0), px(29.0)),
+            navbar_size: Size::new(px(80.0), px(29.0)),
             input_regions: InputRegions::default(),
         }
     }

@@ -35,8 +35,7 @@ minimized = { origin = { x = 0.0, y = 591.0 }, size = { width = 230.0, height = 
 maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
 
 [running_apps]
-navbar_size = { width = 199.22, height = 28.5 }
-center_bar_size = { width = 80.0, height = 29.0 }
+navbar_size = { width = 80.0, height = 29.0 }
 
 [running_apps.layer_shell]
 layer = "top"
