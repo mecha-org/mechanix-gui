@@ -1,6 +1,6 @@
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
-use settings::prelude::{InputRegions, LayerShellSettings, Settings, VolumeSliderSettings};
+use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 use std::time::Duration;
 
 use crate::icon::{VolumeIcon, VolumeIconName};
@@ -30,14 +30,14 @@ pub fn init(cx: &mut App) -> SliderConfig {
         min_volume_level,
         max_volume_level,
         overlay_timeout_ms,
-        input_regions: _,
+        input_regions,
     } = Settings::global(cx).volume_slider.clone();
     let LayerShellSettings {
-        size,
         layer,
         anchor,
         namespace,
         exclusive_zone,
+        ..
     } = layer_shell;
 
     let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
@@ -49,7 +49,10 @@ pub fn init(cx: &mut App) -> SliderConfig {
             .pattern(SliderPattern::Bars)
     });
 
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let window_bounds = WindowBounds::Windowed(Bounds::new(
+        input_regions.maximized.origin,
+        input_regions.maximized.size,
+    ));
     let slider_state_for_overlay = slider_state.clone();
 
     cx.open_window(

@@ -98,8 +98,7 @@ max_volume_level = 100.0
 overlay_timeout_ms = 2000
 
 [volume_slider.input_regions]
-minimized = { origin = { x = 0.0, y = 0.0 }, size = { width = 0.0, height = 0.0 } }
-maximized = { origin = { x = -7.5, y = -10.0 }, size = { width = 52.0, height = 297.0 } }
+maximized = { origin = { x = 16, y = 172.0 }, size = { width = 36.0, height = 276.0 } }
 
 [launcher.layer_shell]
 layer = "bottom"
