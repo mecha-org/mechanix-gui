@@ -49,24 +49,26 @@ impl StatusBar {
 impl Render for StatusBar {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let size = window.bounds().size;
+        let colors = Theme::global(cx).colors.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
 
         div()
             .id("status-bar")
             .w(px(1.))
             .h(px(1.))
-            .bg(gpui::black())
+            .bg(colors.background_1000)
             .when(window.foreign_toplevels().len() > 0, |this| {
                 this.child(
                     div()
                         .absolute()
                         .top(px(0.))
                         .left(px(0.))
-                        .bg(gpui::transparent_black())
+                        .bg(colors.background_1000.with_alpha(0.0))
                         .flex()
                         .justify_between()
                         .w(size.width)
                         .h(size.height)
-                        .text_color(gpui::white())
+                        .text_color(colors.foreground_0)
                         .pt_2()
                         .pl_4()
                         .pr_4()
@@ -187,7 +189,8 @@ pub fn status_bar_components(
 
     let battery_icon_path = match battery_state {
         BatteryState::Charging => match battery_percent {
-            0..=10 => battery_10_charging,
+            0 => battery_0_charging,
+            1..=10 => battery_10_charging,
             11..=20 => battery_20_charging,
             21..=30 => battery_30_charging,
             31..=40 => battery_40_charging,
@@ -199,8 +202,10 @@ pub fn status_bar_components(
             91..=100 => battery_100_charging,
             _ => battery_empty,
         },
+
         BatteryState::Discharging => match battery_percent {
-            0..=10 => battery_10,
+            0 => battery_empty,
+            1..=10 => battery_10,
             11..=20 => battery_20,
             21..=30 => battery_30,
             31..=40 => battery_40,
@@ -216,6 +221,7 @@ pub fn status_bar_components(
         BatteryState::Empty => battery_empty,
         _ => battery_empty,
     };
+
     div()
         .when_else(
             !is_homescreen,
@@ -227,14 +233,13 @@ pub fn status_bar_components(
                 )
                 .color_space(ColorSpace::default()))
             },
-            |this| this.bg(gpui::black()),
+            |this| this.bg(colors.background_1000),
         )
         .flex()
         .justify_between()
         .items_center()
         .w(size.width)
         .h(size.height)
-        .text_color(colors.foreground_200)
         .px_4()
         .child(
             div()
