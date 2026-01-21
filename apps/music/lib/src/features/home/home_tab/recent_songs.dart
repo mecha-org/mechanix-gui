@@ -18,6 +18,8 @@ class RecentSong extends StatefulWidget {
 class _RecentSongState extends State<RecentSong> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int currentPage = 0;
+  static const double _songTileHeight = 80;
+  static const double _maxHeight = 240;
 
   List<List<SongInfo>> _buildPages(List<SongInfo> songs) {
     const pageSize = 3;
@@ -52,6 +54,11 @@ class _RecentSongState extends State<RecentSong> {
     }
   }
 
+  double _calculatePageHeight(int itemCount) {
+    final height = itemCount * _songTileHeight;
+    return height.clamp(0, _maxHeight);
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocSelector<SongsBloc, SongsState, List<SongInfo>>(
@@ -63,16 +70,14 @@ class _RecentSongState extends State<RecentSong> {
 
         final pages = _buildPages(songs);
 
-        return SizedBox(
+        return Container(
+          margin: const EdgeInsets.only(bottom: 36),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 0,
-                ),
+                padding: const EdgeInsets.only(left: 16, right: 10),
                 child: Row(
                   spacing: 12,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,7 +127,7 @@ class _RecentSongState extends State<RecentSong> {
 
               // Pages
               SizedBox(
-                height: 240,
+                height: _calculatePageHeight(pages[0].length),
                 child: PageView.builder(
                   controller: _pageController,
                   padEnds: false,
