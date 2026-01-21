@@ -21,4 +21,4 @@ shell_state = { path = "../shell_state" }
 theme = { path = "../theme" }
 upower = { workspace = true }
 futures = "0.3.31"
-
+mxconf_dbus = { path = "../../../dbus/mechanix/mxconf" }
