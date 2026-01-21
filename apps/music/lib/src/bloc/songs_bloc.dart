@@ -59,7 +59,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<ShuffleToggle>(_shuffleToggle);
     on<StartDirectoryWatch>(_onStartWatch);
     on<StopDirectoryWatch>(_onStopWatch);
-    // on<AudioFileCreated>(_onAudioCreated);
     on<AudioFileModified>(_onAudioModified);
     on<AudioFileDeleted>(_onAudioDeleted);
     on<PlaylistShuffle>(shufflePlaylist);

@@ -23,6 +23,21 @@ class AudioPlayerBottomBar extends StatelessWidget {
       selector: (state) => state.isPlaying,
       builder:
           (context, isPlaying) => MechanixBottomBar(
+            theme: MechanixBottomBarThemeData(
+              decoration: BoxDecoration(
+                color: context.surfaceContainerHigh,
+                borderRadius:
+                    isUpcomingTrackWindow
+                        ? BorderRadius.only(
+                          topLeft: Radius.circular(0),
+                          topRight: Radius.circular(0),
+                        )
+                        : BorderRadius.only(
+                          topLeft: Radius.circular(8),
+                          topRight: Radius.circular(8),
+                        ),
+              ),
+            ),
             leadingWidget: [
               BottomBarButton(
                 disabledColor: Theme.of(context).disabledColor,

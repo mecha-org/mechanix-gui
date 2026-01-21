@@ -36,26 +36,15 @@ class BottomMenu extends StatelessWidget {
           dropdownPosition: DropdownPosition.topRight,
           padding: const EdgeInsets.only(top: 0),
 
-          // theme: MechanixMenuThemeData(
-          //   decoration: BoxDecoration(
-          //     color: context.tertiary,
-          //     borderRadius: BorderRadius.circular(8),
-          //   ),
-          //   itemBackgroundColor: context.tertiary,
+          offset: const Offset(0, -12),
+          // buttonIcon: IconWidget(
+          //   boxHeight: 24,
+          //   boxWidth: 24,
+          //   iconHeight: 24,
+          //   iconWidth: 24,
+          //   iconPath: MusicIcons.threeDotIcon,
+          //   activeIconColor: context.primary,
           // ),
-
-          // theme: const MechanixMenuThemeData(
-          //   buttonMargin: EdgeInsets.only(right: 12),
-          // ),
-          offset: const Offset(5, -15),
-          buttonIcon: IconWidget(
-            boxHeight: 24,
-            boxWidth: 24,
-            iconHeight: 24,
-            iconWidth: 24,
-            iconPath: MusicIcons.threeDotIcon,
-            activeIconColor: context.primary,
-          ),
           items: [
             MechanixMenuItemsType(
               disabled: playlists.length >= Constants.playlistLimit,
