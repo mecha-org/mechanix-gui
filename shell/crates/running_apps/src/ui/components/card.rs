@@ -311,14 +311,36 @@ impl RunningApps {
                                                 .items_center()
                                                 .justify_center()
                                                 .p_4()
-                                                .when_some(app_icon_path, |this, icon| {
-                                                    this.child(
-                                                        img(icon)                                                            
-                                                            .w(w)
-                                                            .h(h)
-                                                    )
-                                                })
-                                                // .child(div().size_full().rounded_2xl().bg(colors.background_1000)),
+                                                .top(upper_wing_height)
+                                                .child(
+                                                    div()
+                                                        .size_full()
+                                                        .rounded_2xl()
+                                                        .bg(colors.background_1000)
+                                                        .flex()
+                                                        .p_8()
+                                                        .relative()
+                                                        .child(
+                                                            div()
+                                                                .rounded(px(20.0))
+                                                                .bg(colors.background_700)
+                                                                .flex()
+                                                                .w(w * 0.45)
+                                                                .h(h * 0.35)
+                                                                .top(upper_wing_height * 0.30)
+                                                                .left(w * 0.17)
+                                                                .p_6()
+                                                                .items_center()
+                                                                .justify_center()
+                                                                .when_some(app_icon_path, |this, icon| {
+                                                                    this.child(
+                                                                        img(icon)
+                                                                            .w(w * 0.40)
+                                                                            .h(h * 0.35)
+                                                                    )
+                                                                })
+                                                        )
+                                                )
                                         );
                                         inner_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
                                         inner_wing.border_radius(px(12.));
