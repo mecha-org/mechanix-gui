@@ -4,7 +4,9 @@ import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_event.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
+import 'package:widgets/extension.dart';
 import 'package:widgets/widgets/text_input/mechanix_text_input.dart';
+import 'package:widgets/widgets/text_input/mechanix_text_input_theme.dart';
 
 class AddMusicInput extends StatefulWidget {
   final ValueChanged<String> onSearch;
@@ -56,6 +58,12 @@ class _AddMusicInputState extends State<AddMusicInput> {
                     ? MechanixTextInput.search(
                       key: const ValueKey('search'),
                       autofocus: true,
+                      theme: MechanixTextInputThemeData(
+                        widgetDecoration: BoxDecoration(
+                          borderRadius: BorderRadius.zero,
+                          color: context.colorScheme.surfaceContainerHigh,
+                        ),
+                      ),
                       onChanged: (value) {
                         context.read<SongsBloc>().add(SearchedSong(value));
                         widget.onSearch(value);

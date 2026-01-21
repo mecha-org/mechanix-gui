@@ -1,5 +1,5 @@
-use crate::Homescreen;
 use crate::widgets::HomescreenWidget;
+use crate::Homescreen;
 use app_drawer::prelude::*;
 use gpui::*;
 

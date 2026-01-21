@@ -1,4 +1,4 @@
-use crate::utils::{FileMetadata, SchemaFields};
+    use crate::utils::{FileMetadata, SchemaFields};
 use crate::{utils, FilesConfig};
 use log::{debug, error, info, warn};
 use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
@@ -365,7 +365,8 @@ impl FileSearchService {
 
         debug!("Watching path: {}", watch_path.display());
         if !watch_path.exists() {
-            anyhow::bail!("Watch path does not exist: {}", watch_path.display());
+            error!("Watch path does not exist: {}", watch_path.display());
+            return Ok(());
         }
 
         Self::index_existing_files(

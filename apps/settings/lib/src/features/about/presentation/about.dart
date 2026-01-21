@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
 import 'package:widgets/mechanix.dart';
@@ -19,12 +21,12 @@ class _AboutState extends State<About> {
     return BlocBuilder<AboutBloc, AboutState>(
       builder: (context, state) {
         return Scaffold(
-          appBar: const MechanixNavigationBar(title: 'About this Comet'),
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
                 child: Column(
               children: [
+                const CustomTitle(title: "System Info"),
                 MechanixSimpleList(
                   physics: const NeverScrollableScrollPhysics(),
                   listItems: [
@@ -59,6 +61,9 @@ class _AboutState extends State<About> {
                 )
               ],
             ).padTop(8)),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
           ),
         );
       },

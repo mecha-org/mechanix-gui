@@ -4,7 +4,6 @@ import 'package:mechanix_music/models/playlist_info.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
 import 'package:mechanix_music/src/bloc/songs_state.dart';
-import 'package:mechanix_music/src/commons/colors.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:widgets/extension.dart';
 
@@ -28,33 +27,57 @@ class PlaylistTopView extends StatelessWidget {
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Image.asset(MusicIcons.audioImage, width: 152, height: 160),
+                  Image.asset(
+                    MusicIcons.halfSliderIcon,
+                    width: 75,
+                    height: 152,
+                  ),
                   Positioned(
                     left: 72,
-                    child: Container(
-                      width: 160,
-                      height: 160,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: hasCoverImage ? null : MusicColors.albumColor,
-                        image:
-                            hasCoverImage
-                                ? DecorationImage(
-                                  image: AssetImage(
-                                    playlistInfo.coverImagePath!,
-                                  ),
-                                  fit: BoxFit.cover,
-                                )
-                                : null,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 160,
+                        height: 160,
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            // Image layer
+                            Image.asset(
+                              hasCoverImage
+                                  ? playlistInfo.coverImagePath!
+                                  : MusicIcons.playlistCardIcon,
+                              fit: BoxFit.cover,
+                            ),
+
+                            // Gradient overlay
+                            Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.black26, // top - light
+                                    Colors.black38, // middle
+                                    Colors.black54, // bottom - darker
+                                  ],
+                                  stops: [0.0, 0.55, 1.0],
+                                ),
+                              ),
+                            ),
+
+                            // Plus icon
+                            Center(
+                              child: Image.asset(
+                                MusicIcons.plusIcon,
+                                width: 24,
+                                height: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      // child: Center(
-                      //   child: Image.asset(
-                      //     MusicIcons.plusIcon,
-                      //     width: 24,
-                      //     height: 24,
-                      //     color: Colors.white,
-                      //   ),
-                      // ),
                     ),
                   ),
                 ],

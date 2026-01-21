@@ -13,7 +13,7 @@ class DisplayBloc extends Bloc<DisplayEvent, DisplayState> {
   final logger = Logger();
   final DisplayRepository displayRepository;
 
-  DisplayBloc({required this.displayRepository}) : super(DisplayState()) {
+  DisplayBloc({required this.displayRepository}) : super(const DisplayState()) {
     on<GetDefaultSettingsEvent>(_getDisplaySettings);
     on<SetBrightnessEvent>(_setBrightnessChangeEnd);
     on<SetBrightnessChangeEvent>(_setBrightnessChanging);
