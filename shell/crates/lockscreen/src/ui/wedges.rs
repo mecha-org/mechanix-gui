@@ -220,10 +220,10 @@ fn status_icons(cx: &mut App, colors: &ThemeColors) -> impl IntoElement {
 
 // Left wedge - size 540 x 106, with bell icon and lock icon
 pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32) -> impl IntoElement {
-    let left_wedge_fill_color = colors.background_900;
-    let left_wedge_border_color = colors.accent_500.with_alpha(0.7);
+    let left_wedge_fill_color = colors.accent_200;
+    let left_wedge_border_color = colors.accent_300;
     let bell_icon_color = colors.accent_200;
-    let bell_circle_color = colors.accent_300.with_alpha(0.6);
+    let bell_circle_color = colors.accent_100.with_alpha(0.1);
     // Left wedge icons remain visible even when unlocked; only hide if opacity is zero.
     let show_icons = icon_opacity > 0.0;
 
@@ -238,6 +238,7 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
             svg()
                 .path("icons/lockscreen/wedge_left.svg")
                 .absolute()
+                .opacity(0.20)
                 .inset_0()
                 .w(px(LEFT_WEDGE_WIDTH))
                 .h(px(LEFT_WEDGE_HEIGHT))
@@ -249,6 +250,7 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
                 .path("icons/lockscreen/wedge_left_outline.svg")
                 .absolute()
                 .inset_0()
+                .opacity(0.80)
                 .w(px(LEFT_WEDGE_WIDTH))
                 .h(px(LEFT_WEDGE_HEIGHT))
                 .text_color(left_wedge_border_color),
@@ -293,8 +295,8 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
 
 // Right wedge - size 540 x 67, with status icons
 pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> impl IntoElement {
-    let right_wedge_fill_color = colors.background_700;
-    let right_wedge_border_color = colors.accent_500.with_alpha(0.7);
+    let right_wedge_fill_color = colors.accent_200;
+    let right_wedge_border_color = colors.accent_300;
     let show_icons = icon_opacity > 0.0;
 
     let mut container = div()
@@ -311,6 +313,7 @@ pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> imp
                 .inset_0()
                 .w(px(RIGHT_WEDGE_WIDTH))
                 .h(px(RIGHT_WEDGE_HEIGHT))
+                .opacity(0.20)
                 .text_color(right_wedge_fill_color),
         )
         // Outline overlay
@@ -319,6 +322,7 @@ pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> imp
                 .path("icons/lockscreen/wedge_right_outline.svg")
                 .absolute()
                 .inset_0()
+                .opacity(0.80)
                 .w(px(RIGHT_WEDGE_WIDTH))
                 .h(px(RIGHT_WEDGE_HEIGHT))
                 .text_color(right_wedge_border_color),
@@ -375,9 +379,9 @@ impl LockState {
 
     fn bg_color(&self, colors: &ThemeColors) -> Rgba {
         match self {
-            LockState::Locked => colors.accent_200.with_alpha(0.6),
-            LockState::HalfOpen => colors.accent_100.with_alpha(0.6),
-            LockState::FullyOpen => colors.accent_0.with_alpha(0.6),
+            LockState::Locked => colors.accent_100.with_alpha(0.1),
+            LockState::HalfOpen => colors.accent_100.with_alpha(0.5),
+            LockState::FullyOpen => colors.accent_100.with_alpha(0.7),
         }
     }
 }
