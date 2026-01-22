@@ -20,7 +20,7 @@ use std::{
 use theme::ActiveTheme;
 use theme::prelude::{AlphaExt, Fonts};
 
-use settings::prelude::Settings;
+use settings::prelude::{InputRegions, Settings};
 
 const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
 const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
@@ -29,6 +29,10 @@ const CARD_GAP: f32 = 8.0; // mt_2()
 const GROUP_GAP: f32 = 10.0; // gap_2p5()
 const LIST_PADDING_TOP: f32 = 12.0;
 const LIST_PADDING_BOTTOM: f32 = 12.0;
+
+const ANIMATION_DURATION_MS: f32 = 250.0;
+const ANIMATION_FRAME_MS: u64 = 16;
+
 
 pub struct DragInfo {
     pub position: Point<Pixels>,
@@ -414,6 +418,30 @@ impl NotificationCenter {
         self.is_dragging = false;
         self.last_scroll_offset = self.scroll_offset;
     }
+
+    fn update_input_regions(&self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        let mut regions = Vec::new();
+
+        let settings = Settings::global(cx).notifications.clone();
+        let InputRegions {
+            minimized,
+            maximized,
+        } = settings.input_regions;
+
+        if open {
+            regions.push(Bounds {
+                origin: maximized.origin,
+                size: maximized.size,
+            });
+        } else {
+            regions.push(Bounds {
+                origin: minimized.origin,
+                size: minimized.size,
+            });
+        }
+        window.set_input_regions(Some(regions));
+        cx.notify();
+    }
 }
 
 impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
@@ -713,12 +741,12 @@ impl NotificationCenter {
     pub fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
         let start = self.position;
         let change = target - start;
-        let duration_ms = 250.0; // Animation speed
         let start_time = std::time::Instant::now();
+        let closed_pos = Self::closed_pos(cx);
 
         if target == 0.0 {
             self.is_visible = true;
-        } else if target == Self::closed_pos(cx) {
+        } else if target == closed_pos {
             self.is_visible = false;
         }
 
@@ -728,12 +756,12 @@ impl NotificationCenter {
                     let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
 
                     // Check if animation is done
-                    if elapsed >= duration_ms {
+                    if elapsed >= ANIMATION_DURATION_MS {
                         this.update(cx, |this, cx| {
                             this.position = target;
                             if target == 0.0 {
                                 this.is_visible = true;
-                            } else if target == Self::closed_pos(cx) {
+                            } else if target == closed_pos {
                                 this.is_visible = false;
                             }
                             cx.notify();
@@ -742,13 +770,13 @@ impl NotificationCenter {
                         break;
                     }
 
-                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let t = (elapsed / ANIMATION_DURATION_MS).clamp(0.0, 1.0);
                     let ease = 1.0 - (1.0 - t).powi(3);
                     let current = start + (change * ease);
 
                     this.update(cx, |this, cx| {
                         this.position = current;
-                        if current < (Self::closed_pos(cx) / 2.0) {
+                        if current < (closed_pos / 2.0) {
                             this.is_visible = true;
                         } else {
                             this.is_visible = false;
@@ -758,7 +786,7 @@ impl NotificationCenter {
                     .ok();
 
                     cx.background_executor()
-                        .timer(std::time::Duration::from_millis(16))
+                        .timer(std::time::Duration::from_millis(ANIMATION_FRAME_MS))
                         .await;
                 }
             },
@@ -773,28 +801,19 @@ impl Render for NotificationCenter {
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
         let input_regions = settings.input_regions.clone();
-
+        let primary_font = Fonts::global(cx).primary.clone();
         let colors = cx.theme().colors.clone();
 
         let open_y = 0.;
         let closed_y = Self::closed_pos(cx);
 
         let threshold_px = 40.;
+        self.update_input_regions(self.is_visible, window, cx);
 
         div()
             .w_full()
             .h_full()
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|this, event: &MouseDownEvent, _window, cx| {
-                    if this.is_visible {
-                        cx.stop_propagation();
-                        this.drag_start_pos = this.position;
-                        this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
-                        cx.notify();
-                    }
-                }),
-            )
+            .font_family(primary_font)
             .on_mouse_move(
                 cx.listener(move |this, event: &MouseMoveEvent, _window, cx| {
                     if let Some(offset) = this.drag_offset {
@@ -816,18 +835,14 @@ impl Render for NotificationCenter {
                         if started_closed {
                             if this.position < (closed_y - threshold_px) {
                                 target = open_y;
-                                this.is_visible = true;
                             } else {
                                 target = closed_y;
-                                this.is_visible = false;
                             }
                         } else {
                             if this.position > (open_y + threshold_px) {
                                 target = closed_y;
-                                this.is_visible = false;
                             } else {
                                 target = open_y;
-                                this.is_visible = true;
                             }
                         }
                         this.snap_to(target, cx);
@@ -1747,6 +1762,15 @@ impl NotificationCenter {
             .w(notifications_center_size.width - px(1.5))
             .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                    cx.stop_propagation();
+                    this.drag_start_pos = this.position;
+                    this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
+                    cx.notify();
+                }),
+            )
             .child(
                 div()
                     .id("nc-center-container")

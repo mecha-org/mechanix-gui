@@ -20,6 +20,8 @@ impl Global for ExtensionState {}
 
 pub struct ExtensionWidget {
     bounds: Bounds<Pixels>,
+    background_color: Hsla,
+    border_color: Hsla,
     has_border: bool,
 }
 
@@ -43,17 +45,13 @@ impl ExtensionKind {
 }
 
 impl ExtensionWidget {
-    pub fn new(has_border: bool) -> Self {
+    pub fn new(color: impl Into<Hsla>, border_color: impl Into<Hsla>, has_border: bool) -> Self {
         Self {
             bounds: Bounds::default(),
+            background_color: color.into(),
+            border_color: border_color.into(),
             has_border,
         }
-    }
-}
-
-impl Default for ExtensionWidget {
-    fn default() -> Self {
-        Self::new(true)
     }
 }
 
@@ -87,7 +85,6 @@ impl HomescreenWidget for ExtensionWidget {
             .relative()
             .overflow_hidden()
             .rounded(px(16.))
-            .bg(colors.background_800)
             // Layer 1: Background SVG (bottom layer)
             .child(
                 div().absolute().inset_0().child(
@@ -123,7 +120,7 @@ impl HomescreenWidget for ExtensionWidget {
     }
 
     fn background_color(&self) -> Hsla {
-        rgb(0x2a2a2a).into()
+        self.background_color
     }
 
     fn has_border(&self) -> bool {
@@ -131,7 +128,7 @@ impl HomescreenWidget for ExtensionWidget {
     }
 
     fn border_color(&self) -> Hsla {
-        rgb(0x404040).into()
+        self.border_color
     }
 }
 
