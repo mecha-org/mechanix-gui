@@ -87,10 +87,9 @@ class _HomePageState extends State<HomePage>
             selector: (state) => state.groupedNotes.isEmpty,
             builder:
                 (context, hasNotes) =>
-                    hasNotes
-                        ? const HomeFloatingButton()
-                        : const SizedBox.shrink(),
+                    hasNotes ? HomeFloatingButton() : const SizedBox.shrink(),
           ),
+
           // App bar only shows in selection mode
           appBar:
               ((isSelectionMode && !isSearchPage)
