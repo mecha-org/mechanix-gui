@@ -151,12 +151,12 @@ impl Default for LockscreenIcons {
                 "{}lockscreen/lock-open-half.svg",
                 ICONS_BASE_PATH
             )),
-            wedge_left: PathBuf::from(format!("{}lockscreen/wedge_left.svg", ICONS_BASE_PATH)),
+            wedge_left: PathBuf::from(format!("{}lockscreen/wedge-left.svg", ICONS_BASE_PATH)),
             wedge_left_outline: PathBuf::from(format!(
                 "{}lockscreen/wedge_left_outline.svg",
                 ICONS_BASE_PATH
             )),
-            wedge_right: PathBuf::from(format!("{}lockscreen/wedge_right.svg", ICONS_BASE_PATH)),
+            wedge_right: PathBuf::from(format!("{}lockscreen/wedge-right.svg", ICONS_BASE_PATH)),
             wedge_right_outline: PathBuf::from(format!(
                 "{}lockscreen/wedge_right_outline.svg",
                 ICONS_BASE_PATH

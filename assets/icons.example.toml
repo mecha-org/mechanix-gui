@@ -30,10 +30,10 @@
 "lock" = "/usr/share/mechanix/shell/assets/icons/lockscreen/lock.svg"
 "lock-open-full" = "/usr/share/mechanix/shell/assets/icons/lockscreen/lock-open-full.svg"
 "lock-open-half" = "/usr/share/mechanix/shell/assets/icons/lockscreen/lock-open-half.svg"
-"wedge-left" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_left.svg"
-"wedge-left-outline" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_left_outline.svg"
-"wedge-right" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_right.svg"
-"wedge-right-outline" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge_right_outline.svg"
+"wedge-left" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge-left.svg"
+"wedge-left-outline" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge-left-outline.svg"
+"wedge-right" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge-right.svg"
+"wedge-right-outline" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wedge-right-outline.svg"
 "wallpaper" = "/usr/share/mechanix/shell/assets/icons/lockscreen/wallpaper.png"
 
 [settings_drawer]

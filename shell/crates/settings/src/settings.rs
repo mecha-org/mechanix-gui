@@ -218,8 +218,6 @@ pub struct LockscreenSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub input_regions: InputRegions,
-    #[serde(default)]
-    pub wallpaper_path: String,
 }
 
 impl Default for LockscreenSettings {
@@ -242,7 +240,6 @@ impl Default for LockscreenSettings {
                     size: Size::new(px(540.0), px(620.0)),
                 },
             },
-            wallpaper_path: "icons/lockscreen/wallpaper.png".into(),
         }
     }
 }

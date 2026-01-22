@@ -1,4 +1,7 @@
+use std::path::PathBuf;
+
 use gpui::*;
+use icons::prelude::Icons;
 use shell_state::ShellState;
 use theme::prelude::{AlphaExt, ThemeColors};
 use upower::interfaces::device::BatteryState;
@@ -39,96 +42,25 @@ pub const RIGHT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
 // Gap between bell and lock icons in left wedge
 pub const LEFT_WEDGE_ICON_GAP: f32 = 12.0;
 
-// Icon name enum for status icons
-#[derive(Clone, Debug)]
-enum StatusIconName {
-    WirelessOn,
-    WirelessOff,
-    WirelessHigh,
-    WirelessMedium,
-    WirelessLow,
-    BluetoothOn,
-    BluetoothOff,
-    BluetoothConnected,
-    Battery10,
-    Battery20,
-    Battery30,
-    Battery40,
-    Battery50,
-    Battery60,
-    Battery70,
-    Battery80,
-    Battery90,
-    Battery100,
-    BatteryEmpty,
-    Battery10Charging,
-    Battery20Charging,
-    Battery30Charging,
-    Battery40Charging,
-    Battery50Charging,
-    Battery60Charging,
-    Battery70Charging,
-    Battery80Charging,
-    Battery90Charging,
-    Battery100Charging,
-}
-
-impl StatusIconName {
-    fn resolve(&self) -> SharedString {
-        let icon_path = match self {
-            StatusIconName::WirelessOn => "wireless-on.svg",
-            StatusIconName::WirelessOff => "wireless-off.svg",
-            StatusIconName::WirelessHigh => "wireless-high.svg",
-            StatusIconName::WirelessMedium => "wireless-medium.svg",
-            StatusIconName::WirelessLow => "wireless-low.svg",
-            StatusIconName::BluetoothOn => "bluetooth-on.svg",
-            StatusIconName::BluetoothOff => "bluetooth-off.svg",
-            StatusIconName::BluetoothConnected => "bluetooth-connected.svg",
-            StatusIconName::Battery10 => "battery-10.svg",
-            StatusIconName::Battery20 => "battery-20.svg",
-            StatusIconName::Battery30 => "battery-30.svg",
-            StatusIconName::Battery40 => "battery-40.svg",
-            StatusIconName::Battery50 => "battery-50.svg",
-            StatusIconName::Battery60 => "battery-60.svg",
-            StatusIconName::Battery70 => "battery-70.svg",
-            StatusIconName::Battery80 => "battery-80.svg",
-            StatusIconName::Battery90 => "battery-90.svg",
-            StatusIconName::Battery100 => "battery-100.svg",
-            StatusIconName::BatteryEmpty => "battery-empty.svg",
-            StatusIconName::Battery10Charging => "battery-10-charging.svg",
-            StatusIconName::Battery20Charging => "battery-20-charging.svg",
-            StatusIconName::Battery30Charging => "battery-30-charging.svg",
-            StatusIconName::Battery40Charging => "battery-40-charging.svg",
-            StatusIconName::Battery50Charging => "battery-50-charging.svg",
-            StatusIconName::Battery60Charging => "battery-60-charging.svg",
-            StatusIconName::Battery70Charging => "battery-70-charging.svg",
-            StatusIconName::Battery80Charging => "battery-80-charging.svg",
-            StatusIconName::Battery90Charging => "battery-90-charging.svg",
-            StatusIconName::Battery100Charging => "battery-100-charging.svg",
-        };
-        format!("{}{}", STATUS_BAR_ICONS_DIR, icon_path).into()
-    }
-}
-
-fn render_wifi_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
+fn render_wifi_icon(icon: PathBuf, color: Rgba) -> impl IntoElement {
     svg()
-        .path(icon.resolve())
+        .external_path(SharedString::from(icon.to_string_lossy().to_string()))
         .w(px(WIFI_ICON_SIZE))
         .h(px(WIFI_ICON_SIZE))
         .text_color(color)
 }
 
-fn render_bluetooth_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
+fn render_bluetooth_icon(icon: PathBuf, color: Rgba) -> impl IntoElement {
     svg()
-        .path(icon.resolve())
+        .external_path(SharedString::from(icon.to_string_lossy().to_string()))
         .w(px(BLUETOOTH_ICON_SIZE))
         .h(px(BLUETOOTH_ICON_SIZE))
         .text_color(color)
 }
 
-fn render_battery_icon(icon: StatusIconName, color: Rgba) -> impl IntoElement {
+fn render_battery_icon(icon: PathBuf, color: Rgba) -> impl IntoElement {
     svg()
-        .path(icon.resolve())
+        .external_path(SharedString::from(icon.to_string_lossy().to_string()))
         .w(px(BATTERY_ICON_SIZE))
         .h(px(BATTERY_ICON_SIZE))
         .text_color(color)
@@ -152,58 +84,60 @@ fn status_icons(cx: &mut App, colors: &ThemeColors) -> impl IntoElement {
         .as_ref()
         .map_or(0, |n| n.signal_strength);
 
+    let icons = Icons::global(cx).status_bar.clone();
+
     // Resolve wireless icon based on state
     let wireless_icon = match wireless_enabled {
         true => match wireless_strength {
-            0 => StatusIconName::WirelessOn,
-            1..=30 => StatusIconName::WirelessLow,
-            31..=60 => StatusIconName::WirelessMedium,
-            61..=100 => StatusIconName::WirelessHigh,
-            _ => StatusIconName::WirelessOn,
+            0 => icons.wireless_on,
+            1..=30 => icons.wireless_low,
+            31..=60 => icons.wireless_medium,
+            61..=100 => icons.wireless_high,
+            _ => icons.wireless_on,
         },
-        false => StatusIconName::WirelessOff,
+        false => icons.wireless_off,
     };
 
     // Resolve bluetooth icon based on state
     let bluetooth_icon = match bluetooth_enabled {
         true => match bluetooth_connected {
-            true => StatusIconName::BluetoothConnected,
-            false => StatusIconName::BluetoothOn,
+            true => icons.bluetooth_connected,
+            false => icons.bluetooth_on,
         },
-        false => StatusIconName::BluetoothOff,
+        false => icons.bluetooth_off,
     };
 
     // Resolve battery icon based on state and percentage
     let battery_icon = match battery_state {
         BatteryState::Charging => match battery_percent {
-            0..=10 => StatusIconName::Battery10Charging,
-            11..=20 => StatusIconName::Battery20Charging,
-            21..=30 => StatusIconName::Battery30Charging,
-            31..=40 => StatusIconName::Battery40Charging,
-            41..=50 => StatusIconName::Battery50Charging,
-            51..=60 => StatusIconName::Battery60Charging,
-            61..=70 => StatusIconName::Battery70Charging,
-            71..=80 => StatusIconName::Battery80Charging,
-            81..=90 => StatusIconName::Battery90Charging,
-            91..=100 => StatusIconName::Battery100Charging,
-            _ => StatusIconName::BatteryEmpty,
+            0..=10 => icons.battery_10_charging,
+            11..=20 => icons.battery_20_charging,
+            21..=30 => icons.battery_30_charging,
+            31..=40 => icons.battery_40_charging,
+            41..=50 => icons.battery_50_charging,
+            51..=60 => icons.battery_60_charging,
+            61..=70 => icons.battery_70_charging,
+            71..=80 => icons.battery_80_charging,
+            81..=90 => icons.battery_90_charging,
+            91..=100 => icons.battery_100_charging,
+            _ => icons.battery_empty,
         },
         BatteryState::Discharging => match battery_percent {
-            0..=10 => StatusIconName::Battery10,
-            11..=20 => StatusIconName::Battery20,
-            21..=30 => StatusIconName::Battery30,
-            31..=40 => StatusIconName::Battery40,
-            41..=50 => StatusIconName::Battery50,
-            51..=60 => StatusIconName::Battery60,
-            61..=70 => StatusIconName::Battery70,
-            71..=80 => StatusIconName::Battery80,
-            81..=90 => StatusIconName::Battery90,
-            91..=100 => StatusIconName::Battery100,
-            _ => StatusIconName::BatteryEmpty,
+            0..=10 => icons.battery_10,
+            11..=20 => icons.battery_20,
+            21..=30 => icons.battery_30,
+            31..=40 => icons.battery_40,
+            41..=50 => icons.battery_50,
+            51..=60 => icons.battery_60,
+            61..=70 => icons.battery_70,
+            71..=80 => icons.battery_80,
+            81..=90 => icons.battery_90,
+            91..=100 => icons.battery_100,
+            _ => icons.battery_empty,
         },
-        BatteryState::FullCharged => StatusIconName::Battery100,
-        BatteryState::Empty => StatusIconName::BatteryEmpty,
-        _ => StatusIconName::BatteryEmpty,
+        BatteryState::FullCharged => icons.battery_100,
+        BatteryState::Empty => icons.battery_empty,
+        _ => icons.battery_empty,
     };
 
     // Icon color from theme accent ramp
@@ -219,13 +153,19 @@ fn status_icons(cx: &mut App, colors: &ThemeColors) -> impl IntoElement {
 }
 
 // Left wedge - size 540 x 106, with bell icon and lock icon
-pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32) -> impl IntoElement {
+pub fn left_wedge(
+    colors: &ThemeColors,
+    lock_state: LockState,
+    icon_opacity: f32,
+    cx: &mut App,
+) -> impl IntoElement {
     let left_wedge_fill_color = colors.accent_200;
     let left_wedge_border_color = colors.accent_300;
     let bell_icon_color = colors.accent_200;
     let bell_circle_color = colors.accent_100.with_alpha(0.1);
     // Left wedge icons remain visible even when unlocked; only hide if opacity is zero.
     let show_icons = icon_opacity > 0.0;
+    let icons = Icons::global(cx).lockscreen.clone();
 
     let mut container = div()
         .absolute()
@@ -236,7 +176,9 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
         // Filled wedge background
         .child(
             svg()
-                .path("icons/lockscreen/wedge_left.svg")
+                .external_path(SharedString::from(
+                    icons.wedge_left.to_string_lossy().to_string(),
+                ))
                 .absolute()
                 .opacity(0.20)
                 .inset_0()
@@ -247,7 +189,9 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
         // Outline overlay
         .child(
             svg()
-                .path("icons/lockscreen/wedge_left_outline.svg")
+                .external_path(SharedString::from(
+                    icons.wedge_left_outline.to_string_lossy().to_string(),
+                ))
                 .absolute()
                 .inset_0()
                 .opacity(0.80)
@@ -279,14 +223,16 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
                         .justify_center()
                         .child(
                             svg()
-                                .path("icons/lockscreen/bell.svg")
+                                .external_path(SharedString::from(
+                                    icons.bell.to_string_lossy().to_string(),
+                                ))
                                 .w(px(BELL_ICON_SIZE))
                                 .h(px(BELL_ICON_SIZE))
                                 .text_color(bell_icon_color),
                         ),
                 )
                 // Lock icon in circle (state-based)
-                .child(lock_icon(lock_state, colors)),
+                .child(lock_icon(lock_state, colors, cx)),
         );
     }
 
@@ -294,10 +240,11 @@ pub fn left_wedge(colors: &ThemeColors, lock_state: LockState, icon_opacity: f32
 }
 
 // Right wedge - size 540 x 67, with status icons
-pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> impl IntoElement {
+pub fn right_wedge(colors: &ThemeColors, icon_opacity: f32, cx: &mut App) -> impl IntoElement {
     let right_wedge_fill_color = colors.accent_200;
     let right_wedge_border_color = colors.accent_300;
     let show_icons = icon_opacity > 0.0;
+    let icons = Icons::global(cx).lockscreen.clone();
 
     let mut container = div()
         .absolute()
@@ -308,7 +255,9 @@ pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> imp
         // Filled wedge background
         .child(
             svg()
-                .path("icons/lockscreen/wedge_right.svg")
+                .external_path(SharedString::from(
+                    icons.wedge_right.to_string_lossy().to_string(),
+                ))
                 .absolute()
                 .inset_0()
                 .w(px(RIGHT_WEDGE_WIDTH))
@@ -319,7 +268,9 @@ pub fn right_wedge(cx: &mut App, colors: &ThemeColors, icon_opacity: f32) -> imp
         // Outline overlay
         .child(
             svg()
-                .path("icons/lockscreen/wedge_right_outline.svg")
+                .external_path(SharedString::from(
+                    icons.wedge_right_outline.to_string_lossy().to_string(),
+                ))
                 .absolute()
                 .inset_0()
                 .opacity(0.80)
@@ -364,11 +315,13 @@ impl LockState {
         }
     }
 
-    fn icon_path(&self) -> &'static str {
+    fn icon_path(&self, cx: &mut App) -> PathBuf {
+        let icons = Icons::global(cx).lockscreen.clone();
+
         match self {
-            LockState::Locked => "icons/lockscreen/lock.svg",
-            LockState::HalfOpen => "icons/lockscreen/lock-open-half.svg",
-            LockState::FullyOpen => "icons/lockscreen/lock-open-full.svg",
+            LockState::Locked => icons.lock,
+            LockState::HalfOpen => icons.lock_open_half,
+            LockState::FullyOpen => icons.lock_open_full,
         }
     }
 
@@ -390,7 +343,7 @@ impl LockState {
 /// - Locked: at rest (position_y = 0)
 /// - HalfOpen: dragging but below threshold
 /// - FullyOpen: beyond unlock threshold
-pub fn lock_icon(lock_state: LockState, colors: &ThemeColors) -> impl IntoElement {
+pub fn lock_icon(lock_state: LockState, colors: &ThemeColors, cx: &mut App) -> impl IntoElement {
     div()
         .w(px(LOCK_CIRCLE_SIZE))
         .h(px(LOCK_CIRCLE_SIZE))
@@ -401,7 +354,9 @@ pub fn lock_icon(lock_state: LockState, colors: &ThemeColors) -> impl IntoElemen
         .justify_center()
         .child(
             svg()
-                .path(lock_state.icon_path())
+                .external_path(SharedString::from(
+                    lock_state.icon_path(cx).to_string_lossy().to_string(),
+                ))
                 .w(px(LOCK_ICON_SIZE))
                 .h(px(LOCK_ICON_SIZE))
                 .text_color(lock_state.icon_color(colors)),
