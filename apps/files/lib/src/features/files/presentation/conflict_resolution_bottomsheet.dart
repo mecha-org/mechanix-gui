@@ -27,7 +27,7 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
     final double sheetWidth = MediaQuery.of(context).size.width;
 
     return ClipPath(
-      clipper: TabClipper(shift: sheetWidth * 0.65),
+      clipper: TabClipper(shift: 400),
       child: Container(
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHigh,
@@ -126,7 +126,7 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
+              ).padBottom(30),
             ],
           ),
         ),

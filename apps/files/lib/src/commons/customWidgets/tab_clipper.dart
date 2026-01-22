@@ -10,8 +10,10 @@ class TabClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     const double radius = 8; // Outer rounded corners
     const double tabH = 12; // Tab height
-    const double tabW = 42; // Tab width
+    final double tabW = 42; // Tab width
     const double tabSlope = 12; // Small sloped curve
+    // final double shift =
+    //     topTabRightSideShiftLength ?? 450; // Shift tab right by this amount
 
     final Path p = Path();
 

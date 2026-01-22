@@ -85,6 +85,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     _scrollController.addListener(_onScroll);
 
     controller.openDirectory(Directory(widget.currentPath));
+    _focusNode.addListener(_onFocusChange);
 
     controller.getPathNotifier.addListener(() {
       setState(() {
@@ -118,6 +119,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     searchQuery.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -137,6 +140,16 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
       color: context.colorScheme.onSurface,
       fontWeight: FontWeight.w400,
     );
+  }
+
+  bool isTextInputOpened = false;
+  final FocusNode _focusNode = FocusNode();
+
+  Future<void> _onFocusChange() async {
+    if (!_focusNode.hasFocus) {
+      await Future.delayed(Duration(milliseconds: 500));
+    }
+    setState(() => isTextInputOpened = _focusNode.hasFocus);
   }
 
   @override
@@ -191,7 +204,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
           height: 1,
           color: context.colorScheme.surfaceContainer,
         ), // Navigation bar
-        SizedBox(
+        Container(
+          color: context.surfaceContainerHigh,
           height: 60,
           child: Row(
             children: [
@@ -199,11 +213,13 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 Expanded(
                   child: MechanixTextInput.search(
                     theme: MechanixTextInputThemeData(
+                      widgetHeight: 60,
                       widgetDecoration: BoxDecoration(
                         color: context.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(0),
                       ),
                     ),
+                    focusNode: _focusNode,
                     cursorColor: context.colorScheme.primaryFixed,
                     prefixIcon: IconWidget(
                       iconPath: Images.search,
@@ -235,6 +251,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 Expanded(
                   child: MechanixBottomBar(
                     theme: MechanixBottomBarThemeData(
+                      height: 50,
                       decoration: BoxDecoration(
                           color: context.colorScheme.surfaceContainerHigh),
                     ),
@@ -286,7 +303,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         },
                       ),
                     ],
-                  ).padLeft(16).padRight(16),
+                  ),
                 ),
               ]
             ],
@@ -295,8 +312,10 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
         // Bottom bar
         Container(
-          height: 60,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          // height: 90,
+          height: isTextInputOpened ? 65 : 90,
+          padding:
+              const EdgeInsets.only(left: 16, right: 16, bottom: 30, top: 8),
           decoration: BoxDecoration(
             color: context.colorScheme.secondaryContainer,
             borderRadius:
@@ -409,6 +428,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     return Expanded(
       child: MechanixTextInput.textInput(
         theme: MechanixTextInputThemeData(
+          widgetHeight: 64,
           widgetDecoration: BoxDecoration(
             color: context.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(0),
@@ -734,7 +754,7 @@ Future<void> showInvalidMoveSheet(
     backgroundColor: Colors.transparent,
     builder: (sheetContext) {
       return ClipPath(
-        clipper: TabClipper(shift: sheetWidth * 0.65),
+        clipper: TabClipper(shift: 400),
         child: Container(
           decoration: BoxDecoration(
             color: context.colorScheme.surfaceContainerHigh,
