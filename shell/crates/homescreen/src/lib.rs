@@ -27,7 +27,7 @@ use crate::state::*;
 use crate::ui::HomescreenUi;
 use crate::widgets::app_drawer::AppDrawerWidget;
 use crate::widgets::demo_widget::DemoWidget;
-use crate::widgets::extentions::ExtensionWidget;
+use crate::widgets::extentions::{ExtensionWidget, ExtensionState, listen_for_extensions};
 use crate::widgets::pinned_apps::PinnedApps;
 use crate::widgets::system_usage::SystemUsage;
 use crate::widgets::time::Time;
@@ -64,6 +64,10 @@ impl Homescreen {
 
         cx.set_global(system_usage_state);
 
+        // Initialize extension state and start listening for extensions
+        cx.set_global(ExtensionState::default());
+        listen_for_extensions(cx);
+
         let _system_usage_subscription = cx.observe_global::<SystemUsageState>(|_this, cx| {
             cx.notify();
         });
@@ -74,7 +78,7 @@ impl Homescreen {
             sys.refresh_cpu_usage(); // Refreshing CPU usage.
             let usage = sys.global_cpu_usage();
             _ = this.update(cx, |_this, cx| {
-                cx.global_mut::<SystemUsageState>().cpu_usage = format!("{:3.2}%", usage);
+                cx.global_mut::<SystemUsageState>().cpu_usage = format!("{:.1}%", usage);
                 cx.notify();
             });
         })
@@ -88,7 +92,7 @@ impl Homescreen {
 
             let used = sys.used_memory() as f32 / 1024. / 1024. / 1024.;
             _ = this.update(cx, |_this, cx| {
-                cx.global_mut::<SystemUsageState>().memory_usage = format!("{:3.2}GB", used);
+                cx.global_mut::<SystemUsageState>().memory_usage = format!("{:.2}", used);
                 cx.notify();
             });
         })
@@ -103,7 +107,7 @@ impl Homescreen {
             let hours = uptime / 3600;
             uptime -= hours * 3600;
             let minutes = uptime / 60;
-            let uptime = format!("{:?}d{:?}h{:?}m", days, hours, minutes);
+            let uptime = format!("{}d {}h {}m", days, hours, minutes);
             _ = this.update(cx, |_this, cx| {
                 cx.global_mut::<SystemUsageState>().uptime = uptime;
                 cx.notify();
@@ -202,7 +206,7 @@ impl Homescreen {
             },
         );
         state.create_widget(
-            ExtensionWidget::new(icons.keyboard, rgb(0xb565a7), rgb(0x9d5091), false),
+            ExtensionWidget::new(false),
             1,
             Bounds {
                 origin: point(2, 0),

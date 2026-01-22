@@ -31,44 +31,68 @@ impl Default for Time {
 
 impl HomescreenWidget for Time {
     fn render(&self, cx: &mut gpui::App) -> gpui::AnyElement {
-        let background = cx.theme().colors.accent_200.clone();
+        let colors = cx.theme().colors.clone();
         let digital = cx.fonts().digital.clone();
-        let text_color = cx.theme().colors.background_700.clone();
+        let text_color = colors.background_700.clone();
         let date_time = ShellState::global(cx).current_time_date.clone();
         let mut parts = date_time.split(':');
         let hour = parts.next().unwrap_or("00").to_string();
         let minute = parts.next().unwrap_or("00").to_string();
 
+        // Asset paths for layered rendering
+        let clock_background_path = "icons/homescreen/clock_background.svg";
+        let dot_grid_path = "icons/homescreen/extension/dot_grid.svg";
+        let dashed_lines_path = "icons/homescreen/dashed_lines.svg";
+
         div()
             .size_full()
-            .flex()
-            .justify_center()
-            .items_center()
-            .bg(background)
-            .flex()
-            .flex_col()
-            .rounded(px(4.))
-            .p(px(4.))
+            .relative()
+            .overflow_hidden()
             .child(
                 div()
-                    .size_full()
+                    .absolute()
+                    .inset_0()
                     .flex()
-                    .flex_col()
                     .justify_center()
                     .items_center()
-                    .border(px(2.))
-                    .border_dashed()
-                    .border_color(gpui::black())
-                    .text_size(px(64.))
-                    .font_family(digital)
-                    .italic()
-                    .line_height(px(60.))
-                    .font_weight(FontWeight::NORMAL)
-                    .text_color(text_color)
-                    .child(hour)
-                    .child(minute),
+                    .child(img(clock_background_path).w(px(156.)).h(px(156.)).text_color(colors.accent_200)),
             )
-            // .child(img(self.icon.clone()).size_full())
+            .child(
+                div()
+                    .absolute()
+                    .inset_0()
+                    .flex()
+                    .justify_center()
+                    .items_center()
+                    .child(img(dot_grid_path).w(px(148.)).h(px(146.))),
+            )
+            .child(
+                div()
+                    .absolute()
+                    .inset_0()
+                    .flex()
+                    .justify_center()
+                    .items_center()
+                    .child(img(dashed_lines_path).w(px(140.)).h(px(140.))),
+            )
+            .child(
+                div().absolute().inset_0().p(px(4.)).child(
+                    div()
+                        .size_full()
+                        .flex()
+                        .flex_col()
+                        .justify_center()
+                        .items_center()
+                        .text_size(px(64.))
+                        .font_family(digital)
+                        .italic()
+                        .line_height(px(60.))
+                        .font_weight(FontWeight::NORMAL)
+                        .text_color(text_color)
+                        .child(hour)
+                        .child(minute),
+                ),
+            )
             .into_any_element()
     }
 
