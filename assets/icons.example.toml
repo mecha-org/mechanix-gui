@@ -161,7 +161,13 @@
 "xls-file" = "/usr/share/mechanix/shell/assets/icons/universal-search/xls-file.svg"
 "zip-file" = "/usr/share/mechanix/shell/assets/icons/universal-search/zip-file.svg"
 
-[homescreen]
-"gamepad" = "/usr/share/mechanix/shell/assets/icons/homescreen/gamepad.png"
-"keyboard" = "/usr/share/mechanix/shell/assets/icons/homescreen/keyboard.png"
-"gpio" = "/usr/share/mechanix/shell/assets/icons/homescreen/gpio.png"
+[homescreen.extensions]
+gamepad = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/gamepad.png"
+keyboard = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/keyboard.png"
+gpio = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/gpio.png"
+unknown = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/unknown.png"
+dot-grid = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/dot-grid.png"
+detached = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/detached.png"
+
+[homescreen.clock]
+dashed = "/usr/share/mechanix/shell/assets/icons/homescreen/clock/dashed.png"
