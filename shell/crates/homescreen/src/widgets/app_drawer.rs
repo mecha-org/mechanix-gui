@@ -1,5 +1,5 @@
-use crate::Homescreen;
 use crate::widgets::HomescreenWidget;
+use crate::Homescreen;
 use app_drawer::prelude::*;
 use gpui::*;
 
@@ -21,7 +21,7 @@ impl AppDrawerWidget {
 }
 
 impl HomescreenWidget for AppDrawerWidget {
-    fn render(&self) -> AnyElement {
+    fn render(&self, cx: &mut gpui::App) -> AnyElement {
         div()
             .size_full()
             .child(self.drawer_handle.clone())

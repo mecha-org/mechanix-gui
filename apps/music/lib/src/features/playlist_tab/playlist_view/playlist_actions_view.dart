@@ -56,14 +56,8 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
             children: [
               MusicIconButton(
                 enabled: !widget.isEditMode && playlistSongs.isNotEmpty,
-                // iconColor:
-                //     widget.isEditMode ? Theme.of(context).disabledColor : null,
-                // iconColor:  widget.playlistInfo.isLiked
                 iconColor: isFavourite ? context.primary : null,
-                icon:
-                    isFavourite
-                        ? MusicIcons.filledFavouriteIcon
-                        : MusicIcons.favouritesIcon,
+                icon: MusicIcons.searchIcon,
                 onPressed:
                     playlistSongs.isNotEmpty
                         ? () {

@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
@@ -30,7 +32,7 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
     return BlocBuilder<DateTimeBloc, DateTimeState>(
       builder: (context, state) {
         final currentTimeZoneAbbr = state.selectedTimezone.isNotEmpty
-            ? '(${timeZones.firstWhere((e) => e.value == state.selectedTimezone, orElse: () => defaultTimeZones).label})'
+            ? '(${selectTimeZones.firstWhere((e) => e.value == state.selectedTimezone, orElse: () => defaultTimeZones).label})'
             : '';
 
         final month = state.systemDateTime?.month != null
@@ -56,72 +58,102 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
             ? DateFormat('a').format(state.systemDateTime!)
             : '';
 
+        print("state.selectedTimezone");
+        print(state.selectedTimezone);
+
         final hourMinute = '$hour : $minute';
 
         return Scaffold(
-          appBar: MechanixNavigationBar(
-            title: 'Date and Time',
-          ),
           body: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: ContainerWidget(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const CustomTitle(title: "Date & Time"),
                   MechanixSimpleList(
                       physics: const NeverScrollableScrollPhysics(),
                       listItems: [
                         SimpleListItems(
-                            title: 'Auto-time',
-                            trailing: MechanixSwitch(
-                                value: state.autoDateTime,
-                                inactiveText: 'ON',
-                                onChanged: (value) {
-                                  context
-                                      .read<DateTimeBloc>()
-                                      .add(ToggleAutoDateTime(value));
-                                })),
+                          title: 'Auto-time',
+                          trailing: MechanixSwitch(
+                            value: state.autoDateTime,
+                            activeText: 'OFF',
+                            inactiveText: 'ON',
+                            onChanged: (value) {
+                              context
+                                  .read<DateTimeBloc>()
+                                  .add(ToggleAutoDateTime(value));
+                            },
+                          ),
+                        ),
                         SimpleListItems(
-                          title: 'Set Time',
-                          disabled: state.autoDateTime,
-                          onTap: () => Navigator.pushNamed(
-                              context, AppRoutes.timeSettings),
+                          title: 'Time zone',
+                          onTap: () {
+                            Navigator.pushNamed(context, AppRoutes.timeZone);
+                          },
                           trailing: Row(
                             children: [
                               CustomTrailingText(
-                                title:
-                                    '$hourMinute $meridiem $currentTimeZoneAbbr',
+                                title: '${state.selectedTimezone}',
                               ),
                               IconWidget(
                                 iconWidth: 10,
                                 iconHeight: 17,
+                                iconColor: context.outlineVariant,
                                 iconPath: Images.rightIconArrow,
                               )
                             ],
                           ),
                         ),
-                        SimpleListItems(
-                          title: 'Set Date',
-                          disabled: state.autoDateTime,
-                          onTap: () => Navigator.pushNamed(
-                              context, AppRoutes.dateSettings),
-                          trailing: Row(
-                            children: [
-                              CustomTrailingText(
+                        if (!state.autoDateTime)
+                          SimpleListItems(
+                            title: 'Set Time',
+                            disabled: state.autoDateTime,
+                            onTap: () => Navigator.pushNamed(
+                                context, AppRoutes.timeSettings),
+                            trailing: Row(
+                              children: [
+                                CustomTrailingText(
                                   title:
-                                      '${state.systemDateTime?.day ?? ""} $month ${state.systemDateTime?.year ?? ""}'),
-                              IconWidget(
-                                iconWidth: 10,
-                                iconHeight: 17,
-                                iconPath: Images.rightIconArrow,
-                              )
-                            ],
+                                      '$hourMinute $meridiem $currentTimeZoneAbbr',
+                                ),
+                                IconWidget(
+                                  iconWidth: 10,
+                                  iconHeight: 17,
+                                  iconColor: context.outlineVariant,
+                                  iconPath: Images.rightIconArrow,
+                                )
+                              ],
+                            ),
                           ),
-                        ),
+                        if (!state.autoDateTime)
+                          SimpleListItems(
+                            title: 'Set Date',
+                            disabled: state.autoDateTime,
+                            onTap: () => Navigator.pushNamed(
+                                context, AppRoutes.dateSettings),
+                            trailing: Row(
+                              children: [
+                                CustomTrailingText(
+                                    title:
+                                        '${state.systemDateTime?.day ?? ""} $month ${state.systemDateTime?.year ?? ""}'),
+                                IconWidget(
+                                  iconWidth: 10,
+                                  iconHeight: 17,
+                                  iconColor: context.outlineVariant,
+                                  iconPath: Images.rightIconArrow,
+                                )
+                              ],
+                            ),
+                          ),
                       ])
                 ],
               ).padVertical(8),
             ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
           ),
         );
       },

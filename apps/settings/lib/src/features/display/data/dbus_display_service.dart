@@ -1,7 +1,4 @@
-import 'dart:developer';
-
 import 'package:dbus/dbus.dart';
-import 'package:flutter/material.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/display/models/types.dart';
 
@@ -147,11 +144,10 @@ class DBusDisplayService {
       );
 
       final int brightnessValue = convertToRange(brightness);
-      print('brightnessValue - $brightnessValue');
-      log('brightnessValue - $brightnessValue');
-      debugPrint('brightnessValue - $brightnessValue');
 
-      var args = [DBusString(brightnessValue.toString())];
+      print('brightnessValue - $brightnessValue');
+
+      var args = [DBusByte(brightnessValue)];
 
       await object.callMethod(
         'org.mechanix.services.Display',

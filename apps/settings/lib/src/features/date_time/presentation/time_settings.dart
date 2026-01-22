@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_state.dart';
 import 'package:mechanix_settings/src/features/date_time/models/types.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/widgets/apply_button.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/wheel_scroll/mechanix_wheel_scroll_theme.dart';
 
 class TimeSettings extends StatefulWidget {
@@ -26,44 +28,26 @@ class _TimeSettingsState extends State<TimeSettings> {
   Widget build(BuildContext context) {
     return BlocBuilder<DateTimeBloc, DateTimeState>(
       builder: (context, state) {
-        final currentTimeZoneAbbr = timeZones.isNotEmpty
-            ? timeZones.firstWhere((t) {
-                return t.value == state.selectedTimezone;
-              }).label
-            : '';
-
-        final hour = hours12Options
-            .firstWhere((e) => e.value == state.selectedHour)
-            .label;
-
-        final minute = minutesOptions
-            .firstWhere((e) => e.value == state.selectedMinute)
-            .label;
-
         return Scaffold(
-          appBar: MechanixNavigationBar(title: "Set time"),
           body: SingleChildScrollView(
             child: ContainerWidget(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  CustomTrailingText(
-                          title:
-                              '$hour :$minute ${state.selectedMeridiem}, $currentTimeZoneAbbr')
-                      .padOnly(top: 8, bottom: 40),
+                  const CustomTitle(title: "Set Time"),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 348,
-                        height: 284,
                         child: Row(
                           children: [
                             MechanixWheelScroll(
-                              width: 116,
-                              height: 220,
-                              selectionWidth: 116,
-                              selectionHeight: 56,
+                              width: 74,
+                              squeeze: 0.75,
+                              height: 248,
+                              selectionWidth: 74,
+                              selectionHeight: 60,
                               value: state.selectedHour,
                               options: hours12Options,
                               theme: MechanixWheelScrollThemeData(
@@ -75,11 +59,14 @@ class _TimeSettingsState extends State<TimeSettings> {
                                     .add(SetSelectedHourEvent(value));
                               },
                             ),
+                            // const CustomTrailingText(title: ":"),
+                            const Text(":").padHorizontal(16),
                             MechanixWheelScroll(
-                              width: 116,
-                              height: 220,
-                              selectionWidth: 116,
-                              selectionHeight: 56,
+                              width: 74,
+                              squeeze: 0.75,
+                              height: 248,
+                              selectionWidth: 74,
+                              selectionHeight: 60,
                               value: state.selectedMinute,
                               options: minutesOptions,
                               theme: MechanixWheelScrollThemeData(
@@ -89,12 +76,13 @@ class _TimeSettingsState extends State<TimeSettings> {
                                     .read<DateTimeBloc>()
                                     .add(SetSelectedMinuteEvent(value));
                               },
-                            ),
+                            ).padRight(36),
                             MechanixWheelScroll(
-                              width: 116,
-                              height: 220,
-                              selectionWidth: 116,
-                              selectionHeight: 56,
+                              width: 74,
+                              squeeze: 0.75,
+                              height: 248,
+                              selectionWidth: 74,
+                              selectionHeight: 60,
                               value: state.selectedMeridiem,
                               options: timeMeridiemOptions,
                               theme: MechanixWheelScrollThemeData(
@@ -111,25 +99,15 @@ class _TimeSettingsState extends State<TimeSettings> {
                           ],
                         ),
                       ),
-                      MechanixWheelScroll(
-                        width: 124,
-                        height: 220,
-                        selectionWidth: 116,
-                        selectionHeight: 56,
-                        value: state.selectedTimezone,
-                        options: timeZones,
-                        onSelectedItemChanged: (value) {
-                          context
-                              .read<DateTimeBloc>()
-                              .add(SetSelectedTimezoneEvent(value));
-                        },
-                      ),
                     ],
-                  ),
-                  ApplyButton()
+                  ).padTop(100),
                 ],
               ).padTop(8),
             ),
+          ),
+          bottomNavigationBar: MechanixBottomBar(
+            leadingWidget: [context.backButton],
+            anchorWidget: const [BottomBarButton.widget(widget: ApplyButton())],
           ),
         );
       },

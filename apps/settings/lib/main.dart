@@ -6,8 +6,13 @@ import 'package:mechanix_settings/src/features/about/bloc/about_bloc.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository.dart';
 import 'package:mechanix_settings/src/features/about/data/about_repository_impl.dart';
 import 'package:mechanix_settings/src/features/about/presentation/about.dart';
+import 'package:mechanix_settings/src/features/appearance/bloc/appearance_bloc.dart';
+import 'package:mechanix_settings/src/features/appearance/data/appearance_repository.dart';
+import 'package:mechanix_settings/src/features/appearance/data/appearance_repository_impl.dart';
 import 'package:mechanix_settings/src/features/appearance/presentation/appearance.dart';
-import 'package:mechanix_settings/src/features/appearance/presentation/apply_wallpaper.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/set_up_theme.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/set_up_wallpaper.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/wallpaper_preview.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
 import 'package:mechanix_settings/src/features/battery/data/battery_repository.dart';
@@ -30,6 +35,7 @@ import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.d
 import 'package:mechanix_settings/src/features/date_time/presentation/date_settings.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/date_time.dart';
 import 'package:mechanix_settings/src/features/date_time/presentation/time_settings.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/time_zone_list.dart';
 import 'package:mechanix_settings/src/features/display/bloc/display_bloc.dart';
 import 'package:mechanix_settings/src/features/display/data/display_repository.dart';
 import 'package:mechanix_settings/src/features/display/data/display_repository_impl.dart';
@@ -94,6 +100,9 @@ void main() async {
         ),
         RepositoryProvider<AboutRepository>(
           create: (_) => AboutRepositoryImpl(),
+        ),
+        RepositoryProvider<AppearanceRepository>(
+          create: (_) => AppearanceRepositoryImpl(),
         ),
       ],
       child: MechanixSettingsApp(),
@@ -196,50 +205,50 @@ class MainApp extends StatelessWidget {
       providers: [
         // Sound Bloc
         BlocProvider(
-          create: (context) =>
-              SoundBloc(soundRepository: context.read<SoundRepository>())
-                ..add(InitializeSound())
-                ..add(GetOutputDeviceList())
-                ..add(GetInputDeviceList()),
+          create: (context) => SoundBloc(
+            soundRepository: context.read<SoundRepository>(),
+          )..add(InitializeSound()),
         ),
-
         // Bluetooth Bloc
         BlocProvider(
           create: (context) => BluetoothBloc(
-              bluetoothRepository: context.read<BluetoothRepository>())
-            ..add(InitBluetooth()),
+            bluetoothRepository: context.read<BluetoothRepository>(),
+          )..add(InitBluetooth()),
         ),
-
         // Battery Bloc
         BlocProvider(
-          create: (context) =>
-              BatteryBloc(batteryRepository: context.read<BatteryRepository>())
-                ..add(BatteryInfoRequested()),
+          create: (context) => BatteryBloc(
+            batteryRepository: context.read<BatteryRepository>(),
+          )..add(BatteryInfoRequested()),
         ),
-
         // Display Bloc
         BlocProvider(
-          create: (context) =>
-              DisplayBloc(displayRepository: context.read<DisplayRepository>())
-                ..add(GetDefaultSettingsEvent()),
+          create: (context) => DisplayBloc(
+            displayRepository: context.read<DisplayRepository>(),
+          )..add(GetDefaultSettingsEvent()),
         ),
-
         // DateTime Bloc
         BlocProvider(
           create: (context) => DateTimeBloc()..add(GetDateTimeData()),
         ),
-
         // ConnectNetwork Bloc (note: this might need special handling)
         BlocProvider(
           create: (context) => ConnectNetworkBloc(
-              wifiRepository: context.read<WifiRepository>()),
+            wifiRepository: context.read<WifiRepository>(),
+          ),
         ),
-
         // About Bloc
         BlocProvider(
-          create: (context) =>
-              AboutBloc(aboutRepository: context.read<AboutRepository>())
-                ..add(InitializeAbout()),
+          create: (context) => AboutBloc(
+            aboutRepository: context.read<AboutRepository>(),
+          )..add(InitializeAbout()),
+        ),
+
+        // Appearance Bloc
+        BlocProvider(
+          create: (context) => AppearanceBloc(
+            appearanceRepository: context.read<AppearanceRepository>(),
+          )..add(AppearanceInit()),
         ),
       ],
       child: MaterialApp(
@@ -254,7 +263,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.vibrationLevel: (context) => const VibrationLevel(),
           AppRoutes.soundOutputDevices: (context) => const OutputDevices(),
           AppRoutes.soundInputDevices: (context) => const InputDevices(),
-          AppRoutes.notificationSound: (context) => const NotificationSound(),
+          AppRoutes.notificationSound: (context) => const NotificationSounds(),
 
           // Wireless Routes
           AppRoutes.wireless: (context) => BlocProvider(
@@ -282,7 +291,6 @@ class MainApp extends StatelessWidget {
                 child: const SavedNetworkDetails(network: null),
               ),
           AppRoutes.wirelessConnectSecureNetwork: (context) =>
-              // const ConnectSecureNetwork(),
               BlocProvider.value(
                 value: context.read<WirelessSettingsBloc>(),
                 child: const ConnectSecureNetwork(),
@@ -312,13 +320,18 @@ class MainApp extends StatelessWidget {
           AppRoutes.battery: (context) => const Battery(),
           AppRoutes.batteryPerformance: (context) => const BatteryPerformance(),
 
+          // Appearance Routes
+          AppRoutes.appearance: (context) => const Appearance(),
+          AppRoutes.setTheme: (context) => const SetUpTheme(),
+          AppRoutes.setWallpaper: (context) => const SetUpWallpaper(),
+          AppRoutes.wallpaperPreview: (context) => const WallpaperPreview(),
+
           // Display Routes
           AppRoutes.display: (context) => const DisplayPage(),
-          AppRoutes.appearance: (context) => const Appearance(),
-          AppRoutes.applyWallpaper: (context) => const ApplyWallpaper(),
           AppRoutes.displayScreenOffTime: (context) =>
               const ScreenOffTimeSettings(),
           AppRoutes.lockScreenTimeout: (context) => const LockScreenTimeout(),
+          AppRoutes.timeZone: (context) => const TimeZoneList(),
 
           // Other Routes
           AppRoutes.about: (context) => const About(),
@@ -342,3 +355,55 @@ class MainApp extends StatelessWidget {
     );
   }
 }
+// class _MechanixSettingsAppContentState
+//     extends State<_MechanixSettingsAppContent> {
+//   DBusClient? _bus;
+//   ThemeSettingsService? _themeService;
+//   bool _isInitialized = false;
+//   Future<MechanixThemeData?>? _themeFuture; // ✅ Single future
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _initializeTheme();
+//   }
+
+//   Future<void> _initializeTheme() async {
+//     _bus = DBusClient.session();
+//     _themeService = ThemeSettingsService(_bus!);
+//     _themeService!.listenForThemeChanges(_handleThemeChange);
+//     _themeFuture = _fetchInitialTheme(); // ✅ Store future
+//   }
+
+//   Future<MechanixThemeData?> _fetchInitialTheme() async {
+//     final colors = await _themeService!.fetchCurrentTheme();
+//     return colors != null ? _themeService!.colorsToThemeData(colors) : null;
+//   }
+
+//   void _handleThemeChange(Map<String, String> colors) {
+//     if (mounted) setState(() {}); // Trigger rebuild
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return FutureBuilder<MechanixThemeData?>(
+//       future: _themeFuture,
+//       builder: (context, snapshot) {
+//         if (!snapshot.hasData) {
+//           // ✅ Show NOTHING (no flash!)
+//           return const SizedBox.shrink();
+//         }
+
+//         final themeData = snapshot.data!;
+//         return MechanixTheme(
+//           data: themeData,
+//           builder: (context, mechanix, child) => MainApp(
+//             darkTheme: mechanix.darkTheme,
+//             lightTheme: mechanix.lightTheme,
+//             themeMode: widget.themeMode,
+//           ),
+//         );
+//       },
+//     );
+//   }
+// }

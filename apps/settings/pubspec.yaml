@@ -151,6 +151,32 @@ flutter:
     - assets/images/security_icon.png
     - assets/images/update_icon.png
     - assets/images/block_icon.png
+    - assets/images/amber_view_1.png
+    - assets/images/amber_view_2.png
+    - assets/images/amber_view_3.png
+    - assets/images/wallpaper_1.png
+    - assets/images/wallpaper_2.png
+    - assets/images/wallpaper_3.png
+    - assets/images/wallpaper_4.png
+    - assets/images/wallpaper_5.png
+    - assets/images/wallpaper_6.png
+    - assets/images/theme_preview_amber.png
+    - assets/images/theme_preview_blue.png
+    - assets/images/theme_preview_coral.png
+    - assets/images/theme_preview_mint.png
+    - assets/images/theme_preview_orange.png
+    - assets/images/theme_preview_magenta.png
+    - assets/images/theme_preview_purple.png
+    - assets/images/theme_preview_yellow.png
+    - assets/images/wallpaper_amber.png
+    - assets/images/wallpaper_amber.png
+    - assets/images/wallpaper_blue.png
+    - assets/images/wallpaper_coral.png
+    - assets/images/wallpaper_mint.png
+    - assets/images/wallpaper_orange.png
+    - assets/images/wallpaper_magenta.png
+    - assets/images/wallpaper_purple.png
+    - assets/images/wallpaper_yellow.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

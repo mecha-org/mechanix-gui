@@ -1,3 +1,4 @@
+import 'package:widgets/widgets/select/select_type.dart';
 import 'package:widgets/widgets/wheel_scroll/wheel_scroll_options_type.dart';
 
 final List<WheelScrollOption<int>> hours12Options = List.generate(12, (index) {
@@ -23,8 +24,8 @@ final List<WheelScrollOption<int>> minutesOptions = List.generate(
         ));
 
 final List<WheelScrollOption<String>> timeMeridiemOptions = [
-  WheelScrollOption(label: 'AM', value: 'AM'),
-  WheelScrollOption(label: 'PM', value: 'PM'),
+  const WheelScrollOption(label: 'AM', value: 'AM'),
+  const WheelScrollOption(label: 'PM', value: 'PM'),
 ];
 
 final List<int> days = List.generate(31, (i) => i + 1);
@@ -71,66 +72,66 @@ int getIndex<T>(List<WheelScrollOption<T>> list, T value) {
 }
 
 final List<WheelScrollOption<int>> shortWeekdays = [
-  WheelScrollOption(label: 'Mon', value: 1),
-  WheelScrollOption(label: 'Tue', value: 2),
-  WheelScrollOption(label: 'Wed', value: 3),
-  WheelScrollOption(label: 'Thu', value: 4),
-  WheelScrollOption(label: 'Fri', value: 5),
-  WheelScrollOption(label: 'Sat', value: 6),
-  WheelScrollOption(label: 'Sun', value: 7),
+  const WheelScrollOption(label: 'Mon', value: 1),
+  const WheelScrollOption(label: 'Tue', value: 2),
+  const WheelScrollOption(label: 'Wed', value: 3),
+  const WheelScrollOption(label: 'Thu', value: 4),
+  const WheelScrollOption(label: 'Fri', value: 5),
+  const WheelScrollOption(label: 'Sat', value: 6),
+  const WheelScrollOption(label: 'Sun', value: 7),
 ];
 
 final List<WheelScrollOption<int>> longWeekdays = [
-  WheelScrollOption(label: 'Monday', value: 1),
-  WheelScrollOption(label: 'Tuesday', value: 2),
-  WheelScrollOption(label: 'Wednesday', value: 3),
-  WheelScrollOption(label: 'Thursday', value: 4),
-  WheelScrollOption(label: 'Friday', value: 5),
-  WheelScrollOption(label: 'Saturday', value: 6),
-  WheelScrollOption(label: 'Sunday', value: 7),
+  const WheelScrollOption(label: 'Monday', value: 1),
+  const WheelScrollOption(label: 'Tuesday', value: 2),
+  const WheelScrollOption(label: 'Wednesday', value: 3),
+  const WheelScrollOption(label: 'Thursday', value: 4),
+  const WheelScrollOption(label: 'Friday', value: 5),
+  const WheelScrollOption(label: 'Saturday', value: 6),
+  const WheelScrollOption(label: 'Sunday', value: 7),
 ];
 
 // Short form
 final List<WheelScrollOption<int>> shortMonths = [
-  WheelScrollOption(label: 'Jan', value: 1),
-  WheelScrollOption(label: 'Feb', value: 2),
-  WheelScrollOption(label: 'Mar', value: 3),
-  WheelScrollOption(label: 'Apr', value: 4),
-  WheelScrollOption(label: 'May', value: 5),
-  WheelScrollOption(label: 'Jun', value: 6),
-  WheelScrollOption(label: 'Jul', value: 7),
-  WheelScrollOption(label: 'Aug', value: 8),
-  WheelScrollOption(label: 'Sep', value: 9),
-  WheelScrollOption(label: 'Oct', value: 10),
-  WheelScrollOption(label: 'Nov', value: 11),
-  WheelScrollOption(label: 'Dec', value: 12),
+  const WheelScrollOption(label: 'Jan', value: 1),
+  const WheelScrollOption(label: 'Feb', value: 2),
+  const WheelScrollOption(label: 'Mar', value: 3),
+  const WheelScrollOption(label: 'Apr', value: 4),
+  const WheelScrollOption(label: 'May', value: 5),
+  const WheelScrollOption(label: 'Jun', value: 6),
+  const WheelScrollOption(label: 'Jul', value: 7),
+  const WheelScrollOption(label: 'Aug', value: 8),
+  const WheelScrollOption(label: 'Sep', value: 9),
+  const WheelScrollOption(label: 'Oct', value: 10),
+  const WheelScrollOption(label: 'Nov', value: 11),
+  const WheelScrollOption(label: 'Dec', value: 12),
 ];
 
 // Long form
 final List<WheelScrollOption<int>> longMonths = [
-  WheelScrollOption(label: 'January', value: 1),
-  WheelScrollOption(label: 'February', value: 2),
-  WheelScrollOption(label: 'March', value: 3),
-  WheelScrollOption(label: 'April', value: 4),
-  WheelScrollOption(label: 'May', value: 5),
-  WheelScrollOption(label: 'June', value: 6),
-  WheelScrollOption(label: 'July', value: 7),
-  WheelScrollOption(label: 'August', value: 8),
-  WheelScrollOption(label: 'September', value: 9),
-  WheelScrollOption(label: 'October', value: 10),
-  WheelScrollOption(label: 'November', value: 11),
-  WheelScrollOption(label: 'December', value: 12),
+  const WheelScrollOption(label: 'January', value: 1),
+  const WheelScrollOption(label: 'February', value: 2),
+  const WheelScrollOption(label: 'March', value: 3),
+  const WheelScrollOption(label: 'April', value: 4),
+  const WheelScrollOption(label: 'May', value: 5),
+  const WheelScrollOption(label: 'June', value: 6),
+  const WheelScrollOption(label: 'July', value: 7),
+  const WheelScrollOption(label: 'August', value: 8),
+  const WheelScrollOption(label: 'September', value: 9),
+  const WheelScrollOption(label: 'October', value: 10),
+  const WheelScrollOption(label: 'November', value: 11),
+  const WheelScrollOption(label: 'December', value: 12),
 ];
 
-final List<WheelScrollOption<String>> timeZones = [
-  WheelScrollOption(label: 'IST', value: 'Asia/Kolkata'),
-  WheelScrollOption(label: 'PST', value: 'Asia/Manila'),
-  WheelScrollOption(label: 'CEST', value: 'Europe/Luxembourg'),
-  WheelScrollOption(label: 'CST', value: 'Asia/Macau'),
-  WheelScrollOption(label: 'AEST', value: 'Australia/Brisbane'),
-  WheelScrollOption(label: 'ACST', value: 'Australia/Broken_Hill'),
-  WheelScrollOption(label: 'CEST', value: 'Europe/Vatican'),
+final List<SelectOption<String>> selectTimeZones = [
+  const SelectOption(label: 'IST', value: 'Asia/Kolkata'),
+  const SelectOption(label: 'PST', value: 'Asia/Manila'),
+  const SelectOption(label: 'CEST', value: 'Europe/Luxembourg'),
+  const SelectOption(label: 'CST', value: 'Asia/Macau'),
+  const SelectOption(label: 'AEST', value: 'Australia/Brisbane'),
+  const SelectOption(label: 'ACST', value: 'Australia/Broken_Hill'),
+  const SelectOption(label: 'CEST', value: 'Europe/Vatican'),
 ];
 
-final WheelScrollOption<String> defaultTimeZones =
-    WheelScrollOption(label: 'IST', value: 'Asia/Kolkata');
+final SelectOption<String> defaultTimeZones =
+    const SelectOption(label: 'IST', value: 'Asia/Kolkata');

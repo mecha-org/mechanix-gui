@@ -35,7 +35,7 @@ minimized = { origin = { x = 0.0, y = 591.0 }, size = { width = 230.0, height = 
 maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
 
 [running_apps]
-navbar_size = { width = 199.22, height = 28.5 }
+navbar_size = { width = 80.0, height = 29.0 }
 
 [running_apps.layer_shell]
 layer = "top"
@@ -48,27 +48,16 @@ size = { width = 540.0, height = 620.0 }
 minimized = { origin = { x = 230.0, y = 591.0 }, size = { width = 80.0, height = 100.0 } }
 maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
 
-[universal_search]
-navbar_size = { width = 199.22, height = 28.5 }
-
-[universal_search.layer_shell]
-layer = "top"
-anchor = ["bottom"]
-namespace = "mechanix.universal.search"
-exclusive_zone = -1.0
-size = { width = 540.0, height = 620.0 }
 
 [homescreen]
 status_bar_size = { width = 540.0, height = 36.0 }
-navbar_size = { width = 199.22, height = 28.5 }
-navbar_height = 40.0
 
 [homescreen.layer_shell]
 layer = "bottom"
 anchor = ["top", "left", "right", "bottom"]
 namespace = "mechanix.homescreen"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 620.0 }
+size = { width = 540.0, height = 591.5 }
 
 
 [power_options.layer_shell]
@@ -85,6 +74,11 @@ namespace = "mechanix.app.drawer"
 exclusive_zone = 0.0
 size = { width = 540.0, height = 554.0 }
 
+[volume_slider]
+min_volume_level = 0.0
+max_volume_level = 100.0
+overlay_timeout_ms = 2000
+
 [volume_slider.layer_shell]
 layer = "overlay"
 anchor = ["bottom", "left"]
@@ -92,9 +86,9 @@ namespace = "mechanix.hardware_buttons.slider"
 exclusive_zone = 0.0
 size = { width = 37.0, height = 277.0 }
 
-[volume_slider]
-min_volume_level = 0.0
-max_volume_level = 100.0
+[volume_slider.input_regions]
+minimized = { origin = { x = 0.0, y = 0.0 }, size = { width = 0.0, height = 0.0 } }
+maximized = { origin = { x = 16, y = 172.0 }, size = { width = 52.0, height = 297.0 } }
 
 [launcher.layer_shell]
 layer = "bottom"

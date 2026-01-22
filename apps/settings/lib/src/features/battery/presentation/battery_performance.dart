@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_event.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_state.dart';
@@ -25,11 +27,11 @@ class BatteryPerformanceState extends State<BatteryPerformance> {
   Widget build(BuildContext context) {
     return BlocBuilder<BatteryBloc, BatteryState>(builder: (context, state) {
       return Scaffold(
-        appBar: const MechanixNavigationBar(title: 'Performance Mode'),
         body: ContainerWidget(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const CustomTitle(title: 'Performance Mode'),
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 MechanixSelect(
                   options: performanceOptions,
@@ -39,6 +41,9 @@ class BatteryPerformanceState extends State<BatteryPerformance> {
               ])
             ],
           ).padTop(8),
+        ),
+        bottomNavigationBar: MechanixBottomBar(
+          leadingWidget: [context.backButton],
         ),
       );
     });
