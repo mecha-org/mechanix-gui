@@ -59,7 +59,7 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: 36b15ec95e6043d4452054e7cd853711f4600cca
+      ref: d5e8f96f3baab583d58397df42ca1f84574bbd48
 
       # url: https://github.com/ojas-mecha/mechanix-ui.git
       # path: flutter/widgets
