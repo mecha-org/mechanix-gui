@@ -95,11 +95,6 @@ assets = [
         "755",
     ],
     [
-        "../../../assets/icons/homescreen/*",
-        "usr/share/mechanix/shell/assets/icons/homescreen/",
-        "755",
-    ],
-    [
         "../../../assets/icons/homescreen/extensions/*",
         "usr/share/mechanix/shell/assets/icons/homescreen/extensions/",
         "755",
@@ -150,9 +145,6 @@ assets = [
 
     # Lockscreen icons
     { source = "../../../assets/icons/lockscreen/*", dest = "/usr/share/mechanix/shell/assets/icons/lockscreen/", mode = "755" },
-
-    # Homescreen icons
-    { source = "../../../assets/icons/homescreen/*", dest = "/usr/share/mechanix/shell/assets/icons/homescreen/", mode = "755" },
 
     # Homescreen extensions icons
     { source = "../../../assets/icons/homescreen/extensions/*", dest = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/", mode = "755" },
