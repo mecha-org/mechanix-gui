@@ -12,11 +12,12 @@ use zbus::connection;
 pub const DISPLAY_CONNECTION_BUS_NAME: &str = "org.mechanix.services.Display";
 pub const HW_BUTTONS_CONNECTION_BUS_NAME: &str = "org.mechanix.services.HwButton";
 
-pub const BRIGHTNESS_PATH: &str = "/sys/class/backlight/backlight/brightness";
-pub const POWER_BUTTON_PATH: &str = "/dev/input/event3";
-pub const HOME_BUTTON_PATH: &str = "/dev/input/event3";
+pub const BRIGHTNESS_PATH: &str = "/sys/class/backlight/32e60000.mipi_dsi.0/brightness";
+pub const POWER_BUTTON_PATH: &str = "/dev/input/event0";
+pub const HOME_BUTTON_PATH: &str = "/dev/input/event2";
 pub const VOLUME_UP_BUTTON_PATH: &str = "/dev/input/event3";
-pub const VOLUME_DOWN_BUTTON_PATH: &str = "/dev/input/event3";
+pub const VOLUME_DOWN_BUTTON_PATH: &str = "/dev/input/event4";
+pub const EXTENSION_PATH: &str = "/dev/input/event3";
 pub const SERVED_AT: &str = "/org/mechanix/services/Display";
 
 struct SystemPaths {
@@ -25,6 +26,7 @@ struct SystemPaths {
     home_button_path: String,
     volume_up_button_path: String,
     volume_down_button_path: String,
+    extension_path: String
 }
 
 fn get_system_paths() -> SystemPaths {
@@ -48,6 +50,10 @@ fn get_system_paths() -> SystemPaths {
         std::env::var("VOLUME_DOWN_BUTTON_PATH").unwrap_or(VOLUME_DOWN_BUTTON_PATH.to_string());
     debug!("volume down button path: {}", volume_down_button_path);
 
+    let extension_path =
+        std::env::var("EXTENSION_PATH").unwrap_or(EXTENSION_PATH.to_string());
+    debug!("extension path: {}", extension_path);
+
 
     SystemPaths {
         display_brightness_path,
@@ -55,6 +61,7 @@ fn get_system_paths() -> SystemPaths {
         home_button_path,
         volume_up_button_path,
         volume_down_button_path,
+        extension_path
     }
 }
 
@@ -89,6 +96,7 @@ async fn main() -> Result<()> {
             String::from(paths.home_button_path),
             String::from(paths.volume_up_button_path),
             String::from(paths.volume_down_button_path),
+            String::from(paths.extension_path),
         )
         .await
         {
