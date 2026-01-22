@@ -30,6 +30,10 @@ const GROUP_GAP: f32 = 10.0; // gap_2p5()
 const LIST_PADDING_TOP: f32 = 12.0;
 const LIST_PADDING_BOTTOM: f32 = 12.0;
 
+const ANIMATION_DURATION_MS: f32 = 250.0;
+const ANIMATION_FRAME_MS: u64 = 16;
+
+
 pub struct DragInfo {
     pub position: Point<Pixels>,
 }
@@ -737,12 +741,12 @@ impl NotificationCenter {
     pub fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
         let start = self.position;
         let change = target - start;
-        let duration_ms = 250.0; // Animation speed
         let start_time = std::time::Instant::now();
+        let closed_pos = Self::closed_pos(cx);
 
         if target == 0.0 {
             self.is_visible = true;
-        } else if target == Self::closed_pos(cx) {
+        } else if target == closed_pos {
             self.is_visible = false;
         }
 
@@ -752,12 +756,12 @@ impl NotificationCenter {
                     let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
 
                     // Check if animation is done
-                    if elapsed >= duration_ms {
+                    if elapsed >= ANIMATION_DURATION_MS {
                         this.update(cx, |this, cx| {
                             this.position = target;
                             if target == 0.0 {
                                 this.is_visible = true;
-                            } else if target == Self::closed_pos(cx) {
+                            } else if target == closed_pos {
                                 this.is_visible = false;
                             }
                             cx.notify();
@@ -766,13 +770,13 @@ impl NotificationCenter {
                         break;
                     }
 
-                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let t = (elapsed / ANIMATION_DURATION_MS).clamp(0.0, 1.0);
                     let ease = 1.0 - (1.0 - t).powi(3);
                     let current = start + (change * ease);
 
                     this.update(cx, |this, cx| {
                         this.position = current;
-                        if current < (Self::closed_pos(cx) / 2.0) {
+                        if current < (closed_pos / 2.0) {
                             this.is_visible = true;
                         } else {
                             this.is_visible = false;
@@ -782,7 +786,7 @@ impl NotificationCenter {
                     .ok();
 
                     cx.background_executor()
-                        .timer(std::time::Duration::from_millis(16))
+                        .timer(std::time::Duration::from_millis(ANIMATION_FRAME_MS))
                         .await;
                 }
             },
@@ -810,17 +814,6 @@ impl Render for NotificationCenter {
             .w_full()
             .h_full()
             .font_family(primary_font)
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|this, event: &MouseDownEvent, _window, cx| {
-                    if this.is_visible {
-                        cx.stop_propagation();
-                        this.drag_start_pos = this.position;
-                        this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
-                        cx.notify();
-                    }
-                }),
-            )
             .on_mouse_move(
                 cx.listener(move |this, event: &MouseMoveEvent, _window, cx| {
                     if let Some(offset) = this.drag_offset {
@@ -1769,6 +1762,15 @@ impl NotificationCenter {
             .w(notifications_center_size.width - px(1.5))
             .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                    cx.stop_propagation();
+                    this.drag_start_pos = this.position;
+                    this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
+                    cx.notify();
+                }),
+            )
             .child(
                 div()
                     .id("nc-center-container")
