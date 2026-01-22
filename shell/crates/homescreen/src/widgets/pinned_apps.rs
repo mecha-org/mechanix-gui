@@ -1,7 +1,8 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, pin};
 
-use crate::widgets::HomescreenWidget;
-use gpui::*;
+use crate::{widgets::HomescreenWidget, PinnedAppsState};
+use dispatcher::Dispatcher;
+use gpui::{prelude::FluentBuilder, *};
 use theme::{ActiveFonts, ActiveTheme};
 
 pub struct PinnedApps {
@@ -27,6 +28,20 @@ impl PinnedApps {
             has_border,
         }
     }
+
+    pub fn on_app_click(possible_app_id: String, exec: String, cx: &mut App) {
+        let sender = Dispatcher::global(cx).0.clone();
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: possible_app_id,
+                        exec,
+                    })
+                    .await;
+            })
+            .detach();
+    }
 }
 
 impl Default for PinnedApps {
@@ -38,7 +53,10 @@ impl Default for PinnedApps {
 impl HomescreenWidget for PinnedApps {
     fn render(&self, cx: &mut gpui::App) -> gpui::AnyElement {
         let primary = cx.fonts().primary.clone();
-        let text_color = cx.theme().colors.accent_200.clone();
+        let colors = cx.theme().colors.clone();
+        let text_color = colors.accent_200.clone();
+        let pinned_apps = PinnedAppsState::global(cx).apps.clone();
+        let icon_bg_color = colors.background_800.clone();
 
         div()
             .size_full()
@@ -54,6 +72,44 @@ impl HomescreenWidget for PinnedApps {
                     .font_family(primary)
                     .text_color(text_color)
                     .child("Apps"),
+            )
+            .child(
+                div()
+                    .absolute()
+                    .top(px(48.))
+                    .left(px(24.))
+                    .w(px(460.))
+                    .h(px(172.))
+                    .grid()
+                    .grid_cols(5)
+                    .grid_rows(2)
+                    .gap(px(20.))
+                    .children(pinned_apps.iter().enumerate().map(|(idx, app)| {
+                        let app_id = app.possible_app_id.clone();
+                        let exec = app.exec.clone();
+                        div()
+                            .id(idx)
+                            .bg(icon_bg_color)
+                            .size(px(76.))
+                            .rounded(px(7.6))
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .cursor_pointer()
+                            .on_click(move |_, _, cx| {
+                                Self::on_app_click(app_id.clone(), exec.clone(), cx);
+                            })
+                            .when_some(app.icon_path.clone(), |this, icon| {
+                                this.child(
+                                    div()
+                                        .size(px(49.5))
+                                        .flex()
+                                        .items_center()
+                                        .justify_center()
+                                        .child(img(PathBuf::from(icon)).size_full()),
+                                )
+                            })
+                    })),
             )
             .into_any_element()
     }
