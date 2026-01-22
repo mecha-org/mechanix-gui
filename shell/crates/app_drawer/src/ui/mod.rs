@@ -11,6 +11,7 @@ use settings::prelude::Settings;
 use std::collections::HashMap;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use theme::prelude::{AlphaExt, Fonts, Theme};
 
@@ -911,7 +912,7 @@ impl AppDrawer {
     pub fn resolved_icon(app_icon: &Option<String>, cx: &mut gpui::App) -> Img {
         let icons = Icons::global(cx).app_drawer.clone();
         match app_icon {
-            Some(path) if !path.trim().is_empty() => img(path.clone()).size_full(),
+            Some(path) if !path.trim().is_empty() => img(PathBuf::from(path.clone())).size_full(),
             _ => img(icons.default_app).size_full(),
         }
     }
