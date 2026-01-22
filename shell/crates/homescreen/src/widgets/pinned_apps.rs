@@ -56,7 +56,7 @@ impl HomescreenWidget for PinnedApps {
         let colors = cx.theme().colors.clone();
         let text_color = colors.accent_200.clone();
         let pinned_apps = PinnedAppsState::global(cx).apps.clone();
-        let icon_bg_color = colors.background_800.clone();
+        let icon_bg_color = colors.background_600.clone();
 
         div()
             .size_full()
@@ -96,6 +96,7 @@ impl HomescreenWidget for PinnedApps {
                             .items_center()
                             .justify_center()
                             .cursor_pointer()
+                            .active(|this| this.bg(colors.background_700))
                             .on_click(move |_, _, cx| {
                                 Self::on_app_click(app_id.clone(), exec.clone(), cx);
                             })
