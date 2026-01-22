@@ -12,9 +12,9 @@ use icons::prelude::*;
 use models::{DragInfo, SearchResults, UniversalSearch};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{Settings, UniversalSearchSettings};
+use settings::prelude::Settings;
 use theme::ActiveTheme;
-use theme::prelude::{AlphaExt, Theme, Fonts};
+use theme::prelude::{AlphaExt, Fonts, Theme};
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const FILE_SECTION_HEIGHT: f32 = 52.0;
@@ -44,9 +44,6 @@ impl Render for DragInfo {
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let files_app_name = Settings::global(cx).system_apps.clone().files;
-        let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
-        let navbar_size = Settings::global(cx).universal_search.clone().navbar_size;
-
         cx.spawn(async move |this, cx| {
             if let Ok(service) = MxSearchService::new().await {
                 let mut files_app: Option<AppInfo> = None;
@@ -75,6 +72,13 @@ impl UniversalSearch {
             ..
         } = Icons::global(cx).universal_search.clone();
 
+        let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
+        let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let app_size = gpui::size(
+            homesceen_size.width,
+            homesceen_size.height - status_bar_size.height,
+        );
+
         Self {
             app_count: 0,
             file_count: 0,
@@ -93,7 +97,7 @@ impl UniversalSearch {
             text_input: cx.new(|cx| TextInput::new(cx)),
             last_search_query: String::new(),
             is_searching: false,
-            position: Self::closed_pos(app_size, navbar_size),
+            position: app_size.height.into(),
             drag_offset: None,
             drag_start_pos: 0.0,
             search_service: None,
@@ -165,7 +169,11 @@ impl UniversalSearch {
         self.is_dragging = false;
     }
 
-    fn calculate_scroll_bounds(&self, app_size: Size<Pixels>, content_height: Pixels) -> (Pixels, Pixels) {
+    fn calculate_scroll_bounds(
+        &self,
+        app_size: Size<Pixels>,
+        content_height: Pixels,
+    ) -> (Pixels, Pixels) {
         let container_height = app_size.height - px(SEARCH_BAR_HEIGHT);
 
         if content_height <= container_height {
@@ -231,11 +239,15 @@ impl UniversalSearch {
             return;
         }
 
-         let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
-
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
         let content_height = self.estimate_content_height();
+        let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
+        let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let app_size = gpui::size(
+            homesceen_size.width,
+            homesceen_size.height - status_bar_size.height,
+        );
         let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
@@ -277,11 +289,6 @@ impl Render for UniversalSearch {
 }
 
 impl UniversalSearch {
- 
-    fn closed_pos(app_size: Size<Pixels>, navbar_size: Size<Pixels>) -> f32 {
-        (app_size.height - navbar_size.height).into()
-    }
-
     fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
         let start = self.position;
         let change = target - start;
@@ -496,7 +503,12 @@ impl UniversalSearch {
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
-        let app_size = Settings::global(cx).universal_search.clone().layer_shell.size;
+        let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
+        let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let app_size = gpui::size(
+            homesceen_size.width,
+            homesceen_size.height - status_bar_size.height,
+        );
 
         // Initialize text input
         self.text_input.update(cx, |input, _| {

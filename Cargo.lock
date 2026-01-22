@@ -3220,10 +3220,14 @@ dependencies = [
  "anyhow",
  "app_drawer",
  "commons",
+ "dispatcher",
  "gpui",
+ "icons",
  "rust-embed",
  "settings",
+ "shell_state",
  "status_bar",
+ "sysinfo 0.33.1",
  "theme",
  "universal_search",
 ]
@@ -3990,6 +3994,7 @@ dependencies = [
  "dispatcher",
  "futures",
  "gpui",
+ "mxconf_dbus",
  "rust-embed",
  "settings",
  "shell_state",
@@ -5610,7 +5615,7 @@ dependencies = [
  "once_cell",
  "socket2 0.6.1",
  "tracing",
- "windows-sys 0.52.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -7056,6 +7061,20 @@ name = "sysinfo"
 version = "0.31.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "355dbe4f8799b304b05e1b0f05fc59b2a18d36645cf169607da45bde2f69a1be"
+dependencies = [
+ "core-foundation-sys",
+ "libc",
+ "memchr",
+ "ntapi",
+ "rayon",
+ "windows 0.57.0",
+]
+
+[[package]]
+name = "sysinfo"
+version = "0.33.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fc858248ea01b66f19d8e8a6d55f41deaf91e9d495246fd01368d99935c6c01"
 dependencies = [
  "core-foundation-sys",
  "libc",
@@ -9468,7 +9487,7 @@ dependencies = [
  "rand 0.8.5",
  "screencapturekit",
  "screencapturekit-sys",
- "sysinfo",
+ "sysinfo 0.31.4",
  "tao-core-video-sys",
  "windows 0.61.3",
  "windows-capture",
