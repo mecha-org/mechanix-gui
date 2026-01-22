@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:io' as io;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,13 +14,16 @@ import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/conflict_resolution_bottomsheet.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
+import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
+import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
@@ -28,12 +31,10 @@ import 'package:widgets/widgets/menu/constants/menu_positions.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/notification/notification_type.dart';
-import 'view_mode_notifier.dart';
+
 import 'grid_view.dart';
 import 'list_view.dart';
-import 'package:mechanix_files/src/features/files/models/types.dart';
-import 'package:path/path.dart' as p;
-import 'package:widgets/mechanix.dart';
+import 'view_mode_notifier.dart';
 
 class FileExplorerPage extends StatefulWidget {
   final String title;
@@ -89,6 +90,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   bool isCopyPressed = false;
   bool isSharePressed = false;
   bool isDeletePressed = false;
+  bool isTextInputOpened = false;
   final FocusNode _focusNode = FocusNode();
 
   @override
@@ -169,6 +171,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _fabController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> focusChange() async {
+    if (!_focusNode.hasFocus) {
+      await Future.delayed(const Duration(milliseconds: 300));
+    }
+
+    setState(() => isTextInputOpened = _focusNode.hasFocus);
   }
 
   final FloatingActionBarController _fabController =
@@ -455,13 +465,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     _searchOverlayEntry = OverlayEntry(builder: (ctx) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await Future.delayed(const Duration(milliseconds: 300));
-
+        _focusNode.addListener(focusChange);
         if (!mounted) return;
         if (!_focusNode.canRequestFocus) return;
         if (_searchOverlayEntry == null) return; // overlay still exists
 
-        FocusManager.instance.primaryFocus?.unfocus();
-        _focusNode.requestFocus();
+        // FocusManager.instance.primaryFocus?.unfocus();
+        // _focusNode.requestFocus();
       });
 
       return Positioned(
@@ -470,11 +480,11 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         bottom: 0,
         child: Material(
           color: Colors.transparent,
-          child: SizedBox(
-            height: 60,
+          child: Container(
+            color: context.secondaryContainer,
             child: MechanixTextInput.search(
-              autofocus: false,
-              canRequestFocus: true,
+              autofocus: true,
+              // canRequestFocus: true,
               focusNode: _focusNode,
               prefixIcon: IconWidget(
                 iconPath: Images.search,
@@ -635,6 +645,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   Widget _buildBottomActionMenuBar(BuildContext context) {
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
+        height: isTextInputOpened ? 65 : 90,
         decoration: BoxDecoration(
             color: context.colorScheme.secondaryContainer,
             borderRadius: selectionMode
@@ -1221,8 +1232,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   padding: EdgeInsets.only(
                     bottom: MediaQuery.of(ctx).viewInsets.bottom,
                   ),
-                  child: SizedBox(
-                    height: 60,
+                  child: Container(
+                    height: 90,
                     child: MechanixTextInput.textInput(
                       autofocus: true,
                       canRequestFocus: true,
@@ -1537,12 +1548,20 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     entry = OverlayEntry(
       builder: (ctx) {
+        _focusNode.addListener(focusChange);
+
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!_focusNode.canRequestFocus) return;
           if (entry == null) return;
 
-          FocusManager.instance.primaryFocus?.unfocus();
-          _focusNode.requestFocus();
+          // FocusManager.instance.primaryFocus?.unfocus();
+          // _focusNode.requestFocus();
+
+          print("_focusNode.hasFocus");
+          print(_focusNode.hasFocus);
+          // setState(() {
+          //   isTextInputOpened = _focusNode.hasFocus;
+          // });
         });
 
         return Positioned(
@@ -1558,66 +1577,65 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 final bool showCheck = !isEmpty && !isSame;
 
                 return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(ctx).viewInsets.bottom,
-                  ),
-                  child: SizedBox(
-                    height: 60,
-                    child: MechanixTextInput.textInput(
-                      autofocus: true,
-                      canRequestFocus: true,
-                      focusNode: _focusNode,
-                      cursorColor: context.colorScheme.primaryContainer,
-                      onChanged: (v) {
-                        setState(() {
-                          folderName = v;
-                        });
+                  padding: EdgeInsets.zero,
+                  child: Column(children: [
+                    Container(
+                      color: context.surfaceContainerHigh,
+                      child: MechanixTextInput.textInput(
+                        autofocus: true,
+                        focusNode: _focusNode,
+                        cursorColor: context.colorScheme.primaryContainer,
+                        onChanged: (v) {
+                          setState(() {
+                            folderName = v;
+                          });
 
-                        controller.setLiveRename(oldPath, v);
-                      },
-                      initialValue: initialName,
-                      anchorWidget: showCheck
-                          ? IconButton(
-                              icon: Icon(Icons.check,
-                                  color: context.colorScheme.onSurface),
-                              onPressed: () {
-                                entry?.remove();
+                          controller.setLiveRename(oldPath, v);
+                        },
+                        initialValue: initialName,
+                        anchorWidget: showCheck
+                            ? IconButton(
+                                icon: Icon(Icons.check,
+                                    color: context.colorScheme.onSurface),
+                                onPressed: () {
+                                  entry?.remove();
 
-                                final newFullPath = p.join(
-                                  p.dirname(oldPath),
-                                  folderName,
-                                );
+                                  final newFullPath = p.join(
+                                    p.dirname(oldPath),
+                                    folderName,
+                                  );
 
-                                filesBloc.add(
-                                  Rename(
-                                    oldPath: oldPath,
-                                    newName: folderName,
-                                    controller: controller,
-                                  ),
-                                );
+                                  filesBloc.add(
+                                    Rename(
+                                      oldPath: oldPath,
+                                      newName: folderName,
+                                      controller: controller,
+                                    ),
+                                  );
 
-                                controller.clearLiveRename();
-                                controller.clearNewFolder();
+                                  controller.clearLiveRename();
+                                  controller.clearNewFolder();
 
-                                completer.complete(newFullPath);
-                              },
-                            )
-                          : IconButton(
-                              icon: Icon(
-                                Icons.close,
-                                color: context.colorScheme.onSurface,
-                                size: 24,
+                                  completer.complete(newFullPath);
+                                },
+                              )
+                            : IconButton(
+                                icon: Icon(
+                                  Icons.close,
+                                  color: context.colorScheme.onSurface,
+                                  size: 24,
+                                ),
+                                onPressed: () {
+                                  entry?.remove();
+                                  controller.clearLiveRename();
+                                  controller.clearNewFolder();
+                                  // Return null (cancel)
+                                  completer.complete(null);
+                                },
                               ),
-                              onPressed: () {
-                                entry?.remove();
-                                controller.clearLiveRename();
-                                controller.clearNewFolder();
-                                // Return null (cancel)
-                                completer.complete(null);
-                              },
-                            ),
+                      ),
                     ),
-                  ),
+                  ]),
                 );
               },
             ),
@@ -1658,10 +1676,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             MediaQuery.of(bottomSheetContext).size.width;
 
         return ClipPath(
-          clipper: TabClipper(shift: bottomSheetWidth * 0.5),
+          clipper: TabClipper(shift: 400),
           child: Container(
             padding:
-                const EdgeInsets.only(left: 16, right: 16, bottom: 16, top: 32),
+                const EdgeInsets.only(left: 16, right: 16, bottom: 30, top: 32),
             decoration: BoxDecoration(
               color: context.colorScheme.surfaceContainerHigh,
             ),
