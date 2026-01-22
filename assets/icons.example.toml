@@ -160,3 +160,8 @@
 "x" = "/usr/share/mechanix/shell/assets/icons/universal-search/x.svg"
 "xls-file" = "/usr/share/mechanix/shell/assets/icons/universal-search/xls-file.svg"
 "zip-file" = "/usr/share/mechanix/shell/assets/icons/universal-search/zip-file.svg"
+
+[homescreen]
+"gamepad" = "/usr/share/mechanix/shell/assets/icons/homescreen/gamepad.png"
+"keyboard" = "/usr/share/mechanix/shell/assets/icons/homescreen/keyboard.png"
+"gpio" = "/usr/share/mechanix/shell/assets/icons/homescreen/gpio.png"

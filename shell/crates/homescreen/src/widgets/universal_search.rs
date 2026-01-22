@@ -1,5 +1,5 @@
-use crate::Homescreen;
 use crate::widgets::HomescreenWidget;
+use crate::Homescreen;
 use gpui::*;
 use universal_search::prelude::UniversalSearch;
 
@@ -21,7 +21,7 @@ impl UniversalSearchWidget {
 }
 
 impl HomescreenWidget for UniversalSearchWidget {
-    fn render(&self) -> AnyElement {
+    fn render(&self, cx: &mut App) -> AnyElement {
         div()
             .size_full()
             .child(self.search_handle.clone())

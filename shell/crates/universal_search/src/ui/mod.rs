@@ -17,8 +17,9 @@ use theme::ActiveTheme;
 use theme::prelude::{AlphaExt, Fonts, Theme};
 
 const APP_SECTION_HEIGHT: f32 = 76.0;
-const FILE_SECTION_HEIGHT: f32 = 52.0;
+const ROW_SECTION_HEIGHT: f32 = 52.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
+const SEARCH_HEADER_HEIGHT: f32 = 44.;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const MIN_SEARCH_QUERY_LEN: usize = 3;
 
@@ -44,7 +45,6 @@ impl Render for DragInfo {
 impl UniversalSearch {
     pub fn new(cx: &mut Context<Self>) -> Self {
         let files_app_name = Settings::global(cx).system_apps.clone().files;
-
         cx.spawn(async move |this, cx| {
             if let Ok(service) = MxSearchService::new().await {
                 let mut files_app: Option<AppInfo> = None;
@@ -72,6 +72,13 @@ impl UniversalSearch {
             arrow_up_right: arrow_up_right_icon,
             ..
         } = Icons::global(cx).universal_search.clone();
+
+        let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
+        let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let app_size = gpui::size(
+            homesceen_size.width,
+            homesceen_size.height - status_bar_size.height,
+        );
 
         Self {
             app_count: 0,
@@ -164,10 +171,10 @@ impl UniversalSearch {
 
     fn calculate_scroll_bounds(
         &self,
+        app_size: Size<Pixels>,
         content_height: Pixels,
-        search_screen_size: Size<Pixels>,
     ) -> (Pixels, Pixels) {
-        let container_height = search_screen_size.height - px(SEARCH_BAR_HEIGHT);
+        let container_height = app_size.height - px(SEARCH_BAR_HEIGHT) - px(SEARCH_HEADER_HEIGHT);
 
         if content_height <= container_height {
             return (px(0.0), px(0.0));
@@ -179,13 +186,11 @@ impl UniversalSearch {
     }
 
     fn estimate_content_height(&self) -> Pixels {
-        let columns = 6.0;
-        let icon_rows = (self.app_count as f32 / columns).ceil();
-        let icon_section_height = px(APP_SECTION_HEIGHT) * icon_rows + px(16.0);
-        let file_section_height =
-            px(FILE_SECTION_HEIGHT + FILE_SECTION_DIVIDER_HEIGHT) * self.file_count as f32;
-
-        icon_section_height + file_section_height + px(16.0)
+        let total_rows_count = self.file_count + self.app_count;
+        if total_rows_count == 0 {
+            return px(0.0);
+        }
+        px(total_rows_count as f32 * ROW_SECTION_HEIGHT) + px(ROW_SECTION_HEIGHT)
     }
 
     fn is_search_result_empty(&self) -> bool {
@@ -242,14 +247,13 @@ impl UniversalSearch {
         let delta_y = event.event.position.y - self.drag_start_y;
         let new_scroll_offset = self.last_scroll_offset + delta_y;
         let content_height = self.estimate_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(
-            content_height,
-            gpui::size(
-                window.bounds().size.width,
-                window.bounds().size.height
-                    - Settings::global(cx).homescreen.status_bar_size.height,
-            ),
+        let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
+        let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let app_size = gpui::size(
+            homesceen_size.width,
+            homesceen_size.height - status_bar_size.height,
         );
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
 
         self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
         cx.notify();
@@ -318,7 +322,7 @@ impl UniversalSearch {
         let colors = Theme::global(cx).colors.clone();
         let icons = Icons::global(cx).universal_search.clone();
 
-        div().h(px(FILE_SECTION_HEIGHT)).w_full().child(
+        div().h(px(ROW_SECTION_HEIGHT)).w_full().child(
             div().size_full().flex().flex_row().items_center().child(
                 div()
                     .size_full()
@@ -488,6 +492,12 @@ impl UniversalSearch {
     ) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
+        let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
+        let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let app_size = gpui::size(
+            homesceen_size.width,
+            homesceen_size.height - status_bar_size.height,
+        );
 
         // Initialize text input
         self.text_input.update(cx, |input, _| {
@@ -508,15 +518,7 @@ impl UniversalSearch {
 
         // Calculate scroll bounds
         let content_height = self.estimate_content_height();
-        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(
-            content_height,
-            gpui::size(
-                window.bounds().size.width,
-                window.bounds().size.height
-                    - Settings::global(cx).homescreen.status_bar_size.height,
-            ),
-        );
-
+        let (min_scroll, max_scroll) = self.calculate_scroll_bounds(app_size, content_height);
         self.scroll_offset = self.scroll_offset.clamp(min_scroll, max_scroll);
 
         // Build content children
@@ -527,190 +529,200 @@ impl UniversalSearch {
         let entity = cx.entity();
 
         div()
-            .w_full()
-            .h_full()
-            .flex()
-            .flex_col()
-            .bg(colors.background_1000)
-            .font_family(primary_font.clone())
-            .on_drop(cx.listener(Self::on_drop))
-            .on_drag_move(cx.listener(Self::on_drag_move))
-            .child(
-                div()
-                    .id("content-container")
-                    .flex()
-                    .flex_col()
-                    .relative()
-                    .h_full()
-                    .overflow_hidden()
-                    .px_4()
-                    .child(
-                        div().w_full().h(px(44.)).flex().flex_col().child(
-                            div()
-                                .flex()
-                                .flex_row()
-                                .justify_between()
-                                .items_center()
-                                .h_full()
-                                .child(
-                                    div()
-                                        .font_family(primary_font)
-                                        .font_weight(FontWeight::MEDIUM)
-                                        .text_size(px(24.0))
-                                        .line_height(px(1.2))
-                                        .text_color(colors.foreground_200)
-                                        .child("Search"),
-                                )
-                                .child(
-                                    div()
-                                        .id("clear-result")
-                                        .text_size(px(16.0))
-                                        .text_color(if all_results.len() == 0 {
-                                            colors.background_800
-                                        } else {
-                                            colors.foreground_100
-                                        })
-                                        .on_click(cx.listener(
-                                            |this: &mut Self, _event, window, cx| {
-                                                this.clear_search_results(cx);
-                                                this.clear_text_input(cx, window);
-                                            },
-                                        ))
-                                        .child("Clear all"),
-                                ),
-                        ),
-                    )
-                    .when(content_children.len() == 0, |content_div| {
-                        content_div.child(
-                            div().flex().flex_col().h(px(16.)).py(px(10.)).child(
+        .w_full()
+        .h_full()
+        .flex()
+        .flex_col()
+        .bg(colors.background_1000)
+        .font_family(primary_font.clone())
+        .child(
+            div()
+                .id("content-container")
+                .flex()
+                .flex_col()
+                .relative()
+                .h_full()
+                .overflow_hidden()
+                .px_4()
+                .child(
+                    div()
+                        .w_full()
+                        .h(px(SEARCH_HEADER_HEIGHT))
+                        .flex()
+                        .flex_col()
+                        .child(
                                 div()
-                                    .font_weight(FontWeight::LIGHT)
-                                    .line_height(px(1.2))
-                                    .text_size(px(16.0))
-                                    .text_color(colors.foreground_900)
-                                    .child("Search an app, a file, a word or anything literally"),
-                            ),
-                        )
-                    })
-                    .child(
-                        div()
-                            .id("scrollable-content")
-                            .flex()
-                            .flex_col()
-                            .relative()
-                            .flex_1()
-                            .overflow_hidden()
-                            .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
-                                entity.update(cx, |this, cx| {
-                                    this.drag_start_y = position.y;
-                                    this.last_scroll_offset = this.scroll_offset;
-                                    this.is_dragging = true;
-                                    cx.stop_propagation();
-                                    cx.notify();
-                                });
-
-                                cx.new(|_| DragInfo::new().position(position))
-                            })
-                            .child(
-                                div()
-                                    .absolute()
-                                    .top(self.scroll_offset)
-                                    .w_full()
-                                    .flex()
-                                    .flex_col()
-                                    .my_1()
-                                    .children(content_children),
-                            ),
-                    ),
-            )
-            .child(
-                div()
-                    .h(px(SEARCH_BAR_HEIGHT))
-                    .w_full()
-                    .bottom(px(0.0))
-                    .child(
-                        div()
-                            .size_full()
-                            .flex()
-                            .flex_row()
-                            .items_center()
-                            .bg(colors.accent_300.with_alpha(0.1))
-                            .border_color(colors.background_700)
-                            .border_1()
-                            .py(px(6.))
-                            .child(
-                                div()
-                                    .w(px(488.))
-                                    .h(px(44.))
-                                    .ml_2()
                                     .flex()
                                     .flex_row()
                                     .justify_between()
                                     .items_center()
-                                    .bg(colors.background_800)
-                                    .border_color(colors.accent_500)
-                                    .border_1()
-                                    .rounded_sm()
+                                    .h_full()
                                     .child(
                                         div()
-                                            .flex()
-                                            .flex_row()
-                                            .items_center()
-                                            .child(
-                                                div()
-                                                    .flex()
-                                                    .flex_row()
-                                                    .items_center()
-                                                    .justify_center()
-                                                    .py_2()
-                                                    .ml_3()
-                                                    .mr_2()
-                                                    .w(px(24.0))
-                                                    .h(px(24.0))
-                                                    .rounded(px(8.0))
-                                                    .child(
-                                                        svg()
-                                                            .external_path(SharedString::from(
-                                                                search_icon
-                                                                    .to_string_lossy()
-                                                                    .to_string(),
-                                                            ))
-                                                            .size(px(24.0))
-                                                            .text_color(colors.accent_300),
-                                                    ),
-                                            )
-                                            .child(
-                                                div()
-                                                    .font_weight(FontWeight::MEDIUM)
-                                                    .line_height(px(1.25))
-                                                    .text_size(px(18.0))
-                                                    .text_color(colors.foreground_200)
-                                                    .child(text_input),
-                                            ),
-                                    ),
-                            )
-                            .child(
-                                div()
-                                    .w(px(40.))
-                                    .h(px(40.))
-                                    .flex()
-                                    .flex_row()
-                                    .items_center()
-                                    .justify_center()
-                                    .id("cancel-button")
-                                    .on_click(cx.listener(|this: &mut Self, _event, window, cx| {
-                                        this.clear_text_input(cx, window);
-                                    }))
+                                            .font_family(primary_font)
+                                            .font_weight(FontWeight::MEDIUM)
+                                            .text_size(px(24.0))
+                                            .line_height(px(1.2))
+                                            .text_color(colors.foreground_200)
+                                            .child("Search"),
+                                    )
                                     .child(
-                                        svg()
-                                            .external_path(SharedString::from(
-                                                x_icon.to_string_lossy().to_string(),
+                                        div()
+                                            .id("clear-result")
+                                            .text_size(px(16.0))
+                                            .text_color(if all_results.len() == 0 {
+                                                colors.background_800
+                                            } else {
+                                                colors.foreground_100
+                                            })
+                                            .on_click(cx.listener(
+                                                |this: &mut Self, _event, window, cx| {
+                                                    this.clear_search_results(cx);
+                                                    this.clear_text_input(cx, window);
+                                                },
                                             ))
-                                            .size(px(24.0))
-                                            .text_color(colors.foreground_400),
+                                            .child("Clear all"),
                                     ),
-                            ),
-                    ),
-            )
+                        ),
+                )
+                .child(
+                    div()
+                        .id("scroll-viewport")
+                        .relative()
+                        .flex_1()  
+                        .overflow_hidden()
+                        .on_drop(cx.listener(Self::on_drop))
+                        .on_drag_move(cx.listener(Self::on_drag_move))
+                        .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
+                            entity.update(cx, |this, cx| {
+                                this.drag_start_y = position.y;
+                                this.last_scroll_offset = this.scroll_offset;
+                                this.is_dragging = true;
+                                cx.stop_propagation();
+                                cx.notify();
+                            });
+
+                            cx.new(|_| DragInfo::new().position(position))
+                        })
+                        .when(content_children.len() == 0, |viewport| {
+                            viewport.child(
+                                div()
+                                    .flex()
+                                    .items_start()
+                                    .justify_start()
+                                    .h(px(16.)).py(px(10.))
+                                    .child(
+                                        div()
+                                            .font_weight(FontWeight::LIGHT)
+                                            .line_height(px(1.2))
+                                            .text_size(px(16.0))
+                                            .text_color(colors.foreground_900)
+                                            .child("Search an app, a file, a word or anything literally"),
+                                    )
+                            )
+                        })
+                        .when(content_children.len() > 0, |viewport| {
+                            viewport.child(
+                                div()
+                                    .absolute()
+                                    .top(self.scroll_offset)
+                                    .left(px(0.0))
+                                    .right(px(0.0))
+                                    .flex()
+                                    .flex_col()
+                                    .children(content_children),
+                            )
+                        }),
+                ),
+        )
+        .child(
+            div()
+                .h(px(SEARCH_BAR_HEIGHT))
+                .w_full()
+                .bottom(px(0.0))
+                .child(
+                    div()
+                        .size_full()
+                        .flex()
+                        .flex_row()
+                        .items_center()
+                        .bg(colors.accent_300.with_alpha(0.1))
+                        .border_color(colors.background_700)
+                        .border_1()
+                        .py(px(6.))
+                        .child(
+                            div()
+                                .w(px(488.))
+                                .h(px(44.))
+                                .ml_2()
+                                .flex()
+                                .flex_row()
+                                .justify_between()
+                                .items_center()
+                                .bg(colors.background_800)
+                                .border_color(colors.accent_500)
+                                .border_1()
+                                .rounded_sm()
+                                .child(
+                                    div()
+                                        .flex()
+                                        .flex_row()
+                                        .items_center()
+                                        .child(
+                                            div()
+                                                .flex()
+                                                .flex_row()
+                                                .items_center()
+                                                .justify_center()
+                                                .py_2()
+                                                .ml_3()
+                                                .mr_2()
+                                                .w(px(24.0))
+                                                .h(px(24.0))
+                                                .rounded(px(8.0))
+                                                .child(
+                                                    svg()
+                                                        .external_path(SharedString::from(
+                                                            search_icon
+                                                                .to_string_lossy()
+                                                                .to_string(),
+                                                        ))
+                                                        .size(px(24.0))
+                                                        .text_color(colors.accent_300),
+                                                ),
+                                        )
+                                        .child(
+                                            div()
+                                                .font_weight(FontWeight::MEDIUM)
+                                                .line_height(px(1.25))
+                                                .text_size(px(18.0))
+                                                .text_color(colors.foreground_200)
+                                                .child(text_input),
+                                        ),
+                                ),
+                        )
+                        .child(
+                            div()
+                                .w(px(40.))
+                                .h(px(40.))
+                                .flex()
+                                .flex_row()
+                                .items_center()
+                                .justify_center()
+                                .id("cancel-button")
+                                .on_click(cx.listener(|this: &mut Self, _event, window, cx| {
+                                    this.clear_text_input(cx, window);
+                                }))
+                                .child(
+                                    svg()
+                                        .external_path(SharedString::from(
+                                            x_icon.to_string_lossy().to_string(),
+                                        ))
+                                        .size(px(24.0))
+                                        .text_color(colors.foreground_400),
+                                ),
+                        ),
+                ),
+        )
     }
 }
