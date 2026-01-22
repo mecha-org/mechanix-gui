@@ -193,7 +193,7 @@ pub fn run() {
 
         let installed_apps = cx.new(|cx| InstalledApps::new(cx));
 
-        status_bar::run_app(cx);
+        // status_bar::run_app(cx);
 
         homescreen::run_app(cx);
 
