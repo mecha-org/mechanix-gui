@@ -67,9 +67,6 @@ namespace = "mechanix.power.options"
 exclusive_zone = 0.0
 size = { width = 540.0, height = 620.0 }
 
-[lockscreen]
-wallpaper_path = "/usr/share/mechanix/shell/assets/icons/lockscreen/wallpaper.png"
-
 [lockscreen.layer_shell]
 layer = "overlay"
 anchor = ["top", "left", "right", "bottom"]

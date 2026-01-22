@@ -1,11 +1,10 @@
-use crate::prelude::Icon;
-use crate::prelude::IconName;
 use crate::ui::widgets::{BottomSheetKind, SubWindow};
 use commons::prelude::TextInput;
 use commons::widgets::{WingSide, wing};
 use dispatcher::Dispatcher;
 use gpui::prelude::*;
 use gpui::*;
+use icons::prelude::Icons;
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
 use settings::prelude::Settings;
@@ -15,7 +14,6 @@ use std::hash::{Hash, Hasher};
 use std::time::{Duration, Instant};
 use theme::prelude::{AlphaExt, Fonts, Theme};
 
-pub mod icon;
 pub mod utils;
 mod widgets;
 const MIN_MODAL_SIZE: (f32, f32) = (10.0, 10.0);
@@ -384,6 +382,7 @@ impl AppDrawer {
 
     fn render_floating_search_button(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
+        let icon = Icons::global(cx).app_drawer.search.clone();
 
         div()
             .id("floating-search-btn")
@@ -412,7 +411,12 @@ impl AppDrawer {
                     .flex()
                     .items_center()
                     .justify_center()
-                    .child(Icon::build(IconName::Search).text_color(colors.foreground_300)),
+                    .child(
+                        svg()
+                            .size_full()
+                            .external_path(SharedString::from(icon.to_string_lossy().to_string()))
+                            .text_color(colors.foreground_300),
+                    ),
             )
     }
 
@@ -454,6 +458,7 @@ impl AppDrawer {
     fn render_search_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let text_input = self.text_input.clone();
         let colors = Theme::global(cx).colors.clone();
+        let icons = Icons::global(cx).app_drawer.clone();
 
         div()
             .id("main-search")
@@ -488,7 +493,14 @@ impl AppDrawer {
                             .flex()
                             .items_center()
                             .justify_center()
-                            .child(Icon::build(IconName::Search).text_color(colors.accent_200)),
+                            .child(
+                                svg()
+                                    .size_full()
+                                    .external_path(SharedString::from(
+                                        icons.search.to_string_lossy().to_string(),
+                                    ))
+                                    .text_color(colors.accent_200),
+                            ),
                     )
                     .child(
                         div()
@@ -548,7 +560,14 @@ impl AppDrawer {
                             .flex()
                             .items_center()
                             .justify_center()
-                            .child(Icon::build(IconName::Close).text_color(colors.foreground_100)),
+                            .child(
+                                svg()
+                                    .size_full()
+                                    .external_path(SharedString::from(
+                                        icons.x.to_string_lossy().to_string(),
+                                    ))
+                                    .text_color(colors.foreground_100),
+                            ),
                     ),
             )
     }
@@ -652,7 +671,7 @@ impl AppDrawer {
                                                 let app_id = app.possible_app_id.clone();
                                                 let exec = app.exec.clone();
                                                 let id = hash_id(&app_id);
-                                                let icon = Self::resolved_icon(&app.icon_path);
+                                                let icon = Self::resolved_icon(&app.icon_path, cx);
                                                 let app_for_sheet = app.clone();
 
                                                 div()
@@ -835,7 +854,7 @@ impl AppDrawer {
                         let app_id = app.possible_app_id.clone();
                         let name = app.name.clone();
                         let id = hash_id(&app_id);
-                        let icon = Self::resolved_icon(&app.icon_path);
+                        let icon = Self::resolved_icon(&app.icon_path, cx);
 
                         div()
                             .id(id)
@@ -889,10 +908,11 @@ impl AppDrawer {
             )
     }
 
-    pub fn resolved_icon(app_icon: &Option<String>) -> Icon {
+    pub fn resolved_icon(app_icon: &Option<String>, cx: &mut gpui::App) -> Img {
+        let icons = Icons::global(cx).app_drawer.clone();
         match app_icon {
-            Some(path) if !path.trim().is_empty() => Icon::default().path(path.clone()),
-            _ => Icon::from(IconName::DefaultApp),
+            Some(path) if !path.trim().is_empty() => img(path.clone()).size_full(),
+            _ => img(icons.default_app).size_full(),
         }
     }
 
