@@ -538,14 +538,7 @@ impl AppDrawer {
                             .flex()
                             .items_center()
                             .justify_center()
-                            .child(
-                                svg()
-                                    .size_full()
-                                    .external_path(
-                                        SharedString::from(icons.x.to_string_lossy().to_string())
-                                    )
-                                    .text_color(colors.foreground_100)
-                            )
+                            .child(img(icons.x).size_full().text_color(colors.foreground_100))
                     )
             )
     }
