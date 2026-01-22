@@ -1,14 +1,13 @@
+use futures::future::Shared;
 use gpui::{prelude::FluentBuilder, *};
+use icons::prelude::Icons;
 use settings::prelude::Settings;
 use shell_state::ShellState;
-use std::path::PathBuf;
+use std::{ops::Shr, path::PathBuf};
 mod wallpaper;
 mod wedges;
-use commons::assets::Assets;
-use std::path::Path;
 use theme::ActiveTheme;
 use theme::prelude::Fonts;
-use wallpaper::wallpaper;
 use wedges::{LockState, left_wedge, right_wedge};
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
@@ -25,7 +24,6 @@ const LOCK_ICONS_FADE_THRESHOLD: f32 = 310.0;
 // Unlock prompt styling
 const UNLOCK_PROMPT_RADIUS: f32 = 12.0;
 const UNLOCK_PROMPT_ARROW_SIZE: f32 = 40.0;
-const UNLOCK_PROMPT_ICON_PATH: &str = "icons/lockscreen/arrow.svg";
 const UNLOCK_PROMPT_SIZE_FACTOR: f32 = 0.9;
 const UNLOCK_PROMPT_BOTTOM_OFFSET: f32 = 45.0;
 
@@ -43,19 +41,6 @@ const RIGHT_WEDGE_BOTTOM_LIMIT: f32 = 38.0;
 // How quickly icons fade relative to slider movement (left fades slower than right)
 const LEFT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.1;
 const RIGHT_WEDGE_ICON_FADE_STRENGTH: f32 = 0.8;
-
-fn wallpaper_exists(path: &str) -> bool {
-    if path.trim().is_empty() {
-        return false;
-    }
-
-    if Path::new(path).exists() {
-        return true;
-    }
-
-    let normalized_path = path.strip_prefix("assets/").unwrap_or(path);
-    Assets::get(normalized_path).is_some()
-}
 
 pub struct Lockscreen {
     drag_offset: Option<f32>,
@@ -125,20 +110,13 @@ impl Render for Lockscreen {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
-        let lockscreen_settings = Settings::global(cx).lockscreen.clone();
+        let icons = Icons::global(cx).lockscreen.clone();
 
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
 
         // To check if a valid wallpaper path from settings.toml and if not use default wallpaper
-        let settings_wallpaper_path = lockscreen_settings.wallpaper_path;
-        let wallpaper_path = if wallpaper_exists(&settings_wallpaper_path) {
-            settings_wallpaper_path
-        } else {
-            "icons/lockscreen/wallpaper.png".to_string()
-        };
-
         if self.window_height == 0.0 {
             self.window_height = window_height;
         }
@@ -170,7 +148,8 @@ impl Render for Lockscreen {
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
         // Additional fade for lock + bell icons so they vanish at the fade threshold
         let lock_icon_fade = 1.0 - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
-        let wallpaper_path = self.wallpaper_path.clone();
+        let wallpaper_path = self.wallpaper_path.clone().unwrap_or(icons.wallpaper);
+        let unlock_prompt = Icons::global(cx).lockscreen.arrow.clone();
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
@@ -184,11 +163,14 @@ impl Render for Lockscreen {
                         .h(px(panel_height))
                         .overflow_hidden()
                         // Wallpaper background
-                        .child(div().absolute().inset_0().child(wallpaper(
-                            size.width,
-                            px(panel_height),
-                            wallpaper_path,
-                        )))
+                        .child(
+                            div().absolute().inset_0().child(
+                                img(wallpaper_path)
+                                    .w(size.width)
+                                    .h(px(panel_height))
+                                    .object_fit(ObjectFit::Cover),
+                            ),
+                        )
                         // Content overlay
                         .child(
                             div()
@@ -229,7 +211,11 @@ impl Render for Lockscreen {
                                             if show_arrow_prompt {
                                                 inner = inner.child(
                                                     svg()
-                                                        .path(UNLOCK_PROMPT_ICON_PATH)
+                                                        .external_path(SharedString::from(
+                                                            unlock_prompt
+                                                                .to_string_lossy()
+                                                                .to_string(),
+                                                        ))
                                                         .w(px(UNLOCK_PROMPT_ARROW_SIZE
                                                             * UNLOCK_PROMPT_SIZE_FACTOR))
                                                         .h(px(UNLOCK_PROMPT_ARROW_SIZE
@@ -308,7 +294,7 @@ impl Render for Lockscreen {
                                 .absolute()
                                 .bottom(px(-left_wedge_offset))
                                 .left(px(-left_wedge_gap))
-                                .child(left_wedge(&colors, lock_state, left_icon_opacity)),
+                                .child(left_wedge(&colors, lock_state, left_icon_opacity, cx)),
                         )
                         // Right wedge (overlaps left wedge, rendered on top, with status icons)
                         .child(
@@ -316,7 +302,7 @@ impl Render for Lockscreen {
                                 .absolute()
                                 .bottom(px(-right_wedge_offset))
                                 .right(px(-right_wedge_gap))
-                                .child(right_wedge(cx, &colors, right_icon_opacity)),
+                                .child(right_wedge(&colors, right_icon_opacity, cx)),
                         )
                 })
         })
