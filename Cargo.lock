@@ -3226,6 +3226,7 @@ dependencies = [
  "dispatcher",
  "gpui",
  "icons",
+ "mxsearch",
  "rust-embed",
  "settings",
  "shell_state",

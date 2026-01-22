@@ -27,6 +27,7 @@ fn listen_dispatcher(cx: &mut App, slider: Entity<SliderState>, min_volume: f32,
 
     cx.spawn(async move |app| {
         while let Ok(message) = dispatcher_rx.recv().await {
+            println!("volume listen_dispatcher() message: {:#?}", message);
             match message {
                 dispatcher::Message::VolumeUp => {
                     let _ = app.update(|cx| {
