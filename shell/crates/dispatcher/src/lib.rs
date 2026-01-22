@@ -61,6 +61,8 @@ pub enum Message {
     ShowPowerOptions(bool),
     ShowLockscreen(bool),
     SetLockscreenWallpaper(String),
+    ExtensionAttached(String),
+    ExtensionDetached(String),
     VolumeUp,
     VolumeDown,
     LaunchApp {

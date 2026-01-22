@@ -20,5 +20,7 @@ universal_search = { path = "../universal_search" }
 app_drawer = { path = "../app_drawer" }
 theme = { path = "../theme" }
 icons = { path = "../icons" }
-shell_state = { path = "../shell_state" }
+shell_state = { path = "../shell_state"}
+dispatcher = { path = "../dispatcher" }
+
 sysinfo = "0.33.0"
