@@ -2,6 +2,7 @@ use dispatcher::Dispatcher;
 use gpui::*;
 use icons::prelude::Icons;
 use settings::prelude::{Settings, ToastSettings};
+use std::path::PathBuf;
 use std::time::Duration;
 use theme::{ActiveFonts, ActiveTheme};
 
@@ -20,7 +21,7 @@ const TOAST_TEXT_SIZE: f32 = 16.0;
 /// General toast UI component that shows a message with an icon.
 pub struct Toast {
 	message: Option<String>,
-	icon_path: Option<String>,
+	icon_path: Option<PathBuf>,
 	visible: bool,
 	dismiss_task: Option<Task<()>>,
 	settings: ToastSettings,
@@ -40,7 +41,7 @@ impl Toast {
 	}
 
 	/// Show the toast with a message and icon, auto-dismisses after timeout
-	pub fn show(&mut self, message: String, icon_path: String, cx: &mut Context<Self>) {
+	pub fn show(&mut self, message: String, icon_path: PathBuf, cx: &mut Context<Self>) {
 		// Skip if same message is already showing
 		if self.visible && self.message.as_ref() == Some(&message) {
 			return;
@@ -108,11 +109,7 @@ impl Render for Toast {
 		let colors = cx.theme().colors.clone();
 		let primary_font = cx.fonts().primary.clone();
 
-		let icon_close = Icons::global(cx)
-			.toast
-			.close
-			.to_string_lossy()
-			.to_string();
+		let icon_close = Icons::global(cx).toast.close.clone();
 
 		div()
 			.size_full()
@@ -167,7 +164,7 @@ impl Render for Toast {
 										this.hide(cx);
 									}))
 									.child(
-										img(icon_close.clone())
+										img(icon_close)
 											.w(px(TOAST_CLOSE_SIZE))
 											.h(px(TOAST_CLOSE_SIZE))
 									),
@@ -186,8 +183,8 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
 
 	let icons = Icons::global(cx).toast.clone();
 
-	let icon_attached = icons.extension_attached.to_string_lossy().to_string();
-	let icon_detached = icons.extension_detached.to_string_lossy().to_string();
+	let icon_attached = icons.extension_attached;
+	let icon_detached = icons.extension_detached;
 
 	let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
 
