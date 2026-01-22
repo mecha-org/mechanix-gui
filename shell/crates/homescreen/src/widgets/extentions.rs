@@ -147,15 +147,16 @@ pub fn listen_for_extensions(cx: &mut App) {
     cx.spawn(async move |app| {
         while let Ok(message) = dispatcher_rx.recv().await {
             match message {
-                dispatcher::Message::ExtensionAttached(id) => {
+                dispatcher::Message::SetExtensionDetected(id) => {
                     let _ = app.update(|cx| {
                         println!("Extension attached: {id}");
-                        let kind = ExtensionKind::from(&id);
+                        //TODO: @sandeep update with your code
+                        let kind = ExtensionKind::from(&"Gamepad");
                         cx.global_mut::<ExtensionState>().kind = Some(kind);
                         cx.refresh_windows();
                     });
                 }
-                dispatcher::Message::ExtensionDetached(id) => {
+                dispatcher::Message::SetExtensionName(id) => {
                     let _ = app.update(|cx| {
                         println!("Extension detached: {id}");
                         cx.global_mut::<ExtensionState>().kind = None;

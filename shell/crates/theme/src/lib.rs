@@ -58,8 +58,6 @@ impl ActiveFonts for App {
 pub enum ThemeEvents {
     SetThemeColors {
         accent: String,
-        background: String,
-        foreground: String,
     },
     SetThemeMode(String),
     SetPrimaryFont(String),

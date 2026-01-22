@@ -5,6 +5,7 @@ use icons::prelude::Icons;
 use mxsearch::prelude::AppInfo;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
 use theme::prelude::{AlphaExt, Theme};
 
 const POPUP_BASE_TOP: f32 = 10.0;
@@ -59,7 +60,7 @@ impl SubWindow {
     pub fn resolved_icon(app_icon: &Option<String>, cx: &mut gpui::App) -> Img {
         let icons = Icons::global(cx).app_drawer.clone();
         match app_icon {
-            Some(path) if !path.trim().is_empty() => img(path.clone()).size_full(),
+            Some(path) if !path.trim().is_empty() => img(PathBuf::from(path.clone())).size_full(),
             _ => img(icons.default_app).size_full(),
         }
     }

@@ -34,23 +34,23 @@ pub fn init(cx: &mut App) {
 
     cx.spawn(async move |app| {
         while let Some(event) = rx.next().await {
-            let _ = app.update(|cx| {
-                let Some(message) = handle::build_message_for_event(event) else {
-                    return;
-                };
+            if let Some(message) = handle::build_message_for_event(event).await {
+                let _ = app.update(|cx| {
+                    if !cx.has_global::<Dispatcher>() {
+                        warn!("dispatcher missing; dropping hardware button event");
+                        return;
+                    }
 
-                if !cx.has_global::<Dispatcher>() {
-                    warn!("dispatcher missing; dropping hardware button event");
-                    return;
-                }
-
-                let sender = Dispatcher::global(cx).0.clone();
-                cx.background_executor()
-                    .spawn(async move {
-                        let _ = sender.broadcast(message).await;
-                    })
-                    .detach();
-            });
+                    let sender = Dispatcher::global(cx).0.clone();
+                    cx.background_executor()
+                        .spawn(async move {
+                            let _ = sender.broadcast(message).await;
+                        })
+                        .detach();
+                });
+            }
+            
+            
         }
     })
     .detach();

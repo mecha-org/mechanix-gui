@@ -25,8 +25,6 @@ pub const BELL_PADDING_BOTTOM: f32 = 56.0;
 pub const LOCK_ICON_SIZE: f32 = 24.0;
 pub const LOCK_CIRCLE_SIZE: f32 = 40.0;
 
-const STATUS_BAR_ICONS_DIR: &str = "icons/status-bar/";
-
 // Left wedge dimensions: 540 x 106 (from wedge_left.svg )
 pub const LEFT_WEDGE_WIDTH: f32 = 540.0;
 pub const LEFT_WEDGE_HEIGHT: f32 = 106.0;
