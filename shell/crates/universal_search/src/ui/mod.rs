@@ -668,6 +668,7 @@ impl UniversalSearch {
                                         .flex()
                                         .flex_row()
                                         .items_center()
+                                        .justify_center()
                                         .child(
                                             div()
                                                 .flex()
@@ -697,6 +698,8 @@ impl UniversalSearch {
                                                 .line_height(px(1.25))
                                                 .text_size(px(18.0))
                                                 .text_color(colors.foreground_200)
+                                                .items_center()
+                                                .justify_center()
                                                 .child(text_input),
                                         ),
                                 ),
