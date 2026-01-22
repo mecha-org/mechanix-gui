@@ -20,7 +20,7 @@ use std::{
 use theme::ActiveTheme;
 use theme::prelude::{AlphaExt, Fonts};
 
-use settings::prelude::Settings;
+use settings::prelude::{InputRegions, Settings};
 
 const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
 const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
@@ -414,6 +414,30 @@ impl NotificationCenter {
         self.is_dragging = false;
         self.last_scroll_offset = self.scroll_offset;
     }
+
+    fn update_input_regions(&self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
+        let mut regions = Vec::new();
+
+        let settings = Settings::global(cx).notifications.clone();
+        let InputRegions {
+            minimized,
+            maximized,
+        } = settings.input_regions;
+
+        if open {
+            regions.push(Bounds {
+                origin: maximized.origin,
+                size: maximized.size,
+            });
+        } else {
+            regions.push(Bounds {
+                origin: minimized.origin,
+                size: minimized.size,
+            });
+        }
+        window.set_input_regions(Some(regions));
+        cx.notify();
+    }
 }
 
 impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
@@ -773,17 +797,19 @@ impl Render for NotificationCenter {
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
         let input_regions = settings.input_regions.clone();
-
+        let primary_font = Fonts::global(cx).primary.clone();
         let colors = cx.theme().colors.clone();
 
         let open_y = 0.;
         let closed_y = Self::closed_pos(cx);
 
         let threshold_px = 40.;
+        self.update_input_regions(self.is_visible, window, cx);
 
         div()
             .w_full()
             .h_full()
+            .font_family(primary_font)
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|this, event: &MouseDownEvent, _window, cx| {
@@ -816,18 +842,14 @@ impl Render for NotificationCenter {
                         if started_closed {
                             if this.position < (closed_y - threshold_px) {
                                 target = open_y;
-                                this.is_visible = true;
                             } else {
                                 target = closed_y;
-                                this.is_visible = false;
                             }
                         } else {
                             if this.position > (open_y + threshold_px) {
                                 target = closed_y;
-                                this.is_visible = false;
                             } else {
                                 target = open_y;
-                                this.is_visible = true;
                             }
                         }
                         this.snap_to(target, cx);
