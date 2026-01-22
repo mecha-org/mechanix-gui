@@ -4,7 +4,7 @@ use theme::{ActiveFonts, ActiveTheme};
 
 pub struct SystemUsage {
     bounds: Bounds<Pixels>,
-    color: Hsla,
+    background_color: Hsla,
     border_color: Hsla,
     has_border: bool,
 }
@@ -13,7 +13,7 @@ impl SystemUsage {
     pub fn new(color: impl Into<Hsla>, border_color: impl Into<Hsla>, has_border: bool) -> Self {
         Self {
             bounds: Bounds::default(),
-            color: color.into(),
+            background_color: color.into(),
             border_color: border_color.into(),
             has_border,
         }
@@ -30,16 +30,14 @@ impl HomescreenWidget for SystemUsage {
         let uptime = state.uptime.clone();
 
         // Colors from theme
-        let accent_color = colors.accent_200; 
-        let value_color = colors.foreground_200; 
-        let label_color = colors.foreground_600; 
-        let bg_color = colors.background_800; 
+        let accent_color = colors.accent_200;
+        let value_color = colors.foreground_200;
+        let label_color = colors.foreground_600;
 
         div()
             .size_full()
             .flex()
             .flex_col()
-            .bg(bg_color)
             .rounded(px(5.))
             .p(px(12.))
             .font_family(primary_font)
@@ -143,7 +141,7 @@ impl HomescreenWidget for SystemUsage {
     }
 
     fn background_color(&self) -> Hsla {
-        self.color
+        self.background_color
     }
 
     fn has_border(&self) -> bool {

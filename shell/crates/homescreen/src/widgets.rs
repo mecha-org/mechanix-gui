@@ -154,7 +154,9 @@ impl WidgetWrapper {
         cx: &mut gpui::App,
     ) -> impl IntoElement {
         let widget = widget_data.widget();
-        let colors = theme::ActiveTheme::theme(cx).colors.clone();
+
+        let widget_border_color = widget.border_color();
+        let widget_background_color = widget.background_color();
 
         let mut w = wing();
         if widget.has_border() {
@@ -281,8 +283,8 @@ impl WidgetWrapper {
 
         let element = w
             .absolute()
-            .bg(colors.background_1000)
-            .border_color(colors.accent_200.with_alpha(0.4))
+            .bg(widget_background_color)
+            .border_color(widget_border_color)
             .left(widget.get_bounds().origin.x + px(horizontal_adjustment))
             .top(widget.get_bounds().origin.y - px(upper_wing_height))
             .w(widget.get_bounds().size.width + px(size_adjustment))

@@ -8,7 +8,7 @@ use theme::{ActiveFonts, ActiveTheme};
 
 pub struct Time {
     bounds: Bounds<Pixels>,
-    color: Hsla,
+    background_color: Hsla,
     border_color: Hsla,
     has_border: bool,
 }
@@ -17,7 +17,7 @@ impl Time {
     pub fn new(color: impl Into<Hsla>, border_color: impl Into<Hsla>, has_border: bool) -> Self {
         Self {
             bounds: Bounds::default(),
-            color: color.into(),
+            background_color: color.into(),
             border_color: border_color.into(),
             has_border,
         }
@@ -49,7 +49,6 @@ impl HomescreenWidget for Time {
             .relative()
             .overflow_hidden()
             .rounded(px(16.))
-            .bg(colors.accent_200.clone())
             .child(
                 div()
                     .absolute()
@@ -90,7 +89,7 @@ impl HomescreenWidget for Time {
     }
 
     fn background_color(&self) -> Hsla {
-        self.color
+        self.background_color
     }
 
     fn has_border(&self) -> bool {

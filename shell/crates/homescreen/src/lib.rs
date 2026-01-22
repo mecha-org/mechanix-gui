@@ -9,6 +9,7 @@ use settings::prelude::*;
 use status_bar::prelude::status_bar_components;
 use std::time::Duration;
 use sysinfo::System;
+use theme::prelude::Theme;
 use theme::ActiveTheme;
 
 mod animation_manager;
@@ -27,7 +28,7 @@ use crate::state::*;
 use crate::ui::HomescreenUi;
 use crate::widgets::app_drawer::AppDrawerWidget;
 use crate::widgets::demo_widget::DemoWidget;
-use crate::widgets::extentions::{ExtensionWidget, ExtensionState, listen_for_extensions};
+use crate::widgets::extentions::{listen_for_extensions, ExtensionState, ExtensionWidget};
 use crate::widgets::pinned_apps::PinnedApps;
 use crate::widgets::system_usage::SystemUsage;
 use crate::widgets::time::Time;
@@ -55,6 +56,7 @@ impl Homescreen {
     ) -> Self {
         let mut state = HomescreenState::new(config);
         let icons = Icons::global(cx).homescreen.clone();
+        let colors = Theme::global(cx).colors.clone();
 
         let system_usage_state = SystemUsageState {
             cpu_usage: "".to_string(),
@@ -116,7 +118,7 @@ impl Homescreen {
         .detach();
 
         state.create_widget(
-            UniversalSearchWidget::new(cx, false),
+            UniversalSearchWidget::new(cx, colors.background_1000, false),
             0,
             Bounds {
                 origin: point(0, 0),
@@ -180,7 +182,7 @@ impl Homescreen {
         // );
 
         state.create_widget(
-            Time::new(rgb(0x4ecdc4), rgb(0x45b7aa), false),
+            Time::new(colors.accent_200, colors.background_700, true),
             1,
             Bounds {
                 origin: point(0, 0),
@@ -198,7 +200,7 @@ impl Homescreen {
         // );
 
         state.create_widget(
-            SystemUsage::new(rgb(0xb565a7), rgb(0x9d5091), true),
+            SystemUsage::new(colors.background_800, colors.background_700, true),
             1,
             Bounds {
                 origin: point(1, 0),
@@ -206,7 +208,7 @@ impl Homescreen {
             },
         );
         state.create_widget(
-            ExtensionWidget::new(false),
+            ExtensionWidget::new(colors.background_800, colors.background_700, true),
             1,
             Bounds {
                 origin: point(2, 0),
@@ -224,12 +226,7 @@ impl Homescreen {
         // );
 
         state.create_widget(
-            PinnedApps::new(
-                vec![],
-                rgb(0xb565a7),
-                cx.theme().colors.background_800.clone(),
-                true,
-            ),
+            PinnedApps::new(vec![], colors.background_800, colors.background_700, true),
             1,
             Bounds {
                 origin: point(0, 1),
@@ -330,7 +327,7 @@ impl Homescreen {
         // );
 
         state.create_widget(
-            AppDrawerWidget::new(cx, false),
+            AppDrawerWidget::new(cx, colors.background_1000, false),
             2,
             Bounds {
                 origin: point(0, 0),
