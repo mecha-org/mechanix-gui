@@ -84,8 +84,9 @@
 "screen-recording-on" = "assets/icons/settings-drawer/screen-recording-on.svg"
 "second-screen" = "assets/icons/settings-drawer/second-screen.svg"
 "settings" = "assets/icons/settings-drawer/settings.svg"
-"slider-gray-dot-column" = "assets/icons/settings-drawer/slider-gray-dot-column.png"
+"slider-gray-dot-column" = "assets/icons/settings-drawer/slider-gray-dot-column.svg"
 "slider-orange-dot-column" = "assets/icons/settings-drawer/slider-orange-dot-column.png"
+"slider-accent-dots-column" = "assets/icons/settings-drawer/slider-accent-dots-column.svg"
 "system-speaker" = "assets/icons/settings-drawer/system-speaker.svg"
 "terminal" = "assets/icons/settings-drawer/terminal.svg"
 "volume-high" = "assets/icons/settings-drawer/volume-high.svg"
@@ -159,3 +160,8 @@
 "x" = "assets/icons/universal-search/x.svg"
 "xls-file" = "assets/icons/universal-search/xls-file.svg"
 "zip-file" = "assets/icons/universal-search/zip-file.svg"
+
+[homescreen]
+"gamepad" = "assets/icons/homescreen/gamepad.png"
+"keyboard" = "assets/icons/homescreen/keyboard.png"
+"gpio" = "assets/icons/homescreen/gpio.png"

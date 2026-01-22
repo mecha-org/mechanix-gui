@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use gpui::{prelude::FluentBuilder, *};
 use shell_state::ShellState;
 mod wallpaper;
@@ -49,6 +50,7 @@ pub struct Lockscreen {
     window_height: f32,
     pub show: bool,
     show_arrow_prompt: bool,
+    pub wallpaper_path: Option<PathBuf>,
 }
 
 impl Lockscreen {
@@ -57,13 +59,15 @@ impl Lockscreen {
             cx.notify();
         })
         .detach();
+
         Self {
             drag_offset: None,
             drag_start_mouse_y: 0.0,
             position_y: 0.0,
             window_height: 0.0,
-            show: false,
+            show: true,
             show_arrow_prompt: false,
+            wallpaper_path: None,
         }
     }
 
@@ -142,6 +146,7 @@ impl Render for Lockscreen {
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
         // Additional fade for lock + bell icons so they vanish at the fade threshold
         let lock_icon_fade = 1.0 - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
+        let wallpaper_path = self.wallpaper_path.clone();
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
@@ -159,7 +164,7 @@ impl Render for Lockscreen {
                             div()
                                 .absolute()
                                 .inset_0()
-                                .child(wallpaper(size.width, px(panel_height))),
+                                .child(wallpaper(size.width, px(panel_height), wallpaper_path)),
                         )
                         // Content overlay
                         .child(

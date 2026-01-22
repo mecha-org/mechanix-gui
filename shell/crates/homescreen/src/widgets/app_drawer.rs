@@ -21,7 +21,7 @@ impl AppDrawerWidget {
 }
 
 impl HomescreenWidget for AppDrawerWidget {
-    fn render(&self) -> AnyElement {
+    fn render(&self, cx: &mut gpui::App) -> AnyElement {
         div()
             .size_full()
             .child(self.drawer_handle.clone())
