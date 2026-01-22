@@ -19,3 +19,5 @@ zbus = { workspace = true }
 hw-buttons = { path = "../../../shared/hw-buttons", package = "mechanix-hw-buttons" }
 dispatcher = { path = "../dispatcher" }
 futures-util = "0.3.31"
+rusb = "0.9.4"
+mxconf_dbus = { path = "../../../dbus/mechanix/mxconf" }
