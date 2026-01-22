@@ -1,6 +1,8 @@
 use crate::widgets::HomescreenWidget;
 use dispatcher::{self, Dispatcher};
 use gpui::*;
+use icons::prelude::Icons;
+use theme::ActiveTheme;
 
 /// Global state for extension widget that can be updated from listen_for_extensions
 #[derive(Clone)]
@@ -26,28 +28,10 @@ pub enum ExtensionKind {
     Gamepad,
     Keyboard,
     Gpio,
-    Unknown
+    Unknown,
 }
 
 impl ExtensionKind {
-    pub fn get_icon_path(&self) -> &str {
-        match self {
-            ExtensionKind::Gamepad => "icons/homescreen/extension/gamepad_icon.svg",
-            ExtensionKind::Keyboard => "icons/homescreen/extension/keyboard_icon.svg",
-            ExtensionKind::Gpio => "icons/homescreen/extension/gpio_icon.svg",
-            ExtensionKind::Unknown => "icons/homescreen/extension/unknown_icon.svg",
-        }
-    }
-
-    pub fn get_background_path(&self) -> &str {
-        match self {
-            ExtensionKind::Gamepad => "icons/homescreen/extension/gamepad_background.svg",
-            ExtensionKind::Keyboard => "icons/homescreen/extension/keyboard_background.svg",
-            ExtensionKind::Gpio => "icons/homescreen/extension/gpio_background.svg",
-            ExtensionKind::Unknown => "icons/homescreen/extension/unknown_background.svg",
-        }
-    }
-
     pub fn from(id: &str) -> Self {
         match id {
             "GAMEPAD" => ExtensionKind::Gamepad,
@@ -82,35 +66,39 @@ impl HomescreenWidget for ExtensionWidget {
             ExtensionState::default()
         };
 
+        let icons = Icons::global(cx).homescreen.extensions.clone();
+        let colors = cx.theme().colors.clone();
+
         // Asset paths for layered rendering based on extension kind
-        let (icon_path, background_path) = match &extension_state.kind {
-            Some(kind) => (kind.get_icon_path(), kind.get_background_path()),
-            None => (
-                "icons/homescreen/extension/detached_icon.svg",
-                "icons/homescreen/extension/detached_background.svg",
-            ),
+        let extension_icon = match &extension_state.kind {
+            Some(kind) => match kind {
+                ExtensionKind::Gamepad => icons.gamepad,
+                ExtensionKind::Keyboard => icons.keyboard,
+                ExtensionKind::Gpio => icons.gpio,
+                ExtensionKind::Unknown => icons.unknown,
+            },
+            None => icons.detached,
         };
-        let dot_grid_path = "icons/homescreen/extension/dot_grid.svg";
+
+        let background = icons.dot_grid.clone();
 
         div()
             .size_full()
             .relative()
             .overflow_hidden()
+            .rounded(px(16.))
+            .bg(colors.background_800)
             // Layer 1: Background SVG (bottom layer)
             .child(
-                div()
-                    .absolute()
-                    .inset_0()
-                    .child(img(background_path).size_full())
-                    .child(
-                        div()
-                            .absolute()
-                            .inset_0()
-                            .flex()
-                            .justify_center()
-                            .items_center()
-                            .child(img(dot_grid_path).size_full()),
-                    ),
+                div().absolute().inset_0().child(
+                    div()
+                        .absolute()
+                        .inset_0()
+                        .flex()
+                        .justify_center()
+                        .items_center()
+                        .child(img(background).size_full()),
+                ),
             )
             // Layer 2: Dot grid SVG (middle layer)
             // Layer 3: Icon/gamepad image (top layer, centered)
@@ -121,7 +109,7 @@ impl HomescreenWidget for ExtensionWidget {
                     .flex()
                     .justify_center()
                     .items_center()
-                    .child(img(icon_path)),
+                    .child(img(extension_icon)),
             )
             .into_any_element()
     }
