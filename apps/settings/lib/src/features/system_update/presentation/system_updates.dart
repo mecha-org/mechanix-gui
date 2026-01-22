@@ -7,6 +7,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class SystemUpdates extends StatefulWidget {
   const SystemUpdates({super.key});
@@ -37,6 +38,10 @@ class _SystemUpdatesState extends State<SystemUpdates> {
                     defaultTrailingIcon: false,
                     trailing: MechanixSwitch(
                       value: true,
+                      style: MechanixSwitchStyle(
+                        activeTrackColor: context.secondaryContainer,
+                        inactiveTrackColor: context.secondaryContainer,
+                      ),
                       inactiveText: 'ON',
                       onChanged: (v) => {},
                     ),

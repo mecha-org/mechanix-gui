@@ -27,7 +27,12 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
       BatteryInfoRequested event, Emitter<BatteryState> emit) async {
     try {
       final batteryInfo = await batteryRepository.getBatteryInfo();
-
+      print('BLOC -Battery mode: ${batteryInfo.mode}');
+      print('BLOC -Battery percentage: ${batteryInfo.batteryPercentage}');
+      print('BLOC -Battery time To Full: ${batteryInfo.batteryChargingTime}');
+      print('BLOC -Battery time To Empty: ${batteryInfo.batteryRemainingTime}');
+      print(
+          'BLOC -available battery modes: ${batteryInfo.availableBatteryModes}');
       emit(state.copyWith(
         batteryPercentage: batteryInfo.batteryPercentage,
         batteryStatus: batteryInfo.status,
@@ -48,20 +53,22 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
   Future<void> _initializeBatteryStream() async {
     try {
       final stream = await batteryRepository.streamBatteryEvents();
-      changeStream = stream.listen((prop) async {
-        logger.i("Battery Property Update: $prop");
+      if (stream != null) {
+        changeStream = stream.listen((prop) async {
+          logger.i("Battery Property Update: $prop");
 
-        add(BatteryInfoRequested());
-        // const relevantProps = [
-        //   "Percentage",
-        //   "State",
-        //   "TimeToEmpty",
-        //   "TimeToFull",
-        //   "PowerSupply",
-        // ];
-        // // if (relevantProps.contains(prop))
-        // if (prop.contains("UpdateTime")) add(BatteryInfoRequested());
-      });
+          add(BatteryInfoRequested());
+          // const relevantProps = [
+          //   "Percentage",
+          //   "State",
+          //   "TimeToEmpty",
+          //   "TimeToFull",
+          //   "PowerSupply",
+          // ];
+          // // if (relevantProps.contains(prop))
+          // if (prop.contains("UpdateTime")) add(BatteryInfoRequested());
+        });
+      }
     } catch (e, stackTrace) {
       logger.e('Error initializing battery stream $e, $stackTrace ');
     }
@@ -69,6 +76,7 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
 
   @override
   Future<void> close() {
+    print("battery bloc closing...");
     changeStream?.cancel();
     return super.close();
   }

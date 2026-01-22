@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:dbus/dbus.dart';
 import 'package:logger/web.dart';
@@ -46,7 +45,12 @@ class BatteryRepositoryImpl implements BatteryRepository {
 
     if (device.type == UPowerDeviceType.battery) {
       percentage = device.percentage;
-      log('Battery percentage: $percentage');
+      // log('Battery percentage: $percentage');
+      print('Battery mode: $batteryMode');
+      print('Battery percentage: $percentage');
+      print('Battery time To Full: ${device.timeToFull}');
+      print('Battery time To Empty: ${device.timeToEmpty}');
+      print('available battery modes: ${modes}');
     }
 
     return BatteryInfo(
@@ -157,9 +161,14 @@ class BatteryRepositoryImpl implements BatteryRepository {
   }
 
   @override
-  Future<Stream<List<String>>> streamBatteryEvents() async {
-    await _ensureConnected();
-    final device = _client.displayDevice;
-    return device.propertiesChanged;
+  Future<Stream<List<String>>?> streamBatteryEvents() async {
+    try {
+      await _ensureConnected();
+      final device = _client.displayDevice;
+      return device.propertiesChanged;
+    } catch (e, stackTrace) {
+      print('Error initializing battery stream $e, $stackTrace ');
+      return null;
+    }
   }
 }

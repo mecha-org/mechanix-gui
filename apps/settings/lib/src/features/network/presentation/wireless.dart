@@ -24,6 +24,7 @@ import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class WirelessSettings extends StatefulWidget {
   const WirelessSettings({super.key});
@@ -53,9 +54,18 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                       title: 'Wireless',
                       titleTextStyle:
                           const TextStyle(fontWeight: FontWeight.w700),
+                      onTap: () {
+                        context
+                            .read<WirelessSettingsBloc>()
+                            .add(ToggleWifi(!state.wifiOn));
+                      },
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
+                        style: MechanixSwitchStyle(
+                          activeTrackColor: context.secondaryContainer,
+                          inactiveTrackColor: context.secondaryContainer,
+                        ),
                         value: state.wifiOn,
                         onChanged: (val) => context
                             .read<WirelessSettingsBloc>()

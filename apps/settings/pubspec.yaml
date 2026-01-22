@@ -48,7 +48,7 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: 119a95d80a9d0b2e7430a2a34c1842eb4b008407
+      ref: d5e8f96f3baab583d58397df42ca1f84574bbd48
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
@@ -154,12 +154,11 @@ flutter:
     - assets/images/amber_view_1.png
     - assets/images/amber_view_2.png
     - assets/images/amber_view_3.png
-    - assets/images/wallpaper_1.png
-    - assets/images/wallpaper_2.png
-    - assets/images/wallpaper_3.png
-    - assets/images/wallpaper_4.png
-    - assets/images/wallpaper_5.png
-    - assets/images/wallpaper_6.png
+    - assets/images/wallpaper_1.jpg
+    - assets/images/wallpaper_2.jpg
+    - assets/images/wallpaper_3.jpg
+    - assets/images/wallpaper_4.jpg
+    - assets/images/wallpaper_5.jpg
     - assets/images/theme_preview_amber.png
     - assets/images/theme_preview_blue.png
     - assets/images/theme_preview_coral.png

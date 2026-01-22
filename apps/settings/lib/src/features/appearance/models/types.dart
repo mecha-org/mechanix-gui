@@ -19,7 +19,6 @@ final List<String> wallpapersList = [
   Images.wallpaper3,
   Images.wallpaper4,
   Images.wallpaper5,
-  Images.wallpaper6,
 ];
 
 final List<AccentPreviewType> accentPreviewImages = [

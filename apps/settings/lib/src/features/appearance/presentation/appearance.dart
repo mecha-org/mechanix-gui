@@ -6,6 +6,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dar
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/right_icon_arrow_widget.dart';
 import 'package:mechanix_settings/src/features/appearance/bloc/appearance_bloc.dart';
+import 'package:mechanix_settings/src/features/appearance/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
@@ -28,6 +29,33 @@ class _AppearanceState extends State<Appearance> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAllThemeImages();
+  }
+
+  Future<void> _precacheAllThemeImages() async {
+    final allPreviewPaths =
+        accentPreviewImages.map((e) => e.themePreview).toList();
+
+    for (final wallpaper in wallpapersList) {
+      await precacheImage(
+        AssetImage(wallpaper),
+        context,
+        size: const Size(153, 176),
+      );
+    }
+
+    for (final path in allPreviewPaths) {
+      await precacheImage(
+        AssetImage(path),
+        context,
+        size: const Size(500, 267),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ContainerWidget(
@@ -38,7 +66,7 @@ class _AppearanceState extends State<Appearance> {
               listItems: [
                 SimpleListItems(
                   title: 'Dark Mode',
-                  // disabled: true,
+                  disabled: true,
                   trailing:
                       BlocSelector<AppearanceBloc, AppearanceState, ThemeMode>(
                     selector: (state) {

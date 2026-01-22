@@ -13,6 +13,7 @@ import 'package:mechanix_settings/src/features/sound/presentation/volume.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class Sound extends StatelessWidget {
   const Sound({super.key});
@@ -39,6 +40,10 @@ class Sound extends StatelessWidget {
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
+                        style: MechanixSwitchStyle(
+                          activeTrackColor: context.secondaryContainer,
+                          inactiveTrackColor: context.secondaryContainer,
+                        ),
                         value: state.enableLauncherSounds,
                         onChanged: (v) => context
                             .read<SoundBloc>()
@@ -50,6 +55,10 @@ class Sound extends StatelessWidget {
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
+                        style: MechanixSwitchStyle(
+                          activeTrackColor: context.secondaryContainer,
+                          inactiveTrackColor: context.secondaryContainer,
+                        ),
                         value: state.enableVibration,
                         onChanged: (v) => context
                             .read<SoundBloc>()

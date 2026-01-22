@@ -5,18 +5,21 @@ import 'package:widgets/theme/variants.dart';
 
 class AppearanceRepositoryImpl extends AppearanceRepository {
   @override
-  Future<Map<String, String>?> onInit() async {
+  Future<({Map<String, String>? currentTheme, String? currentWallPaper})?>
+      onInit() async {
     final dBus = DBusClient.session();
     try {
       final themeService = ThemeSettingsService(dBus);
 
       final currentTheme = await themeService.fetchCurrentTheme();
-      return currentTheme;
+      final currentWallPaper = await themeService.getWallpaper();
+
+      return (currentTheme: currentTheme, currentWallPaper: currentWallPaper);
     } catch (e) {
-      print("Error on initialize Appearance repository");
+      print("Error on initialize Appearance repository: $e");
       return null;
     } finally {
-      dBus.close();
+      await dBus.close();
     }
   }
 
@@ -36,6 +39,15 @@ class AppearanceRepositoryImpl extends AppearanceRepository {
 
   @override
   Future<void> applyWallpaper(String wallpaper) async {
-    // TODO: implement apply Wallpaper
+    final dBus = DBusClient.session();
+    try {
+      final themeService = ThemeSettingsService(dBus);
+
+      await themeService.setWallpaper(wallpaper);
+    } catch (e) {
+      print("Error in Updating theme");
+    } finally {
+      dBus.close();
+    }
   }
 }

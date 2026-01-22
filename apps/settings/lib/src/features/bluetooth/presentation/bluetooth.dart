@@ -17,6 +17,7 @@ import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class Bluetooth extends StatefulWidget {
   const Bluetooth({super.key});
@@ -67,6 +68,10 @@ class _BluetoothState extends State<Bluetooth> {
                         trailing: MechanixSwitch(
                           activeText: 'OFF',
                           inactiveText: 'ON',
+                          style: MechanixSwitchStyle(
+                            activeTrackColor: context.secondaryContainer,
+                            inactiveTrackColor: context.secondaryContainer,
+                          ),
                           value: state.isPowered,
                           onChanged: (val) => context
                               .read<BluetoothBloc>()

@@ -10,6 +10,7 @@ import 'package:mechanix_settings/src/features/display/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class DisplayPage extends StatefulWidget {
   const DisplayPage({super.key});
@@ -92,6 +93,10 @@ class _DisplayPageState extends State<DisplayPage> {
                             trailing: MechanixSwitch(
                               activeText: 'OFF',
                               inactiveText: 'ON',
+                              style: MechanixSwitchStyle(
+                                activeTrackColor: context.secondaryContainer,
+                                inactiveTrackColor: context.secondaryContainer,
+                              ),
                               value: state.isAutoBrightness,
                               onChanged: changeBrightnessAuto,
                             )),

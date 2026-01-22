@@ -14,6 +14,7 @@ import 'package:mechanix_settings/src/features/date_time/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class DateTimeSettings extends StatefulWidget {
   const DateTimeSettings({super.key});
@@ -58,9 +59,6 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
             ? DateFormat('a').format(state.systemDateTime!)
             : '';
 
-        print("state.selectedTimezone");
-        print(state.selectedTimezone);
-
         final hourMinute = '$hour : $minute';
 
         return Scaffold(
@@ -80,6 +78,10 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                             value: state.autoDateTime,
                             activeText: 'OFF',
                             inactiveText: 'ON',
+                            style: MechanixSwitchStyle(
+                              activeTrackColor: context.secondaryContainer,
+                              inactiveTrackColor: context.secondaryContainer,
+                            ),
                             onChanged: (value) {
                               context
                                   .read<DateTimeBloc>()

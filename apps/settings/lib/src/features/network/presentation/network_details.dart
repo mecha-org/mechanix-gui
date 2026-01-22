@@ -7,6 +7,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/right_icon_arrow_widget.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_event.dart';
@@ -109,11 +110,23 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                         widgetPadding: Spacing.only(top: 8, bottom: 40)),
                     sectionListItems: [
                       SectionListItems(
-                          defaultTrailingIcon: false,
-                          title: 'Private Wifi Address',
-                          trailing: CustomTrailingText(
-                            title: state.selectedNMAccessPoint?.hwAddress ?? '',
-                          )),
+                        defaultTrailingIcon: false,
+                        title: 'Private Wifi Address',
+                        trailing: Row(
+                          children: [
+                            const CustomTrailingText(title: 'Fixed')
+                                .padRight(8),
+                            const RightIconArrowWidget(),
+                          ],
+                        ),
+                      ),
+                      SectionListItems(
+                        defaultTrailingIcon: false,
+                        title: 'Private Wifi Address',
+                        trailing: CustomTrailingText(
+                          title: state.selectedNMAccessPoint?.hwAddress ?? '',
+                        ),
+                      ),
                     ],
                   ),
 
@@ -139,8 +152,13 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                               ),
                             );
                           },
-                          trailing:
-                              const CustomTrailingText(title: 'Automatic'),
+                          trailing: Row(
+                            children: [
+                              const CustomTrailingText(title: 'Automatic')
+                                  .padRight(8),
+                              const RightIconArrowWidget(),
+                            ],
+                          ),
                         ),
                         if (state.selectedAccessPoint!.isActive)
                           SectionListItems(
@@ -316,17 +334,12 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                         onPressed: () {
                           onNetworkTap(state.selectedAccessPoint);
                         },
-                        icon: IconWidget(
+                        icon: const IconWidget(
                           iconPath: Images.addRoundedSquare,
                           iconHeight: 15,
                           iconWidth: 15,
                           boxWidth: 20,
                           boxHeight: 20,
-                          iconColor: Theme.of(context)
-                              .textButtonTheme
-                              .style
-                              ?.iconColor
-                              ?.resolve({}),
                         ),
                         label: const Text("Join Network"),
                       ),

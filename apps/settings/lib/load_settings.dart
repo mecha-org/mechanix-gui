@@ -14,11 +14,46 @@ class ThemeSettingsService {
       'org.mechanix.desktop.settings.active_theme.theme_colors';
   static const String _schemaName = 'org.mechanix.desktop';
   static const String _schemaKey = 'settings.active_theme.theme_colors';
+  static const String _wallpaperKey =
+      'org.mechanix.desktop.settings.lockscreen.wallpaper';
+
+  static const String _fixedWallpaperPath =
+      '/usr/share/backgrounds/lock-screen/wallpaper_1.png';
 
   final DBusClient _bus;
   StreamSubscription<DBusSignal>? _signalSubscription;
 
   ThemeSettingsService(this._bus);
+
+  Future<String?> getWallpaper() async {
+    try {
+      final remoteObj = DBusRemoteObject(
+        _bus,
+        name: _busName,
+        path: DBusObjectPath(_busPath),
+      );
+
+      final response = await remoteObj.callMethod(
+        _busInterface,
+        'GetSetting',
+        [const DBusString(_wallpaperKey)],
+      );
+
+      if (response.returnValues.isNotEmpty &&
+          response.returnValues[0] is DBusDict) {
+        final dict = response.returnValues[0] as DBusDict;
+        final dBusValue = dict.children[const DBusString(_wallpaperKey)];
+
+        if (dBusValue is DBusString) {
+          return dBusValue.value.replaceAll(_fixedWallpaperPath, '');
+        }
+      }
+      return null;
+    } catch (e) {
+      print("Error getting up wallpaper $e");
+      return null;
+    }
+  }
 
   void listenForThemeChanges(Function(Map<String, String>) onThemeChanged) {
     final remoteObj = DBusRemoteObject(
@@ -99,13 +134,36 @@ class ThemeSettingsService {
         _busInterface,
         'SetSetting',
         [
-          DBusStruct([DBusString(_themeKey), DBusString(body)])
+          DBusStruct([const DBusString(_themeKey), DBusString(body)])
         ],
       );
     } catch (e) {
       print('Error updating theme from app: $e');
     }
     return null;
+  }
+
+  Future<void> setWallpaper(String filename) async {
+    try {
+      final remoteObj = DBusRemoteObject(
+        _bus,
+        name: _busName,
+        path: DBusObjectPath(_busPath),
+      );
+
+      await remoteObj.callMethod(
+        _busInterface,
+        'SetSetting',
+        [
+          DBusStruct([
+            const DBusString(_wallpaperKey),
+            DBusString(_fixedWallpaperPath + filename)
+          ])
+        ],
+      );
+    } catch (e) {
+      print("Error setting up wallpaper $e");
+    }
   }
 
   /// Parse theme colors from DBus response string
