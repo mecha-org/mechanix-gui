@@ -1,3 +1,4 @@
+use std::fmt;
 use std::time::Duration;
 use dispatcher::Message;
 use hw_buttons::{Key, KeyEvent};
@@ -6,7 +7,7 @@ use rusb::{
     ConfigDescriptor, DeviceDescriptor, DeviceHandle, DeviceList, EndpointDescriptor,
     InterfaceDescriptor, Language, Result, Speed, UsbContext,
 };
-use mxconf_dbus::get_setting;
+use mxconf_dbus::{get_setting, set_setting};
 
 struct UsbDevice<T: UsbContext> {
     handle: DeviceHandle<T>,
@@ -19,9 +20,22 @@ pub enum Extension {
     MechaGamepad,
     MechaKeyboard,
     MechaGpio,
+    Unknown,
 }
 
-pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
+
+impl fmt::Display for Extension {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Extension::MechaGamepad => "MechaGamepad",
+            Extension::MechaKeyboard => "MechaKeyboard",
+            Extension::MechaGpio => "MechaGpio",
+            Extension::Unknown => "Unknown",
+        };
+        write!(f, "{s}")
+    }
+}
+pub async fn build_message_for_event(event: KeyEvent) -> Option<Message> {
     info!("hardware_buttons: received hardware button event: {event:?}");
 
     let mut message: Option<Message> = None;
@@ -90,7 +104,16 @@ pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
 
         KeyEvent::Pressed(Key::ExtensionDetection) => {
             println!("HARDWARE EXTENTION DETCTION EVENT:PRESSED");
-            list_devices();
+            set_setting("org.mechanix.desktop.settings.extension.detected", "true").await;
+            let detected_extension_name = match get_detected_extension_name().await {
+                Ok(extension) => extension,
+                Err(_) => {
+                    Extension::Unknown
+                }
+            };
+            set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
+
+
             info!("hardware_buttons: extension detection pressed");
         }
         KeyEvent::Pressing(Key::ExtensionDetection) => {
@@ -99,6 +122,14 @@ pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
         }
         KeyEvent::Released(Key::ExtensionDetection) => {
             println!("HARDWARE EXTENTION DETCTION EVENT:released");
+            set_setting("org.mechanix.desktop.settings.extension.detected", "false").await;
+            let detected_extension_name = match get_detected_extension_name().await {
+                Ok(extension) => extension,
+                Err(_) => {
+                    Extension::Unknown
+                }
+            };
+            set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
             info!("hardware_buttons: extension detection released");
         }
         KeyEvent::Unknown(Key::ExtensionDetection) => {
@@ -120,6 +151,52 @@ pub fn build_message_for_event(event: KeyEvent) -> Option<Message> {
     }
 
     message
+}
+
+async fn get_detected_extension_name() -> Result<Extension> {
+    let timeout = Duration::from_secs(1);
+    for device in DeviceList::new()?.iter() {
+        let device_desc = match device.device_descriptor() {
+            Ok(d) => d,
+            Err(_) => continue,
+        };
+
+        let mut usb_device = {
+            match device.open() {
+                Ok(h) => match h.read_languages(timeout) {
+                    Ok(l) => {
+                        if !l.is_empty() {
+                            Some(UsbDevice {
+                                handle: h,
+                                language: l[0],
+                                timeout,
+                            })
+                        } else {
+                            None
+                        }
+                    }
+                    Err(_) => None,
+                },
+                Err(_) => None,
+            }
+        };
+
+        let vendor_id = device_desc.vendor_id();
+        let product_id = device_desc.product_id();
+
+        if let Some(extension) = extension_from_vid_pid(vendor_id, product_id) {
+            println!("  → Detected {:?}", extension);
+            return Ok(extension);
+        }
+        println!(
+            "Bus {:03} Device {:03} ID {:04x}:{:04x}",
+            device.bus_number(),
+            device.address(),
+            device_desc.vendor_id(),
+            device_desc.product_id(),
+        );
+    }
+    Ok(Extension::Unknown)
 }
 
 fn list_devices() -> Result<()> {
