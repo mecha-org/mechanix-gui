@@ -82,11 +82,6 @@ impl HomescreenWidget for ExtensionWidget {
 
         let background = icons.dot_grid.clone();
 
-        println!(
-            "background: {:?}  extension_icon {:?}",
-            background, extension_icon
-        );
-
         div()
             .size_full()
             .relative()
