@@ -11,7 +11,7 @@ pub const DEFAULT_MIN_BRIGHTNESS: f32 = 10.;
 
 pub fn get_current_datetime() -> String {
     let now = Local::now();
-    format!("{}", now.format("%d %b %H:%M"))
+    format!("{}", now.format("%H:%M"))
 }
 
 pub async fn sync_connected_network(

@@ -36,7 +36,7 @@ impl Default for ExtensionWidget {
 
 impl HomescreenWidget for ExtensionWidget {
     fn render(&self, cx: &mut gpui::App) -> gpui::AnyElement {
-        println!("image path is {:?}", self.icon);
+        //println!("image path is {:?}", self.icon);
         div()
             .size_full()
             .flex()
