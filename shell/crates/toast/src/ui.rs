@@ -114,7 +114,6 @@ impl Render for Toast {
 			.to_string_lossy()
 			.to_string();
 
-		// Toast box: 358x48, centered content
 		div()
 			.size_full()
 			.flex()
@@ -142,8 +141,7 @@ impl Render for Toast {
 							.gap(px(TOAST_GAP))
 							// Icon
 							.child(
-								svg()
-									.path(icon_path)
+								img(icon_path)
 									.w(px(TOAST_ICON_SIZE))
 									.h(px(TOAST_ICON_SIZE))
 							)
@@ -169,8 +167,7 @@ impl Render for Toast {
 										this.hide(cx);
 									}))
 									.child(
-										svg()
-											.path(icon_close.clone())
+										img(icon_close.clone())
 											.w(px(TOAST_CLOSE_SIZE))
 											.h(px(TOAST_CLOSE_SIZE))
 									),
@@ -194,30 +191,56 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
 
 	let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
 
-	// Track extension state locally for building messages
-	let mut extension_name: Option<String> = None;
-	let mut last_detected: Option<bool> = None;
+	// Track extension state as a tuple (name, detected) for robust state management
+	let mut current_extension: Option<(String, bool)> = None;
 
 	cx.spawn(async move |cx| {
 		while let Ok(message) = dispatcher_rx.recv().await {
 			match message {
 				dispatcher::Message::SetExtensionName(name) => {
-					extension_name = Some(name);
+					// When extension name changes, check if it's a new extension
+					let is_new_extension = current_extension
+						.as_ref()
+						.map(|(old_name, _)| old_name != &name)
+						.unwrap_or(true);
+
+					if is_new_extension {
+						// Reset state for new extension - preserve name but clear detected state
+						current_extension = Some((name, false));
+					} else if let Some((_, detected)) = current_extension {
+						// Same extension, keep the detected state
+						current_extension = Some((name, detected));
+					}
 				}
 				dispatcher::Message::SetExtensionDetected(detected) => {
-					// Skip if same state as before
-					if last_detected == Some(detected) {
-						continue;
-					}
-					last_detected = Some(detected);
-
-					let Some(name) = extension_name.clone() else {
+					let Some((ref name, last_detected)) = current_extension else {
+						// No extension name set yet, ignore
 						continue;
 					};
 
+					// Skip if same state for the same extension
+					if last_detected == detected {
+						continue;
+					}
+
+					// Update state
+					let ext_name = name.clone();
+					current_extension = Some((ext_name.clone(), detected));
+
+					// Clear existing toast before showing new one to prevent stale toasts
+					let _ = cx.update(|cx| {
+						let _ = toast_entity.update(cx, |toast, cx| {
+							toast.clear(cx);
+						});
+					});
+
+					// Small delay to ensure clear takes effect
+					cx.background_executor()
+						.timer(Duration::from_millis(50))
+						.await;
+
 					if detected {
-						// Extension attached - show toast with timeout
-						let toast_message = format!("{} was attached", name);
+						let toast_message = format!("{} was attached", ext_name);
 						let icon = icon_attached.clone();
 						let _ = cx.update(|cx| {
 							let _ = toast_entity.update(cx, |toast, cx| {
@@ -225,8 +248,7 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
 							});
 						});
 					} else {
-						// Extension detached - show toast with detached icon
-						let toast_message = format!("{} was detached", name);
+						let toast_message = format!("{} was detached", ext_name);
 						let icon = icon_detached.clone();
 						let _ = cx.update(|cx| {
 							let _ = toast_entity.update(cx, |toast, cx| {

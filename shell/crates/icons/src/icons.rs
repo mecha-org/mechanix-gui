@@ -746,9 +746,9 @@ pub struct ToastIcons {
 impl Default for ToastIcons {
     fn default() -> Self {
         Self {
-            extension_attached: PathBuf::from(format!("{}toast/extension_attached.svg", ICONS_BASE_PATH)),
-            extension_detached: PathBuf::from(format!("{}toast/extension_detached.svg", ICONS_BASE_PATH)),
-            close: PathBuf::from(format!("{}toast/cross.svg", ICONS_BASE_PATH)),
+            extension_attached: PathBuf::from(format!("{}toast/extension_attached.png", ICONS_BASE_PATH)),
+            extension_detached: PathBuf::from(format!("{}toast/extension_detached.png", ICONS_BASE_PATH)),
+            close: PathBuf::from(format!("{}toast/cross.png", ICONS_BASE_PATH)),
         }
     }
 }

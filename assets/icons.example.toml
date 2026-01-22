@@ -173,6 +173,6 @@ detached = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/detache
 dashed = "/usr/share/mechanix/shell/assets/icons/homescreen/clock/dashed.png"
 
 [toast]
-extension-attached = "/usr/share/mechanix/shell/assets/icons/toast/extension_attached.svg"
-extension-detached = "/usr/share/mechanix/shell/assets/icons/toast/extension_detached.svg"
-close = "/usr/share/mechanix/shell/assets/icons/toast/cross.svg"
+extension-attached = "/usr/share/mechanix/shell/assets/icons/toast/extension_attached.png"
+extension-detached = "/usr/share/mechanix/shell/assets/icons/toast/extension_detached.png"
+close = "/usr/share/mechanix/shell/assets/icons/toast/cross.png"
