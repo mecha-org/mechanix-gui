@@ -24,12 +24,11 @@ const MODAL_ANIMATION_FRAME_MS: u64 = 16;
 
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const GRID_ROW_HEIGHT: f32 = 126.0;
-const GRID_ROW_WIDTH: f32 = 508.0;
 const SECTION_SPACING: f32 = 15.0;
 const APP_ROW_HEIGHT: f32 = 60.0;
 const FLOATING_BTN_SIZE: f32 = 56.0;
-const FLOATING_BTN_BOTTOM: f32 = 6.0;
-const FLOATING_BTN_RIGHT: f32 = 15.0;
+const FLOATING_BTN_BOTTOM: f32 = 16.0;
+const FLOATING_BTN_RIGHT: f32 = 16.0;
 const SEARCH_BAR_BOTTOM: f32 = 20.0;
 const DRAG_THRESHOLD: f32 = 2.0;
 const LONG_PRESS_DURATION: Duration = Duration::from_millis(500);
@@ -184,40 +183,42 @@ impl AppDrawer {
         _: &mut Context<Self>
     ) -> (Pixels, Pixels) {
         let container_height = if self.is_searching {
-            app_drawer_size.height - px(16.0 - (SEARCH_BAR_HEIGHT + SEARCH_BAR_BOTTOM + 16.0))
+            app_drawer_size.height - px(SEARCH_BAR_HEIGHT + SEARCH_BAR_BOTTOM + 32.0)
         } else {
-            app_drawer_size.height
+            app_drawer_size.height - px(16.0) // Fixed: was adding, should subtract
         };
 
-        let max_scroll = px(0.0);
-        let min_scroll = container_height - content_height;
-
         if content_height <= container_height {
-            (px(0.0), px(0.0))
-        } else {
-            (min_scroll, max_scroll)
+            return (px(0.0), px(0.0));
         }
+
+        // Fixed: max_scroll should be 0 (top), min_scroll should be negative (bottom)
+        let max_scroll = px(0.0);
+        let min_scroll = -(content_height - container_height);
+
+        (min_scroll, max_scroll)
     }
 
+    // 2. Fix estimate_content_height - more accurate calculations
     fn estimate_content_height(&self) -> Pixels {
         if self.is_searching {
             let num_apps = self.filtered.len() as f32;
             if num_apps == 0.0 {
-                return px(0.0);
+                return px(100.0); // Return minimum height for empty state
             }
-
-            let gaps = if num_apps > 1.0 { (num_apps - 1.0) * 1.0 } else { 0.0 };
-            px(APP_ROW_HEIGHT * num_apps + gaps + 16.0)
+            // Each app row is APP_ROW_HEIGHT (60px) + 1px gap
+            let height = px(APP_ROW_HEIGHT * num_apps + (num_apps - 1.0) + 32.0);
+            height
         } else {
             let count = self.grouped.len() as f32;
             if count == 0.0 {
-                return px(0.0);
+                return px(100.0); // Return minimum height for empty state
             }
-
+            // Each category is GRID_ROW_HEIGHT + SECTION_SPACING between them
             let rows_height = GRID_ROW_HEIGHT * count;
             let gaps_height = if count > 1.0 { SECTION_SPACING * (count - 1.0) } else { 0.0 };
-
-            px(rows_height + gaps_height + 16.0)
+            let height = px(rows_height + gaps_height + 32.0);
+            height
         }
     }
 
@@ -257,24 +258,17 @@ impl AppDrawer {
                 delta_y.abs().to_f64() * delta_y.abs().to_f64() +
                 delta_x.abs().to_f64() * delta_x.abs().to_f64();
 
-            // Determine scroll direction once threshold is exceeded
             if distance_squared > ((DRAG_THRESHOLD * DRAG_THRESHOLD) as f64) {
-                // Determine if this is a vertical scroll or horizontal swipe
                 if !self.has_moved {
                     let abs_delta_y = delta_y.abs().to_f64();
                     let abs_delta_x = delta_x.abs().to_f64();
-
-                    // If movement is primarily vertical, treat as scroll
-                    // Otherwise, let it pass through to homescreen for page swipe
                     self.is_vertical_scroll = abs_delta_y > abs_delta_x;
                 }
 
                 self.has_moved = true;
-                // Cancel any pending long press
                 self.press_start_time = None;
             }
 
-            // Only scroll vertically if this is a vertical scroll gesture
             if self.is_vertical_scroll {
                 let new_scroll_offset = self.last_scroll_offset + delta_y;
                 let content_height = self.estimate_content_height();
@@ -287,13 +281,12 @@ impl AppDrawer {
                     ),
                     cx
                 );
+
+                // Clamp: min_scroll is negative (bottom limit), max_scroll is 0 (top limit)
                 self.scroll_offset = new_scroll_offset.clamp(min_scroll, max_scroll);
                 cx.notify();
-
-                // Stop propagation only for vertical scrolls
                 cx.stop_propagation();
             }
-            // For horizontal swipes, don't stop propagation - let homescreen handle it
         }
     }
 
@@ -420,6 +413,8 @@ impl AppDrawer {
         self.text_input.update(cx, |input, _| {
             input.focus_handle.focus(window);
         });
+
+        // Reset scroll when entering search mode
         self.scroll_offset = px(0.0);
         self.last_scroll_offset = px(0.0);
 
@@ -439,7 +434,7 @@ impl AppDrawer {
             .flex_row()
             .items_center()
             .px_2()
-            .bg(colors.accent_300.with_alpha(0.1))
+            .bg(colors.accent_300.with_alpha(0.2))
             .child(
                 div()
                     .id("search-bar")
@@ -508,6 +503,8 @@ impl AppDrawer {
 
                             this.text_input.read(cx).blur(window);
                             this.is_searching = false;
+
+                            // Reset scroll when exiting search mode
                             this.scroll_offset = px(0.0);
                             this.last_scroll_offset = px(0.0);
                             this.drag_start_y = px(0.0);
@@ -540,252 +537,273 @@ impl AppDrawer {
             .flex()
             .flex_col()
             .size_full()
-            .items_center()
-            .py_2()
-            .gap(px(SECTION_SPACING))
-            .top(self.scroll_offset)
-            .children(
-                grouped
-                    .into_iter()
-                    .enumerate()
-                    .map(|(idx, (category, apps))| {
-                        let total = apps.len();
-                        let show_popup = total > 1;
-                        let shown_apps = if show_popup {
-                            apps.iter().take(6).cloned().collect::<Vec<_>>()
-                        } else {
-                            apps.clone()
-                        };
+            .overflow_hidden()
+            .child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .w_full()
+                    .px_4()
+                    .py_2() // Add top padding
+                    .gap(px(SECTION_SPACING))
+                    .relative()
+                    .top(self.scroll_offset)
+                    .children(
+                        grouped
+                            .into_iter()
+                            .enumerate()
+                            .map(|(idx, (category, apps))| {
+                                let total = apps.len();
+                                let show_popup = total > 1;
+                                let shown_apps = if show_popup {
+                                    apps.iter().take(6).cloned().collect::<Vec<_>>()
+                                } else {
+                                    apps.clone()
+                                };
 
-                        let category_for_popup = category.clone();
+                                let category_for_popup = category.clone();
 
-                        div()
-                            .id(idx)
-                            .relative()
-                            .w(px(GRID_ROW_WIDTH))
-                            .h(px(GRID_ROW_HEIGHT))
-                            .cursor_pointer()
-                            .on_click(
-                                cx.listener(move |this: &mut AppDrawer, _event, window, cx| {
-                                    if !this.has_moved && !this.is_long_press {
-                                        let app_drawer_size = gpui::size(
-                                            window.bounds().size.width,
-                                            window.bounds().size.height -
-                                                Settings::global(
-                                                    cx
-                                                ).homescreen.status_bar_size.height
-                                        );
-
-                                        // Calculate card position
-                                        let card_x = px(16.0);
-                                        let card_y =
-                                            px(8.0) +
-                                            this.scroll_offset +
-                                            px((idx as f32) * (GRID_ROW_HEIGHT + SECTION_SPACING));
-                                        let card_bottom = card_y + px(GRID_ROW_HEIGHT);
-
-                                        // Clamp Y position to viewport
-                                        let viewport_top = px(8.0);
-                                        let viewport_bottom = app_drawer_size.height;
-
-                                        let clamped_y = if card_bottom < viewport_top {
-                                            viewport_top
-                                        } else if card_y > viewport_bottom {
-                                            viewport_bottom
-                                        } else {
-                                            card_bottom
-                                        };
-
-                                        // Origin point: bottom-left of the card
-                                        let origin = Point::new(card_x, clamped_y);
-
-                                        this.show_subwindow_modal = true;
-                                        this.subwindow_category = category_for_popup.clone();
-                                        this.subwindow = None;
-
-                                        this.start_modal_animation(origin, cx);
-                                        cx.notify();
-                                    }
-
-                                    this.has_moved = false;
-                                    this.is_long_press = false;
-                                })
-                            )
-                            .child(
                                 div()
-                                    .grid()
-                                    .grid_cols(6)
-                                    .gap(px(28.0))
-                                    .bg(colors.background_900)
-                                    .p(px(20.0))
-                                    .rounded(px(8.0))
-                                    .border(px(1.0))
-                                    .border_color(colors.accent_200.with_alpha(0.6))
-                                    .w(px(GRID_ROW_WIDTH))
+                                    .id(idx)
+                                    .relative()
+                                    .w_full()
                                     .h(px(GRID_ROW_HEIGHT))
-                                    .justify_center()
-                                    .children(
-                                        shown_apps
-                                            .into_iter()
-                                            .enumerate()
-                                            .map(|(idx, app)| {
-                                                let app_id = app.possible_app_id.clone();
-                                                let exec = app.exec.clone();
-                                                let id = hash_id(&app_id);
-                                                let icon = Self::resolved_icon(&app.icon_path);
-                                                let app_for_sheet = app.clone();
-
-                                                div()
-                                                    .id(id + idx)
-                                                    .bg(colors.background_800)
-                                                    .flex()
-                                                    .items_center()
-                                                    .justify_center()
-                                                    .rounded(px(5.6))
-                                                    .size(px(56.0))
-                                                    .on_mouse_down(
-                                                        MouseButton::Left,
-                                                        cx.listener(
-                                                            move |
-                                                                this: &mut AppDrawer,
-                                                                _event,
-                                                                _window,
+                                    .cursor_pointer()
+                                    .on_click(
+                                        cx.listener(
+                                            move |this: &mut AppDrawer, _event, window, cx| {
+                                                if !this.has_moved && !this.is_long_press {
+                                                    let app_drawer_size = gpui::size(
+                                                        window.bounds().size.width,
+                                                        window.bounds().size.height -
+                                                            Settings::global(
                                                                 cx
-                                                            | {
-                                                                this.press_start_time = Some(
-                                                                    Instant::now()
-                                                                );
-                                                                this.press_app_info = Some(
-                                                                    app_for_sheet.clone()
-                                                                );
-                                                                this.is_long_press = false;
+                                                            ).homescreen.status_bar_size.height
+                                                    );
 
-                                                                cx.spawn(async move |this, cx| {
-                                                                    cx
-                                                                        .background_executor()
-                                                                        .timer(
-                                                                            LONG_PRESS_DURATION
-                                                                        ).await;
+                                                    // Calculate card position
+                                                    let card_x = px(16.0);
+                                                    let card_y =
+                                                        px(8.0) +
+                                                        this.scroll_offset +
+                                                        px(
+                                                            (idx as f32) *
+                                                                (GRID_ROW_HEIGHT + SECTION_SPACING)
+                                                        );
+                                                    let card_bottom = card_y + px(GRID_ROW_HEIGHT);
 
-                                                                    this.update(cx, |this, cx| {
-                                                                        if
-                                                                            this.press_start_time.is_some() &&
-                                                                            !this.has_moved &&
-                                                                            !this.is_long_press
-                                                                        {
-                                                                            this.is_long_press = true;
-                                                                            this.show_bottom_sheet = true;
-                                                                            this.sheet_app =
-                                                                                this.press_app_info.clone();
-                                                                            this.sheet_kind =
-                                                                                BottomSheetKind::MainOptions;
-                                                                            this.press_start_time =
-                                                                                None;
-                                                                            cx.notify();
-                                                                        }
-                                                                    }).ok();
-                                                                }).detach();
+                                                    // Clamp Y position to viewport
+                                                    let viewport_top = px(8.0);
+                                                    let viewport_bottom = app_drawer_size.height;
 
-                                                                cx.stop_propagation();
-                                                            }
-                                                        )
-                                                    )
-                                                    .on_mouse_up(
-                                                        MouseButton::Left,
-                                                        cx.listener(
-                                                            move |
-                                                                this: &mut AppDrawer,
-                                                                _event,
-                                                                _window,
-                                                                cx
-                                                            | {
-                                                                if
-                                                                    let Some(start_time) =
-                                                                        this.press_start_time
-                                                                {
-                                                                    let duration =
-                                                                        start_time.elapsed();
+                                                    let clamped_y = if card_bottom < viewport_top {
+                                                        viewport_top
+                                                    } else if card_y > viewport_bottom {
+                                                        viewport_bottom
+                                                    } else {
+                                                        card_bottom
+                                                    };
 
-                                                                    if
-                                                                        duration >=
-                                                                            LONG_PRESS_DURATION &&
-                                                                        !this.has_moved
-                                                                    {
-                                                                        this.is_long_press = true;
-                                                                        this.show_bottom_sheet = true;
-                                                                        this.sheet_app =
-                                                                            this.press_app_info.clone();
-                                                                        this.sheet_kind =
-                                                                            BottomSheetKind::MainOptions;
-                                                                        cx.notify();
-                                                                    } else if
-                                                                        !this.has_moved &&
-                                                                        !this.is_long_press
-                                                                    {
-                                                                        this.on_app_click(
-                                                                            app_id.clone(),
-                                                                            exec.clone(),
-                                                                            cx
-                                                                        );
-                                                                    }
-                                                                }
+                                                    // Origin point: bottom-left of the card
+                                                    let origin = Point::new(card_x, clamped_y);
 
-                                                                this.press_start_time = None;
-                                                                this.press_app_info = None;
-                                                                this.has_moved = false;
-                                                                cx.stop_propagation();
-                                                            }
-                                                        )
-                                                    )
-                                                    .child(
+                                                    this.show_subwindow_modal = true;
+                                                    this.subwindow_category =
+                                                        category_for_popup.clone();
+                                                    this.subwindow = None;
+
+                                                    this.start_modal_animation(origin, cx);
+                                                    cx.notify();
+                                                }
+
+                                                this.has_moved = false;
+                                                this.is_long_press = false;
+                                            }
+                                        )
+                                    )
+                                    .child(
+                                        div()
+                                            .grid()
+                                            .grid_cols(6)
+                                            .gap(px(28.0))
+                                            .bg(colors.background_900)
+                                            .p(px(20.0))
+                                            .rounded(px(8.0))
+                                            .border(px(1.0))
+                                            .border_color(colors.background_700)
+                                            .w_full()
+                                            .h(px(GRID_ROW_HEIGHT))
+                                            .justify_center()
+                                            .children(
+                                                shown_apps
+                                                    .into_iter()
+                                                    .enumerate()
+                                                    .map(|(idx, app)| {
+                                                        let app_id = app.possible_app_id.clone();
+                                                        let exec = app.exec.clone();
+                                                        let id = hash_id(&app_id);
+                                                        let icon = Self::resolved_icon(
+                                                            &app.icon_path
+                                                        );
+                                                        let app_for_sheet = app.clone();
+
                                                         div()
-                                                            .size(px(41.0))
-                                                            .border(px(1.0))
+                                                            .id(id + idx)
+                                                            .bg(colors.background_800)
+                                                            .flex()
                                                             .items_center()
                                                             .justify_center()
-                                                            .child(icon)
-                                                    )
-                                            })
+                                                            .rounded(px(5.6))
+                                                            .size(px(56.0))
+                                                            .on_mouse_down(
+                                                                MouseButton::Left,
+                                                                cx.listener(
+                                                                    move |
+                                                                        this: &mut AppDrawer,
+                                                                        _event,
+                                                                        _window,
+                                                                        cx
+                                                                    | {
+                                                                        this.press_start_time =
+                                                                            Some(Instant::now());
+                                                                        this.press_app_info = Some(
+                                                                            app_for_sheet.clone()
+                                                                        );
+                                                                        this.is_long_press = false;
+
+                                                                        cx.spawn(
+                                                                            async move |this, cx| {
+                                                                                cx
+                                                                                    .background_executor()
+                                                                                    .timer(
+                                                                                        LONG_PRESS_DURATION
+                                                                                    ).await;
+
+                                                                                this.update(
+                                                                                    cx,
+                                                                                    |this, cx| {
+                                                                                        if
+                                                                                            this.press_start_time.is_some() &&
+                                                                                            !this.has_moved &&
+                                                                                            !this.is_long_press
+                                                                                        {
+                                                                                            this.is_long_press = true;
+                                                                                            this.show_bottom_sheet = true;
+                                                                                            this.sheet_app =
+                                                                                                this.press_app_info.clone();
+                                                                                            this.sheet_kind =
+                                                                                                BottomSheetKind::MainOptions;
+                                                                                            this.press_start_time =
+                                                                                                None;
+                                                                                            cx.notify();
+                                                                                        }
+                                                                                    }
+                                                                                ).ok();
+                                                                            }
+                                                                        ).detach();
+
+                                                                        cx.stop_propagation();
+                                                                    }
+                                                                )
+                                                            )
+                                                            .on_mouse_up(
+                                                                MouseButton::Left,
+                                                                cx.listener(
+                                                                    move |
+                                                                        this: &mut AppDrawer,
+                                                                        _event,
+                                                                        _window,
+                                                                        cx
+                                                                    | {
+                                                                        if
+                                                                            let Some(start_time) =
+                                                                                this.press_start_time
+                                                                        {
+                                                                            let duration =
+                                                                                start_time.elapsed();
+
+                                                                            if
+                                                                                duration >=
+                                                                                    LONG_PRESS_DURATION &&
+                                                                                !this.has_moved
+                                                                            {
+                                                                                this.is_long_press = true;
+                                                                                this.show_bottom_sheet = true;
+                                                                                this.sheet_app =
+                                                                                    this.press_app_info.clone();
+                                                                                this.sheet_kind =
+                                                                                    BottomSheetKind::MainOptions;
+                                                                                cx.notify();
+                                                                            } else if
+                                                                                !this.has_moved &&
+                                                                                !this.is_long_press
+                                                                            {
+                                                                                this.on_app_click(
+                                                                                    app_id.clone(),
+                                                                                    exec.clone(),
+                                                                                    cx
+                                                                                );
+                                                                            }
+                                                                        }
+
+                                                                        this.press_start_time =
+                                                                            None;
+                                                                        this.press_app_info = None;
+                                                                        this.has_moved = false;
+                                                                        cx.stop_propagation();
+                                                                    }
+                                                                )
+                                                            )
+                                                            .child(
+                                                                div()
+                                                                    .size(px(41.0))
+                                                                    .border(px(1.0))
+                                                                    .items_center()
+                                                                    .justify_center()
+                                                                    .child(icon)
+                                                            )
+                                                    })
+                                            )
                                     )
-                            )
-                            .child({
-                                let mut w = wing()
-                                    .absolute()
-                                    .bottom_0()
-                                    .left_0()
-                                    .h(px(36.0))
-                                    .w(px(GRID_ROW_WIDTH))
-                                    .flex()
-                                    .flex_col()
-                                    .justify_start()
-                                    .items_start()
-                                    .bg(colors.accent_200.with_alpha(0.1))
-                                    .border_color(colors.accent_200.with_alpha(0.6));
-                                w.upper_wing_size(Size::new(px(150.0), px(15.0)));
-                                w.border_width(px(1.0));
-                                w.border_radius(px(8.0));
-                                w.corner_radii(commons::widgets::CornerRadii {
-                                    top_left: px(0.0),
-                                    top_right: px(0.0),
-                                    bottom_right: px(8.0),
-                                    bottom_left: px(8.0),
-                                });
-                                w
+                                    .child({
+                                        let mut w = wing()
+                                            .absolute()
+                                            .bottom_0()
+                                            .left_0()
+                                            .h(px(36.0))
+                                            .w_full()
+                                            .flex()
+                                            .flex_col()
+                                            .justify_start()
+                                            .items_start()
+                                            .bg(colors.accent_200.with_alpha(0.1))
+                                            .border_color(colors.accent_200.with_alpha(0.6));
+                                        w.upper_wing_size(Size::new(px(150.0), px(15.0)));
+                                        w.border_width(px(1.0));
+                                        w.border_radius(px(8.0));
+                                        w.corner_radii(commons::widgets::CornerRadii {
+                                            top_left: px(0.0),
+                                            top_right: px(0.0),
+                                            bottom_right: px(8.0),
+                                            bottom_left: px(8.0),
+                                        });
+                                        w
+                                    })
+                                    .child(
+                                        div()
+                                            .absolute()
+                                            .bottom_5()
+                                            .left_6()
+                                            .font_weight(FontWeight(400.0))
+                                            .text_size(px(16.0))
+                                            .line_height(px(1.25))
+                                            .text_color(colors.foreground_300)
+                                            .child(category.clone())
+                                            .text_ellipsis()
+                                            .w(px(120.0))
+                                    )
                             })
-                            .child(
-                                div()
-                                    .absolute()
-                                    .bottom_5()
-                                    .left_6()
-                                    .font_weight(FontWeight(400.0))
-                                    .text_size(px(16.0))
-                                    .line_height(px(1.25))
-                                    .text_color(colors.foreground_300)
-                                    .child(category.clone())
-                                    .text_ellipsis()
-                                    .w(px(120.0))
-                            )
-                    })
+                    )
             )
     }
     fn render_search_list(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -798,18 +816,19 @@ impl AppDrawer {
         div()
             .id("search-results-list")
             .size_full()
-            .px_4()
-            .py_2()
-            .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
-            .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
-            .on_mouse_move(cx.listener(Self::on_mouse_move))
+            .overflow_hidden()
             .child(
                 div()
-                    .relative()
                     .flex()
                     .flex_col()
+                    .px_4()
+                    .pt_2() // Add top padding
                     .gap(px(1.0))
-                    .top(self.scroll_offset)
+                    .relative()
+                    .top(self.scroll_offset) // Apply scroll offset here
+                    .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+                    .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+                    .on_mouse_move(cx.listener(Self::on_mouse_move))
                     .children(
                         searched_apps.iter().map(|app| {
                             let exec = app.exec.clone();
@@ -897,7 +916,7 @@ impl AppDrawer {
         let progress = self.modal_animation_progress;
         let origin = self.modal_origin_point;
 
-        let final_width = px(GRID_ROW_WIDTH);
+        let final_width = app_drawer_size.width;
         let final_height_f32 = 500.0;
 
         let target_x = (app_drawer_size.width - final_width) / 2.0;
@@ -1010,15 +1029,11 @@ impl Render for AppDrawer {
         }
 
         div()
-            .h(app_drawer_size.height)
-            .w(app_drawer_size.width)
-            .child(self.render_floating_search_button(cx))
+            .size_full()
             .child(
                 div()
                     .flex()
-                    .justify_center()
                     .relative()
-                    .items_center()
                     .flex_col()
                     .size_full()
                     .font_family(primary_font)
@@ -1037,20 +1052,20 @@ impl Render for AppDrawer {
                     // SEARCH MODE
                     .when(self.is_searching, |search_div| {
                         search_div
-                            .bg(colors.background_900)
                             .flex()
                             .flex_col()
                             .size_full()
                             .child(
                                 div()
                                     .flex_1()
-                                    .w_full()
+                                    // .w_full()
+                                    .size_full()
                                     .overflow_hidden()
                                     .on_mouse_down(
                                         MouseButton::Left,
                                         cx.listener(Self::on_mouse_down)
                                     )
-                                    .pb(px(SEARCH_BAR_HEIGHT + 150.0))
+                                    // .pb(px(SEARCH_BAR_HEIGHT))
                                     .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
                                     .on_mouse_move(cx.listener(Self::on_mouse_move))
                                     .child(self.render_search_list(cx))
@@ -1063,7 +1078,7 @@ impl Render for AppDrawer {
                         modal_div.child(
                             self.render_subwindow_modal(
                                 gpui::size(
-                                    window.bounds().size.width,
+                                    window.bounds().size.width - px(8.0),
                                     window.bounds().size.height -
                                         Settings::global(cx).homescreen.status_bar_size.height
                                 ),
@@ -1107,14 +1122,9 @@ impl Render for AppDrawer {
                                 let mut w = wing()
                                     .absolute()
                                     .bottom(px(-10.0))
-                                    .bg(colors.background_900)
+                                    .bg(colors.background_800)
                                     .h(bottom_sheet_height)
-                                    .border_color(colors.accent_200.with_alpha(0.6))
-                                    .w(app_drawer_size.width - px(2.0))
-                                    .flex()
-                                    .flex_col()
-                                    .justify_start()
-                                    .items_start();
+                                    .w_full();
                                 w.upper_wing_size(Size::new(px(80.0), px(15.0)));
                                 w.upper_wing_side(WingSide::Right);
                                 w.border_width(px(1.0));
