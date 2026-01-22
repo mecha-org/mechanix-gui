@@ -35,7 +35,7 @@ minimized = { origin = { x = 0.0, y = 591.0 }, size = { width = 230.0, height = 
 maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
 
 [running_apps]
-navbar_size = { width = 199.22, height = 28.5 }
+navbar_size = { width = 80.0, height = 29.0 }
 
 [running_apps.layer_shell]
 layer = "top"
@@ -67,16 +67,31 @@ namespace = "mechanix.power.options"
 exclusive_zone = 0.0
 size = { width = 540.0, height = 620.0 }
 
-[volume_slider.layer_shell]
+[lockscreen.layer_shell]
+layer = "overlay"
+anchor = ["top", "left", "right", "bottom"]
+namespace = "mechanix.lockscreen"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 620.0 }
+
+[lockscreen.input_regions]
+maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
+
+[volume_slider]
+overlay_timeout_ms = 2000
 layer = "overlay"
 anchor = ["bottom", "left"]
 namespace = "mechanix.hardware_buttons.slider"
 exclusive_zone = 0.0
 size = { width = 37.0, height = 277.0 }
 
-[volume_slider]
+[volume_slider.layer_shell]
 min_volume_level = 0.0
 max_volume_level = 100.0
+
+[volume_slider.input_regions]
+minimized = { origin = { x = 0.0, y = 0.0 }, size = { width = 0.0, height = 0.0 } }
+maximized = { origin = { x = 16, y = 172.0 }, size = { width = 52.0, height = 297.0 } }
 
 [launcher.layer_shell]
 layer = "bottom"

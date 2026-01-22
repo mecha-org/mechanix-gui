@@ -73,6 +73,7 @@ pub struct Fonts {
     pub primary: SharedString,
     pub secondary: SharedString,
     pub tertiary: SharedString,
+    pub digital: SharedString,
 }
 
 impl Default for Fonts {
@@ -81,6 +82,7 @@ impl Default for Fonts {
             primary: "Overused Grotesk".into(),
             secondary: "Noto Sans".into(),
             tertiary: "Inter".into(),
+            digital: "Digital-7 Mono".into(),
         }
     }
 }

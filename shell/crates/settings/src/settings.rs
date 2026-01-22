@@ -89,8 +89,6 @@ pub struct RunningAppsSettings {
     #[serde(default)]
     pub navbar_size: Size<Pixels>,
     #[serde(default)]
-    pub center_bar_size: Size<Pixels>,
-    #[serde(default)]
     pub input_regions: InputRegions,
 }
 
@@ -104,8 +102,7 @@ impl Default for RunningAppsSettings {
                 exclusive_zone: px(-1.0),
                 size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(199.22), px(28.5)),
-            center_bar_size: Size::new(px(80.0), px(29.0)),
+            navbar_size: Size::new(px(80.0), px(29.0)),
             input_regions: InputRegions::default(),
         }
     }
@@ -219,6 +216,8 @@ impl Default for PowerOptionsSettings {
 pub struct LockscreenSettings {
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for LockscreenSettings {
@@ -230,6 +229,16 @@ impl Default for LockscreenSettings {
                 namespace: "mechanix.lockscreen".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
+            },
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(540.0), px(620.0)),
+                },
             },
         }
     }
@@ -244,6 +253,10 @@ pub struct VolumeSliderSettings {
     pub min_volume_level: f32,
     #[serde(default)]
     pub max_volume_level: f32,
+    #[serde(default)]
+    pub overlay_timeout_ms: u64,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for VolumeSliderSettings {
@@ -258,6 +271,17 @@ impl Default for VolumeSliderSettings {
             },
             min_volume_level: 0.0,
             max_volume_level: 100.0,
+            overlay_timeout_ms: 2_000,
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(52.0), px(297.0)),
+                },
+            },
         }
     }
 }

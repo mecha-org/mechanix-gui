@@ -22,3 +22,4 @@ theme = { path = "../theme" }
 upower = { workspace = true }
 futures = "0.3.31"
 mxconf_dbus = { path = "../../../dbus/mechanix/mxconf" }
+icons = { path = "../icons" }

@@ -87,7 +87,7 @@ class _FavouritesTabState extends State<FavouritesTab> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: context.onSurface,
+                            color: context.onSurfaceVariant,
                           ),
                         ),
                       ),

@@ -10,20 +10,21 @@ use gpui::*;
 use settings::prelude::{InputRegions, Settings};
 use theme::prelude::*;
 
-const BAR_SIZE: (f32, f32) = (80.0, 29.0);
-const APP_SIZE: (f32, f32) = (540.0, 620.0);
-
 impl Render for RunningApps {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let settings = Settings::global(cx).running_apps.clone();
+        let running_apps_size = settings.layer_shell.size;
+        let bar_size = settings.navbar_size;
+
         let top_levels = window.foreign_toplevels();
         if self.apps.len() != top_levels.len() && !self.is_animating() {
             self.update_running_apps(top_levels, window, cx);
             cx.notify();
         }
 
-        let input_regions = Settings::global(cx).running_apps.input_regions.clone();
-        let bar_fixed_pos = APP_SIZE.1 - BAR_SIZE.1;
-        let current_bar_y = bar_fixed_pos + self.bar_drag_offset;
+        let input_regions = settings.input_regions.clone();
+        let bar_fixed_pos = running_apps_size.height - bar_size.height;
+        let current_bar_y = bar_fixed_pos + px(self.bar_drag_offset);
         let colors = cx.theme().colors.clone();
 
         div()
@@ -115,13 +116,13 @@ impl Render for RunningApps {
                         .justify_center()
                         .items_center()
                         .absolute()
-                        .top(px(current_bar_y))
-                        .h(px(BAR_SIZE.1))
+                        .top(current_bar_y)
+                        .h(bar_size.height)
                         .child(
                             div()
                             .id("center-bar")
                             .bg(colors.accent_200)
-                            .w(px(BAR_SIZE.0))
+                            .w(bar_size.width)
                             .h(px(4.0))
                             .rounded(px(4.0)),
                         ),
@@ -275,7 +276,8 @@ impl RunningApps {
             .flex_col()
             .items_center()
             .justify_center()
-            .bg(rgb(0x000000))
+            .bg(colors.background_1000)
+            .font_family(primary_font)
             .when(has_apps, |this| this.child(self.scroller_container(cx)))
             .when(!has_apps, |this| {
                 this.child(
@@ -290,8 +292,7 @@ impl RunningApps {
                                 .text_size(px(16.0))
                                 .line_height(px(24.0))
                                 .text_center()
-                                .font_weight(FontWeight(500.0))
-                                .font_family(primary_font)
+                                .font_weight(FontWeight(500.0))                                
                                 .max_w(px(300.0))
                                 .child("There are no apps or droids")
                                 .child(div().child("you are looking for.")),

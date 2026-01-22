@@ -21,3 +21,4 @@ shell_state = { path = "../shell_state" }
 settings = { path = "../settings" }
 dispatcher = { path = "../dispatcher" }
 futures-util = "0.3.31"
+icons = { path = "../icons" }

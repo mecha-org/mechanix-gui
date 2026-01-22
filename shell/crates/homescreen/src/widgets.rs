@@ -6,6 +6,10 @@ use crate::utils::GridBounds;
 
 pub mod app_drawer;
 pub mod demo_widget;
+pub mod extentions;
+pub mod pinned_apps;
+pub mod system_usage;
+pub mod time;
 pub mod universal_search;
 
 #[derive(Copy, Clone, Hash, Debug, PartialEq, Eq)]
@@ -147,10 +151,12 @@ impl WidgetWrapper {
         widget_id: WidgetId,
         widget_data: &WidgetData,
         state: &crate::state::HomescreenState,
-        cx: &gpui::App,
+        cx: &mut gpui::App,
     ) -> impl IntoElement {
         let widget = widget_data.widget();
-        let colors = theme::ActiveTheme::theme(cx).colors.clone();
+
+        let widget_border_color = widget.border_color();
+        let widget_background_color = widget.background_color();
 
         let mut w = wing();
         if widget.has_border() {
@@ -180,17 +186,17 @@ impl WidgetWrapper {
         let left_edge_at_center = widget_data.grid_bounds.origin.x == center_column;
 
         let touching_wide_widget_above = touching_widgets.iter().any(|info| {
-            info.grid_bounds.size.width == 4
+            info.grid_bounds.size.width == 3
                 && info.grid_bounds.origin.y < widget_data.grid_bounds.origin.y
         });
 
         // Check if touching a full-width widget below
         let touching_wide_widget_below = touching_widgets.iter().any(|info| {
-            info.grid_bounds.size.width == 4
+            info.grid_bounds.size.width == 3
                 && info.grid_bounds.origin.y > widget_data.grid_bounds.origin.y
         });
 
-        let half_width = state.config.window.width / 2.0;
+        let one_third_width = state.config.window.width / 3.0;
         let wing_size_adjustment = 30.0;
         let widget_width: f32 = widget.get_bounds().size.width.into();
 
@@ -213,12 +219,12 @@ impl WidgetWrapper {
             widget_data.grid_bounds.origin.x <= center_column && right_edge >= center_column;
 
         // Apply wing logic based on position
-        if widget_data.grid_bounds.size.width == 4 {
+        if widget_data.grid_bounds.size.width == 3 {
             // Add upper wing only if not touching top edge
             if !touching_top_edge {
                 upper_wing_height = 30.0;
                 let upper_wing_width =
-                    (half_width - 4.0 * upper_wing_height / 3.0 - 5.0).min(widget_width);
+                    (one_third_width - 4.0 * upper_wing_height / 3.0 - 5.0).min(widget_width);
                 w.upper_wing_size(size(px(upper_wing_width), px(upper_wing_height)));
             }
 
@@ -226,7 +232,7 @@ impl WidgetWrapper {
             if !touching_bottom_edge {
                 lower_wing_height = 30.0;
                 let lower_wing_width =
-                    (half_width - lower_wing_height / 2.0 + 5.0).min(widget_width);
+                    (one_third_width - lower_wing_height / 2.0 + 5.0).min(widget_width);
                 w.lower_wing_size(size(px(lower_wing_width), px(lower_wing_height)));
             }
         } else if widget_touches_or_crosses_center
@@ -236,10 +242,10 @@ impl WidgetWrapper {
             // Widget touching/crossing center and touching full-width widget above
             let widget_left: f32 = widget.get_bounds().origin.x.into();
             // Only add upper wing (left of center) if widget has portion to the left of center
-            if widget_left < half_width {
+            if widget_left < one_third_width {
                 upper_wing_height = 30.0;
                 let widget_right = widget_left + widget_width;
-                let portion_left_of_center = (half_width - widget_left)
+                let portion_left_of_center = (one_third_width - widget_left)
                     .min(widget_right - widget_left)
                     .max(0.0);
                 let upper_wing_width = portion_left_of_center - upper_wing_height;
@@ -253,9 +259,9 @@ impl WidgetWrapper {
             let widget_left: f32 = widget.get_bounds().origin.x.into();
             let widget_right = widget_left + widget_width;
             // Only add lower wing (right of center) if widget has portion to the right of center
-            if widget_right > half_width {
+            if widget_right > one_third_width {
                 lower_wing_height = 30.0;
-                let portion_right_of_center = widget_right - half_width;
+                let portion_right_of_center = widget_right - one_third_width;
                 let lower_wing_width = portion_right_of_center.min(widget_width);
                 w.lower_wing_size(size(px(lower_wing_width), px(lower_wing_height)));
             }
@@ -277,19 +283,19 @@ impl WidgetWrapper {
 
         let element = w
             .absolute()
-            .bg(colors.background_1000)
-            .border_color(colors.accent_200.with_alpha(0.4))
+            .bg(widget_background_color)
+            .border_color(widget_border_color)
             .left(widget.get_bounds().origin.x + px(horizontal_adjustment))
             .top(widget.get_bounds().origin.y - px(upper_wing_height))
             .w(widget.get_bounds().size.width + px(size_adjustment))
             .h(widget.get_bounds().size.height + px(upper_wing_height) + px(height_adjustment));
 
-        element.child(div().size_full().child(widget.render()))
+        element.child(div().size_full().child(widget.render(cx)))
     }
 }
 
 pub trait HomescreenWidget {
-    fn render(&self) -> AnyElement;
+    fn render(&self, cx: &mut gpui::App) -> AnyElement;
     fn set_bounds(&mut self, bounds: Bounds<Pixels>);
     fn get_bounds(&self) -> Bounds<Pixels>;
 

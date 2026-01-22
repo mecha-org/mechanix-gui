@@ -56,11 +56,11 @@ class FileDetailsDialog extends StatelessWidget {
               Positioned(
                 left: screenWidth * 0.25,
                 right: 8,
-                bottom: 65,
+                bottom: 100,
                 child: GestureDetector(
                   onTap: () {},
                   child: ClipPath(
-                    clipper: TabClipper(shift: screenWidth * 0.50 * 0.70),
+                    clipper: TabClipper(shift: 250),
                     child: Container(
                       decoration: BoxDecoration(
                         color: context.colorScheme.surfaceContainerHigh,

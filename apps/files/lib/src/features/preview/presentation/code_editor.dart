@@ -1,20 +1,21 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
 import 'package:highlight/highlight_core.dart';
+import 'package:highlight/languages/cpp.dart';
 import 'package:highlight/languages/dart.dart';
+import 'package:highlight/languages/java.dart';
+import 'package:highlight/languages/javascript.dart';
 import 'package:highlight/languages/json.dart';
 import 'package:highlight/languages/plaintext.dart';
-import 'package:highlight/languages/sql.dart';
-import 'package:highlight/languages/yaml.dart';
 import 'package:highlight/languages/python.dart';
-import 'package:highlight/languages/java.dart';
-import 'package:highlight/languages/cpp.dart';
 import 'package:highlight/languages/ruby.dart';
-import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/rust.dart';
-import 'package:highlight/languages/javascript.dart';
+import 'package:highlight/languages/sql.dart';
+import 'package:highlight/languages/xml.dart';
+import 'package:highlight/languages/yaml.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
@@ -743,7 +744,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         child: Material(
           color: Colors.transparent,
           child: SizedBox(
-            height: 60,
+            height: 90,
             child: MechanixTextInput.search(
               autofocus: false,
               hintText: "Search in file",
