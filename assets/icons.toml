@@ -30,10 +30,10 @@
 "lock" = "assets/icons/lockscreen/lock.svg"
 "lock-open-full" = "assets/icons/lockscreen/lock-open-full.svg"
 "lock-open-half" = "assets/icons/lockscreen/lock-open-half.svg"
-"wedge-left" = "assets/icons/lockscreen/wedge_left.svg"
-"wedge-left-outline" = "assets/icons/lockscreen/wedge_left_outline.svg"
-"wedge-right" = "assets/icons/lockscreen/wedge_right.svg"
-"wedge-right-outline" = "assets/icons/lockscreen/wedge_right_outline.svg"
+"wedge-left" = "assets/icons/lockscreen/wedge-left.svg"
+"wedge-left-outline" = "assets/icons/lockscreen/wedge-left-outline.svg"
+"wedge-right" = "assets/icons/lockscreen/wedge-right.svg"
+"wedge-right-outline" = "assets/icons/lockscreen/wedge-right-outline.svg"
 "wallpaper" = "assets/icons/lockscreen/wallpaper.png"
 
 [settings_drawer]
@@ -161,7 +161,13 @@
 "xls-file" = "assets/icons/universal-search/xls-file.svg"
 "zip-file" = "assets/icons/universal-search/zip-file.svg"
 
-[homescreen]
-"gamepad" = "assets/icons/homescreen/gamepad.png"
-"keyboard" = "assets/icons/homescreen/keyboard.png"
-"gpio" = "assets/icons/homescreen/gpio.png"
+[homescreen.extensions]
+gamepad = "assets/icons/homescreen/extensions/gamepad.png"
+keyboard = "assets/icons/homescreen/extensions/keyboard.png"
+gpio = "assets/icons/homescreen/extensions/gpio.png"
+unknown = "assets/icons/homescreen/extensions/unknown.png"
+dot-grid = "assets/icons/homescreen/extensions/dot-grid.png"
+detached = "assets/icons/homescreen/extensions/detached.png"
+
+[homescreen.clock]
+dashed = "assets/icons/homescreen/clock/dashed.png"

@@ -14,7 +14,7 @@ pub mod prelude {
 }
 
 pub fn run_app(cx: &mut App) {
-    let LockscreenSettings { layer_shell } = Settings::global(cx).lockscreen.clone();
+    let LockscreenSettings { layer_shell, .. } = Settings::global(cx).lockscreen.clone();
     let LayerShellSettings {
         size,
         layer,
@@ -39,8 +39,7 @@ pub fn run_app(cx: &mut App) {
             ..Default::default()
         },
         |window, cx| {
-            let regions = Vec::new();
-            window.set_input_regions(Some(regions));
+            window.set_input_regions(Some(Vec::new()));
 
             cx.new(|cx| {
                 listen_dispatcher(cx);

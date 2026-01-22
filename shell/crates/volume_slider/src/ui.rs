@@ -1,9 +1,9 @@
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
+use icons::prelude::Icons;
 use settings::prelude::{LayerShellSettings, Settings, VolumeSliderSettings};
 use std::time::Duration;
 
-use crate::icon::{VolumeIcon, VolumeIconName};
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
 use crate::{get_volume, set_volume, sync_volume_to_system};
 
@@ -187,8 +187,21 @@ impl SliderOverlay {
 
 impl Render for SliderOverlay {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let icon_name =
-            VolumeIconName::from_volume(self.slider_value, self.min_volume, self.max_volume);
+        let icons = Icons::global(cx).settings_drawer.clone();
+
+        let icon_name = if self.slider_value <= self.min_volume {
+            icons.volume_off
+        } else {
+            let range = self.max_volume - self.min_volume;
+            let normalized = (self.slider_value - self.min_volume) / range;
+            if normalized <= 0.33 {
+                icons.volume_low
+            } else if normalized <= 0.66 {
+                icons.volume_medium
+            } else {
+                icons.volume_high
+            }
+        };
 
         if self.visible != self.last_visible {
             self.update_input_regions(window, self.visible, cx);
@@ -226,8 +239,11 @@ impl Render for SliderOverlay {
                                 .items_center()
                                 .justify_center()
                                 .child(
-                                    VolumeIcon::new(icon_name)
-                                        .size((px(ICON_SIZE), px(ICON_SIZE)))
+                                    svg()
+                                        .external_path(SharedString::from(
+                                            icon_name.to_string_lossy().to_string(),
+                                        ))
+                                        .size(px(ICON_SIZE))
                                         .text_color(rgb(0xFFFFFF)),
                                 ),
                         ),

@@ -92,7 +92,7 @@ impl Render for Launcher {
         }
 
         if self.refresh_windows_counter > 0 {
-            cx.refresh_windows(); 
+            cx.refresh_windows();
             self.refresh_windows_counter -= 1;
         }
 
@@ -169,7 +169,7 @@ fn listen_dispatcher(cx: &mut gpui::App, entity: Entity<Launcher>) {
 }
 
 pub fn run() {
-    Application::new().with_assets(Assets {}).run(|cx| {
+    Application::new().run(|cx| {
         //init global settings
         settings::init(cx);
 

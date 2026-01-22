@@ -2,12 +2,13 @@ use std::path::PathBuf;
 
 use crate::widgets::HomescreenWidget;
 use gpui::*;
+use icons::prelude::Icons;
 use shell_state::ShellState;
 use theme::{ActiveFonts, ActiveTheme};
 
 pub struct Time {
     bounds: Bounds<Pixels>,
-    color: Hsla,
+    background_color: Hsla,
     border_color: Hsla,
     has_border: bool,
 }
@@ -16,7 +17,7 @@ impl Time {
     pub fn new(color: impl Into<Hsla>, border_color: impl Into<Hsla>, has_border: bool) -> Self {
         Self {
             bounds: Bounds::default(),
-            color: color.into(),
+            background_color: color.into(),
             border_color: border_color.into(),
             has_border,
         }
@@ -38,16 +39,16 @@ impl HomescreenWidget for Time {
         let mut parts = date_time.split(':');
         let hour = parts.next().unwrap_or("00").to_string();
         let minute = parts.next().unwrap_or("00").to_string();
+        let icons = Icons::global(cx).homescreen.clock.clone();
 
         // Asset paths for layered rendering
-        let clock_background_path = "icons/homescreen/clock_background.svg";
-        let dot_grid_path = "icons/homescreen/extension/dot_grid.svg";
-        let dashed_lines_path = "icons/homescreen/dashed_lines.svg";
+        let dashed = icons.dashed;
 
         div()
             .size_full()
             .relative()
             .overflow_hidden()
+            .rounded(px(16.))
             .child(
                 div()
                     .absolute()
@@ -55,28 +56,11 @@ impl HomescreenWidget for Time {
                     .flex()
                     .justify_center()
                     .items_center()
-                    .child(img(clock_background_path).w(px(156.)).h(px(156.)).text_color(colors.accent_200)),
+                    .p_1()
+                    .child(img(dashed).size_full()),
             )
             .child(
-                div()
-                    .absolute()
-                    .inset_0()
-                    .flex()
-                    .justify_center()
-                    .items_center()
-                    .child(img(dot_grid_path).w(px(148.)).h(px(146.))),
-            )
-            .child(
-                div()
-                    .absolute()
-                    .inset_0()
-                    .flex()
-                    .justify_center()
-                    .items_center()
-                    .child(img(dashed_lines_path).w(px(140.)).h(px(140.))),
-            )
-            .child(
-                div().absolute().inset_0().p(px(4.)).child(
+                div().absolute().size_full().inset_0().child(
                     div()
                         .size_full()
                         .flex()
@@ -105,7 +89,7 @@ impl HomescreenWidget for Time {
     }
 
     fn background_color(&self) -> Hsla {
-        self.color
+        self.background_color
     }
 
     fn has_border(&self) -> bool {

@@ -9,8 +9,8 @@ import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
-import 'package:pdfrx/pdfrx.dart';
 import 'package:path/path.dart' as p;
+import 'package:pdfrx/pdfrx.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
@@ -121,7 +121,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   bottom: MediaQuery.of(bottomSheetContext).viewInsets.bottom,
                 ),
                 child: Container(
-                  height: 60,
+                  height: 90,
                   decoration: const BoxDecoration(
                     borderRadius:
                         BorderRadius.vertical(top: Radius.circular(12)),
@@ -503,7 +503,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         child: Material(
           color: Colors.transparent,
           child: SizedBox(
-            height: 60,
+            height: 90,
             child: MechanixTextInput.search(
               cursorColor: context.colorScheme.primaryFixed,
               autofocus: false,

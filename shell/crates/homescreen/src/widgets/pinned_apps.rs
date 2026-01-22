@@ -7,7 +7,7 @@ use theme::{ActiveFonts, ActiveTheme};
 pub struct PinnedApps {
     bounds: Bounds<Pixels>,
     apps: Vec<PathBuf>,
-    color: Hsla,
+    background_color: Hsla,
     border_color: Hsla,
     has_border: bool,
 }
@@ -22,7 +22,7 @@ impl PinnedApps {
         Self {
             bounds: Bounds::default(),
             apps: apps.into(),
-            color: color.into(),
+            background_color: color.into(),
             border_color: border_color.into(),
             has_border,
         }
@@ -67,7 +67,7 @@ impl HomescreenWidget for PinnedApps {
     }
 
     fn background_color(&self) -> Hsla {
-        self.color
+        self.background_color
     }
 
     fn has_border(&self) -> bool {

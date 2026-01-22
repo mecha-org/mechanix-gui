@@ -183,14 +183,16 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
           color: context.colorScheme.surfaceContainer,
         ),
         // Navigation bar
-        SizedBox(
-          height: 60,
+        Container(
+          height: 64,
+          color: context.secondaryContainer,
           child: Row(
             children: [
               if (isSearching) ...[
                 Expanded(
                   child: MechanixTextInput.search(
                     theme: MechanixTextInputThemeData(
+                      widgetHeight: 64,
                       widgetDecoration: BoxDecoration(
                         color: context.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(0),
@@ -227,6 +229,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 Expanded(
                   child: MechanixBottomBar(
                     theme: MechanixBottomBarThemeData(
+                      height: 60,
                       decoration: BoxDecoration(
                           color: context.colorScheme.surfaceContainerHigh),
                     ),
@@ -273,7 +276,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         },
                       ),
                     ],
-                  ).padLeft(16).padRight(16),
+                  ),
                 ),
               ]
             ],
@@ -282,8 +285,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
 
         // Bottom bar
         Container(
-          height: 60,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding:
+              const EdgeInsets.only(left: 16, right: 16, bottom: 30, top: 8),
           decoration: BoxDecoration(
             color: context.colorScheme.secondaryContainer,
             borderRadius:
