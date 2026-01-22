@@ -679,15 +679,15 @@ impl Render for TextInput {
             .w(px(400.))
             .justify_center()
             .items_center()
-            .h(px(20.))
+            .h(px(22.))
             .line_height(px(18.))
             .text_size(px(16.))
             .text_color(rgb(0xF4F4F4))
             .child(
                 div()
-                    .h(px(20.))
+                    .h(px(22.))
                     .w_full()
-                    .pt(px(3.))
+                    .py(px(2.5))
                     .child(TextElement { input: cx.entity() }),
             )
     }
