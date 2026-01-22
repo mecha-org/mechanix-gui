@@ -150,7 +150,8 @@ pub fn listen_for_extensions(cx: &mut App) {
                 dispatcher::Message::SetExtensionDetected(id) => {
                     let _ = app.update(|cx| {
                         println!("Extension attached: {id}");
-                        let kind = ExtensionKind::from(&id);
+                        //TODO: @sandeep update with your code
+                        let kind = ExtensionKind::from(&"Gamepad");
                         cx.global_mut::<ExtensionState>().kind = Some(kind);
                         cx.refresh_windows();
                     });

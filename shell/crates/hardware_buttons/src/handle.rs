@@ -17,9 +17,9 @@ struct UsbDevice<T: UsbContext> {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Extension {
-    MechaGamepad,
-    MechaKeyboard,
-    MechaGpio,
+    Gamepad,
+    Keyboard,
+    Gpio,
     Unknown,
 }
 
@@ -27,9 +27,9 @@ pub enum Extension {
 impl fmt::Display for Extension {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let s = match self {
-            Extension::MechaGamepad => "MechaGamepad",
-            Extension::MechaKeyboard => "MechaKeyboard",
-            Extension::MechaGpio => "MechaGpio",
+            Extension::Gamepad => "GAMEPAD",
+            Extension::Keyboard => "KEYBOARD",
+            Extension::Gpio => "GPIO",
             Extension::Unknown => "Unknown",
         };
         write!(f, "{s}")
@@ -204,9 +204,9 @@ pub fn extension_from_vid_pid(
     product_id: u16,
 ) -> Option<Extension> {
     match (vendor_id, product_id) {
-        (0xCE07, 0x0001) => Some(Extension::MechaGamepad),
-        (0xCE07, 0x0002) => Some(Extension::MechaKeyboard),
-        (0xCE07, 0x0003) => Some(Extension::MechaGpio),
-        _ => Some(Extension::MechaGpio),
+        (0xCE07, 0x0001) => Some(Extension::Keyboard),
+        (0xCE07, 0x0002) => Some(Extension::Gamepad),
+        (0xCE07, 0x0003) => Some(Extension::Gpio),
+        _ => Some(Extension::Gpio),
     }
 }
