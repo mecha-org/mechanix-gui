@@ -8157,6 +8157,7 @@ dependencies = [
  "futures-timer",
  "futures-util",
  "gpui",
+ "icons",
  "log",
  "power_options",
  "settings",
