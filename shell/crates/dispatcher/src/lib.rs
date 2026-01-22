@@ -19,8 +19,6 @@ impl Global for Dispatcher {}
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct ThemeColors {
     pub accent: String,
-    pub background: String,
-    pub foreground: String,
 }
 
 impl ThemeColors {
@@ -40,8 +38,6 @@ impl ThemeColors {
 
         Ok(Self {
             accent: extract(input, "accent")?,
-            background: extract(input, "background")?,
-            foreground: extract(input, "foreground")?,
         })
     }
 }
@@ -51,8 +47,6 @@ pub enum Message {
     SetThemeMode(String),
     SetThemeColors {
         accent: String,
-        background: String,
-        foreground: String,
     },
     SetPrimaryFont(String),
     SetSecondaryFont(String),
@@ -110,8 +104,6 @@ pub fn init(cx: &mut App) {
                                     match tx
                                         .broadcast(Message::SetThemeColors {
                                             accent: theme.accent,
-                                            background: theme.background,
-                                            foreground: theme.foreground,
                                         })
                                         .await
                                     {
