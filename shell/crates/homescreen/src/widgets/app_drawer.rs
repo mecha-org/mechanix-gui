@@ -6,15 +6,17 @@ use gpui::*;
 pub struct AppDrawerWidget {
     bounds: Bounds<Pixels>,
     drawer_handle: Entity<AppDrawer>,
+    background_color: Hsla,
     has_border: bool,
 }
 
 impl AppDrawerWidget {
-    pub fn new(cx: &mut Context<Homescreen>, has_border: bool) -> Self {
+    pub fn new(cx: &mut Context<Homescreen>, color: impl Into<Hsla>, has_border: bool) -> Self {
         let drawer_handle = cx.new(|cx| AppDrawer::new(cx));
         Self {
             bounds: Bounds::default(),
             drawer_handle,
+            background_color: color.into(),
             has_border,
         }
     }
@@ -37,7 +39,7 @@ impl HomescreenWidget for AppDrawerWidget {
     }
 
     fn background_color(&self) -> Hsla {
-        gpui::transparent_black().into()
+        self.background_color
     }
 
     fn has_border(&self) -> bool {
