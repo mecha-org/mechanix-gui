@@ -30,7 +30,7 @@ impl HomescreenConfig {
             },
         );
         config.grid.page_gaps.insert(
-            4,
+            2,
             GridGap {
                 horizontal: 0.0,
                 vertical: 0.0,
@@ -45,8 +45,8 @@ impl HomescreenConfig {
             left: 10.0,
         };
         config.grid.page_paddings.insert(1, page_padding);
-        config.grid.page_paddings.insert(2, page_padding);
-        config.grid.page_paddings.insert(3, page_padding);
+        // config.grid.page_paddings.insert(2, page_padding);
+        // config.grid.page_paddings.insert(3, page_padding);
 
         config
     }
