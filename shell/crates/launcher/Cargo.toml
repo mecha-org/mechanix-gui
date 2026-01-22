@@ -28,6 +28,7 @@ shell_state = { path = "../shell_state" }
 volume_slider = { path = "../volume_slider" }
 hardware_buttons = { path = "../hardware_buttons" }
 lockscreen = { path = "../lockscreen" }
+toast = { path = "../toast" }
 icons = { path = "../icons" }
 
 [package.metadata.deb]

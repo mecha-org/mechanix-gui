@@ -209,6 +209,8 @@ pub fn run() {
 
         volume_slider::run_app(cx);
 
+        toast::run_app(cx);
+
         cx.activate(true);
         cx.refresh_windows();
     });

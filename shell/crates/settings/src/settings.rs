@@ -32,6 +32,8 @@ pub struct Settings {
     pub launcher: LauncherSettings,
     #[serde(default)]
     pub system_apps: SystemApps,
+    #[serde(default)]
+    pub toast: ToastSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -326,6 +328,42 @@ impl Default for LauncherSettings {
                 namespace: "mechanix.launcher".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+/// Toast settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct ToastSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub timeout_ms: u64,
+    #[serde(default)]
+    pub input_regions: InputRegions,
+}
+
+impl Default for ToastSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Overlay,
+                anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT,
+                namespace: "mechanix.toast".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(48.0)),
+            },
+            timeout_ms: 3_000,
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(91.0), px(0.0)),
+                    size: Size::new(px(358.0), px(48.0)),
+                },
             },
         }
     }
