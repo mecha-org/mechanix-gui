@@ -13,6 +13,8 @@ use crate::ui::{FINAL_MODAL_SIZE, SettingsDrawer};
 
 pub const ROW_HEIGHT: f32 = 60.0;
 pub const MODAL_HEADER_HEIGHT: f32 = 60.0;
+pub const MODAL_WING_WIDTH: f32 = 237.0;
+pub const MODAL_WING_HEIGHT: f32 = 36.0;
 
 impl SettingsDrawer {
     pub fn render_header_div(
@@ -36,8 +38,6 @@ impl SettingsDrawer {
             .font_weight(FontWeight::SEMIBOLD)
             .pl(px(16.))
             .pt(px(8.))
-            .border_b_1()
-            .border_color(colors.accent_200.with_alpha(0.4))
             .h(px(MODAL_HEADER_HEIGHT))
             .into_any()
     }
@@ -52,8 +52,8 @@ impl SettingsDrawer {
             .flex_row()
             .items_end()
             .justify_start()
-            .border_t_1()
             .bg(colors.background_1000)
+            .border_t_1()
             .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
             .rounded_md()

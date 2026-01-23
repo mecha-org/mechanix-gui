@@ -1,4 +1,5 @@
 use std::time::Duration;
+
 use bluez::{interfaces::device::BluetoothDevice, service::{BluetoothEvent, BluetoothService, InterfaceEvent}};
 use pulseaudio::service::{DeviceInfo, PulseAudioService};
 use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
@@ -225,7 +226,7 @@ impl ShellStateManager {
                             ShellState::global_mut(cx).sound_devices = list;
                         }
                         ShellStateMessage::Brightness { value } => {
-                            ShellState::global_mut(cx).brightness_value = value;
+                            ShellState::global_mut(cx).brightness_value = if value == 0. {DEFAULT_MIN_BRIGHTNESS} else {value};
                         }
                         _ => {}
                     };
