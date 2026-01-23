@@ -5,8 +5,31 @@ import 'package:mechanix_settings/src/features/appearance/models/types.dart';
 import 'package:mechanix_settings/src/features/appearance/presentation/wallpaper_preview.dart';
 import 'package:widgets/extension.dart';
 
-class WallpaperGallery extends StatelessWidget {
+class WallpaperGallery extends StatefulWidget {
   const WallpaperGallery({super.key});
+
+  @override
+  State<WallpaperGallery> createState() => _WallpaperGalleryState();
+}
+
+class _WallpaperGalleryState extends State<WallpaperGallery> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAllThemeImages();
+  }
+
+  Future<void> _precacheAllThemeImages() async {
+    if (mounted) {
+      for (final wallpaper in wallpapersList) {
+        await precacheImage(
+          AssetImage(wallpaper.wallpaperPreview),
+          context,
+          size: const Size(153, 176),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

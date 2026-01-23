@@ -42,12 +42,16 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
       final appliedVariant = MechanixVariant.getAllVariants()
           .firstWhereOrNull((variant) => variant.color == accent);
 
+      final appliedWallpaper = wallpapersList
+          .firstWhere((w) => w.wallpaperPreview == wallpaper)
+          .wallpaper;
+
       if (appliedVariant != null) {
         emit(state.copyWith(
           variant: appliedVariant,
           appliedVariant: appliedVariant,
-          wallpaperFileName: wallpaper,
-          appliedWallpaper: wallpaper,
+          wallpaperFileName: appliedWallpaper,
+          appliedWallpaper: appliedWallpaper,
         ));
       }
     }
@@ -76,8 +80,13 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
 
   Future<void> _applyWallpaper(
       ApplyWallpaperEvent event, Emitter<AppearanceState> emit) async {
+    final appliedWallpaper = wallpapersList
+        .firstWhere((w) => w.wallpaper == state.wallpaperFileName)
+        .wallpaperPreview;
+
     emit(state.copyWith(appliedWallpaper: state.wallpaperFileName));
-    await appearanceRepository.applyWallpaper(state.wallpaperFileName);
+
+    await appearanceRepository.applyWallpaper(appliedWallpaper);
   }
 
   @override
