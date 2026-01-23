@@ -10,6 +10,7 @@ use crate::{
         modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
     },
 };
+use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 
 #[derive(Debug)]
 struct PerformanceMode {
@@ -104,8 +105,6 @@ impl SettingsDrawer {
                                         .h(px(ROW_HEIGHT))
                                         .px_4()
                                         .bg(colors.accent_200.with_alpha(0.1))
-                                        .border_y_1()
-                                        .border_color(colors.accent_200.with_alpha(0.4))
                                         .child(
                                             div()
                                                 .flex()
@@ -179,7 +178,7 @@ impl SettingsDrawer {
                             })),
                     )
                     .child(self.render_settings_div(cx));
-                w.upper_wing_size(Size::new(px(237.0), px(36.0)));
+                w.upper_wing_size(Size::new(px(MODAL_WING_WIDTH), px(MODAL_WING_HEIGHT)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));
                 w
