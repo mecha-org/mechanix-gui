@@ -526,7 +526,7 @@ impl Render for SettingsDrawer {
             0.0
         };
 
-        let bg_color = if (self.drawer_moving || self.drag_offset.is_some()) || self.is_visible {
+        let bg_color = if self.drag_offset.is_some() || self.is_visible {
             colors.background_1000
         } else {
             colors.background_800
@@ -599,30 +599,43 @@ impl Render for SettingsDrawer {
                     .h_full()
                     .absolute()
                     .top(px(self.position))
-                    .child(div().id("right-wing").child({
-                        let mut w = wing()
-                            .w(settings_drawer_size.width)
-                            .h(settings_drawer_size.height)
-                            .border_color(colors.background_700)
-                            .flex()
-                            .flex_col()
-                            .justify_end()
-                            .items_end()
-                            .bg(bg_color)
-                            .opacity(opacity)
-                            .child(self.drawer_items(opacity, window, cx));
+                    .child(
+                        div()
+                            .id("right-wing")
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                                    cx.stop_propagation();
+                                    this.drag_start_pos = this.position;
+                                    this.drag_offset =
+                                        Some(event.position.y.to_f64() as f32 - this.position);
+                                    cx.notify();
+                                }),
+                            )
+                            .child({
+                                let mut w = wing()
+                                    .w(settings_drawer_size.width)
+                                    .h(settings_drawer_size.height)
+                                    .border_color(colors.background_700)
+                                    .flex()
+                                    .flex_col()
+                                    .justify_end()
+                                    .items_end()
+                                    .bg(bg_color)
+                                    .child(self.drawer_items(window, cx));
 
-                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
-                        w.upper_wing_side(WingSide::Right);
-                        w.border_width(px(1.0));
-                        w.corner_radii(CornerRadii {
-                            top_left: px(8.0),
-                            top_right: px(8.0),
-                            bottom_right: px(0.0),
-                            bottom_left: px(0.0),
-                        });
-                        w
-                    })),
+                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                                w.upper_wing_side(WingSide::Right);
+                                w.border_width(px(1.0));
+                                w.corner_radii(CornerRadii {
+                                    top_left: px(8.0),
+                                    top_right: px(8.0),
+                                    bottom_right: px(0.0),
+                                    bottom_left: px(0.0),
+                                });
+                                w
+                            }),
+                    ),
             )
     }
 }
@@ -757,7 +770,6 @@ impl SettingsDrawer {
 
     fn drawer_items(
         &mut self,
-        opacity: f32,
         window: &mut Window,
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
@@ -815,21 +827,19 @@ impl SettingsDrawer {
             }
         }
 
+        let closed_pos = Self::calculate_closed_position(&settings);
+        let opacity = if self.drawer_moving || self.drag_offset.is_some() {
+            1.0 - (self.position / closed_pos).clamp(0.0, 1.0)
+        } else {
+            if self.is_visible { 1.0 } else { 0.0 }
+        };
+
         div()
             .id("root")
             .relative()
             .w(settings_drawer_size.width - px(1.5))
             .h(settings_drawer_size.height - navbar_size.height - px(1.5))
             .font_family(primary_font)
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|this, event: &MouseDownEvent, _, cx| {
-                    cx.stop_propagation();
-                    this.drag_start_pos = this.position;
-                    this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
-                    cx.notify();
-                }),
-            )
             .opacity(opacity)
             .bg(colors.background_1000)
             .child(

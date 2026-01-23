@@ -784,12 +784,6 @@ impl Render for NotificationCenter {
 
         let threshold_px = 40.;
 
-        let opacity = if self.is_dragging || self.drag_offset.is_some() {
-            1.0 - (self.position / closed_y).clamp(0.0, 1.0)
-        } else {
-            0.0
-        };
-
         let bg_color = if (self.is_dragging || self.drag_offset.is_some()) || self.is_visible {
             colors.background_1000
         } else {
@@ -873,7 +867,6 @@ impl Render for NotificationCenter {
                             .justify_end()
                             .items_end()
                             .bg(bg_color)
-                            .opacity(opacity)
                             .child(self.render_content(window, cx));
 
                         w.upper_wing_size(size(navbar_size.width, navbar_size.height));
