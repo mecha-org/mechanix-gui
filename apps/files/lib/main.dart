@@ -164,7 +164,9 @@ class MainApp extends StatelessWidget {
         theme: darkTheme,
         darkTheme: _buildDarkTheme(),
         themeMode: themeMode,
-        home: _buildHomePage(),
+        home: FileHomePage(
+          path: openPath.isNotEmpty ? pathToSegments(openPath) : const [],
+        ),
         routes: {
           AppRoutes.files: (context) => const FileHomePage(),
         },
@@ -180,11 +182,5 @@ class MainApp extends StatelessWidget {
         },
       ),
     );
-  }
-
-  Widget _buildHomePage() {
-    return openPath.isNotEmpty
-        ? FileExplorerPage(startPath: openPath)
-        : const FileHomePage();
   }
 }

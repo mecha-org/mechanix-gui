@@ -443,12 +443,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   }
 
   void homeNavigation() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const FileHomePage(),
-      ),
-    );
+    Navigator.pop(context);
   }
 
   OverlayEntry? _searchOverlayEntry;
