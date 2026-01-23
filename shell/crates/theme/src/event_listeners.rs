@@ -1,8 +1,8 @@
-use dispatcher::Dispatcher;
-use futures::{SinkExt, StreamExt, channel::mpsc};
-use gpui::*;
-use gpui::QuitMode::Default;
 use crate::{ThemeEvents, helpers::parse_oklcha_str, manager::ThemeManager, prelude::*};
+use dispatcher::{Dispatcher, ThemeColors};
+use futures::{SinkExt, StreamExt, channel::mpsc};
+use gpui::QuitMode::Default;
+use gpui::*;
 
 pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) {
     if !cx.has_global::<Dispatcher>() {
@@ -19,14 +19,8 @@ pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) 
                     dispatcher::Message::SetThemeMode(mode) => {
                         let _ = theme_tx.send(ThemeEvents::SetThemeMode(mode)).await;
                     }
-                    dispatcher::Message::SetThemeColors {
-                        accent,
-                    } => {
-                        let _ = theme_tx
-                            .send(ThemeEvents::SetThemeColors {
-                                accent
-                            })
-                            .await;
+                    dispatcher::Message::SetThemeColors { accent } => {
+                        let _ = theme_tx.send(ThemeEvents::SetThemeColors { accent }).await;
                     }
                     dispatcher::Message::SetPrimaryFont(font) => {
                         let _ = theme_tx.send(ThemeEvents::SetPrimaryFont(font)).await;
@@ -46,11 +40,27 @@ pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) 
 
 pub fn listen_theme_channel(cx: &mut App, mut theme_rx: mpsc::Receiver<ThemeEvents>) {
     cx.spawn(async move |app| {
+        let setting_key = "org.mechanix.desktop.settings.active_theme.theme_colors";
+        if let Ok(settings) = mxconf_dbus::get_setting(setting_key).await {
+            if let Some(theme_colors) = settings.get(setting_key) {
+                println!("default theme colors {:?}", theme_colors);
+                if let Ok(parsed_colors) = ThemeColors::parse(&theme_colors) {
+                    _ = app.update(|cx| {
+                        let mut colors = ThemeManager::global(cx).colors.clone();
+                        if let Ok(accent_color) = parse_oklcha_str(&parsed_colors.accent) {
+                            colors.accent_color = accent_color;
+                            ThemeManager::global_mut(cx).set_colors(colors);
+                            ThemeManager::apply(cx);
+                            cx.refresh_windows();
+                        }
+                    });
+                }
+            }
+        };
+
         while let Some(msg) = theme_rx.next().await {
             match msg {
-                ThemeEvents::SetThemeColors {
-                    accent,
-                } => {
+                ThemeEvents::SetThemeColors { accent } => {
                     _ = app.update(|mut cx| {
                         let mut colors = ThemeManager::global(cx).colors.clone();
                         colors.accent_color = parse_oklcha_str(&accent).unwrap();
