@@ -179,7 +179,7 @@ impl SubWindow {
             .min_h(px(420.0))
             .bg(colors.background_900)
             .border(px(1.0))
-            .border_color(colors.accent_200.with_alpha(0.6))
+            .border_color(colors.background_700)
             .rounded(px(12.0))
             .overflow_hidden()
             .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
@@ -212,7 +212,6 @@ impl SubWindow {
                     .w(px(120.0)),
             )
     }
-
     /// Render the grid of appss
     pub fn render_grid(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
@@ -272,8 +271,8 @@ impl SubWindow {
             .left_0()
             .h(px(36.0))
             .w(px(CARD_WIDTH))
-            .bg(colors.accent_200.with_alpha(0.1))
-            .border_color(colors.accent_200.with_alpha(0.6));
+            // .bg(colors.accent_200.with_alpha(0.1))
+            .border_color(colors.background_700);
 
         w.upper_wing_size(Size::new(px(150.0), px(15.0)));
         w.border_width(px(1.0));

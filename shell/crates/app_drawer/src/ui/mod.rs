@@ -792,8 +792,8 @@ impl AppDrawer {
                                             .flex_col()
                                             .justify_start()
                                             .items_start()
-                                            .bg(colors.accent_200.with_alpha(0.1))
-                                            .border_color(colors.accent_200.with_alpha(0.6));
+                                            // .bg(colors.accent_200.with_alpha(0.1))
+                                            .border_color(colors.background_700);
                                         w.upper_wing_size(Size::new(px(150.0), px(15.0)));
                                         w.border_width(px(1.0));
                                         w.border_radius(px(8.0));
