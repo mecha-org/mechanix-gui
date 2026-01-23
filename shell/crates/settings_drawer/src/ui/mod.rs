@@ -293,8 +293,13 @@ impl SettingsDrawer {
                             })
                             .detach();
                     } else {
+                        if current_value as u32 == last_sent as u32 {
+                            return;
+                        }
+
                         // Small change - debounce it
                         // Cancel previous debounce task if it exists
+
                         if let Some(task) = this.brightness_debounce_task.take() {
                             task.detach();
                         }
@@ -379,8 +384,6 @@ impl SettingsDrawer {
 
                     // Immediate service call
                     let volume = current_value;
-                    println!("IFF volume -- {:?} ", volume);
-
                     cx.background_executor()
                         .spawn(async move {
                             let mut tx = tx;
@@ -395,14 +398,17 @@ impl SettingsDrawer {
                 } else {
                     // Small change - debounce both slider update and service call
                     // Cancel previous debounce task
+
+                    if current_value as u32 == last_sent as u32 {
+                        return;
+                    }
+
                     if let Some(task) = this.volume_debounce_task.take() {
                         task.detach();
                     }
 
                     // Start new debounced task
                     let volume = current_value;
-                    println!("ELSE volume -- {:?} ", volume);
-
                     this.volume_slider_state.update(cx, |state, _cx| {
                         let volume_value = if is_mute { 0.0 } else { volume };
                         state.value = volume_value.clamp(state.min, state.max);
