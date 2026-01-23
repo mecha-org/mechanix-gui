@@ -20,7 +20,7 @@ use std::{
 use theme::ActiveTheme;
 use theme::prelude::{AlphaExt, Fonts};
 
-use settings::prelude::{InputRegions, Settings};
+use settings::prelude::Settings;
 
 const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
 const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
@@ -418,30 +418,6 @@ impl NotificationCenter {
         self.is_dragging = false;
         self.last_scroll_offset = self.scroll_offset;
     }
-
-    fn update_input_regions(&self, open: bool, window: &mut Window, cx: &mut Context<Self>) {
-        let mut regions = Vec::new();
-
-        let settings = Settings::global(cx).notifications.clone();
-        let InputRegions {
-            minimized,
-            maximized,
-        } = settings.input_regions;
-
-        if open {
-            regions.push(Bounds {
-                origin: maximized.origin,
-                size: maximized.size,
-            });
-        } else {
-            regions.push(Bounds {
-                origin: minimized.origin,
-                size: minimized.size,
-            });
-        }
-        window.set_input_regions(Some(regions));
-        cx.notify();
-    }
 }
 
 impl EventEmitter<UserDismissedEvent> for NotificationCenter {}
@@ -808,7 +784,6 @@ impl Render for NotificationCenter {
         let closed_y = Self::closed_pos(cx);
 
         let threshold_px = 40.;
-        self.update_input_regions(self.is_visible, window, cx);
 
         div()
             .w_full()
@@ -1073,51 +1048,75 @@ impl NotificationCenter {
             // Main card with stacked appearance using layered divs
             let mut row = div().relative().overflow_hidden().flex().flex_col();
 
-            // TODO: Show multiple wings (only show when NOT expanded)
+            // Show multiple wings (only show when NOT expanded)
             if !is_expanded {
                 // Back layer (third card hint) - only if count > 2
                 if g.count > 2 {
-                    let mut w = wing();
-                    w.upper_wing_size(size(px(20.0), navbar_size.height));
-                    w.upper_wing_side(WingSide::Left);
-                    // w.include_upper_wing_in_bounds(false);
-                    let mut w = w
-                        .absolute()
-                            .w(px(20.0))
-                            .h(navbar_size.height)
-                            .left(navbar_size.width)
-                            .bg(if self.is_visible {
-                                colors.accent_200.with_alpha(0.2)
-                            } else {
-                                colors.accent_200.with_alpha(0.1)
-                            });
-                            w.border_width(px(1.0));
+                    let mut outer_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w(px(0.0))
+                        .left(navbar_size.width)
+                        .border_1()
+                        .bottom(px(-4.0))
+                        .border_color(colors.accent_200.with_alpha(0.6))
+                        .bg(colors.background_1000);
 
-                    row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    outer_wing.include_upper_wing_in_bounds(true);
+                    outer_wing.border_width(px(1.0));
 
+                    let mut inner_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w_full()
+                    .bg(if self.is_visible {
+                            colors.accent_200.with_alpha(0.2)
+                        } else {
+                            colors.accent_200.with_alpha(0.1)
+                        });
+
+                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    inner_wing.upper_wing_side(WingSide::Left);
+                    inner_wing.include_upper_wing_in_bounds(true);
+                    inner_wing.border_width(px(1.0));
+
+                    let inner = inner_wing.into_any();
+                    row = row.child(outer_wing.child(inner).into_any());
                 }
 
                 // Middle layer (second card hint) - only if count > 1
-                if !is_expanded && g.count > 1 {
-                    let mut w = wing();
+                if g.count > 1 {
+                    let mut outer_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w(px(0.0))
+                        .left(navbar_size.width - px(20.0))
+                        .bottom(px(-2.0))
+                        .border_1()
+                        .border_color(colors.accent_200.with_alpha(0.6))
+                        .bg(colors.background_1000);
 
-                    w.upper_wing_size(size(navbar_size.width + px(20.0), navbar_size.height));
-                    w.upper_wing_side(WingSide::Left);
-                    w.include_upper_wing_in_bounds(true);
-                    let mut w = w
-                    .absolute()
-                        .w(px(20.0))
-                        .h(navbar_size.height)
-                        // .tab_index(1)
-                        //.left(navbar_size.width - 20.0)
+                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    outer_wing.include_upper_wing_in_bounds(true);
+                    outer_wing.border_width(px(1.0));
+
+                    let mut inner_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w_full()
                         .bg(if self.is_visible {
                             colors.accent_200.with_alpha(0.2)
                         } else {
                             colors.accent_200.with_alpha(0.1)
                         });
-                        w.border_width(px(1.0));
-                        
-                    row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+
+                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    inner_wing.include_upper_wing_in_bounds(true);
+                    inner_wing.border_width(px(1.0));
+
+                    let inner = inner_wing.into_any();
+                    row = row.child(outer_wing.child(inner).into_any());
                 }
             }
 
@@ -1285,35 +1284,60 @@ impl NotificationCenter {
                 content = content.child(body);
 
                 let card_inner: AnyElement = if show_header {
-                    let mut wing = wing()
+
+                     let mut outer_wing = wing()
+                        .w_128()
+                        .group("")
+                        .overflow_hidden()
+                        .relative()
+                        .border_1()
+                        .border_color(colors.accent_200.with_alpha(0.6))                        
+                        .bg(if is_expanded {
+                            colors.background_900
+                        } else {
+                            colors.background_1000
+                        })
+                        .rounded(px(12.0));
+
+                    outer_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    outer_wing.include_upper_wing_in_bounds(true);
+                    outer_wing.border_radius(px(12.0));
+                    outer_wing.border_width(px(1.0));
+
+                    let mut inner_wing = wing()
                         .w_128()
                         .group("")
                         .relative()
                         .overflow_hidden()
-                        .relative()
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.4))
-                        .bg(colors.accent_200.with_alpha(0.1))
+                        .bg(if is_expanded {
+                            colors.accent_200.with_alpha(0.0)
+                        } else {
+                            colors.accent_200.with_alpha(0.1)
+                        })
+                        .border(px(2.0))
                         .rounded(px(12.0))
                         .shadow_md()
                         .pt(px(2.0))
                         .px_4()
                         .py_3p5();
 
-                    wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
-                    wing.include_upper_wing_in_bounds(true);
-                    wing.border_radius(px(12.0));
-                    wing.border_width(px(1.0));
+                    inner_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    inner_wing.include_upper_wing_in_bounds(true);
+                    inner_wing.border_radius(px(12.0));
+                    inner_wing.border_width(px(1.0));
 
-                    wing.child(content).into_any()
+                    let inner = inner_wing.child(content).into_any();
+                        
+                    outer_wing.child(inner).into_any()
                 } else {
                     div()
                         .w_128()
                         .relative()
                         .rounded(px(12.0))
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.4))
-                        .bg(colors.accent_200.with_alpha(0.1))
+                        .border_color(colors.accent_200.with_alpha(0.2))
+                        .bg(colors.background_900)
                         .px_4()
                         .py_3p5()
                         .child(content)
