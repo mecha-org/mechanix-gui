@@ -62,10 +62,7 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
                     playlistSongs.isNotEmpty
                         ? () {
                           context.read<SongsBloc>().add(
-                            FavouriteToggle(
-                              isFavourite: !isFavourite,
-                              songIds: playlistSongs.map((e) => e.id).toList(),
-                            ),
+                            MusicTabSwitch(MusicTabs.search),
                           );
                         }
                         : null,
