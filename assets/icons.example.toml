@@ -16,6 +16,7 @@
 "close" = "/usr/share/mechanix/shell/assets/icons/notifications/close.svg"
 "navbar-gray" = "/usr/share/mechanix/shell/assets/icons/notifications/navbar-gray.png"
 "navbar" = "/usr/share/mechanix/shell/assets/icons/notifications/navbar.png"
+"bell" = "/usr/share/mechanix/shell/assets/icons/notifications/bell.svg"
 
 [power_options]
 "down-arrow" = "/usr/share/mechanix/shell/assets/icons/power-options/down-arrow.svg"
