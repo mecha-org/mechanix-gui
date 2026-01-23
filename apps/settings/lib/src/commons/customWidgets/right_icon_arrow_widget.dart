@@ -7,13 +7,12 @@ class RightIconArrowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IconWidget(
+    return const IconWidget(
       iconPath: Images.rightIconArrow,
       boxWidth: 20,
       boxHeight: 20,
       iconWidth: 8.13,
       iconHeight: 14.38,
-      iconColor: context.onSecondaryFixed,
     );
   }
 }

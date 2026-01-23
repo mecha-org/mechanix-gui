@@ -11,7 +11,25 @@ class SoundRepositoryImpl implements SoundRepository {
   bool _connected = false;
   final DBusSoundService _dBusSoundService = DBusSoundService();
 
+  late final StreamController<PulseAudioServerInfo> _serverInfoController;
+  late final StreamController<PulseAudioSource> _sourceController;
+  late final StreamController<PulseAudioSink> _sinkController;
+  late final StreamController<int> _sourceRemovedController;
+  late final StreamController<int> _sinkRemovedController;
+
+  StreamSubscription<PulseAudioServerInfo>? _serverInfoSubscription;
+  StreamSubscription<PulseAudioSource>? _sourceSubscription;
+  StreamSubscription<PulseAudioSink>? _sinkSubscription;
+  StreamSubscription<int>? _sourceRemovedSubscription;
+  StreamSubscription<int>? _sinkRemovedSubscription;
+
   SoundRepositoryImpl() {
+    _serverInfoController = StreamController<PulseAudioServerInfo>.broadcast();
+    _sourceController = StreamController<PulseAudioSource>.broadcast();
+    _sinkController = StreamController<PulseAudioSink>.broadcast();
+    _sourceRemovedController = StreamController<int>.broadcast();
+    _sinkRemovedController = StreamController<int>.broadcast();
+
     _init();
   }
 
@@ -19,7 +37,6 @@ class SoundRepositoryImpl implements SoundRepository {
     if (!_connected) {
       try {
         await client.initialize();
-
         _connected = true;
       } catch (e) {
         logger.e("Error connecting to PulseAudio: $e");
@@ -37,31 +54,31 @@ class SoundRepositoryImpl implements SoundRepository {
   @override
   Future<Stream<PulseAudioServerInfo>> streamSoundServerEvents() async {
     await _ensureConnected();
-    return client.onServerInfoChanged;
+    return _serverInfoController.stream;
   }
 
   @override
   Future<Stream<PulseAudioSource>> streamSoundSourceEvents() async {
     await _ensureConnected();
-    return client.onSourceChanged;
+    return _sourceController.stream;
   }
 
   @override
   Future<Stream<PulseAudioSink>> streamSoundSinkEvents() async {
     await _ensureConnected();
-    return client.onSinkChanged;
+    return _sinkController.stream;
   }
 
   @override
   Future<Stream<int>> streamSoundSourceRemovedEvents() async {
     await _ensureConnected();
-    return client.onSourceRemoved;
+    return _sourceRemovedController.stream;
   }
 
   @override
   Future<Stream<int>> streamSoundSinkRemovedEvents() async {
     await _ensureConnected();
-    return client.onSinkRemoved;
+    return _sinkRemovedController.stream;
   }
 
   @override
@@ -142,7 +159,7 @@ class SoundRepositoryImpl implements SoundRepository {
     try {
       await client.setSourceMute(sourceName, mute);
     } catch (e) {
-      logger.e("Error setting audio source volume: $e");
+      logger.e("Error setting audio source mute: $e");
     }
   }
 
@@ -152,7 +169,7 @@ class SoundRepositoryImpl implements SoundRepository {
     try {
       await client.setSinkMute(sinkName, mute);
     } catch (e) {
-      logger.e("Error setting audio source volume: $e");
+      logger.e("Error setting audio sink mute: $e");
     }
   }
 
@@ -199,6 +216,25 @@ class SoundRepositoryImpl implements SoundRepository {
   @override
   setNotificationSound(String notificationSound) async {
     return await _dBusSoundService.setNotificationSound(notificationSound);
+  }
+
+  @override
+  void close() {
+    logger.i("Disposing SoundRepository...");
+
+    _serverInfoSubscription?.cancel();
+    _sourceSubscription?.cancel();
+    _sinkSubscription?.cancel();
+    _sourceRemovedSubscription?.cancel();
+    _sinkRemovedSubscription?.cancel();
+
+    _serverInfoController.close();
+    _sourceController.close();
+    _sinkController.close();
+    _sourceRemovedController.close();
+    _sinkRemovedController.close();
+
+    logger.i("SoundRepository disposed");
   }
 }
 

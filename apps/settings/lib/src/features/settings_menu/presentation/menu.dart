@@ -105,7 +105,7 @@ class SettingMenu extends StatelessWidget {
                       iconColor: context.primary,
                       title: 'Launcher',
                       onTap: () {},
-                      iconPath: Images.languageIcon,
+                      iconPath: Images.launcherIcon,
                     ),
                   ]),
               MechanixSectionList(
@@ -138,23 +138,6 @@ class SettingMenu extends StatelessWidget {
                   ]),
             ],
           ).padOnly(top: 8, bottom: 0),
-        ),
-      ),
-      floatingActionButton: IconButton.filled(
-        onPressed: () {},
-        constraints: const BoxConstraints(
-          maxHeight: 44,
-          maxWidth: 44,
-        ),
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.all(context.surfaceContainer),
-        ),
-        icon: const IconWidget(
-          iconPath: Images.searchIcon,
-          boxWidth: 24,
-          boxHeight: 24,
-          iconWidth: 17,
-          iconHeight: 17,
         ),
       ),
     );

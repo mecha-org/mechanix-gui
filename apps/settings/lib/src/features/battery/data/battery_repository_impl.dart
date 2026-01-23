@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:dbus/dbus.dart';
 import 'package:logger/web.dart';
@@ -14,20 +13,31 @@ class BatteryRepositoryImpl implements BatteryRepository {
   final UPowerClient _client = UPowerClient();
 
   BatteryRepositoryImpl() {
-    _init();
+    init();
   }
 
-  Future<void> _init() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
+  @override
+  Future<void> init() async {
+    try {
+      print("before _connected - $_connected");
+      if (!_connected) {
+        await _client.connect();
+        _connected = true;
+      }
+      print("after _connected - $_connected");
+    } catch (e) {
+      print("IMPL :- battery initialize");
     }
   }
 
   Future<void> _ensureConnected() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
+    try {
+      if (!_connected) {
+        await _client.connect();
+        _connected = true;
+      }
+    } catch (e) {
+      print("IMPL :- ensure battery initialize");
     }
   }
 
@@ -46,7 +56,12 @@ class BatteryRepositoryImpl implements BatteryRepository {
 
     if (device.type == UPowerDeviceType.battery) {
       percentage = device.percentage;
-      log('Battery percentage: $percentage');
+      // log('Battery percentage: $percentage');
+      print('Battery mode: $batteryMode');
+      print('Battery percentage: $percentage');
+      print('Battery time To Full: ${device.timeToFull}');
+      print('Battery time To Empty: ${device.timeToEmpty}');
+      print('available battery modes: ${modes}');
     }
 
     return BatteryInfo(
@@ -157,9 +172,25 @@ class BatteryRepositoryImpl implements BatteryRepository {
   }
 
   @override
-  Future<Stream<List<String>>> streamBatteryEvents() async {
-    await _ensureConnected();
-    final device = _client.displayDevice;
-    return device.propertiesChanged;
+  Future<Stream<List<String>>?> streamBatteryEvents() async {
+    try {
+      await _ensureConnected();
+      final device = _client.displayDevice;
+      return device.propertiesChanged;
+    } catch (e, stackTrace) {
+      print('Error initializing battery stream $e, $stackTrace ');
+      return null;
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    try {
+      print("impl battery bloc closing...");
+      _connected = false;
+      await _client.close();
+    } catch (e) {
+      print("close repository...");
+    }
   }
 }

@@ -28,4 +28,5 @@ abstract class SoundRepository {
   Future<void> setEnableVibration(bool enableVibration);
   Future<void> setVibrationLevel(String vibrationLevel);
   Future<void> setNotificationSound(String notificationSound);
+  void close();
 }

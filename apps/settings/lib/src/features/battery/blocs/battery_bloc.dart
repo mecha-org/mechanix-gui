@@ -13,8 +13,19 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
   StreamSubscription? changeStream;
 
   BatteryBloc({required this.batteryRepository}) : super(const BatteryState()) {
+    on<BatteryInit>(_onInit);
     on<SetBatteryMode>(_setBatteryMode);
     on<BatteryInfoRequested>(_getBatteryInfo);
+  }
+
+  Future<void> _onInit(BatteryInit event, Emitter<BatteryState> emit) async {
+    try {
+      print('BLOC:: Init Battery Repo');
+      await batteryRepository.init();
+      add(BatteryInfoRequested());
+    } catch (e) {
+      print('Error  Init Battery Repo: $e');
+    }
   }
 
   Future<void> _setBatteryMode(
@@ -27,7 +38,12 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
       BatteryInfoRequested event, Emitter<BatteryState> emit) async {
     try {
       final batteryInfo = await batteryRepository.getBatteryInfo();
-
+      // print('BLOC -Battery mode: ${batteryInfo.mode}');
+      // print('BLOC -Battery percentage: ${batteryInfo.batteryPercentage}');
+      // print('BLOC -Battery time To Full: ${batteryInfo.batteryChargingTime}');
+      // print('BLOC -Battery time To Empty: ${batteryInfo.batteryRemainingTime}');
+      // print(
+      //     'BLOC -available battery modes: ${batteryInfo.availableBatteryModes}');
       emit(state.copyWith(
         batteryPercentage: batteryInfo.batteryPercentage,
         batteryStatus: batteryInfo.status,
@@ -48,20 +64,24 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
   Future<void> _initializeBatteryStream() async {
     try {
       final stream = await batteryRepository.streamBatteryEvents();
-      changeStream = stream.listen((prop) async {
-        logger.i("Battery Property Update: $prop");
+      if (stream != null) {
+        changeStream = stream.listen((prop) async {
+          print("Battery Property Update: $prop");
 
-        add(BatteryInfoRequested());
-        // const relevantProps = [
-        //   "Percentage",
-        //   "State",
-        //   "TimeToEmpty",
-        //   "TimeToFull",
-        //   "PowerSupply",
-        // ];
-        // // if (relevantProps.contains(prop))
-        // if (prop.contains("UpdateTime")) add(BatteryInfoRequested());
-      });
+          if (prop.contains("TimeToFull") ||
+              prop.contains("Percentage") ||
+              prop.contains("TimeToEmpty")) add(BatteryInfoRequested());
+          // const relevantProps = [
+          //   "Percentage",
+          //   "State",
+          //   "TimeToEmpty",
+          //   "TimeToFull",
+          //   "PowerSupply",
+          // ];
+          // // if (relevantProps.contains(prop))
+          // if (prop.contains("UpdateTime")) add(BatteryInfoRequested());
+        });
+      }
     } catch (e, stackTrace) {
       logger.e('Error initializing battery stream $e, $stackTrace ');
     }
@@ -69,6 +89,8 @@ class BatteryBloc extends Bloc<BatteryEvent, BatteryState> {
 
   @override
   Future<void> close() {
+    print("battery bloc closing...");
+    batteryRepository.close();
     changeStream?.cancel();
     return super.close();
   }

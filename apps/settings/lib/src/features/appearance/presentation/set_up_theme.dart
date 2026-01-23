@@ -10,12 +10,17 @@ import 'package:mechanix_settings/src/features/appearance/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 
-class SetUpTheme extends StatelessWidget {
+class SetUpTheme extends StatefulWidget {
   const SetUpTheme({super.key});
 
+  @override
+  State<SetUpTheme> createState() => _SetUpThemeState();
+}
+
+class _SetUpThemeState extends State<SetUpTheme> {
   void _onSave(BuildContext context) {
     context.read<AppearanceBloc>().add(ApplyThemeVariantEvent());
-    // Navigator.pop(context);
+    Navigator.pop(context);
   }
 
   @override
@@ -49,15 +54,8 @@ class SetUpTheme extends StatelessWidget {
                   final accentImage = accentPreviewImages
                       .firstWhere((variant) => variant.accent == accent);
 
-                  return AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 600),
-                    transitionBuilder:
-                        (Widget child, Animation<double> animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: child,
-                      );
-                    },
+                  return Align(
+                    alignment: Alignment.topCenter,
                     child: Container(
                       key: ValueKey(accent),
                       width: 500,
@@ -81,21 +79,10 @@ class SetUpTheme extends StatelessWidget {
         leadingWidget: [context.backButton],
         anchorWidget: [
           BottomBarButton.widget(
-            // widget: MechanixFilledButton(
-            //   onPressed: () => _onSave(context),
-            //   theme: const MechanixFilledButtonThemeData(
-            //     buttonSize: Size(91, 40),
-            //   ),
-            //   label: "Save",
-            // ).padOnly(right: 18),
-            widget: TextButton.icon(
+            widget: IconButton(
               onPressed: () => _onSave(context),
-              icon: IconWidget(iconPath: Images.submit),
-              // theme: const MechanixFilledButtonThemeData(
-              //   buttonSize: Size(91, 40),
-              // ),
-              label: Text("Save"),
-            ).padOnly(right: 18),
+              icon: const IconWidget(iconPath: Images.submit),
+            ).padOnly(right: 8),
           )
         ],
       ),

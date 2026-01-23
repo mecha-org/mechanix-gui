@@ -2,7 +2,9 @@ import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/features/appearance/data/appearance_repository.dart';
+import 'package:mechanix_settings/src/features/appearance/models/types.dart';
 import 'package:widgets/mechanix.dart';
 
 part 'appearance_event.dart';
@@ -30,16 +32,24 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
 
   Future<void> _onAppearanceInit(
       AppearanceInit event, Emitter<AppearanceState> emit) async {
-    final currentTheme = await appearanceRepository.onInit();
+    final setting = await appearanceRepository.onInit();
 
-    final accent = currentTheme?['accent']?.toOKLCHStringToColor();
+    if (setting != null) {
+      final accent = setting.currentTheme?['accent']?.toOKLCHStringToColor();
 
-    final appliedVariant = MechanixVariant.getAllVariants()
-        .firstWhereOrNull((variant) => variant.color == accent);
+      final wallpaper = setting.currentWallPaper ?? '';
 
-    if (appliedVariant != null) {
-      emit(state.copyWith(variant: appliedVariant));
-      emit(state.copyWith(appliedVariant: appliedVariant));
+      final appliedVariant = MechanixVariant.getAllVariants()
+          .firstWhereOrNull((variant) => variant.color == accent);
+
+      if (appliedVariant != null) {
+        emit(state.copyWith(
+          variant: appliedVariant,
+          appliedVariant: appliedVariant,
+          wallpaperFileName: wallpaper,
+          appliedWallpaper: wallpaper,
+        ));
+      }
     }
   }
 
@@ -50,7 +60,7 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
 
   Future<void> _onSetWallpaper(
       SetWallpaperEvent event, Emitter<AppearanceState> emit) async {
-    emit(state.copyWith(wallpaperFileName: event.fileName));
+    emit(state.copyWith(wallpaperFileName: event.fileName.wallpaper));
   }
 
   Future<void> _onSetThemeVariant(
@@ -60,14 +70,19 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
 
   Future<void> _applyTheme(
       ApplyThemeVariantEvent event, Emitter<AppearanceState> emit) async {
-    await appearanceRepository.applyTheme(state.variant);
-
     emit(state.copyWith(appliedVariant: state.variant));
+    await appearanceRepository.applyTheme(state.variant);
   }
 
   Future<void> _applyWallpaper(
       ApplyWallpaperEvent event, Emitter<AppearanceState> emit) async {
-    // TODO: add apply wallpaper implementation
     emit(state.copyWith(appliedWallpaper: state.wallpaperFileName));
+    await appearanceRepository.applyWallpaper(state.wallpaperFileName);
+  }
+
+  @override
+  Future<void> close() {
+    print("Appearance bloc closing...");
+    return super.close();
   }
 }
