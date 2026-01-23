@@ -3,7 +3,7 @@ use std::ops::Range;
 use gpui::{
     App, Bounds, ClipboardItem, Context, CursorStyle, ElementId, ElementInputHandler, Entity,
     EntityInputHandler, FocusHandle, Focusable, GlobalElementId, LayoutId, MouseButton,
-    MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, Pixels, Point, ShapedLine,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, PaintQuad, Pixels, Point, Rgba, ShapedLine,
     SharedString, Style, TextRun, UTF16Selection, UnderlineStyle, Window, actions, div, fill, hsla,
     point, prelude::*, px, relative, rgb, size,
 };
@@ -34,6 +34,7 @@ pub struct TextInput {
     pub focus_handle: FocusHandle,
     pub content: SharedString,
     pub placeholder: SharedString,
+    pub placeholder_color: Option<Rgba>,
     pub selected_range: Range<usize>,
     pub selection_reversed: bool,
     pub marked_range: Option<Range<usize>>,
@@ -49,6 +50,7 @@ impl TextInput {
             focus_handle: cx.focus_handle(),
             content: "".into(),
             placeholder: "Type here...".into(),
+            placeholder_color: None,
             selected_range: 0..0,
             selection_reversed: false,
             marked_range: None,
@@ -64,6 +66,11 @@ impl TextInput {
         self
     }
 
+    pub fn placeholder_color(mut self, placeholder_color: impl Into<Rgba>) -> Self {
+        self.placeholder_color = Some(placeholder_color.into());
+        self
+    }
+
     pub fn on_change(mut self, callback: impl Fn(&mut Self, &mut Context<Self>) + 'static) -> Self {
         self.on_change = Some(Box::new(callback));
         self
@@ -75,8 +82,8 @@ impl TextInput {
     }
 
     /// Focus the text input
-    pub fn focus(&self, window: &mut Window, app: &mut App) {
-        window.focus(&self.focus_handle, app);
+    pub fn focus(&self, window: &mut Window) {
+        window.focus(&self.focus_handle);
     }
 
     /// Check if the input is currently focused
@@ -518,7 +525,13 @@ impl Element for TextElement {
         let style = window.text_style();
 
         let (display_text, text_color) = if content.is_empty() {
-            (input.placeholder.clone(), hsla(0., 0., 0.65, 1.))
+            let default_placeholder_color = hsla(0., 0., 0.65, 1.);
+            let color = input
+                .placeholder_color
+                .map(|rgba| rgba.into())
+                .unwrap_or_else(|| default_placeholder_color);
+
+            (input.placeholder.clone(), color)
         } else {
             (content, style.color)
         };
@@ -621,15 +634,8 @@ impl Element for TextElement {
             window.paint_quad(selection)
         }
         let line = prepaint.line.take().unwrap();
-        line.paint(
-            bounds.origin,
-            window.line_height(),
-            window.text_style().text_align,
-            None,
-            window,
-            cx,
-        )
-        .unwrap();
+        line.paint(bounds.origin, window.line_height(), window, cx)
+            .unwrap();
 
         if focus_handle.is_focused(window) {
             if let Some(cursor) = prepaint.cursor.take() {
@@ -673,15 +679,15 @@ impl Render for TextInput {
             .w(px(400.))
             .justify_center()
             .items_center()
-            .h(px(20.))
+            .h(px(22.))
             .line_height(px(18.))
             .text_size(px(16.))
             .text_color(rgb(0xF4F4F4))
             .child(
                 div()
-                    .h(px(20.))
+                    .h(px(22.))
                     .w_full()
-                    .pt(px(3.))
+                    .py(px(2.5))
                     .child(TextElement { input: cx.entity() }),
             )
     }

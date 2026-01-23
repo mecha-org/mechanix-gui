@@ -3,11 +3,16 @@ use gpui::prelude::*;
 use gpui::*;
 use rand::Rng;
 use std::time::Duration;
+use std::time::Instant;
 
 struct AnimatedWingExample {
     animation_key: u64,
     current_wing_state: WingState,
     target_wing_state: WingState,
+    is_expanded: bool,
+    last_frame_time: Option<Instant>,
+    fps: f32,
+    frame_times: Vec<f32>,
 }
 
 #[derive(Clone, Copy)]
@@ -25,8 +30,8 @@ struct WingState {
 impl WingState {
     fn random() -> Self {
         let mut rng = rand::thread_rng();
-        let width = rng.gen_range(60.0..150.0);
-        let height = rng.gen_range(50.0..120.0);
+        let width = rng.gen_range(400.0..550.0);
+        let height = rng.gen_range(300.0..450.0);
 
         // Generate upper wing dimensions
         let upper_wing_height = rng.gen_range(8.0..40.0);
@@ -58,6 +63,32 @@ impl WingState {
         }
     }
 
+    fn initial() -> Self {
+        Self {
+            width: 50.0,
+            height: 50.0,
+            upper_wing_width: 10.0,
+            upper_wing_height: 10.0,
+            lower_wing_width: 10.0,
+            lower_wing_height: 10.0,
+            border_width: 2.0,
+            border_radius: 5.0,
+        }
+    }
+
+    fn target() -> Self {
+        Self {
+            width: 400.0,
+            height: 500.0,
+            upper_wing_width: 30.0,
+            upper_wing_height: 30.0,
+            lower_wing_width: 30.0,
+            lower_wing_height: 30.0,
+            border_width: 4.0,
+            border_radius: 10.0,
+        }
+    }
+
     fn lerp(&self, other: &Self, t: f32) -> Self {
         Self {
             width: self.width + (other.width - self.width) * t,
@@ -78,6 +109,29 @@ impl WingState {
 
 impl Render for AnimatedWingExample {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        println!("render()");
+        // Calculate FPS
+        let now = Instant::now();
+        if let Some(last_time) = self.last_frame_time {
+            let delta = now.duration_since(last_time).as_secs_f32();
+            if delta > 0.0 {
+                let current_fps = 1.0 / delta;
+                self.frame_times.push(current_fps);
+
+                // Keep only last 30 frames for averaging
+                if self.frame_times.len() > 30 {
+                    self.frame_times.remove(0);
+                }
+
+                // Calculate average FPS
+                self.fps = self.frame_times.iter().sum::<f32>() / self.frame_times.len() as f32;
+            }
+        }
+        self.last_frame_time = Some(now);
+
+        // Request next frame for continuous FPS updates
+        cx.notify();
+
         let current = self.current_wing_state;
         let target = self.target_wing_state;
 
@@ -103,7 +157,20 @@ impl Render for AnimatedWingExample {
                         div()
                             .text_sm()
                             .text_color(rgb(0x888888))
-                            .child("Click on the wing to animate to a random state"),
+                            .child("Click on the wing to toggle between 50x50 and 400x500"),
+                    )
+                    .child(
+                        div()
+                            .text_lg()
+                            .font_weight(FontWeight::BOLD)
+                            .text_color(if self.fps >= 55.0 {
+                                rgb(0x00ff00)
+                            } else if self.fps >= 30.0 {
+                                rgb(0xffff00)
+                            } else {
+                                rgb(0xff0000)
+                            })
+                            .child(format!("FPS: {:.1}", self.fps)),
                     ),
             )
             .child(
@@ -113,8 +180,13 @@ impl Render for AnimatedWingExample {
                         .on_click(cx.listener(|this, _event: &ClickEvent, _, cx| {
                             // Set current state to the previous target
                             this.current_wing_state = this.target_wing_state;
-                            // Generate new random target state
-                            this.target_wing_state = WingState::random();
+                            // Toggle between initial and target states
+                            this.is_expanded = !this.is_expanded;
+                            this.target_wing_state = if this.is_expanded {
+                                WingState::target()
+                            } else {
+                                WingState::initial()
+                            };
                             // Increment animation key to restart animation
                             this.animation_key += 1;
                             cx.notify();
@@ -204,11 +276,15 @@ fn main() {
                 ..Default::default()
             },
             |_, cx| {
-                let initial_state = WingState::random();
+                let initial_state = WingState::initial();
                 cx.new(|_| AnimatedWingExample {
                     animation_key: 0,
                     current_wing_state: initial_state,
-                    target_wing_state: WingState::random(),
+                    target_wing_state: WingState::target(),
+                    is_expanded: false,
+                    last_frame_time: None,
+                    fps: 0.0,
+                    frame_times: Vec::new(),
                 })
             },
         )

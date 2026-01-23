@@ -1,4 +1,3 @@
-mod icon;
 mod slider;
 mod ui;
 
@@ -18,12 +17,7 @@ pub fn run_app(cx: &mut App) {
     listen_dispatcher(cx, config.slider, config.min_volume, config.max_volume);
 }
 
-fn listen_dispatcher(
-    cx: &mut App,
-    slider: Entity<SliderState>,
-    min_volume: f32,
-    max_volume: f32,
-) {
+fn listen_dispatcher(cx: &mut App, slider: Entity<SliderState>, min_volume: f32, max_volume: f32) {
     if !cx.has_global::<Dispatcher>() {
         dispatcher::init(cx);
     }
@@ -33,15 +27,28 @@ fn listen_dispatcher(
 
     cx.spawn(async move |app| {
         while let Ok(message) = dispatcher_rx.recv().await {
+            println!("volume listen_dispatcher() message: {:#?}", message);
             match message {
                 dispatcher::Message::VolumeUp => {
                     let _ = app.update(|cx| {
-                        handle_volume_delta(cx, &slider_entity, VOLUME_STEP, min_volume, max_volume);
+                        handle_volume_delta(
+                            cx,
+                            &slider_entity,
+                            VOLUME_STEP,
+                            min_volume,
+                            max_volume,
+                        );
                     });
                 }
                 dispatcher::Message::VolumeDown => {
                     let _ = app.update(|cx| {
-                        handle_volume_delta(cx, &slider_entity, -VOLUME_STEP, min_volume, max_volume);
+                        handle_volume_delta(
+                            cx,
+                            &slider_entity,
+                            -VOLUME_STEP,
+                            min_volume,
+                            max_volume,
+                        );
                     });
                 }
                 _ => {}
@@ -55,7 +62,11 @@ fn listen_dispatcher(
 pub fn get_volume(cx: &App) -> f32 {
     if cx.has_global::<ShellState>() {
         let vol = ShellState::global(cx).volume;
-        if vol > 0.0 { vol } else { DEFAULT_VOLUME_LEVEL }
+        if vol > 0.0 {
+            vol
+        } else {
+            DEFAULT_VOLUME_LEVEL
+        }
     } else {
         DEFAULT_VOLUME_LEVEL
     }

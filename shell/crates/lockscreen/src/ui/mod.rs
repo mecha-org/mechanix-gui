@@ -1,12 +1,14 @@
+use futures::future::Shared;
 use gpui::{prelude::FluentBuilder, *};
+use icons::prelude::Icons;
+use settings::prelude::Settings;
 use shell_state::ShellState;
+use std::{ops::Shr, path::PathBuf};
 mod wallpaper;
 mod wedges;
 use theme::ActiveTheme;
-use wallpaper::wallpaper;
-use wedges::{left_wedge, right_wedge, LockState};
-use theme::prelude::{AlphaExt, Fonts};
-
+use theme::prelude::Fonts;
+use wedges::{LockState, left_wedge, right_wedge};
 
 // Threshold: if user swipes up more than this many pixels, hide the lockscreen
 const UNLOCK_THRESHOLD: f32 = 100.0;
@@ -22,7 +24,6 @@ const LOCK_ICONS_FADE_THRESHOLD: f32 = 310.0;
 // Unlock prompt styling
 const UNLOCK_PROMPT_RADIUS: f32 = 12.0;
 const UNLOCK_PROMPT_ARROW_SIZE: f32 = 40.0;
-const UNLOCK_PROMPT_ICON_PATH: &str = "icons/lockscreen/arrow.svg";
 const UNLOCK_PROMPT_SIZE_FACTOR: f32 = 0.9;
 const UNLOCK_PROMPT_BOTTOM_OFFSET: f32 = 45.0;
 
@@ -49,6 +50,7 @@ pub struct Lockscreen {
     window_height: f32,
     pub show: bool,
     show_arrow_prompt: bool,
+    pub wallpaper_path: Option<PathBuf>,
 }
 
 impl Lockscreen {
@@ -57,22 +59,24 @@ impl Lockscreen {
             cx.notify();
         })
         .detach();
+
         Self {
             drag_offset: None,
             drag_start_mouse_y: 0.0,
             position_y: 0.0,
             window_height: 0.0,
-            show: false,
+            show: true,
             show_arrow_prompt: false,
+            wallpaper_path: None,
         }
     }
 
     fn update_input_regions(&self, window: &mut Window, show: bool, cx: &mut Context<Self>) {
-        let size = window.bounds().size;
+        let input_regions = Settings::global(cx).lockscreen.input_regions.clone();
         let regions = if show {
             vec![Bounds {
-                origin: point(px(0.0), px(0.0)),
-                size,
+                origin: input_regions.maximized.origin,
+                size: input_regions.maximized.size,
             }]
         } else {
             vec![]
@@ -106,11 +110,13 @@ impl Render for Lockscreen {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
-        
+        let icons = Icons::global(cx).lockscreen.clone();
+
         let size = window.bounds().size;
         let window_height = f32::from(size.height);
         let show = self.show;
 
+        // To check if a valid wallpaper path from settings.toml and if not use default wallpaper
         if self.window_height == 0.0 {
             self.window_height = window_height;
         }
@@ -142,6 +148,8 @@ impl Render for Lockscreen {
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
         // Additional fade for lock + bell icons so they vanish at the fade threshold
         let lock_icon_fade = 1.0 - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
+        let wallpaper_path = self.wallpaper_path.clone().unwrap_or(icons.wallpaper);
+        let unlock_prompt = Icons::global(cx).lockscreen.arrow.clone();
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
@@ -156,10 +164,12 @@ impl Render for Lockscreen {
                         .overflow_hidden()
                         // Wallpaper background
                         .child(
-                            div()
-                                .absolute()
-                                .inset_0()
-                                .child(wallpaper(size.width, px(panel_height))),
+                            div().absolute().inset_0().child(
+                                img(wallpaper_path)
+                                    .w(size.width)
+                                    .h(px(panel_height))
+                                    .object_fit(ObjectFit::Cover),
+                            ),
                         )
                         // Content overlay
                         .child(
@@ -176,7 +186,9 @@ impl Render for Lockscreen {
                                     div()
                                         .cursor_pointer()
                                         .bg(unlock_prompt_bg_color)
-                                        .rounded(px(UNLOCK_PROMPT_RADIUS * UNLOCK_PROMPT_SIZE_FACTOR))
+                                        .rounded(px(
+                                            UNLOCK_PROMPT_RADIUS * UNLOCK_PROMPT_SIZE_FACTOR
+                                        ))
                                         .px(px(14.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                         .py(px(10.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                         .flex()
@@ -186,29 +198,38 @@ impl Render for Lockscreen {
                                         .gap(px(8.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                         .on_mouse_down(
                                             MouseButton::Left,
-                                            cx.listener(|component, _event: &MouseDownEvent, _, cx| {
-                                                component.show_arrow_prompt = !component.show_arrow_prompt;
-                                                cx.notify();
-                                            }),
+                                            cx.listener(
+                                                |component, _event: &MouseDownEvent, _, cx| {
+                                                    component.show_arrow_prompt =
+                                                        !component.show_arrow_prompt;
+                                                    cx.notify();
+                                                },
+                                            ),
                                         )
                                         .child({
                                             let mut inner = div();
                                             if show_arrow_prompt {
                                                 inner = inner.child(
                                                     svg()
-                                                        .path(UNLOCK_PROMPT_ICON_PATH)
-                                                        .w(px(UNLOCK_PROMPT_ARROW_SIZE * UNLOCK_PROMPT_SIZE_FACTOR))
-                                                        .h(px(UNLOCK_PROMPT_ARROW_SIZE * UNLOCK_PROMPT_SIZE_FACTOR))
+                                                        .external_path(SharedString::from(
+                                                            unlock_prompt
+                                                                .to_string_lossy()
+                                                                .to_string(),
+                                                        ))
+                                                        .w(px(UNLOCK_PROMPT_ARROW_SIZE
+                                                            * UNLOCK_PROMPT_SIZE_FACTOR))
+                                                        .h(px(UNLOCK_PROMPT_ARROW_SIZE
+                                                            * UNLOCK_PROMPT_SIZE_FACTOR))
                                                         .text_color(text_color),
                                                 );
                                             } else {
                                                 inner = inner
                                                     .text_size(px(18.0 * UNLOCK_PROMPT_SIZE_FACTOR))
                                                     .text_color(text_color)
-                                                       .font_family(primary_font)
-                                                        .font_weight(FontWeight::SEMIBOLD)
-                                                        .opacity(1.0)
-                                                        .child("Swipe up to unlock");
+                                                    .font_family(primary_font)
+                                                    .font_weight(FontWeight::SEMIBOLD)
+                                                    .opacity(1.0)
+                                                    .child("Swipe up to unlock");
                                             }
                                             inner
                                         }),
@@ -273,7 +294,7 @@ impl Render for Lockscreen {
                                 .absolute()
                                 .bottom(px(-left_wedge_offset))
                                 .left(px(-left_wedge_gap))
-                                .child(left_wedge(&colors, lock_state, left_icon_opacity)),
+                                .child(left_wedge(&colors, lock_state, left_icon_opacity, cx)),
                         )
                         // Right wedge (overlaps left wedge, rendered on top, with status icons)
                         .child(
@@ -281,7 +302,7 @@ impl Render for Lockscreen {
                                 .absolute()
                                 .bottom(px(-right_wedge_offset))
                                 .right(px(-right_wedge_gap))
-                                .child(right_wedge(cx, &colors, right_icon_opacity)),
+                                .child(right_wedge(&colors, right_icon_opacity, cx)),
                         )
                 })
         })

@@ -175,7 +175,7 @@ pub fn wing() -> Wing {
         interactivity: Interactivity::new(),
         border_width: px(0.0),
         corner_radii: CornerRadii::none(),
-        border_resolution: 8,
+        border_resolution: 2,
         upper_wing_size: Size::new(px(0.0), px(0.0)),
         lower_wing_size: Size::new(px(0.0), px(0.0)),
         upper_wing_side: WingSide::Left,

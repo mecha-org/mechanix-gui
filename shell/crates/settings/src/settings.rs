@@ -17,11 +17,7 @@ pub struct Settings {
     #[serde(default)]
     pub running_apps: RunningAppsSettings,
     #[serde(default)]
-    pub universal_search: UniversalSearchSettings,
-    #[serde(default)]
     pub notifications: NotificationSettings,
-    #[serde(default)]
-    pub app_drawer: AppDrawerSettings,
     #[serde(default)]
     pub homescreen: HomescreenSettings,
     #[serde(default)]
@@ -36,6 +32,8 @@ pub struct Settings {
     pub launcher: LauncherSettings,
     #[serde(default)]
     pub system_apps: SystemApps,
+    #[serde(default)]
+    pub toast: ToastSettings,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -104,9 +102,9 @@ impl Default for RunningAppsSettings {
                 anchor: Anchor::TOP,
                 namespace: "mechanix.running.apps".into(),
                 exclusive_zone: px(-1.0),
-                size: Size::new(px(540.0), px(300.0)),
+                size: Size::new(px(540.0), px(620.0)),
             },
-            navbar_size: Size::new(px(199.22), px(28.5)),
+            navbar_size: Size::new(px(80.0), px(29.0)),
             input_regions: InputRegions::default(),
         }
     }
@@ -142,30 +140,6 @@ impl Default for SettingsDrawerSettings {
     }
 }
 
-/// Universal search settings
-#[derive(Debug, Clone, Deserialize, PartialEq)]
-pub struct UniversalSearchSettings {
-    #[serde(default)]
-    pub layer_shell: LayerShellSettings,
-    #[serde(default)]
-    pub navbar_size: Size<Pixels>,
-}
-
-impl Default for UniversalSearchSettings {
-    fn default() -> Self {
-        Self {
-            layer_shell: LayerShellSettings {
-                layer: Layer::Top,
-                anchor: Anchor::BOTTOM,
-                namespace: "mechanix.universal.search".into(),
-                exclusive_zone: px(-1.0),
-                size: Size::new(px(540.0), px(620.0)),
-            },
-            navbar_size: Size::new(px(199.22), px(28.5)),
-        }
-    }
-}
-
 /// Notification settings
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct NotificationSettings {
@@ -193,38 +167,11 @@ impl Default for NotificationSettings {
     }
 }
 
-/// App drawer settings
-#[derive(Debug, Clone, Deserialize, PartialEq)]
-pub struct AppDrawerSettings {
-    #[serde(default)]
-    pub layer_shell: LayerShellSettings,
-}
-
-impl Default for AppDrawerSettings {
-    fn default() -> Self {
-        Self {
-            layer_shell: LayerShellSettings {
-                layer: Layer::Top,
-                anchor: Anchor::TOP,
-                namespace: "mechanix.app.drawer".into(),
-                exclusive_zone: px(0.0),
-                size: Size::new(px(540.0), px(620.0)),
-            },
-        }
-    }
-}
-
 /// Homescreen settings
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 pub struct HomescreenSettings {
     #[serde(default)]
     pub status_bar_size: Size<Pixels>,
-
-    #[serde(default)]
-    pub navbar_size: Size<Pixels>,
-
-    #[serde(default)]
-    pub navbar_height: Pixels,
 
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
@@ -234,15 +181,13 @@ impl Default for HomescreenSettings {
     fn default() -> Self {
         Self {
             status_bar_size: Size::new(px(540.0), px(36.0)),
-            navbar_size: Size::new(px(199.22), px(28.5)),
             layer_shell: LayerShellSettings {
                 layer: Layer::Bottom,
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
                 namespace: "mechanix.homescreen".into(),
                 exclusive_zone: px(0.0),
-                size: Size::new(px(540.0), px(620.0)),
+                size: Size::new(px(540.0), px(591.5)),
             },
-            navbar_height: px(40.),
         }
     }
 }
@@ -273,6 +218,8 @@ impl Default for PowerOptionsSettings {
 pub struct LockscreenSettings {
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for LockscreenSettings {
@@ -284,6 +231,16 @@ impl Default for LockscreenSettings {
                 namespace: "mechanix.lockscreen".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
+            },
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(540.0), px(620.0)),
+                },
             },
         }
     }
@@ -298,6 +255,10 @@ pub struct VolumeSliderSettings {
     pub min_volume_level: f32,
     #[serde(default)]
     pub max_volume_level: f32,
+    #[serde(default)]
+    pub overlay_timeout_ms: u64,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for VolumeSliderSettings {
@@ -312,6 +273,17 @@ impl Default for VolumeSliderSettings {
             },
             min_volume_level: 0.0,
             max_volume_level: 100.0,
+            overlay_timeout_ms: 2_000,
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(52.0), px(297.0)),
+                },
+            },
         }
     }
 }
@@ -356,6 +328,42 @@ impl Default for LauncherSettings {
                 namespace: "mechanix.launcher".into(),
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(620.0)),
+            },
+        }
+    }
+}
+
+/// Toast settings
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct ToastSettings {
+    #[serde(default)]
+    pub layer_shell: LayerShellSettings,
+    #[serde(default)]
+    pub timeout_ms: u64,
+    #[serde(default)]
+    pub input_regions: InputRegions,
+}
+
+impl Default for ToastSettings {
+    fn default() -> Self {
+        Self {
+            layer_shell: LayerShellSettings {
+                layer: Layer::Overlay,
+                anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT,
+                namespace: "mechanix.toast".into(),
+                exclusive_zone: px(0.0),
+                size: Size::new(px(540.0), px(48.0)),
+            },
+            timeout_ms: 3_000,
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(91.0), px(0.0)),
+                    size: Size::new(px(358.0), px(48.0)),
+                },
             },
         }
     }

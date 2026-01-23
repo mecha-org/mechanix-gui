@@ -3,6 +3,7 @@ use futures::StreamExt;
 use gpui::*;
 use mxconf_dbus::watch_setting;
 use serde::{Deserialize, Serialize};
+use crate::Message::{SetExtensionName, SetLockscreenWallpaper};
 
 #[derive(Clone)]
 pub struct Dispatcher(pub Sender<Message>, pub Receiver<Message>);
@@ -18,8 +19,6 @@ impl Global for Dispatcher {}
 #[derive(Serialize, Debug, Clone, Deserialize)]
 pub struct ThemeColors {
     pub accent: String,
-    pub background: String,
-    pub foreground: String,
 }
 
 impl ThemeColors {
@@ -39,8 +38,6 @@ impl ThemeColors {
 
         Ok(Self {
             accent: extract(input, "accent")?,
-            background: extract(input, "background")?,
-            foreground: extract(input, "foreground")?,
         })
     }
 }
@@ -50,8 +47,6 @@ pub enum Message {
     SetThemeMode(String),
     SetThemeColors {
         accent: String,
-        background: String,
-        foreground: String,
     },
     SetPrimaryFont(String),
     SetSecondaryFont(String),
@@ -59,6 +54,9 @@ pub enum Message {
     SetKeyboardAlwayson(bool),
     ShowPowerOptions(bool),
     ShowLockscreen(bool),
+    SetLockscreenWallpaper(String),
+    SetExtensionDetected(bool),
+    SetExtensionName(String),
     VolumeUp,
     VolumeDown,
     LaunchApp {
@@ -106,8 +104,6 @@ pub fn init(cx: &mut App) {
                                     match tx
                                         .broadcast(Message::SetThemeColors {
                                             accent: theme.accent,
-                                            background: theme.background,
-                                            foreground: theme.foreground,
                                         })
                                         .await
                                     {
@@ -121,6 +117,52 @@ pub fn init(cx: &mut App) {
                                 }
                                 Err(err) => {
                                     eprintln!("Error while parsing theme colors: {}", err);
+                                }
+                            };
+                        }
+                        "settings.lockscreen.wallpaper" => {
+                            match tx
+                                .broadcast(SetLockscreenWallpaper(value))
+                                .await
+                            {
+                                Ok(_) => {
+                                    println!("lockscreen wallpaper message broadcasted");
+                                }
+                                Err(_) => {
+                                    println!("lockscreen wallpaper message broadcasted failed");
+                                }
+                            };
+                        }
+                        "settings.extension.detected" => {
+                            let detected = match value.parse::<bool>() {
+                                Ok(v) => v,
+                                Err(_) =>  {
+                                    eprintln!("Error while parsing extension detected value: {}", value);
+                                    false
+                                },
+                            };
+                            match tx
+                                .broadcast(Message::SetExtensionDetected(detected))
+                                .await
+                            {
+                                Ok(_) => {
+                                    println!("extension detection name message broadcasted");
+                                }
+                                Err(_) => {
+                                    println!("extension detection name message broadcasted failed");
+                                }
+                            };
+                        }
+                        "settings.extension.name" => {
+                            match tx
+                                .broadcast(SetExtensionName(value))
+                                .await
+                            {
+                                Ok(_) => {
+                                    println!("extension detection name message broadcasted");
+                                }
+                                Err(_) => {
+                                    println!("extension detection name message broadcasted failed");
                                 }
                             };
                         }

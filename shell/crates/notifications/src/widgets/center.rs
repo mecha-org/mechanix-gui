@@ -24,11 +24,15 @@ use settings::prelude::Settings;
 
 const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
 const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
-const EXPANDED_ITEM_HEIGHT: f32 = 72.0; // body-only cards
+const EXPANDED_ITEM_HEIGHT: f32 = 100.0; // body-only cards
 const CARD_GAP: f32 = 8.0; // mt_2()
 const GROUP_GAP: f32 = 10.0; // gap_2p5()
 const LIST_PADDING_TOP: f32 = 12.0;
 const LIST_PADDING_BOTTOM: f32 = 12.0;
+
+const ANIMATION_DURATION_MS: f32 = 250.0;
+const ANIMATION_FRAME_MS: u64 = 16;
+
 
 pub struct DragInfo {
     pub position: Point<Pixels>,
@@ -334,7 +338,7 @@ impl NotificationCenter {
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
 
-        let container_height = notifications_center_size.height - navbar_size.height;
+        let container_height = notifications_center_size.height - navbar_size.height - px(1.5);
 
         // let container_height = px(0.0);
         if content_height <= container_height {
@@ -713,12 +717,12 @@ impl NotificationCenter {
     pub fn snap_to(&mut self, target: f32, cx: &mut Context<Self>) {
         let start = self.position;
         let change = target - start;
-        let duration_ms = 250.0; // Animation speed
         let start_time = std::time::Instant::now();
+        let closed_pos = Self::closed_pos(cx);
 
         if target == 0.0 {
             self.is_visible = true;
-        } else if target == Self::closed_pos(cx) {
+        } else if target == closed_pos {
             self.is_visible = false;
         }
 
@@ -728,12 +732,12 @@ impl NotificationCenter {
                     let elapsed = start_time.elapsed().as_secs_f32() * 1000.0;
 
                     // Check if animation is done
-                    if elapsed >= duration_ms {
+                    if elapsed >= ANIMATION_DURATION_MS {
                         this.update(cx, |this, cx| {
                             this.position = target;
                             if target == 0.0 {
                                 this.is_visible = true;
-                            } else if target == Self::closed_pos(cx) {
+                            } else if target == closed_pos {
                                 this.is_visible = false;
                             }
                             cx.notify();
@@ -742,13 +746,13 @@ impl NotificationCenter {
                         break;
                     }
 
-                    let t = (elapsed / duration_ms).clamp(0.0, 1.0);
+                    let t = (elapsed / ANIMATION_DURATION_MS).clamp(0.0, 1.0);
                     let ease = 1.0 - (1.0 - t).powi(3);
                     let current = start + (change * ease);
 
                     this.update(cx, |this, cx| {
                         this.position = current;
-                        if current < (Self::closed_pos(cx) / 2.0) {
+                        if current < (closed_pos / 2.0) {
                             this.is_visible = true;
                         } else {
                             this.is_visible = false;
@@ -758,7 +762,7 @@ impl NotificationCenter {
                     .ok();
 
                     cx.background_executor()
-                        .timer(std::time::Duration::from_millis(16))
+                        .timer(std::time::Duration::from_millis(ANIMATION_FRAME_MS))
                         .await;
                 }
             },
@@ -773,7 +777,7 @@ impl Render for NotificationCenter {
         let notifications_center_size = settings.layer_shell.size;
         let navbar_size = settings.navbar_size;
         let input_regions = settings.input_regions.clone();
-
+        let primary_font = Fonts::global(cx).primary.clone();
         let colors = cx.theme().colors.clone();
 
         let open_y = 0.;
@@ -784,17 +788,7 @@ impl Render for NotificationCenter {
         div()
             .w_full()
             .h_full()
-            .on_mouse_down(
-                MouseButton::Left,
-                cx.listener(|this, event: &MouseDownEvent, _window, cx| {
-                    if this.is_visible {
-                        cx.stop_propagation();
-                        this.drag_start_pos = this.position;
-                        this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
-                        cx.notify();
-                    }
-                }),
-            )
+            .font_family(primary_font)
             .on_mouse_move(
                 cx.listener(move |this, event: &MouseMoveEvent, _window, cx| {
                     if let Some(offset) = this.drag_offset {
@@ -816,18 +810,14 @@ impl Render for NotificationCenter {
                         if started_closed {
                             if this.position < (closed_y - threshold_px) {
                                 target = open_y;
-                                this.is_visible = true;
                             } else {
                                 target = closed_y;
-                                this.is_visible = false;
                             }
                         } else {
                             if this.position > (open_y + threshold_px) {
                                 target = closed_y;
-                                this.is_visible = false;
                             } else {
                                 target = open_y;
-                                this.is_visible = true;
                             }
                         }
                         this.snap_to(target, cx);
@@ -1058,53 +1048,77 @@ impl NotificationCenter {
             // Main card with stacked appearance using layered divs
             let mut row = div().relative().overflow_hidden().flex().flex_col();
 
-            // TODO: Show multiple wings (only show when NOT expanded)
-            // if !is_expanded {
-            //     // Back layer (third card hint) - only if count > 2
-            //     if g.count > 2 {
-            //         let mut w = wing();
-            //         w.upper_wing_size(size(px(20.0), navbar_size.height));
-            //         w.upper_wing_side(WingSide::Left);
-            //         // w.include_upper_wing_in_bounds(false);
-            //         let mut w = w
-            //             .absolute()
-            //                 .w(px(20.0))
-            //                 .h(navbar_size.height)
-            //                 .left(navbar_size.width)
-            //                 .bg(if self.is_visible {
-            //                     colors.accent_200.with_alpha(0.2)
-            //                 } else {
-            //                     colors.accent_200.with_alpha(0.1)
-            //                 });
-            //                 w.border_width(px(1.0));
+            // Show multiple wings (only show when NOT expanded)
+            if !is_expanded {
+                // Back layer (third card hint) - only if count > 2
+                if g.count > 2 {
+                    let mut outer_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w(px(0.0))
+                        .left(navbar_size.width)
+                        .border_1()
+                        .bottom(px(-4.0))
+                        .border_color(colors.accent_200.with_alpha(0.6))
+                        .bg(colors.background_1000);
 
-            //         row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
+                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    outer_wing.include_upper_wing_in_bounds(true);
+                    outer_wing.border_width(px(1.0));
 
-            //     }
+                    let mut inner_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w_full()
+                    .bg(if self.is_visible {
+                            colors.accent_200.with_alpha(0.2)
+                        } else {
+                            colors.accent_200.with_alpha(0.1)
+                        });
 
-            //     // Middle layer (second card hint) - only if count > 1
-            //     if !is_expanded && g.count > 1 {
-            //         let mut w = wing();
+                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    inner_wing.upper_wing_side(WingSide::Left);
+                    inner_wing.include_upper_wing_in_bounds(true);
+                    inner_wing.border_width(px(1.0));
 
-            //         w.upper_wing_size(size(navbar_size.width + px(20.0), navbar_size.height));
-            //         w.upper_wing_side(WingSide::Left);
-            //         w.include_upper_wing_in_bounds(true);
-            //         let mut w = w
-            //         .absolute()
-            //             .w(px(20.0))
-            //             .h(navbar_size.height)
-            //             // .tab_index(1)
-            //             //.left(navbar_size.width - 20.0)
-            //             .bg(if self.is_visible {
-            //                 colors.accent_200.with_alpha(0.2)
-            //             } else {
-            //                 colors.accent_200.with_alpha(0.1)
-            //             });
-            //             w.border_width(px(1.0));
+                    let inner = inner_wing.into_any();
+                    row = row.child(outer_wing.child(inner).into_any());
+                }
 
-            //         row = row.child(w.border_color(colors.accent_200.with_alpha(0.6)));
-            //     }
-            // }
+                // Middle layer (second card hint) - only if count > 1
+                if g.count > 1 {
+                    let mut outer_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w(px(0.0))
+                        .left(navbar_size.width - px(20.0))
+                        .bottom(px(-2.0))
+                        .border_1()
+                        .border_color(colors.accent_200.with_alpha(0.6))
+                        .bg(colors.background_1000);
+
+                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    outer_wing.include_upper_wing_in_bounds(true);
+                    outer_wing.border_width(px(1.0));
+
+                    let mut inner_wing = wing()
+                        .relative()
+                        .overflow_hidden()
+                        .w_full()
+                        .bg(if self.is_visible {
+                            colors.accent_200.with_alpha(0.2)
+                        } else {
+                            colors.accent_200.with_alpha(0.1)
+                        });
+
+                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    inner_wing.include_upper_wing_in_bounds(true);
+                    inner_wing.border_width(px(1.0));
+
+                    let inner = inner_wing.into_any();
+                    row = row.child(outer_wing.child(inner).into_any());
+                }
+            }
 
             // Calculate top margin for main card based on stack count (only when not expanded)
             let card_top_offset = px(0.0);
@@ -1270,35 +1284,60 @@ impl NotificationCenter {
                 content = content.child(body);
 
                 let card_inner: AnyElement = if show_header {
-                    let mut wing = wing()
+
+                     let mut outer_wing = wing()
+                        .w_128()
+                        .group("")
+                        .overflow_hidden()
+                        .relative()
+                        .border_1()
+                        .border_color(colors.accent_200.with_alpha(0.6))                        
+                        .bg(if is_expanded {
+                            colors.background_900
+                        } else {
+                            colors.background_1000
+                        })
+                        .rounded(px(12.0));
+
+                    outer_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    outer_wing.include_upper_wing_in_bounds(true);
+                    outer_wing.border_radius(px(12.0));
+                    outer_wing.border_width(px(1.0));
+
+                    let mut inner_wing = wing()
                         .w_128()
                         .group("")
                         .relative()
                         .overflow_hidden()
-                        .relative()
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.4))
-                        .bg(colors.accent_200.with_alpha(0.1))
+                        .bg(if is_expanded {
+                            colors.accent_200.with_alpha(0.0)
+                        } else {
+                            colors.accent_200.with_alpha(0.1)
+                        })
+                        .border(px(2.0))
                         .rounded(px(12.0))
                         .shadow_md()
                         .pt(px(2.0))
                         .px_4()
                         .py_3p5();
 
-                    wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
-                    wing.include_upper_wing_in_bounds(true);
-                    wing.border_radius(px(12.0));
-                    wing.border_width(px(1.0));
+                    inner_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    inner_wing.include_upper_wing_in_bounds(true);
+                    inner_wing.border_radius(px(12.0));
+                    inner_wing.border_width(px(1.0));
 
-                    wing.child(content).into_any()
+                    let inner = inner_wing.child(content).into_any();
+                        
+                    outer_wing.child(inner).into_any()
                 } else {
                     div()
                         .w_128()
                         .relative()
                         .rounded(px(12.0))
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.4))
-                        .bg(colors.accent_200.with_alpha(0.1))
+                        .border_color(colors.accent_200.with_alpha(0.2))
+                        .bg(colors.background_900)
                         .px_4()
                         .py_3p5()
                         .child(content)
@@ -1747,6 +1786,15 @@ impl NotificationCenter {
             .w(notifications_center_size.width - px(1.5))
             .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|this, event: &MouseDownEvent, _, cx| {
+                    cx.stop_propagation();
+                    this.drag_start_pos = this.position;
+                    this.drag_offset = Some(event.position.y.to_f64() as f32 - this.position);
+                    cx.notify();
+                }),
+            )
             .child(
                 div()
                     .id("nc-center-container")

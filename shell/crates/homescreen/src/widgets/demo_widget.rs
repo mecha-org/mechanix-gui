@@ -33,7 +33,7 @@ impl Default for DemoWidget {
 }
 
 impl HomescreenWidget for DemoWidget {
-    fn render(&self) -> gpui::AnyElement {
+    fn render(&self, cx: &mut gpui::App) -> gpui::AnyElement {
         div()
             .size_full()
             .flex()

@@ -82,6 +82,7 @@ class _HomePageState extends State<HomePage> {
                     child: IgnorePointer(
                       ignoring: !isVisible,
                       child: MusicIconButton(
+                        iconSize: 24,
                         backgroundColor: context.colorScheme.surfaceContainer,
                         icon: MusicIcons.searchIcon,
                         onPressed: () {

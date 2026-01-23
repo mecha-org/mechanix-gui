@@ -6,6 +6,7 @@
 const INSTALL_PREFIX = "/usr"
 const SHARE_BASE = "/usr/share/mechanix"
 const DESKTOP_DIR = "/usr/share/applications"
+const ICON_DIR = "/usr/share/icons/hicolor/48x48/apps"
 
 const REQUIRED_METADATA_FIELDS = ["name", "binary", "folder"]
 const METADATA_FILE = "packaging-metadata.yaml"
@@ -244,8 +245,26 @@ def collect-artifacts [
     } else {
         print "[INFO] No data directory found"
     }
+
+    # Icon (optional)
+    let icon_file = $"mechanix_($app.name).png"
+    let icon_src = ($app.folder | path join "assets" $icon_file)
+    let icon_installed = if ($icon_src | path exists) {
+        print $"[INFO] Installing icon file: ($icon_file)"
+        let icon_dest = $"($rpm_root)($ICON_DIR)/"
+        mkdir $icon_dest
+        cp $icon_src $icon_dest
+        true
+    } else {
+        print $"[INFO] No icon file found: ($icon_src)"
+        false
+    }
     
-    { desktop_installed: $desktop_installed }
+    { 
+        desktop_installed: $desktop_installed,
+        icon_installed: $icon_installed,
+        icon_file: $icon_file
+    }
 }
 
 # Generates RPM spec file
@@ -256,14 +275,14 @@ def generate-spec [
     app: record,
     pubspec: record,
     desktop_file: string,
-    desktop_installed: bool
+    artifacts: record
 ] {
     print "[INFO] Generating RPM spec file..."
     
-    let dependencies = ($app | get -o dependencies | default [])
-    let app_license = ($app | get -o license | default "MIT")
-    let description = ($pubspec | get -o description | default "Mechanix Application")
-    let maintainer = ($app | get -o maintainer | default "Mechanix Team <team@mecha.so>")
+    let dependencies = ($app.dependencies? | default [])
+    let app_license = ($app.license? | default "MIT")
+    let description = ($pubspec.description? | default "Mechanix Application")
+    let maintainer = ($app.maintainer? | default "Mechanix Team <team@mecha.so>")
     
     mut spec_lines = [
         $"Name: ($pkg_name)"
@@ -294,9 +313,15 @@ def generate-spec [
         ""
         "%post"
         "/usr/bin/update-desktop-database &> /dev/null || :"
+        "touch --no-create /usr/share/icons/hicolor &>/dev/null || :"
+        "gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :"
         ""
         "%postun"
         "/usr/bin/update-desktop-database &> /dev/null || :"
+        "if [ $1 -eq 0 ] ; then"
+        "    touch --no-create /usr/share/icons/hicolor &>/dev/null"
+        "    gtk-update-icon-cache /usr/share/icons/hicolor &>/dev/null || :"
+        "fi"
         ""
         "%files"
         $"($INSTALL_PREFIX)/bin/($app.binary)"
@@ -307,8 +332,12 @@ def generate-spec [
     $spec_lines = ($spec_lines | append $"%dir ($SHARE_BASE)/($pkg_name)")
     $spec_lines = ($spec_lines | append $"($SHARE_BASE)/($pkg_name)/*")
     
-    if $desktop_installed {
+    if $artifacts.desktop_installed {
         $spec_lines = ($spec_lines | append $"($DESKTOP_DIR)/($desktop_file)")
+    }
+    
+    if $artifacts.icon_installed {
+        $spec_lines = ($spec_lines | append $"($ICON_DIR)/($artifacts.icon_file)")
     }
     
     $spec_lines | str join "\n"
@@ -425,7 +454,7 @@ def main [
         $app 
         $pubspec 
         $desktop_file 
-        $artifacts.desktop_installed
+        $artifacts
     )
     
     let spec_file = $"($rpmbuild_root)/SPECS/($pkg_name).spec"

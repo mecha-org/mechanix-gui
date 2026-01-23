@@ -1,11 +1,12 @@
-use crate::prelude::{ Icon, IconName };
 use commons::widgets::wing;
 use dispatcher::Dispatcher;
 use gpui::*;
+use icons::prelude::Icons;
 use mxsearch::prelude::AppInfo;
-use theme::prelude::{ AlphaExt, Theme };
 use std::collections::hash_map::DefaultHasher;
-use std::hash::{ Hash, Hasher };
+use std::hash::{Hash, Hasher};
+use std::path::PathBuf;
+use theme::prelude::{AlphaExt, Theme};
 
 const POPUP_BASE_TOP: f32 = 10.0;
 const CARD_WIDTH: f32 = 508.0;
@@ -56,10 +57,11 @@ impl SubWindow {
         }
     }
 
-    pub fn resolved_icon(app_icon: &Option<String>) -> Icon {
+    pub fn resolved_icon(app_icon: &Option<String>, cx: &mut gpui::App) -> Img {
+        let icons = Icons::global(cx).app_drawer.clone();
         match app_icon {
-            Some(path) if !path.trim().is_empty() => { Icon::default().path(path.clone()) }
-            _ => Icon::from(IconName::DefaultApp),
+            Some(path) if !path.trim().is_empty() => img(PathBuf::from(path.clone())).size_full(),
+            _ => img(icons.default_app).size_full(),
         }
     }
 
@@ -83,7 +85,7 @@ impl SubWindow {
         &mut self,
         event: &MouseDownEvent,
         _window: &mut Window,
-        _cx: &mut Context<Self>
+        _cx: &mut Context<Self>,
     ) {
         self.drag_start_y = event.position.y;
         self.drag_start_x = event.position.x;
@@ -102,10 +104,12 @@ impl SubWindow {
         let sender = Dispatcher::global(cx).0.clone();
         cx.background_executor()
             .spawn(async move {
-                _ = sender.broadcast(dispatcher::Message::LaunchApp {
-                    app_id: possible_app_id,
-                    exec,
-                }).await;
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: possible_app_id,
+                        exec,
+                    })
+                    .await;
             })
             .detach();
     }
@@ -114,14 +118,15 @@ impl SubWindow {
         &mut self,
         event: &MouseMoveEvent,
         _: &mut Window,
-        cx: &mut Context<Self>
+        cx: &mut Context<Self>,
     ) {
         if self.is_dragging {
             let delta_y = event.position.y - self.drag_start_y;
             let delta_x = event.position.x - self.drag_start_x;
 
-            let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64() +
-                delta_x.abs().to_f64() * delta_x.abs().to_f64()) as f32;
+            let distance = (delta_y.abs().to_f64() * delta_y.abs().to_f64()
+                + delta_x.abs().to_f64() * delta_x.abs().to_f64())
+                as f32;
 
             // Determine scroll direction once threshold is exceeded
             if distance > DRAG_THRESHOLD {
@@ -142,10 +147,8 @@ impl SubWindow {
             if self.is_vertical_scroll {
                 let content_height = self.estimate_content_height();
                 let (min_scroll, max_scroll) = self.calculate_scroll_bounds(content_height);
-                self.scroll_offset = (self.last_scroll_offset + delta_y).clamp(
-                    min_scroll,
-                    max_scroll
-                );
+                self.scroll_offset =
+                    (self.last_scroll_offset + delta_y).clamp(min_scroll, max_scroll);
                 cx.notify();
 
                 // Stop propagation only for vertical scrolls
@@ -192,7 +195,7 @@ impl SubWindow {
                     .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
                     .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
                     .on_mouse_move(cx.listener(Self::on_mouse_move))
-                    .child(self.render_grid(cx))
+                    .child(self.render_grid(cx)),
             )
             .child(self.render_bottom_wing(cx))
             .child(
@@ -206,11 +209,11 @@ impl SubWindow {
                     .text_color(colors.foreground_300)
                     .child(category)
                     .text_ellipsis()
-                    .w(px(120.0))
+                    .w(px(120.0)),
             )
     }
 
-    /// Render the grid of apps
+    /// Render the grid of appss
     pub fn render_grid(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
         div()
@@ -218,56 +221,45 @@ impl SubWindow {
             .grid_cols(APPS_PER_ROW)
             .gap(px(GRID_GAP))
             .top(self.scroll_offset)
-            .children(
-                self.apps
-                    .iter()
-                    .enumerate()
-                    .map(|(idx, app)| {
-                        let app_id = app.possible_app_id.clone();
-                        let id = hash_id(&app_id);
-                        let exec = app.exec.clone();
-                        let icon = Self::resolved_icon(&app.icon_path);
+            .children(self.apps.iter().enumerate().map(|(idx, app)| {
+                let app_id = app.possible_app_id.clone();
+                let id = hash_id(&app_id);
+                let exec = app.exec.clone();
+                let icon = Self::resolved_icon(&app.icon_path, cx);
 
+                div()
+                    .id(id + idx)
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .child(
                         div()
-                            .id(id + idx)
+                            .id(idx)
+                            .bg(colors.background_800)
+                            .size(px(ICON_BOX_SIZE))
+                            .rounded(px(15.3))
                             .flex()
                             .items_center()
                             .justify_center()
+                            .cursor_pointer()
+                            .on_click(cx.listener(
+                                move |this: &mut SubWindow, _event, _window, cx| {
+                                    if !this.has_moved {
+                                        this.on_app_click(app_id.clone(), exec.clone(), cx);
+                                    }
+                                    this.has_moved = false;
+                                },
+                            ))
                             .child(
                                 div()
-                                    .id(idx)
-                                    .bg(colors.background_800)
-                                    .size(px(ICON_BOX_SIZE))
-                                    .rounded(px(15.3))
+                                    .size(px(ICON_SIZE))
                                     .flex()
                                     .items_center()
                                     .justify_center()
-                                    .cursor_pointer()
-                                    .on_click(
-                                        cx.listener(
-                                            move |this: &mut SubWindow, _event, _window, cx| {
-                                                if !this.has_moved {
-                                                    this.on_app_click(
-                                                        app_id.clone(),
-                                                        exec.clone(),
-                                                        cx
-                                                    );
-                                                }
-                                                this.has_moved = false;
-                                            }
-                                        )
-                                    )
-                                    .child(
-                                        div()
-                                            .size(px(ICON_SIZE))
-                                            .flex()
-                                            .items_center()
-                                            .justify_center()
-                                            .child(icon)
-                                    )
-                            )
-                    })
-            )
+                                    .child(icon),
+                            ),
+                    )
+            }))
     }
 
     /// Render the bottom wing decoration

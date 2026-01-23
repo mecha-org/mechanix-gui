@@ -26,6 +26,10 @@ pub struct Icons {
     pub universal_search: UniversalSearchIcons,
     #[serde(default)]
     pub lockscreen: LockscreenIcons,
+    #[serde(default)]
+    pub homescreen: HomeScreenIcons,
+    #[serde(default)]
+    pub toast: ToastIcons,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -141,12 +145,24 @@ impl Default for LockscreenIcons {
             arrow: PathBuf::from(format!("{}lockscreen/arrow.svg", ICONS_BASE_PATH)),
             bell: PathBuf::from(format!("{}lockscreen/bell.svg", ICONS_BASE_PATH)),
             lock: PathBuf::from(format!("{}lockscreen/lock.svg", ICONS_BASE_PATH)),
-            lock_open_full: PathBuf::from(format!("{}lockscreen/lock-open-full.svg", ICONS_BASE_PATH)),
-            lock_open_half: PathBuf::from(format!("{}lockscreen/lock-open-half.svg", ICONS_BASE_PATH)),
-            wedge_left: PathBuf::from(format!("{}lockscreen/wedge_left.svg", ICONS_BASE_PATH)),
-            wedge_left_outline: PathBuf::from(format!("{}lockscreen/wedge_left_outline.svg", ICONS_BASE_PATH)),
-            wedge_right: PathBuf::from(format!("{}lockscreen/wedge_right.svg", ICONS_BASE_PATH)),
-            wedge_right_outline: PathBuf::from(format!("{}lockscreen/wedge_right_outline.svg", ICONS_BASE_PATH)),
+            lock_open_full: PathBuf::from(format!(
+                "{}lockscreen/lock-open-full.svg",
+                ICONS_BASE_PATH
+            )),
+            lock_open_half: PathBuf::from(format!(
+                "{}lockscreen/lock-open-half.svg",
+                ICONS_BASE_PATH
+            )),
+            wedge_left: PathBuf::from(format!("{}lockscreen/wedge-left.svg", ICONS_BASE_PATH)),
+            wedge_left_outline: PathBuf::from(format!(
+                "{}lockscreen/wedge_left_outline.svg",
+                ICONS_BASE_PATH
+            )),
+            wedge_right: PathBuf::from(format!("{}lockscreen/wedge-right.svg", ICONS_BASE_PATH)),
+            wedge_right_outline: PathBuf::from(format!(
+                "{}lockscreen/wedge_right_outline.svg",
+                ICONS_BASE_PATH
+            )),
             wallpaper: PathBuf::from(format!("{}lockscreen/wallpaper.png", ICONS_BASE_PATH)),
         }
     }
@@ -219,6 +235,7 @@ pub struct SettingsDrawerIcons {
     pub wireless_none: PathBuf,
     pub wireless_off: PathBuf,
     pub wireless_warning: PathBuf,
+    pub slider_accent_dots_column: PathBuf,
 }
 
 impl Default for SettingsDrawerIcons {
@@ -444,6 +461,10 @@ impl Default for SettingsDrawerIcons {
                 "{}settings-drawer/wireless-warning.svg",
                 ICONS_BASE_PATH
             )),
+            slider_accent_dots_column: PathBuf::from(format!(
+                "{}settings-drawer/slider-accent-dots-column.svg",
+                ICONS_BASE_PATH
+            )),
         }
     }
 }
@@ -657,6 +678,92 @@ impl Default for UniversalSearchIcons {
             x: PathBuf::from(format!("{}universal-search/x.svg", ICONS_BASE_PATH)),
             xls_file: PathBuf::from(format!("{}universal-search/xls-file.svg", ICONS_BASE_PATH)),
             zip_file: PathBuf::from(format!("{}universal-search/zip-file.svg", ICONS_BASE_PATH)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct ExtensionsIcons {
+    pub gamepad: PathBuf,
+    pub keyboard: PathBuf,
+    pub gpio: PathBuf,
+    pub unknown: PathBuf,
+    pub dot_grid: PathBuf,
+    pub detached: PathBuf,
+}
+
+impl Default for ExtensionsIcons {
+    fn default() -> Self {
+        Self {
+            gamepad: PathBuf::from(format!(
+                "{}homescreen/extensions/gamepad.png",
+                ICONS_BASE_PATH
+            )),
+            keyboard: PathBuf::from(format!(
+                "{}homescreen/extensions/keyboard.png",
+                ICONS_BASE_PATH
+            )),
+            gpio: PathBuf::from(format!("{}homescreen/extensions/gpio.png", ICONS_BASE_PATH)),
+            unknown: PathBuf::from(format!(
+                "{}homescreen/extensions/unknown.png",
+                ICONS_BASE_PATH
+            )),
+            dot_grid: PathBuf::from(format!(
+                "{}homescreen/extensions/dot-grid.png",
+                ICONS_BASE_PATH
+            )),
+            detached: PathBuf::from(format!(
+                "{}homescreen/extensions/detached.png",
+                ICONS_BASE_PATH
+            )),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct ClockIcons {
+    pub dashed: PathBuf,
+}
+
+impl Default for ClockIcons {
+    fn default() -> Self {
+        Self {
+            dashed: PathBuf::from(format!("{}homescreen/clock/dashed.png", ICONS_BASE_PATH)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct ToastIcons {
+    pub extension_attached: PathBuf,
+    pub extension_detached: PathBuf,
+    pub close: PathBuf,
+}
+
+impl Default for ToastIcons {
+    fn default() -> Self {
+        Self {
+            extension_attached: PathBuf::from(format!("{}toast/extension_attached.png", ICONS_BASE_PATH)),
+            extension_detached: PathBuf::from(format!("{}toast/extension_detached.png", ICONS_BASE_PATH)),
+            close: PathBuf::from(format!("{}toast/cross.png", ICONS_BASE_PATH)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+pub struct HomeScreenIcons {
+    pub extensions: ExtensionsIcons,
+    pub clock: ClockIcons,
+}
+
+impl Default for HomeScreenIcons {
+    fn default() -> Self {
+        Self {
+            extensions: ExtensionsIcons::default(),
+            clock: ClockIcons::default(),
         }
     }
 }

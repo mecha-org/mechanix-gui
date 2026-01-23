@@ -1,2 +1,7 @@
 [settings.active_theme]
 theme_colors = { type = "object", default = { accent = "oklch(0.6388 0.1435 64.8 / 98.0)", background = "oklch(0.0 0.0 0.0 / 100.0)", foreground = "oklch(1.0 0.0 0.0 / 100.0)" }, description = "Theme color palette" }
+[settings.lockscreen]
+wallpaper = { type = "string", default = "/usr/share/backgrounds/lock-screen/wallpaper_1.png", description = "Lockscreen wallpaper" }
+[settings.extension]
+detected = { type = "bool", default = false, description = "Extension detection event" }
+name = { type = "string", default = "unknown", description = "Lockscreen timeout in seconds" }

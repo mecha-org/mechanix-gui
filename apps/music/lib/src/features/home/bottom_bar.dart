@@ -8,6 +8,7 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/bottom_menu.dart';
 import 'package:mechanix_music/src/features/home/mini_player.dart';
 import 'package:mechanix_music/src/features/search_tab/music_search_bar.dart';
+import 'package:tuple/tuple.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
@@ -58,99 +59,110 @@ class BottomBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const MiniPlayer(),
-        BlocSelector<SongsBloc, SongsState, MusicTabs>(
-          selector: (state) => state.musicTab,
-          builder:
-              (context, state) => MechanixBottomBar(
-                theme: MechanixBottomBarThemeData(
-                  iconTheme: MechanixBottomBarIconThemeData(
-                    iconSize: Size(28, 28),
-                    iconBoxSize: Size(44, 44),
-                  ),
-                  decoration: BoxDecoration(
-                    color: context.secondaryContainer,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(0),
-                      topRight: Radius.circular(0),
-                    ),
-                  ),
+        BlocSelector<SongsBloc, SongsState, Tuple2<MusicTabs, bool>>(
+          selector:
+              (state) => Tuple2(state.musicTab, state.currentSong != null),
+          builder: (context, state) {
+            final musicTab = state.item1;
+            final isPlaying = state.item2;
+
+            return MechanixBottomBar(
+              theme: MechanixBottomBarThemeData(
+                iconTheme: MechanixBottomBarIconThemeData(
+                  iconSize: Size(28, 28),
+                  iconBoxSize: Size(44, 44),
+                ),
+                decoration: BoxDecoration(
+                  color: context.secondaryContainer,
+                  borderRadius:
+                      isPlaying
+                          ? BorderRadius.only(
+                            topLeft: Radius.circular(0),
+                            topRight: Radius.circular(0),
+                          )
+                          : BorderRadius.only(
+                            topLeft: Radius.circular(8),
+                            topRight: Radius.circular(8),
+                          ),
+                ),
+              ),
+
+              leadingWidget:
+                  musicTab == MusicTabs.playlistInfo
+                      ? [
+                        BottomBarButton(
+                          isDisabled: musicTab == MusicTabs.home,
+                          iconTheme: MechanixBottomBarIconThemeData(
+                            buttonMargin: const EdgeInsets.only(left: 10),
+                            iconSize: Size(28, 28),
+                            iconBoxSize: Size(44, 44),
+                            iconColor:
+                                musicTab == MusicTabs.home
+                                    ? Theme.of(context).disabledColor
+                                    : null,
+                          ),
+                          onPressed:
+                              musicTab == MusicTabs.home
+                                  ? null
+                                  : () {
+                                    context.read<SongsBloc>().add(
+                                      BackTabEvent(),
+                                    );
+                                  },
+                          iconPath: MusicIcons.backIcon,
+                        ),
+                      ]
+                      : [],
+              centerWidget: [
+                BottomBarButton(
+                  onPressed: () {
+                    context.read<SongsBloc>().add(
+                      MusicTabSwitch(MusicTabs.home),
+                    );
+                  },
+                  isSelected: musicTab == MusicTabs.home,
+
+                  iconPath: MusicIcons.homeIcon,
                 ),
 
-                leadingWidget:
-                    state == MusicTabs.playlistInfo
-                        ? [
-                          BottomBarButton(
-                            isDisabled: state == MusicTabs.home,
-                            iconTheme: MechanixBottomBarIconThemeData(
-                              buttonMargin: const EdgeInsets.only(left: 10),
-                              iconSize: Size(28, 28),
-                              iconBoxSize: Size(44, 44),
-                              iconColor:
-                                  state == MusicTabs.home
-                                      ? Theme.of(context).disabledColor
-                                      : null,
-                            ),
-                            onPressed:
-                                state == MusicTabs.home
-                                    ? null
-                                    : () {
-                                      context.read<SongsBloc>().add(
-                                        BackTabEvent(),
-                                      );
-                                    },
-                            iconPath: MusicIcons.backIcon,
-                          ),
-                        ]
-                        : [],
-                centerWidget: [
-                  BottomBarButton(
-                    onPressed: () {
-                      context.read<SongsBloc>().add(
-                        MusicTabSwitch(MusicTabs.home),
-                      );
-                    },
-                    isSelected: state == MusicTabs.home,
+                BottomBarButton(
+                  isSelected: musicTab == MusicTabs.music,
+                  onPressed: () {
+                    context.read<SongsBloc>().add(
+                      MusicTabSwitch(MusicTabs.music),
+                    );
+                  },
 
-                    iconPath: MusicIcons.homeIcon,
-                  ),
+                  iconPath: MusicIcons.musicIcon,
+                ),
+                BottomBarButton(
+                  isSelected:
+                      musicTab == MusicTabs.playlists ||
+                      musicTab == MusicTabs.playlistInfo,
+                  onPressed: () {
+                    context.read<SongsBloc>().add(
+                      MusicTabSwitch(MusicTabs.playlists),
+                    );
+                  },
 
-                  BottomBarButton(
-                    isSelected: state == MusicTabs.music,
-                    onPressed: () {
-                      context.read<SongsBloc>().add(
-                        MusicTabSwitch(MusicTabs.music),
-                      );
-                    },
-
-                    iconPath: MusicIcons.musicIcon,
-                  ),
-                  BottomBarButton(
-                    isSelected:
-                        state == MusicTabs.playlists ||
-                        state == MusicTabs.playlistInfo,
-                    onPressed: () {
-                      context.read<SongsBloc>().add(
-                        MusicTabSwitch(MusicTabs.playlists),
-                      );
-                    },
-
-                    iconPath: MusicIcons.playlistIcon,
-                  ),
-                  BottomBarButton(
-                    isSelected: state == MusicTabs.favorites,
-                    onPressed: () {
-                      context.read<SongsBloc>().add(
-                        MusicTabSwitch(MusicTabs.favorites),
-                      );
-                    },
-                    iconPath: MusicIcons.favouritesIcon,
-                  ),
-                ],
-                anchorWidget:
-                    state == MusicTabs.playlists
-                        ? [BottomBarButton.widget(widget: BottomMenu())]
-                        : [],
-              ),
+                  iconPath: MusicIcons.playlistIcon,
+                ),
+                BottomBarButton(
+                  isSelected: musicTab == MusicTabs.favorites,
+                  onPressed: () {
+                    context.read<SongsBloc>().add(
+                      MusicTabSwitch(MusicTabs.favorites),
+                    );
+                  },
+                  iconPath: MusicIcons.favouritesIcon,
+                ),
+              ],
+              anchorWidget:
+                  musicTab == MusicTabs.playlists
+                      ? [BottomBarButton.widget(widget: BottomMenu())]
+                      : [],
+            );
+          },
         ),
       ],
     );

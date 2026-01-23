@@ -1,25 +1,29 @@
-use crate::Homescreen;
 use crate::widgets::HomescreenWidget;
+use crate::Homescreen;
 use app_drawer::prelude::*;
 use gpui::*;
 
 pub struct AppDrawerWidget {
     bounds: Bounds<Pixels>,
     drawer_handle: Entity<AppDrawer>,
+    background_color: Hsla,
+    has_border: bool,
 }
 
 impl AppDrawerWidget {
-    pub fn new(cx: &mut Context<Homescreen>) -> Self {
+    pub fn new(cx: &mut Context<Homescreen>, color: impl Into<Hsla>, has_border: bool) -> Self {
         let drawer_handle = cx.new(|cx| AppDrawer::new(cx));
         Self {
             bounds: Bounds::default(),
             drawer_handle,
+            background_color: color.into(),
+            has_border,
         }
     }
 }
 
 impl HomescreenWidget for AppDrawerWidget {
-    fn render(&self) -> AnyElement {
+    fn render(&self, cx: &mut gpui::App) -> AnyElement {
         div()
             .size_full()
             .child(self.drawer_handle.clone())
@@ -35,10 +39,10 @@ impl HomescreenWidget for AppDrawerWidget {
     }
 
     fn background_color(&self) -> Hsla {
-        gpui::transparent_black().into()
+        self.background_color
     }
 
     fn has_border(&self) -> bool {
-        false
+        self.has_border
     }
 }

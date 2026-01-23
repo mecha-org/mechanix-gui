@@ -1,0 +1,17 @@
+[package]
+name = "toast"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+categories.workspace = true
+keywords.workspace = true
+
+[dependencies]
+gpui = { workspace = true }
+dispatcher = { path = "../dispatcher" }
+theme = { path = "../theme" }
+icons = { path = "../icons" }
+settings = { path = "../settings" }

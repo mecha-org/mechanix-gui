@@ -1,7 +1,7 @@
 use gpui::{Pixels, Size};
 use std::collections::HashMap;
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct HomescreenConfig {
     pub window: WindowConfig,
     pub grid: GridConfig,
@@ -16,7 +16,9 @@ impl HomescreenConfig {
                 width: size.width.to_f64() as f32,
                 height: size.height.to_f64() as f32,
             },
-            ..Default::default()
+            grid: GridConfig::default(),
+            drag: DragConfig::default(),
+            animation: AnimationConfig::default(),
         };
 
         // Set zero gaps for pages 0 and 4 (full-screen widgets)
@@ -28,7 +30,7 @@ impl HomescreenConfig {
             },
         );
         config.grid.page_gaps.insert(
-            4,
+            2,
             GridGap {
                 horizontal: 0.0,
                 vertical: 0.0,
@@ -43,8 +45,8 @@ impl HomescreenConfig {
             left: 10.0,
         };
         config.grid.page_paddings.insert(1, page_padding);
-        config.grid.page_paddings.insert(2, page_padding);
-        config.grid.page_paddings.insert(3, page_padding);
+        // config.grid.page_paddings.insert(2, page_padding);
+        // config.grid.page_paddings.insert(3, page_padding);
 
         config
     }
@@ -54,15 +56,6 @@ impl HomescreenConfig {
 pub struct WindowConfig {
     pub width: f32,
     pub height: f32,
-}
-
-impl Default for WindowConfig {
-    fn default() -> Self {
-        Self {
-            width: 540.0,
-            height: 504.0,
-        }
-    }
 }
 
 #[derive(Debug, Clone)]
@@ -111,8 +104,8 @@ pub struct GridSize {
 impl Default for GridSize {
     fn default() -> Self {
         Self {
-            rows: 4,
-            columns: 4,
+            rows: 3,
+            columns: 3,
         }
     }
 }

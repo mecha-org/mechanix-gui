@@ -7,6 +7,7 @@ use settings::prelude::*;
 
 struct Launcher {
     top_levels: Vec<ForeignToplevelHandle>,
+    refresh_windows_counter: usize,
     _poll_task: Task<()>,
 }
 
@@ -27,6 +28,7 @@ impl Launcher {
         });
         Self {
             top_levels: Vec::new(),
+            refresh_windows_counter: 10,
             _poll_task,
         }
     }
@@ -87,6 +89,11 @@ impl Render for Launcher {
         if top_levels.len() != self.top_levels.len() {
             self.top_levels = top_levels;
             cx.notify();
+        }
+
+        if self.refresh_windows_counter > 0 {
+            cx.refresh_windows();
+            self.refresh_windows_counter -= 1;
         }
 
         div().size_full()
@@ -162,7 +169,7 @@ fn listen_dispatcher(cx: &mut gpui::App, entity: Entity<Launcher>) {
 }
 
 pub fn run() {
-    Application::new().with_assets(Assets {}).run(|cx| {
+    Application::new().run(|cx| {
         //init global settings
         settings::init(cx);
 
@@ -186,7 +193,7 @@ pub fn run() {
 
         let installed_apps = cx.new(|cx| InstalledApps::new(cx));
 
-        status_bar::run_app(cx);
+        // status_bar::run_app(cx);
 
         homescreen::run_app(cx);
 
@@ -201,6 +208,8 @@ pub fn run() {
         notifications::run_app(cx);
 
         volume_slider::run_app(cx);
+
+        toast::run_app(cx);
 
         cx.activate(true);
         cx.refresh_windows();

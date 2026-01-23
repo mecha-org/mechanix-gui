@@ -4,8 +4,14 @@ use commons::input::{
 };
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
+use icons::prelude::Icons;
+use mxsearch::prelude::AppInfo;
+use mxsearch::service::MxSearchService;
 use settings::prelude::*;
 use status_bar::prelude::status_bar_components;
+use std::time::Duration;
+use sysinfo::System;
+use theme::prelude::Theme;
 use theme::ActiveTheme;
 
 mod animation_manager;
@@ -24,28 +30,126 @@ use crate::state::*;
 use crate::ui::HomescreenUi;
 use crate::widgets::app_drawer::AppDrawerWidget;
 use crate::widgets::demo_widget::DemoWidget;
+use crate::widgets::extentions::{listen_for_extensions, ExtensionState, ExtensionWidget};
+use crate::widgets::pinned_apps::PinnedApps;
+use crate::widgets::system_usage::SystemUsage;
+use crate::widgets::time::Time;
 use crate::widgets::universal_search::UniversalSearchWidget;
 
 pub struct Homescreen {
     state: HomescreenState,
     status_bar_size: Size<Pixels>,
+    _system_usage_subscription: Subscription,
 }
+
+pub struct SystemUsageState {
+    pub cpu_usage: String,
+    pub memory_usage: String,
+    pub uptime: String,
+}
+
+impl Global for SystemUsageState {}
+
+pub struct PinnedAppsState {
+    pub apps: Vec<AppInfo>,
+}
+
+impl Global for PinnedAppsState {}
 
 impl Homescreen {
     pub fn new(
-        _cx: &mut Context<Self>,
+        cx: &mut Context<Self>,
         config: HomescreenConfig,
         status_bar_size: Size<Pixels>,
     ) -> Self {
         let mut state = HomescreenState::new(config);
+        let icons = Icons::global(cx).homescreen.clone();
+        let colors = Theme::global(cx).colors.clone();
+
+        let system_usage_state = SystemUsageState {
+            cpu_usage: "".to_string(),
+            memory_usage: "".to_string(),
+            uptime: "".to_string(),
+        };
+
+        cx.set_global(system_usage_state);
+
+        // Initialize extension state and start listening for extensions
+        cx.set_global(ExtensionState::default());
+        cx.set_global(PinnedAppsState { apps: vec![] });
+
+        listen_for_extensions(cx);
+
+        let _system_usage_subscription = cx.observe_global::<SystemUsageState>(|_this, cx| {
+            cx.notify();
+        });
+
+        let mut sys = System::new_all();
+        cx.spawn(async move |this, cx| loop {
+            cx.background_executor().timer(Duration::from_secs(5)).await;
+            sys.refresh_cpu_usage(); // Refreshing CPU usage.
+            let usage = sys.global_cpu_usage();
+            _ = this.update(cx, |_this, cx| {
+                cx.global_mut::<SystemUsageState>().cpu_usage = format!("{:.1}%", usage);
+                cx.notify();
+            });
+        })
+        .detach();
+
+        let mut sys = System::new_all();
+        cx.spawn(async move |this, cx| loop {
+            cx.background_executor().timer(Duration::from_secs(5)).await;
+            sys.refresh_memory(); // Refreshing Memory usage.
+                                  // let total = sys.total_memory();
+
+            let used = sys.used_memory() as f32 / 1024. / 1024. / 1024.;
+            _ = this.update(cx, |_this, cx| {
+                cx.global_mut::<SystemUsageState>().memory_usage = format!("{:.2}", used);
+                cx.notify();
+            });
+        })
+        .detach();
+
+        cx.spawn(async move |this, cx| loop {
+            cx.background_executor().timer(Duration::from_secs(5)).await;
+            let up = System::uptime();
+            let mut uptime = up;
+            let days = uptime / 86400;
+            uptime -= days * 86400;
+            let hours = uptime / 3600;
+            uptime -= hours * 3600;
+            let minutes = uptime / 60;
+            let uptime = format!("{}d {}h {}m", days, hours, minutes);
+            _ = this.update(cx, |_this, cx| {
+                cx.global_mut::<SystemUsageState>().uptime = uptime;
+                cx.notify();
+            });
+        })
+        .detach();
+
+        cx.spawn(async move |this, cx| match MxSearchService::new().await {
+            Ok(service) => {
+                if let Ok(app_infos) = service.search_applications("Mechanix").await {
+                    this.update(cx, |_this, cx| {
+                        cx.global_mut::<PinnedAppsState>().apps = app_infos;
+                        cx.notify();
+                    })
+                    .ok();
+                }
+            }
+            Err(_) => {}
+        })
+        .detach();
+
         state.create_widget(
-            UniversalSearchWidget::new(_cx),
+            UniversalSearchWidget::new(cx, colors.background_1000, false),
             0,
             Bounds {
                 origin: point(0, 0),
-                size: size(4, 4), // Adjust size as needed for a search bar
+                size: size(3, 3), // Adjust size as needed for a search bar
             },
         );
+
         // state.create_widget(
         //     DemoWidget::new("Sunrise", rgb(0xff6b6b), rgb(0xff5252), true),
         //     0,
@@ -92,17 +196,43 @@ impl Homescreen {
         // );
 
         // PAGE 1 - First row: 2x1 + 1x1 + 1x1, then 4x3 widget
+        // state.create_widget(
+        //     DemoWidget::new("Coral", rgb(0xff7f50), rgb(0xff6347), true),
+        //     1,
+        //     Bounds {
+        //         origin: point(0, 0),
+        //         size: size(2, 1),
+        //     },
+        // );
+
         state.create_widget(
-            DemoWidget::new("Coral", rgb(0xff7f50), rgb(0xff6347), true),
+            Time::new(gpui::transparent_black(), colors.background_700, false),
             1,
             Bounds {
                 origin: point(0, 0),
-                size: size(2, 1),
+                size: size(1, 1),
             },
         );
 
+        // state.create_widget(
+        //     ExtensionWidget::new(icons.gamepad, rgb(0xb565a7), rgb(0x9d5091), false),
+        //     1,
+        //     Bounds {
+        //         origin: point(1, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
+
         state.create_widget(
-            DemoWidget::new("Mint", rgb(0x98d8c8), rgb(0x7ac7b5), false),
+            SystemUsage::new(colors.background_800, colors.background_700, true),
+            1,
+            Bounds {
+                origin: point(1, 0),
+                size: size(1, 1),
+            },
+        );
+        state.create_widget(
+            ExtensionWidget::new(colors.background_800, colors.background_700, true),
             1,
             Bounds {
                 origin: point(2, 0),
@@ -110,101 +240,129 @@ impl Homescreen {
             },
         );
 
-        state.create_widget(
-            DemoWidget::new("Amber", rgb(0xffa94d), rgb(0xff8c1a), true),
-            1,
-            Bounds {
-                origin: point(3, 0),
-                size: size(1, 1),
-            },
-        );
+        // state.create_widget(
+        //     ExtensionWidget::new(icons.gpio, rgb(0xb565a7), rgb(0x9d5091), false),
+        //     1,
+        //     Bounds {
+        //         origin: point(2, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
 
         state.create_widget(
-            DemoWidget::new("Plum", rgb(0xb565a7), rgb(0x9d5091), true),
+            PinnedApps::new(vec![], colors.background_800, colors.background_700, true),
             1,
             Bounds {
                 origin: point(0, 1),
-                size: size(4, 3),
+                size: size(3, 2),
             },
         );
+
+        // state.create_widget(
+        //     DemoWidget::new("Mint", rgb(0x98d8c8), rgb(0x7ac7b5), false),
+        //     1,
+        //     Bounds {
+        //         origin: point(2, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
+
+        // state.create_widget(
+        //     DemoWidget::new("Amber", rgb(0xffa94d), rgb(0xff8c1a), true),
+        //     1,
+        //     Bounds {
+        //         origin: point(3, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
+
+        // state.create_widget(
+        //     DemoWidget::new("Plum", rgb(0xb565a7), rgb(0x9d5091), true),
+        //     1,
+        //     Bounds {
+        //         origin: point(0, 1),
+        //         size: size(4, 3),
+        //     },
+        // );
 
         // PAGE 2 - Two 4x2 widgets
-        state.create_widget(
-            DemoWidget::new("Rose", rgb(0xff6b9d), rgb(0xff5285), true),
-            2,
-            Bounds {
-                origin: point(0, 0),
-                size: size(4, 2),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Rose", rgb(0xff6b9d), rgb(0xff5285), true),
+        //     2,
+        //     Bounds {
+        //         origin: point(0, 0),
+        //         size: size(4, 2),
+        //     },
+        // );
 
-        state.create_widget(
-            DemoWidget::new("Teal", rgb(0x1abc9c), rgb(0x16a085), true),
-            2,
-            Bounds {
-                origin: point(0, 2),
-                size: size(4, 2),
-            },
-        );
+        // state.create_widget(
+        //     DemoWidget::new("Teal", rgb(0x1abc9c), rgb(0x16a085), true),
+        //     2,
+        //     Bounds {
+        //         origin: point(0, 2),
+        //         size: size(4, 2),
+        //     },
+        // );
 
         // PAGE 3 - Top row: 3x1 + 1x1, middle: 4x2, bottom row: 2x2 + 2x2
+        // state.create_widget(
+        //     DemoWidget::new("Tangerine", rgb(0xff9500), rgb(0xe68200), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(0, 0),
+        //         size: size(3, 1),
+        //     },
+        // );
+
+        // state.create_widget(
+        //     DemoWidget::new("Aqua", rgb(0x00bcd4), rgb(0x00a3ba), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(3, 0),
+        //         size: size(1, 1),
+        //     },
+        // );
+
+        // state.create_widget(
+        //     DemoWidget::new("Mauve", rgb(0xe0b0ff), rgb(0xc78fff), false),
+        //     3,
+        //     Bounds {
+        //         origin: point(0, 1),
+        //         size: size(4, 2),
+        //     },
+        // );
+
+        // state.create_widget(
+        //     DemoWidget::new("Gold", rgb(0xffd700), rgb(0xe6c200), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(0, 3),
+        //         size: size(2, 1),
+        //     },
+        // );
+
+        // state.create_widget(
+        //     DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
+        //     3,
+        //     Bounds {
+        //         origin: point(2, 3),
+        //         size: size(2, 1),
+        //     },
+        // );
+
         state.create_widget(
-            DemoWidget::new("Tangerine", rgb(0xff9500), rgb(0xe68200), true),
-            3,
+            AppDrawerWidget::new(cx, colors.background_1000, false),
+            2,
             Bounds {
                 origin: point(0, 0),
-                size: size(3, 1),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Aqua", rgb(0x00bcd4), rgb(0x00a3ba), true),
-            3,
-            Bounds {
-                origin: point(3, 0),
-                size: size(1, 1),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Mauve", rgb(0xe0b0ff), rgb(0xc78fff), false),
-            3,
-            Bounds {
-                origin: point(0, 1),
-                size: size(4, 2),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Gold", rgb(0xffd700), rgb(0xe6c200), true),
-            3,
-            Bounds {
-                origin: point(0, 3),
-                size: size(2, 1),
-            },
-        );
-
-        state.create_widget(
-            DemoWidget::new("Lavender", rgb(0xc7b3ff), rgb(0xb59fff), true),
-            3,
-            Bounds {
-                origin: point(2, 3),
-                size: size(2, 1),
-            },
-        );
-
-        state.create_widget(
-            AppDrawerWidget::new(_cx),
-            4,
-            Bounds {
-                origin: point(0, 0),
-                size: size(4, 4), // Full screen widget
+                size: size(3, 3), // Full screen widget
             },
         );
 
         Self {
             state,
             status_bar_size,
+            _system_usage_subscription,
         }
     }
 
@@ -274,9 +432,8 @@ pub mod prelude {
 
 pub fn run_app(cx: &mut App) {
     let HomescreenSettings {
-        navbar_height,
-        status_bar_size,
         layer_shell,
+        status_bar_size,
         ..
     } = Settings::global(cx).homescreen.clone();
 
@@ -287,10 +444,10 @@ pub fn run_app(cx: &mut App) {
         namespace,
         ..
     } = layer_shell;
-    let screen_size = gpui::size(size.width, size.height - navbar_height);
 
-    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, screen_size, cx));
-    let config = HomescreenConfig::new(screen_size);
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
+    let config =
+        HomescreenConfig::new(gpui::size(size.width, size.height - status_bar_size.height));
 
     // Register key bindings for the text input
     cx.bind_keys([

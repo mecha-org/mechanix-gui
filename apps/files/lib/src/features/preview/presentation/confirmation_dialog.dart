@@ -16,7 +16,7 @@ class ConfirmationBottomSheet extends StatelessWidget {
     final double sheetWidth = MediaQuery.of(context).size.width;
 
     return ClipPath(
-      clipper: TabClipper(shift: sheetWidth * 0.65),
+      clipper: TabClipper(shift: 400),
       child: Container(
         decoration: BoxDecoration(
           color: context.colorScheme.surfaceContainerHigh,
@@ -24,7 +24,7 @@ class ConfirmationBottomSheet extends StatelessWidget {
         padding: const EdgeInsets.only(
           left: 16,
           right: 16,
-          bottom: 16,
+          bottom: 30,
           top: 32,
         ),
         child: SafeArea(

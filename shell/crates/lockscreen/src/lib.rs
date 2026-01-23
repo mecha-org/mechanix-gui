@@ -14,7 +14,7 @@ pub mod prelude {
 }
 
 pub fn run_app(cx: &mut App) {
-    let LockscreenSettings { layer_shell } = Settings::global(cx).lockscreen.clone();
+    let LockscreenSettings { layer_shell, .. } = Settings::global(cx).lockscreen.clone();
     let LayerShellSettings {
         size,
         layer,
@@ -39,12 +39,26 @@ pub fn run_app(cx: &mut App) {
             ..Default::default()
         },
         |window, cx| {
-            let regions = Vec::new();
-            window.set_input_regions(Some(regions));
+            window.set_input_regions(Some(Vec::new()));
 
             cx.new(|cx| {
                 listen_dispatcher(cx);
-                Lockscreen::new(cx)
+                let lockscreen = Lockscreen::new(cx);
+                // Fetch the default wallpaper asynchronously
+                cx.spawn(async move |this: WeakEntity<Lockscreen> , cx| {
+                    let setting_key = "org.mechanix.desktop.settings.lockscreen.wallpaper";
+                    if let Ok(settings) = mxconf_dbus::get_setting(setting_key).await {
+                        // mxconf_dbus::get_setting returns a HashMap<String, String>
+                        // The value is usually stored under the key name or "value"
+                        if let Some(wallpaper_path) = settings.get(setting_key) {
+                            this.update(cx, |this, cx| {
+                                this.wallpaper_path = Some(std::path::PathBuf::from(wallpaper_path));
+                                cx.notify();
+                            }).ok();
+                        }
+                    }
+                }).detach();
+                lockscreen
             })
         },
     )
@@ -73,6 +87,13 @@ pub fn listen_dispatcher(cx: &mut Context<Lockscreen>) {
                         if show {
                             this.reset(cx);
                         }
+                        cx.notify();
+                    });
+                }
+                dispatcher::Message::SetLockscreenWallpaper(wallpaper) => {
+                    println!("wallpaper to set in lockscreen: {}", wallpaper);
+                    let _ = this.update(cx, |this, cx| {
+                        this.wallpaper_path = Some(std::path::PathBuf::from(wallpaper));
                         cx.notify();
                     });
                 }

@@ -64,7 +64,6 @@ impl SettingsDrawer {
             })
             .p_4()
             .flex_shrink_0()
-            .hover(|style| style.bg(colors.accent_200.with_alpha(0.1)))
             .child(
                 svg()
                     .external_path(SharedString::from(settings.to_string_lossy().to_string()))
