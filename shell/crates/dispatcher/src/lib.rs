@@ -146,10 +146,10 @@ pub fn init(cx: &mut App) {
                                 .await
                             {
                                 Ok(_) => {
-                                    println!("extension detection name message broadcasted");
+                                    println!("extension detection message broadcasted");
                                 }
                                 Err(_) => {
-                                    println!("extension detection name message broadcasted failed");
+                                    println!("extension detection message broadcasted failed");
                                 }
                             };
                         }
@@ -159,10 +159,10 @@ pub fn init(cx: &mut App) {
                                 .await
                             {
                                 Ok(_) => {
-                                    println!("extension detection name message broadcasted");
+                                    println!("extension name message broadcasted");
                                 }
                                 Err(_) => {
-                                    println!("extension detection name message broadcasted failed");
+                                    println!("extension name message broadcasted failed");
                                 }
                             };
                         }
