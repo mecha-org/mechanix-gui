@@ -1,5 +1,6 @@
 use gpui::{prelude::FluentBuilder, *};
 use icons::prelude::{Icons, StatusBarIcons};
+use settings::prelude::Settings;
 use shell_state::ShellState;
 use std::time::Duration;
 use theme::prelude::{AlphaExt, Fonts, Theme};
@@ -221,6 +222,8 @@ pub fn status_bar_components(
         BatteryState::Empty => battery_empty,
         _ => battery_empty,
     };
+    let time_format = Settings::global(cx).homescreen.time_format.clone();
+    let current_time = format!("{}", current_time_date.format(time_format.as_str()));
 
     div()
         .when_else(
@@ -245,7 +248,7 @@ pub fn status_bar_components(
             div()
                 .flex()
                 .flex_row()
-                .child(current_time_date.clone())
+                .child(current_time)
                 .font_family(primary_font)
                 .font_weight(FontWeight::NORMAL)
                 .line_height(px(1.2))

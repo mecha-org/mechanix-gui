@@ -175,6 +175,9 @@ pub struct HomescreenSettings {
 
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
+
+    #[serde(default)]
+    pub time_format: String,
 }
 
 impl Default for HomescreenSettings {
@@ -188,6 +191,7 @@ impl Default for HomescreenSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(591.5)),
             },
+            time_format: "%H:%M".into(),
         }
     }
 }
@@ -220,6 +224,8 @@ pub struct LockscreenSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub input_regions: InputRegions,
+    pub time_format: String,
+    pub date_format: String,
 }
 
 impl Default for LockscreenSettings {
@@ -242,6 +248,8 @@ impl Default for LockscreenSettings {
                     size: Size::new(px(540.0), px(620.0)),
                 },
             },
+            time_format: "%-I:%M %p".into(),
+            date_format: "%A, %-d %b".into(),
         }
     }
 }

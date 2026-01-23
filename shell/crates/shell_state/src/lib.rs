@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use bluez::{interfaces::device::BluetoothDevice, service::{BluetoothEvent, BluetoothService, InterfaceEvent}};
+use chrono::{DateTime, Local};
 use pulseaudio::service::{DeviceInfo, PulseAudioService};
 use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
 use futures_timer::Delay;
@@ -39,7 +40,7 @@ pub struct BluetoothDetails {
 pub struct ShellState {
     pub wireless_details: WirelessDetails,
     pub bluetooth_details: BluetoothDetails,
-    pub current_time_date: String,
+    pub current_time_date: DateTime<Local>,
     pub battery_state: BatteryState,
     pub battery_level: BatteryLevel,
     pub battery_percent: u8,
