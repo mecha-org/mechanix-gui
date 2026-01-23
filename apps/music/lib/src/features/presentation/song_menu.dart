@@ -7,6 +7,7 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
 import 'package:mechanix_music/src/features/presentation/songs_icon.dart';
 import 'package:widgets/mechanix.dart';
+import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
 
 class SongMenu extends StatefulWidget {
   final SongInfo song;
@@ -28,6 +29,10 @@ class _SongMenuState extends State<SongMenu> {
       topTabWidth: 370,
       topTabRightSideShiftLength: 40,
       context,
+      theme: MechanixBottomSheetThemeData(
+        decoration: BoxDecoration(color: context.surfaceContainerHigh),
+        padding: const EdgeInsets.only(bottom: 0),
+      ),
       child: AddToPlaylistSheet(song: widget.song),
     );
   }

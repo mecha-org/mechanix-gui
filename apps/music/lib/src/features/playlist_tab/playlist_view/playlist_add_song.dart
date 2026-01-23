@@ -4,8 +4,7 @@ import 'package:mechanix_music/src/commons/constants.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/playlist_tab/playlist_view/add_music_sheet.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
-import 'package:widgets/widgets/icon_widget.dart';
+import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet_theme.dart';
 
 class PlaylistAddSong extends StatelessWidget {
   final PlaylistInfo playlistInfo;
@@ -20,6 +19,10 @@ class PlaylistAddSong extends StatelessWidget {
       topTabWidth: 370,
       topTabRightSideShiftLength: 40,
       context,
+      theme: MechanixBottomSheetThemeData(
+        decoration: BoxDecoration(color: context.surfaceContainerHigh),
+        padding: const EdgeInsets.only(bottom: 0),
+      ),
       child: AddMusicSheet(playlistInfo: playlistInfo),
     );
   }
