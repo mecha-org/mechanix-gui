@@ -520,11 +520,6 @@ impl Render for SettingsDrawer {
         let threshold_px = 40.;
         self.update_input_regions(self.is_visible, window, cx);
 
-        let opacity = if self.drawer_moving || self.drag_offset.is_some() {
-            1.0 - (self.position / closed_pos_f32).clamp(0.0, 1.0)
-        } else {
-            0.0
-        };
 
         let bg_color = if self.drag_offset.is_some() || self.is_visible {
             colors.background_1000
