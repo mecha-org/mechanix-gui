@@ -104,11 +104,11 @@ impl SliderState {
         let new_u32 = new_value as u32;
         if prev_u32 == new_u32 {
             return;
+        } else {
+            self.value = new_value;
+            cx.emit(SliderEvent::Change(self.value));
+            cx.notify();
         }
-
-        self.value = new_value;
-        cx.emit(SliderEvent::Change(self.value));
-        cx.notify();
     }
 }
 
