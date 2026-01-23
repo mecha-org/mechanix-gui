@@ -28,7 +28,12 @@ pub fn run_app(cx: &mut App) {
             }),
             ..Default::default()
         },
-        |_window, cx| cx.new(|cx| Toast::new(cx)),
+        |window, cx| {
+            cx.new(|cx| {
+                window.set_input_regions(Some(vec![]));
+                Toast::new(cx)
+            })
+        },
     );
 
     if let Ok(window) = window {
