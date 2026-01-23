@@ -3,7 +3,8 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:widgets/mechanix.dart';
 
 class EmptyHomeScreen extends StatelessWidget {
-  const EmptyHomeScreen({super.key});
+  final bool isLoading;
+  const EmptyHomeScreen({super.key, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +13,7 @@ class EmptyHomeScreen extends StatelessWidget {
         children: [
           Image.asset(MusicIcons.emptyHomeScreenIcon, width: 355, height: 355),
           Text(
-            "No music tracks available",
+            isLoading ? "Loading ..." : "No music tracks available",
             style: TextStyle(
               fontSize: 18,
               height: 1.35,

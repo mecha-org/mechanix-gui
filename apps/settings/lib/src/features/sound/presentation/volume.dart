@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_state.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/input_devices.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/output_devices.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
@@ -18,6 +19,34 @@ class VolumeWidget extends StatefulWidget {
 }
 
 class _VolumeWidgetState extends State<VolumeWidget> {
+  void _onOutputDeviceTap() {
+    final bloc = context.read<SoundBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const OutputDevices(),
+        ),
+      ),
+    );
+  }
+
+  void _onInputDeviceTap() {
+    final bloc = context.read<SoundBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const InputDevices(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SoundBloc, SoundState>(
@@ -51,8 +80,7 @@ class _VolumeWidgetState extends State<VolumeWidget> {
               listItems: [
                 SimpleListItems(
                   title: 'Output Devices',
-                  onTap: () => Navigator.pushNamed(
-                      context, AppRoutes.soundOutputDevices),
+                  onTap: _onOutputDeviceTap,
                   trailing: _buildAnchorWidget(
                       context,
                       state.defaultOutputDevice?.description ??
@@ -84,8 +112,7 @@ class _VolumeWidgetState extends State<VolumeWidget> {
               listItems: [
                 SimpleListItems(
                   title: 'Input Devices',
-                  onTap: () =>
-                      Navigator.pushNamed(context, AppRoutes.soundInputDevices),
+                  onTap: _onInputDeviceTap,
                   trailing: _buildAnchorWidget(
                       context,
                       state.defaultInputDevice?.description ??

@@ -5,8 +5,8 @@ class AppearanceState extends Equatable {
     this.variant = MechanixVariant.amber,
     this.appliedVariant = MechanixVariant.amber,
     this.themeMode = ThemeMode.dark,
-    this.wallpaperFileName = '',
-    this.appliedWallpaper = '',
+    this.wallpaperFileName = Images.wallpaper1,
+    this.appliedWallpaper = Images.wallpaper1,
   });
 
   final ThemeMode themeMode;

@@ -13,13 +13,27 @@ class AccentPreviewType {
   final String wallpaperPreview;
 }
 
-final List<String> wallpapersList = [
-  Images.wallpaper1,
-  Images.wallpaper2,
-  Images.wallpaper3,
-  Images.wallpaper4,
-  Images.wallpaper5,
-  Images.wallpaper6,
+class WallpaperPreviewType {
+  const WallpaperPreviewType({
+    required this.wallpaper,
+    required this.wallpaperPreview,
+  });
+
+  final String wallpaper;
+  final String wallpaperPreview;
+}
+
+final List<WallpaperPreviewType> wallpapersList = [
+  const WallpaperPreviewType(
+      wallpaper: Images.wallpaper1, wallpaperPreview: Images.wallpaperPreview1),
+  const WallpaperPreviewType(
+      wallpaper: Images.wallpaper2, wallpaperPreview: Images.wallpaperPreview2),
+  const WallpaperPreviewType(
+      wallpaper: Images.wallpaper3, wallpaperPreview: Images.wallpaperPreview3),
+  const WallpaperPreviewType(
+      wallpaper: Images.wallpaper4, wallpaperPreview: Images.wallpaperPreview4),
+  const WallpaperPreviewType(
+      wallpaper: Images.wallpaper5, wallpaperPreview: Images.wallpaperPreview5),
 ];
 
 final List<AccentPreviewType> accentPreviewImages = [

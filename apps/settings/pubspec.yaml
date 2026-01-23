@@ -48,7 +48,7 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: d5e8f96f3baab583d58397df42ca1f84574bbd48
+      ref: 961b254aa37fa319600c2bcebe0d42847ab8c83d
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
@@ -71,113 +71,7 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/wifi_icon.png
-    - assets/images/bluetooth_icon.png
-    - assets/images/display_icon.png
-    - assets/images/appearance_icon.png
-    - assets/images/battery_icon.png
-    - assets/images/back_icon.png
-    - assets/images/info_icon.png
-    - assets/images/add_icon.png
-    - assets/images/settings.png
-    - assets/images/delete_icon.png
-    - assets/images/secured_wireless_low_icon.png
-    - assets/images/secured_wireless_weak_icon.png
-    - assets/images/secured_wireless_strong_icon.png
-    - assets/images/wireless_low_icon.png
-    - assets/images/wireless_weak_icon.png
-    - assets/images/wireless_strong_icon.png
-    - assets/images/sound_icon.png
-    - assets/images/about_icon.png
-    - assets/images/device_icon.png
-    - assets/images/secured_wireless_off_icon.png
-    - assets/images/date_time_icon.png
-    - assets/images/theme_1.png
-    - assets/images/theme_2.png
-    - assets/images/theme_3.png
-    - assets/images/big_wallpaper.png
-    - assets/images/bluetooth_setting_icon.png
-    - assets/images/bluetooth_connection_icon.png
-    - assets/images/right_arrow_button.png
-    - assets/images/network_icon.png
-    - assets/images/language_icon.png
-    - assets/images/camera_icon.png
-    - assets/images/notification_icon.png
-    - assets/images/sound_icon.png
-    - assets/images/apps_icon.png
-    - assets/images/loader.png
-    - assets/images/check_icon.png
-    - assets/images/charging_icon.png
-    - assets/images/secured_wireless_disabled.png
-    - assets/images/settiings_diabled_icon.png
-    - assets/images/wifi_connected.png
-    - assets/images/wireless_add.png
-    - assets/images/comet_icon.png
-    - assets/images/speaker.png
-    - assets/images/audio_headset.png
-    - assets/images/mobile.png
-    - assets/images/tv.png
-    - assets/images/car.png
-    - assets/images/mic.png
-    - assets/images/sun_icon.png
-    - assets/images/search_icon.png
-    - assets/images/mic_on.png
-    - assets/images/mic_off.png
-    - assets/images/volume_on.png
-    - assets/images/volume_off.png
-    - assets/images/trash.png
-    - assets/images/add_rounded_square.png
-    - assets/images/unlink_icon.png
-    - assets/images/wifi_high_locked.png
-    - assets/images/wifi_medium_locked.png
-    - assets/images/wifi_low_locked.png
-    - assets/images/wifi_none.png
-    - assets/images/wifi_high_open.png
-    - assets/images/wifi_medium_locked.png
-    - assets/images/wifi_low_locked.png
-    - assets/images/wifi_not_found.png
-    - assets/images/tick_icon.png
-    - assets/images/arrow_counter_clock_wise.png
-    - assets/images/connect_icon.png
-    - assets/images/three_dot_icon.png
-    - assets/images/circular_check_icon.png
-    - assets/images/lock_icon.png
-    - assets/images/arrows_clock_wise.png
-    - assets/images/blog_image.png
-    - assets/images/all_apps_icon.png
-    - assets/images/cellular_icon.png
-    - assets/images/extension_icon.png
-    - assets/images/launcher_icon.png
-    - assets/images/security_icon.png
-    - assets/images/update_icon.png
-    - assets/images/block_icon.png
-    - assets/images/amber_view_1.png
-    - assets/images/amber_view_2.png
-    - assets/images/amber_view_3.png
-    - assets/images/wallpaper_1.png
-    - assets/images/wallpaper_2.png
-    - assets/images/wallpaper_3.png
-    - assets/images/wallpaper_4.png
-    - assets/images/wallpaper_5.png
-    - assets/images/wallpaper_6.png
-    - assets/images/theme_preview_amber.png
-    - assets/images/theme_preview_blue.png
-    - assets/images/theme_preview_coral.png
-    - assets/images/theme_preview_mint.png
-    - assets/images/theme_preview_orange.png
-    - assets/images/theme_preview_magenta.png
-    - assets/images/theme_preview_purple.png
-    - assets/images/theme_preview_yellow.png
-    - assets/images/wallpaper_amber.png
-    - assets/images/wallpaper_amber.png
-    - assets/images/wallpaper_blue.png
-    - assets/images/wallpaper_coral.png
-    - assets/images/wallpaper_mint.png
-    - assets/images/wallpaper_orange.png
-    - assets/images/wallpaper_magenta.png
-    - assets/images/wallpaper_purple.png
-    - assets/images/wallpaper_yellow.png
-
+    - assets/images/
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

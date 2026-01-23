@@ -31,6 +31,25 @@ class FileHomePageState extends State<FileHomePage> {
   final recentDir = AppConfig().recentDir;
 
   @override
+  void initState() {
+    super.initState();
+
+    if (widget.path.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FileExplorerPage(
+              startPath: "/${widget.path.map((e) => e.name).join("/")}",
+              path: widget.path,
+            ),
+          ),
+        );
+      });
+    }
+  }
+
+  @override
   void dispose() {
     super.dispose();
   }

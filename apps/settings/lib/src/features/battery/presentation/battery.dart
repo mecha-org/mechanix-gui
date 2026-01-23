@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
@@ -10,6 +9,7 @@ import 'package:mechanix_settings/src/features/battery/blocs/battery_bloc.dart';
 import 'package:mechanix_settings/src/features/battery/blocs/battery_state.dart';
 import 'package:mechanix_settings/src/features/battery/models/types.dart';
 import 'package:mechanix_settings/src/features/battery/presentation/battery_indicator.dart';
+import 'package:mechanix_settings/src/features/battery/presentation/battery_performance.dart';
 import 'package:upower/upower.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/mechanix_simple_list_theme.dart';
@@ -23,6 +23,21 @@ class Battery extends StatefulWidget {
 }
 
 class BatteryScreenState extends State<Battery> {
+  String timeText = '';
+  void _onPerformanceTap() {
+    final bloc = context.read<BatteryBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const BatteryPerformance(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<BatteryBloc, BatteryState>(
@@ -35,10 +50,18 @@ class BatteryScreenState extends State<Battery> {
         final hours = totalSeconds ~/ 3600;
         final minutes = (totalSeconds % 3600) ~/ 60;
 
-        final timeText = [
-          if (hours > 0) "$hours hrs",
-          if (minutes > 0) "$minutes mins"
-        ].join(' ');
+        if (hours > 0 || minutes > 0) {
+          timeText = [
+            if (hours > 0) "$hours hrs",
+            if (minutes > 0) "$minutes mins"
+          ].join(' ');
+
+          if (state.batteryStatus == UPowerDeviceState.charging) {
+            timeText = "$timeText to Full Charge";
+          } else {
+            timeText = "$timeText Left";
+          }
+        }
 
         return Scaffold(
           body: SingleChildScrollView(
@@ -51,9 +74,7 @@ class BatteryScreenState extends State<Battery> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        state.batteryStatus == UPowerDeviceState.charging
-                            ? "$timeText to Full Charge"
-                            : "$timeText Left",
+                        timeText,
                         style: context.textTheme.labelLarge,
                       ),
                       Text(
@@ -73,8 +94,9 @@ class BatteryScreenState extends State<Battery> {
                       listItems: [
                         SimpleListItems(
                             title: 'System Performance',
-                            onTap: () => Navigator.pushNamed(
-                                context, AppRoutes.batteryPerformance),
+                            // onTap: () => Navigator.pushNamed(
+                            //     context, AppRoutes.batteryPerformance),
+                            onTap: _onPerformanceTap,
                             trailing: Row(
                               children: [
                                 CustomTrailingText(

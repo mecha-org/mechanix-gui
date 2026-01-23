@@ -260,3 +260,4 @@ class JumpToIndex extends SongsEvent {
 
   const JumpToIndex(this.index);
 }
+class MediaKitInitialised extends SongsEvent {}

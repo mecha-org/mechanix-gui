@@ -259,7 +259,12 @@ class MainApp extends StatelessWidget {
         themeMode: themeMode,
         routes: {
           // Sound Routes
-          AppRoutes.sound: (context) => const Sound(),
+          AppRoutes.sound: (context) => BlocProvider(
+                create: (context) => SoundBloc(
+                  soundRepository: context.read<SoundRepository>(),
+                )..add(InitializeSound()),
+                child: const Sound(),
+              ),
           AppRoutes.vibrationLevel: (context) => const VibrationLevel(),
           AppRoutes.soundOutputDevices: (context) => const OutputDevices(),
           AppRoutes.soundInputDevices: (context) => const InputDevices(),
@@ -306,7 +311,12 @@ class MainApp extends StatelessWidget {
           AppRoutes.security: (context) => const WifiSecurityWidget(),
 
           // Bluetooth Routes
-          AppRoutes.bluetooth: (context) => const Bluetooth(),
+          AppRoutes.bluetooth: (context) => BlocProvider(
+                create: (context) => BluetoothBloc(
+                  bluetoothRepository: context.read<BluetoothRepository>(),
+                )..add(InitBluetooth()),
+                child: const Bluetooth(),
+              ),
           AppRoutes.bluetoothDeviceInfo: (context) =>
               const BluetoothDeviceInfo(),
           AppRoutes.adapterSettings: (context) => const AdapterSettings(),
@@ -317,11 +327,21 @@ class MainApp extends StatelessWidget {
           AppRoutes.manageDevice: (context) => const ManageDevice(),
 
           // Battery Routes
-          AppRoutes.battery: (context) => const Battery(),
+          AppRoutes.battery: (context) => BlocProvider(
+                create: (context) => BatteryBloc(
+                  batteryRepository: context.read<BatteryRepository>(),
+                )..add(BatteryInit()),
+                child: const Battery(),
+              ),
           AppRoutes.batteryPerformance: (context) => const BatteryPerformance(),
 
           // Appearance Routes
-          AppRoutes.appearance: (context) => const Appearance(),
+          AppRoutes.appearance: (context) => BlocProvider(
+                create: (context) => AppearanceBloc(
+                  appearanceRepository: context.read<AppearanceRepository>(),
+                )..add(AppearanceInit()),
+                child: const Appearance(),
+              ),
           AppRoutes.setTheme: (context) => const SetUpTheme(),
           AppRoutes.setWallpaper: (context) => const SetUpWallpaper(),
           AppRoutes.wallpaperPreview: (context) => const WallpaperPreview(),
@@ -336,7 +356,10 @@ class MainApp extends StatelessWidget {
           // Other Routes
           AppRoutes.about: (context) => const About(),
           AppRoutes.systemUpdates: (context) => const SystemUpdates(),
-          AppRoutes.dateTime: (context) => const DateTimeSettings(),
+          AppRoutes.dateTime: (context) => BlocProvider(
+                create: (context) => DateTimeBloc()..add(InitializeDateTime()),
+                child: const DateTimeSettings(),
+              ),
           AppRoutes.timeSettings: (context) => const TimeSettings(),
           AppRoutes.dateSettings: (context) => const DateSettings(),
         },
@@ -355,55 +378,3 @@ class MainApp extends StatelessWidget {
     );
   }
 }
-// class _MechanixSettingsAppContentState
-//     extends State<_MechanixSettingsAppContent> {
-//   DBusClient? _bus;
-//   ThemeSettingsService? _themeService;
-//   bool _isInitialized = false;
-//   Future<MechanixThemeData?>? _themeFuture; // ✅ Single future
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _initializeTheme();
-//   }
-
-//   Future<void> _initializeTheme() async {
-//     _bus = DBusClient.session();
-//     _themeService = ThemeSettingsService(_bus!);
-//     _themeService!.listenForThemeChanges(_handleThemeChange);
-//     _themeFuture = _fetchInitialTheme(); // ✅ Store future
-//   }
-
-//   Future<MechanixThemeData?> _fetchInitialTheme() async {
-//     final colors = await _themeService!.fetchCurrentTheme();
-//     return colors != null ? _themeService!.colorsToThemeData(colors) : null;
-//   }
-
-//   void _handleThemeChange(Map<String, String> colors) {
-//     if (mounted) setState(() {}); // Trigger rebuild
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return FutureBuilder<MechanixThemeData?>(
-//       future: _themeFuture,
-//       builder: (context, snapshot) {
-//         if (!snapshot.hasData) {
-//           // ✅ Show NOTHING (no flash!)
-//           return const SizedBox.shrink();
-//         }
-
-//         final themeData = snapshot.data!;
-//         return MechanixTheme(
-//           data: themeData,
-//           builder: (context, mechanix, child) => MainApp(
-//             darkTheme: mechanix.darkTheme,
-//             lightTheme: mechanix.lightTheme,
-//             themeMode: widget.themeMode,
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }

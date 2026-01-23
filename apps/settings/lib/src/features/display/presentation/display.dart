@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/display/bloc/display_bloc.dart';
 import 'package:mechanix_settings/src/features/display/models/types.dart';
+import 'package:mechanix_settings/src/features/display/presentation/settings.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class DisplayPage extends StatefulWidget {
   const DisplayPage({super.key});
@@ -27,6 +28,20 @@ class _DisplayPageState extends State<DisplayPage> {
     super.initState();
 
     context.read<DisplayBloc>().add(GetDefaultSettingsEvent());
+  }
+
+  void _onScreenOffTap() {
+    final bloc = context.read<DisplayBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const ScreenOffTimeSettings(),
+        ),
+      ),
+    );
   }
 
   void changeBrightnessAuto(bool value) {
@@ -92,19 +107,16 @@ class _DisplayPageState extends State<DisplayPage> {
                             trailing: MechanixSwitch(
                               activeText: 'OFF',
                               inactiveText: 'ON',
+                              style: MechanixSwitchStyle(
+                                activeTrackColor: context.secondaryContainer,
+                                inactiveTrackColor: context.secondaryContainer,
+                              ),
                               value: state.isAutoBrightness,
                               onChanged: changeBrightnessAuto,
                             )),
                         SectionListItems(
                           title: 'Screen Off Time',
-                          onTap: () async {
-                            // final result = await
-                            Navigator.pushNamed(
-                              context,
-                              AppRoutes.displayScreenOffTime,
-                              arguments: {'screenOffTime': state.screenTimeout},
-                            );
-                          },
+                          onTap: _onScreenOffTap,
                           trailing: Text(displayLabel(state.screenTimeout))
                               .padRight(8),
                         ),

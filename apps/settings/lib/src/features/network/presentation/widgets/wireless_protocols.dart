@@ -15,9 +15,14 @@ import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 
 class WirelessProtocols extends StatefulWidget {
-  const WirelessProtocols({this.accessPoint, super.key});
+  const WirelessProtocols({
+    this.accessPoint,
+    super.key,
+    this.isDisabled = false,
+  });
 
   final NetworkManagerAccessPoint? accessPoint;
+  final bool isDisabled;
 
   @override
   State<WirelessProtocols> createState() => _WirelessProtocolsState();
@@ -46,6 +51,7 @@ class _WirelessProtocolsState extends State<WirelessProtocols> {
             return MechanixSimpleList(
               listItems: [
                 SimpleListItems(
+                    disabled: widget.isDisabled,
                     onTap: () => onTap(context, widget.accessPoint),
                     title: 'Security',
                     trailing: Row(
