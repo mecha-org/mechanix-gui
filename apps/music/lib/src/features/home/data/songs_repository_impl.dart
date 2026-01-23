@@ -66,7 +66,7 @@ class SongsRepositoryImpl extends SongsRepository {
 
       final files =
           await home
-              .list(recursive: true, followLinks: false)
+              .list(recursive: false, followLinks: false)
               .where((entity) {
                 final path = entity.path;
                 if (path.split('/').any((p) => p.startsWith('.'))) return false;

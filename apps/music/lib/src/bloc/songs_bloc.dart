@@ -12,13 +12,23 @@ import 'package:media_kit/media_kit.dart';
 import 'songs_state.dart';
 
 class SongsBloc extends Bloc<SongsEvent, SongsState> {
-  final Player player = Player();
+  Player? _player;
+
   StreamSubscription<FileSystemEvent>? _dirSubscription;
   final Map<String, Timer> _pendingEvents = {};
   final logger = Logger();
   final SongsRepository songsRepository;
+  Player get player {
+    if (_player == null) {
+      throw StateError(
+        'Player not initialized. Call _ensurePlayerInitialized() first.',
+      );
+    }
+    return _player!;
+  }
 
   SongsBloc({required this.songsRepository}) : super(const SongsState()) {
+    on<MediaKitInitialised>(_mediaKitInitialised);
     on<ScanSongs>(_onScanSongs);
     on<LoadSongsFromHive>(_onLoadSongsFromHive);
     on<SearchSong>(_onSearch);
@@ -64,16 +74,30 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<PlaylistShuffle>(shufflePlaylist);
     on<JumpToIndex>(_onJumpToIndex);
     add(LoadSongsFromHive());
-    _initializePlayerListeners();
     add(RecentSongs());
     add(LoadPlaylist());
     add(ScanSongs());
     add(StartDirectoryWatch(Constants.musicDir));
   }
 
+  Future<void> _mediaKitInitialised(
+    MediaKitInitialised event,
+    Emitter<SongsState> emit,
+  ) async {
+    try {
+      _player = Player();
+      _initializePlayerListeners();
+      emit(state.copyWith(isMediaKitInitializing: false));
+    } catch (e) {
+      print("Error initializing MediaKit: $e");
+    }
+  }
+
   void _initializePlayerListeners() {
+    if (_player == null) return;
+
     // Listen to playback completion
-    player.stream.completed.listen((completed) {
+    _player!.stream.completed.listen((completed) {
       if (completed) {
         logger.i("Playback completed: ${state.currentSong?.title}");
         add(const OnSongComplete());
@@ -248,7 +272,6 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   ) async {
     logger.i("Loading songs from Hive");
     emit(state.copyWith(isLoading: true, error: null));
-
     try {
       final songs = await songsRepository.getAllSongs();
 
@@ -304,6 +327,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   Future<void> _onPlaySong(PlaySong event, Emitter<SongsState> emit) async {
     try {
       logger.i("Playing song: ${event.song.title}");
+      if (state.isMediaKitInitializing) return;
 
       final media = Media(event.song.path);
       await player.open(media, play: true);
@@ -341,6 +365,7 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
       //   add(PlaySong(0));
       //   return;
       // }
+      if (state.isMediaKitInitializing) return;
 
       if (state.isPlaying) {
         await player.pause();
@@ -359,6 +384,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
   Future<void> _onPlayNext(PlayNext event, Emitter<SongsState> emit) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       if (state.currentSong == null) {
         logger.w("No current song");
         return;
@@ -592,6 +619,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       if (state.currentSong == null) {
         logger.w("No current song");
         return;
@@ -985,6 +1014,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
 
   Future<void> _addToQueue(AddToQueue event, Emitter<SongsState> emit) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       logger.i(
         "Adding to queue: ${event.songInfo.title}, playNext: ${event.playNext}",
       );
@@ -1296,6 +1327,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       logger.i("Playing playlist: ${event.playlistId}");
 
       if (state.musicMode == MusicMode.playlist &&
@@ -1377,6 +1410,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     PausePlaylistSongs event,
     Emitter<SongsState> emit,
   ) async {
+    if (state.isMediaKitInitializing) return;
+
     logger.i("Pausing playlist");
     await player.pause();
     emit(state.copyWith(isPlaying: false));
@@ -1502,6 +1537,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       logger.i("Playing favourite song: ${event.song.title}");
 
       final startIndex = state.favouriteSongs.indexWhere(
@@ -1564,6 +1601,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       logger.i("Adding playlist to queue: ${event.playlistId}");
 
       final playlistSongs = await songsRepository.getPlaylistSongs(
@@ -1699,6 +1738,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       logger.i("Song completed: ${state.currentSong?.title}");
 
       // Repeat One - replay
@@ -1736,6 +1777,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     Emitter<SongsState> emit,
   ) async {
     try {
+      if (state.isMediaKitInitializing) return;
+
       final targetIndex = event.index;
 
       logger.i("Jumping to index: $targetIndex");
@@ -1904,6 +1947,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   Future<void> close() async {
     await _dirSubscription?.cancel();
     player.dispose();
+    _player?.dispose();
+
     // Cancel all pending timers
     for (var timer in _pendingEvents.values) {
       timer.cancel();

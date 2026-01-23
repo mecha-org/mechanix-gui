@@ -362,7 +362,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 width: 6,
                                 height: scrollbarHeight,
                                 decoration: BoxDecoration(
-                                  color: context.onSurface,
+                                  color: context.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -387,13 +387,13 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: context.onSurface,
+                                color: context.surfaceContainerHighest,
                                 borderRadius: BorderRadius.circular(30),
                               ),
                               child: Text(
                                 sections[currentSection].label,
                                 style: TextStyle(
-                                  color: context.secondary,
+                                  color: context.colorScheme.onTertiaryFixedVariant,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 0,
