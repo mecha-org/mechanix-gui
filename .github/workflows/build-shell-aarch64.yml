@@ -10,6 +10,7 @@ on:
       - pre-release
     paths:
       - "shell/**"
+      - "shared/**"
       - ".github/workflows/build-shell-aarch64.yml"
 
 env:
