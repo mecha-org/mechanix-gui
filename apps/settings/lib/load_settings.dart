@@ -17,7 +17,7 @@ class ThemeSettingsService {
       'org.mechanix.desktop.settings.lockscreen.wallpaper';
 
   static const String _fixedWallpaperPath =
-      '/usr/share/backgrounds/lock-screen/wallpaper_1.png';
+      '/usr/share/backgrounds/lock-screen';
 
   final DBusClient _bus;
   StreamSubscription<DBusSignal>? _signalSubscription;
