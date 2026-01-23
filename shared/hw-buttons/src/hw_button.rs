@@ -15,6 +15,7 @@ impl HwButton {
     pub async fn poll(&mut self) -> (Key, KeyEvent) {
         loop {
             let event = self.event_stream.next_event().await.unwrap();
+            println!("hw-button: received event: {event:?}");
             match event.event_type() {
                 EventType::KEY => {
                     let key = event.code();
