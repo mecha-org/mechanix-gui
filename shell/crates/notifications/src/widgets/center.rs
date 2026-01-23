@@ -33,7 +33,6 @@ const LIST_PADDING_BOTTOM: f32 = 12.0;
 const ANIMATION_DURATION_MS: f32 = 250.0;
 const ANIMATION_FRAME_MS: u64 = 16;
 
-
 pub struct DragInfo {
     pub position: Point<Pixels>,
 }
@@ -785,6 +784,18 @@ impl Render for NotificationCenter {
 
         let threshold_px = 40.;
 
+        let opacity = if self.is_dragging || self.drag_offset.is_some() {
+            1.0 - (self.position / closed_y).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        let bg_color = if (self.is_dragging || self.drag_offset.is_some()) || self.is_visible {
+            colors.background_1000
+        } else {
+            colors.background_800
+        };
+
         div()
             .w_full()
             .h_full()
@@ -861,11 +872,8 @@ impl Render for NotificationCenter {
                             .flex_col()
                             .justify_end()
                             .items_end()
-                            .bg(if self.is_visible {
-                                colors.background_1000
-                            } else {
-                                colors.background_800
-                            })
+                            .bg(bg_color)
+                            .opacity(opacity)
                             .child(self.render_content(window, cx));
 
                         w.upper_wing_size(size(navbar_size.width, navbar_size.height));
@@ -1066,15 +1074,16 @@ impl NotificationCenter {
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
 
-                    let mut inner_wing = wing()
-                        .relative()
-                        .overflow_hidden()
-                        .w_full()
-                    .bg(if self.is_visible {
-                            colors.accent_200.with_alpha(0.2)
-                        } else {
-                            colors.accent_200.with_alpha(0.1)
-                        });
+                    let mut inner_wing =
+                        wing()
+                            .relative()
+                            .overflow_hidden()
+                            .w_full()
+                            .bg(if self.is_visible {
+                                colors.accent_200.with_alpha(0.2)
+                            } else {
+                                colors.accent_200.with_alpha(0.1)
+                            });
 
                     inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     inner_wing.upper_wing_side(WingSide::Left);
@@ -1101,15 +1110,16 @@ impl NotificationCenter {
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
 
-                    let mut inner_wing = wing()
-                        .relative()
-                        .overflow_hidden()
-                        .w_full()
-                        .bg(if self.is_visible {
-                            colors.accent_200.with_alpha(0.2)
-                        } else {
-                            colors.accent_200.with_alpha(0.1)
-                        });
+                    let mut inner_wing =
+                        wing()
+                            .relative()
+                            .overflow_hidden()
+                            .w_full()
+                            .bg(if self.is_visible {
+                                colors.accent_200.with_alpha(0.2)
+                            } else {
+                                colors.accent_200.with_alpha(0.1)
+                            });
 
                     inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     inner_wing.include_upper_wing_in_bounds(true);
@@ -1284,14 +1294,13 @@ impl NotificationCenter {
                 content = content.child(body);
 
                 let card_inner: AnyElement = if show_header {
-
-                     let mut outer_wing = wing()
+                    let mut outer_wing = wing()
                         .w_128()
                         .group("")
                         .overflow_hidden()
                         .relative()
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.6))                        
+                        .border_color(colors.accent_200.with_alpha(0.6))
                         .bg(if is_expanded {
                             colors.background_900
                         } else {
@@ -1328,7 +1337,7 @@ impl NotificationCenter {
                     inner_wing.border_width(px(1.0));
 
                     let inner = inner_wing.child(content).into_any();
-                        
+
                     outer_wing.child(inner).into_any()
                 } else {
                     div()

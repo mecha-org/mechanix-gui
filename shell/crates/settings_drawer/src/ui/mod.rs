@@ -520,6 +520,18 @@ impl Render for SettingsDrawer {
         let threshold_px = 40.;
         self.update_input_regions(self.is_visible, window, cx);
 
+        let opacity = if self.drawer_moving || self.drag_offset.is_some() {
+            1.0 - (self.position / closed_pos_f32).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+
+        let bg_color = if (self.drawer_moving || self.drag_offset.is_some()) || self.is_visible {
+            colors.background_1000
+        } else {
+            colors.background_800
+        };
+
         div()
             .w_full()
             .h_full()
@@ -596,12 +608,9 @@ impl Render for SettingsDrawer {
                             .flex_col()
                             .justify_end()
                             .items_end()
-                            .bg(if self.is_visible {
-                                colors.background_1000
-                            } else {
-                                colors.background_800
-                            })
-                            .child(self.drawer_items(window, cx));
+                            .bg(bg_color)
+                            .opacity(opacity)
+                            .child(self.drawer_items(opacity, window, cx));
 
                         w.upper_wing_size(size(navbar_size.width, navbar_size.height));
                         w.upper_wing_side(WingSide::Right);
@@ -748,6 +757,7 @@ impl SettingsDrawer {
 
     fn drawer_items(
         &mut self,
+        opacity: f32,
         window: &mut Window,
         cx: &mut Context<SettingsDrawer>,
     ) -> impl IntoElement {
@@ -757,13 +767,6 @@ impl SettingsDrawer {
         let settings = Settings::global(cx).settings_drawer.clone();
         let navbar_size = settings.navbar_size;
         let settings_drawer_size = settings.layer_shell.size;
-
-        let closed_pos = Self::calculate_closed_position(&settings);
-        let opacity = if self.drawer_moving || self.drag_offset.is_some() {
-            1.0 - (self.position / closed_pos).clamp(0.0, 1.0)
-        } else {
-            if self.is_visible { 1.0 } else { 0.0 }
-        };
 
         if matches!(
             self.animation_state,
@@ -828,6 +831,7 @@ impl SettingsDrawer {
                 }),
             )
             .opacity(opacity)
+            .bg(colors.background_1000)
             .child(
                 div()
                     .id("main_container")
@@ -836,7 +840,6 @@ impl SettingsDrawer {
                     .w_full()
                     .h_full()
                     .px_8()
-                    .bg(colors.background_1000)
                     .child(
                         // status row
                         div()
