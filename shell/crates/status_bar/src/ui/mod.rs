@@ -257,7 +257,9 @@ pub fn status_bar_components(
                 .flex()
                 .gap_2()
                 .child(img(wireless_icon_path).w(px(20.)).h(px(20.)))
-                .child(img(bluetooth_icon_path).w(px(20.)).h(px(20.)))
+                .when(bluetooth_enabled, |this_div| {
+                    this_div.child(img(bluetooth_icon_path).w(px(20.)).h(px(20.)))
+                })
                 .child(img(battery_icon_path).w(px(20.)).h(px(20.))),
         )
 }

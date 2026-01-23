@@ -5,6 +5,8 @@ use commons::input::{
 use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
 use icons::prelude::Icons;
+use mxsearch::prelude::AppInfo;
+use mxsearch::service::MxSearchService;
 use settings::prelude::*;
 use status_bar::prelude::status_bar_components;
 use std::time::Duration;
@@ -48,6 +50,12 @@ pub struct SystemUsageState {
 
 impl Global for SystemUsageState {}
 
+pub struct PinnedAppsState {
+    pub apps: Vec<AppInfo>,
+}
+
+impl Global for PinnedAppsState {}
+
 impl Homescreen {
     pub fn new(
         cx: &mut Context<Self>,
@@ -68,6 +76,8 @@ impl Homescreen {
 
         // Initialize extension state and start listening for extensions
         cx.set_global(ExtensionState::default());
+        cx.set_global(PinnedAppsState { apps: vec![] });
+
         listen_for_extensions(cx);
 
         let _system_usage_subscription = cx.observe_global::<SystemUsageState>(|_this, cx| {
@@ -114,6 +124,20 @@ impl Homescreen {
                 cx.global_mut::<SystemUsageState>().uptime = uptime;
                 cx.notify();
             });
+        })
+        .detach();
+
+        cx.spawn(async move |this, cx| match MxSearchService::new().await {
+            Ok(service) => {
+                if let Ok(app_infos) = service.search_applications("Mechanix").await {
+                    this.update(cx, |_this, cx| {
+                        cx.global_mut::<PinnedAppsState>().apps = app_infos;
+                        cx.notify();
+                    })
+                    .ok();
+                }
+            }
+            Err(_) => {}
         })
         .detach();
 

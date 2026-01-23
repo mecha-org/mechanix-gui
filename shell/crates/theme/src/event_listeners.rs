@@ -1,7 +1,7 @@
 use dispatcher::Dispatcher;
 use futures::{SinkExt, StreamExt, channel::mpsc};
 use gpui::*;
-
+use gpui::QuitMode::Default;
 use crate::{ThemeEvents, helpers::parse_oklcha_str, manager::ThemeManager, prelude::*};
 
 pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) {
@@ -21,14 +21,10 @@ pub fn listen_dispatcher(cx: &mut App, mut theme_tx: mpsc::Sender<ThemeEvents>) 
                     }
                     dispatcher::Message::SetThemeColors {
                         accent,
-                        background,
-                        foreground,
                     } => {
                         let _ = theme_tx
                             .send(ThemeEvents::SetThemeColors {
-                                accent,
-                                background,
-                                foreground,
+                                accent
                             })
                             .await;
                     }
@@ -54,15 +50,11 @@ pub fn listen_theme_channel(cx: &mut App, mut theme_rx: mpsc::Receiver<ThemeEven
             match msg {
                 ThemeEvents::SetThemeColors {
                     accent,
-                    background,
-                    foreground,
                 } => {
-                    _ = app.update(|cx| {
-                        ThemeManager::global_mut(cx).set_colors(ColorsSetting {
-                            accent_color: parse_oklcha_str(&accent).unwrap(),
-                            background_color: parse_oklcha_str(&background).unwrap(),
-                            foreground_color: parse_oklcha_str(&foreground).unwrap(),
-                        });
+                    _ = app.update(|mut cx| {
+                        let mut colors = ThemeManager::global(cx).colors.clone();
+                        colors.accent_color = parse_oklcha_str(&accent).unwrap();
+                        ThemeManager::global_mut(cx).set_colors(colors);
                         ThemeManager::apply(cx);
                         cx.refresh_windows();
                     });

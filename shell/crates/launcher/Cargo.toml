@@ -94,6 +94,16 @@ assets = [
         "usr/share/mechanix/shell/assets/icons/lockscreen/",
         "755",
     ],
+    [
+        "../../../assets/icons/homescreen/extensions/*",
+        "usr/share/mechanix/shell/assets/icons/homescreen/extensions/",
+        "755",
+    ],
+    [
+        "../../../assets/icons/homescreen/clock/*",
+        "usr/share/mechanix/shell/assets/icons/homescreen/clock/",
+        "755",
+    ],
 ]
 
 [package.metadata.generate-rpm]
@@ -136,5 +146,10 @@ assets = [
     # Lockscreen icons
     { source = "../../../assets/icons/lockscreen/*", dest = "/usr/share/mechanix/shell/assets/icons/lockscreen/", mode = "755" },
 
+    # Homescreen extensions icons
+    { source = "../../../assets/icons/homescreen/extensions/*", dest = "/usr/share/mechanix/shell/assets/icons/homescreen/extensions/", mode = "755" },
+
+    # Homescreen clock icons
+    { source = "../../../assets/icons/homescreen/clock/*", dest = "/usr/share/mechanix/shell/assets/icons/homescreen/clock/", mode = "755" },
 
 ]

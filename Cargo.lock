@@ -3114,6 +3114,8 @@ dependencies = [
  "gpui",
  "log",
  "mechanix-hw-buttons",
+ "mxconf_dbus",
+ "rusb",
  "zbus 4.4.0",
 ]
 
@@ -3224,6 +3226,7 @@ dependencies = [
  "dispatcher",
  "gpui",
  "icons",
+ "mxsearch",
  "rust-embed",
  "settings",
  "shell_state",
@@ -3945,6 +3948,18 @@ dependencies = [
  "bitflags 2.10.0",
  "libc",
  "redox_syscall 0.5.18",
+]
+
+[[package]]
+name = "libusb1-sys"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da050ade7ac4ff1ba5379af847a10a10a8e284181e060105bf8d86960ce9ce0f"
+dependencies = [
+ "cc",
+ "libc",
+ "pkg-config",
+ "vcpkg",
 ]
 
 [[package]]
@@ -5974,6 +5989,16 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "xdg",
+]
+
+[[package]]
+name = "rusb"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab9f9ff05b63a786553a4c02943b74b34a988448671001e9a27e2f0565cc05a4"
+dependencies = [
+ "libc",
+ "libusb1-sys",
 ]
 
 [[package]]
@@ -8134,6 +8159,12 @@ dependencies = [
  "sval_ref",
  "sval_serde",
 ]
+
+[[package]]
+name = "vcpkg"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "version-compare"

@@ -3,3 +3,6 @@ theme_colors = { type = "object", default = { accent = "oklch(0.6388 0.1435 64.8
 [settings.lockscreen]
 wallpaper = { type = "string", default = "/usr/share/backgrounds/lock-screen/wallpaper_1.png", description = "Lockscreen wallpaper" }
 timeout = { type = "integer", default = 10, description = "Lockscreen timeout in seconds" }
+[settings.extension]
+detected = { type = "bool", default = false, description = "Extension detection event" }
+name = { type = "string", default = "unknown", description = "Lockscreen timeout in seconds" }
