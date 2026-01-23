@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:dbus/dbus.dart';
-import 'package:logger/web.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/web.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -10,7 +10,8 @@ class ThemeSettingsService {
   static const String _busName = 'org.mechanix.MxConf';
   static const String _busPath = '/org/mechanix/MxConf';
   static const String _busInterface = 'org.mechanix.MxConf';
-  static const String _themeKey = 'org.mechanix.desktop.settings.active_theme.theme_colors';
+  static const String _themeKey =
+      'org.mechanix.desktop.settings.active_theme.theme_colors';
   static const String _schemaName = 'org.mechanix.desktop';
   static const String _schemaKey = 'settings.active_theme.theme_colors';
 
@@ -55,17 +56,15 @@ class ThemeSettingsService {
         path: DBusObjectPath(_busPath),
       );
 
-      final response = await remoteObj.callMethod(
-        _busInterface,
-        'GetSetting',
-        [const DBusString(_themeKey)],
-      );
+      final response = await remoteObj.callMethod(_busInterface, 'GetSetting', [
+        const DBusString(_themeKey),
+      ]);
 
       if (response.returnValues.isNotEmpty &&
           response.returnValues[0] is DBusDict) {
         final dict = response.returnValues[0] as DBusDict;
         final dbusValue = dict.children[const DBusString(_themeKey)];
-        
+
         if (dbusValue is DBusString) {
           return _parseThemeColors(dbusValue.value);
         }
@@ -80,32 +79,40 @@ class ThemeSettingsService {
   Map<String, String>? _parseThemeColors(String description) {
     final logger = Logger();
 
-    final accentMatch = RegExp(r'accent\s*=\s*"([^"]+)"').firstMatch(description);
-    final backgroundMatch = RegExp(r'background\s*=\s*"([^"]+)"').firstMatch(description);
-    final foregroundMatch = RegExp(r'foreground\s*=\s*"([^"]+)"').firstMatch(description);
+    final accentMatch = RegExp(
+      r'accent\s*=\s*"([^"]+)"',
+    ).firstMatch(description);
+    final backgroundMatch = RegExp(
+      r'background\s*=\s*"([^"]+)"',
+    ).firstMatch(description);
+    final foregroundMatch = RegExp(
+      r'foreground\s*=\s*"([^"]+)"',
+    ).firstMatch(description);
 
-    if (accentMatch == null || backgroundMatch == null || foregroundMatch == null) {
+    if (accentMatch == null) {
       logger.w('Failed to parse theme colors from: $description');
       return null;
     }
 
     return {
       'accent': accentMatch.group(1)!,
-      'background': backgroundMatch.group(1)!,
-      'foreground': foregroundMatch.group(1)!,
+      // 'background': backgroundMatch.group(1)!,
+      // 'foreground': foregroundMatch.group(1)!,
     };
   }
 
   /// Convert color map to MechanixThemeData
   MechanixThemeData colorsToThemeData(Map<String, String> colors) {
     final accent = colors['accent']?.toOKLCHStringToColor() ?? Colors.amber;
-    final background = colors['background']?.toOKLCHStringToColor() ?? defaultBackgroundColor;
-    final foreground = colors['foreground']?.toOKLCHStringToColor() ?? defaultForegroundColor;
+    final background =
+        colors['background']?.toOKLCHStringToColor() ?? defaultBackgroundColor;
+    final foreground =
+        colors['foreground']?.toOKLCHStringToColor() ?? defaultForegroundColor;
 
     return MechanixThemeData(
       mechanixVariant: MechanixVariant.custom(accent),
-      mechanixBackgroundVariant: MechanixVariant.custom(background),
-      mechanixForegroundVariant: MechanixVariant.custom(foreground),
+      mechanixBackgroundVariant: MechanixVariant.custom(defaultBackgroundColor),
+      mechanixForegroundVariant: MechanixVariant.custom(defaultForegroundColor),
     );
   }
 
