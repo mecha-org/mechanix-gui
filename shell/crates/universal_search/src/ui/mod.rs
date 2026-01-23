@@ -502,7 +502,7 @@ impl UniversalSearch {
         // Initialize text input
         self.text_input.update(cx, |input, _| {
             input.placeholder_color = Some(colors.accent_300.with_alpha(0.4));
-            input.placeholder = "Search here".into();
+            input.placeholder = "Search".into();
         });
 
         let text_input = self.text_input.clone();
@@ -637,17 +637,16 @@ impl UniversalSearch {
         )
         .child(
             div()
-                .h(px(SEARCH_BAR_HEIGHT))
+                .h(px(SEARCH_BAR_HEIGHT+90.))
                 .w_full()
-                .bottom(px(0.0))
+                .bottom(px(-90.0+36.0))
                 .child(
                     div()
                         .size_full()
                         .flex()
                         .flex_row()
-                        .items_center()
+                        .items_start()
                         .bg(colors.accent_300.with_alpha(0.1))
-                        .border_color(colors.background_700)
                         .border_1()
                         .py(px(6.))
                         .child(
@@ -659,8 +658,9 @@ impl UniversalSearch {
                                 .flex_row()
                                 .justify_between()
                                 .items_center()
-                                .bg(colors.background_800)
-                                .border_color(colors.accent_500)
+                        // .bg(colors.background_900)
+
+                                // .bg(colors.accent_200)
                                 .border_1()
                                 .rounded_sm()
                                 .child(
@@ -704,7 +704,8 @@ impl UniversalSearch {
                                         ),
                                 ),
                         )
-                        .child(
+                        .when(self.text_input.read(cx).content.clone().len() > 0, |search_bar| {  
+                        search_bar.child(
                             div()
                                 .w(px(40.))
                                 .h(px(40.))
@@ -723,9 +724,10 @@ impl UniversalSearch {
                                         ))
                                         .size(px(24.0))
                                         .text_color(colors.foreground_400),
-                                ),
-                        ),
-                ),
+                                )
+                            )
+    })
+                )
         )
     }
 }
