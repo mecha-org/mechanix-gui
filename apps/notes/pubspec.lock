@@ -1347,8 +1347,8 @@ packages:
     dependency: "direct main"
     description:
       path: "flutter/widgets"
-      ref: d5e8f96f3baab583d58397df42ca1f84574bbd48
-      resolved-ref: d5e8f96f3baab583d58397df42ca1f84574bbd48
+      ref: "961b254aa37fa319600c2bcebe0d42847ab8c83d"
+      resolved-ref: "961b254aa37fa319600c2bcebe0d42847ab8c83d"
       url: "https://github.com/mecha-org/mechanix.dart.git"
     source: git
     version: "0.0.1"

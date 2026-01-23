@@ -75,12 +75,8 @@ class SectionDotsWidget extends StatelessWidget {
                         isActive
                             ? context.primary
                             : isHovered
-                            ? context.surfaceContainerHigh.withValues(
-                              alpha: 0.7,
-                            )
-                            : context.surfaceContainerHigh.withValues(
-                              alpha: 0.4,
-                            ),
+                            ? context.surfaceContainerHigh
+                            : context.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(1),
                   ),
                 ),
