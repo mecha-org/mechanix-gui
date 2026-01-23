@@ -49,7 +49,7 @@ impl Default for AppDrawerIcons {
             category: PathBuf::from(format!("{}app-drawer/category.png", ICONS_BASE_PATH)),
             default_app: PathBuf::from(format!("{}app-drawer/default-app.png", ICONS_BASE_PATH)),
             delete: PathBuf::from(format!("{}app-drawer/delete.svg", ICONS_BASE_PATH)),
-            info: PathBuf::from(format!("{}app-drawer/info.png", ICONS_BASE_PATH)),
+            info: PathBuf::from(format!("{}app-drawer/info.svg", ICONS_BASE_PATH)),
             search: PathBuf::from(format!("{}app-drawer/search.svg", ICONS_BASE_PATH)),
             x: PathBuf::from(format!("{}app-drawer/x.png", ICONS_BASE_PATH)),
         }
