@@ -781,10 +781,10 @@ impl SettingsDrawer {
         ) {
             match self.animation_state {
                 ModalAnimationState::Opening => {
-                    self.animation_progress += 0.20;
+                    self.animation_progress += 0.40;
                 }
                 ModalAnimationState::Closing => {
-                    self.animation_progress -= 0.20;
+                    self.animation_progress -= 0.40;
                 }
                 _ => {}
             }
