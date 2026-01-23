@@ -93,12 +93,20 @@ impl SliderState {
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let bounds = self.bounds;
-        let inner_pos = position.x - bounds.left();
-        let new_value = self.pixels_to_value(inner_pos.into(), width);
+        let inner_pos = position.x - self.bounds.left();
+        let new_value = self
+            .pixels_to_value(inner_pos.into(), width)
+            .clamp(self.min, self.max);
 
-        self.value = new_value.clamp(self.min, self.max);
+        let previous_value = self.value;
 
+        let prev_u32 = previous_value as u32;
+        let new_u32 = new_value as u32;
+        if prev_u32 == new_u32 {
+            return;
+        }
+
+        self.value = new_value;
         cx.emit(SliderEvent::Change(self.value));
         cx.notify();
     }
@@ -153,9 +161,10 @@ impl RenderOnce for Slider {
 
         let width = self.width.unwrap_or(167.0);
         let height = self.height.unwrap_or(66.0);
-        let active_width = state.value_to_pixels(width);
-        let pattern = state.pattern;
 
+        let active_width = state.value_to_pixels(width);
+
+        let pattern = state.pattern;
         let entity_id = self.state.entity_id();
         let slider_width_copy = width;
         let slider_width_drag_copy = width;

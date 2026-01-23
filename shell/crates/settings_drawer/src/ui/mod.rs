@@ -59,13 +59,10 @@ pub struct SettingsDrawer {
     pub cell_signal: bool,
 
     pub brightness_slider_state: Entity<SliderState>,
-    pub brightness_slider_value: f32,
     pub auto_brightness: bool,
     pub dark_mode: bool,
 
     pub volume_slider_state: Entity<SliderState>,
-    pub volume_slider_value: f32,
-    pub volume_device_name: Option<String>,
     pub volume_mute: bool,
 
     pub open_modal: bool,
@@ -114,13 +111,20 @@ impl SettingsDrawer {
         let ShellState {
             volume_tx,
             brightness_tx,
+            volume,
+            default_sound_device,
+            brightness_value,
             ..
         } = ShellState::global(cx).clone();
 
-        let brightness_slider = cx.new(|_| SliderState::new());
+        let brightness_slider = cx.new(|_| {
+            SliderState::new()
+                .default_value(brightness_value)
+                .pattern(widgets::SliderPattern::Bars)
+        });
         let volume_slider = cx.new(|_| {
             SliderState::new()
-                .default_value(0.)
+                .default_value(volume)
                 .pattern(widgets::SliderPattern::Bars)
         });
 
@@ -141,16 +145,13 @@ impl SettingsDrawer {
             microphone_recording: false,
             screen_recording: false,
 
-            volume_device_name: None,
             cell_signal: false,
             brightness_slider_state: brightness_slider,
-            brightness_slider_value: 0.0,
             auto_brightness: false,
             dark_mode: false,
 
             volume_slider_state: volume_slider,
-            volume_slider_value: 0.0,
-            volume_mute: false,
+            volume_mute: default_sound_device.mute,
             open_modal: false,
             animation_progress: 0.0,
             animation_state: ModalAnimationState::None,
@@ -220,8 +221,6 @@ impl SettingsDrawer {
             brightness_slider,
             move |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = event;
-                this.brightness_slider_value = *value;
-
                 if let Some(mut tx) = brightness_tx.clone() {
                     let brightness_value = *value;
                     cx.background_executor()
@@ -236,6 +235,7 @@ impl SettingsDrawer {
                 }
 
                 let clamped_value = value.max(DEFAULT_MIN_BRIGHTNESS);
+
                 this.brightness_slider_state.update(cx, |state, _cx| {
                     state.value = clamped_value.clamp(state.min, state.max);
                 });
@@ -252,12 +252,12 @@ impl SettingsDrawer {
     ) -> Subscription {
         cx.subscribe(volume_slider, move |this, _, event: &SliderEvent, cx| {
             let SliderEvent::Change(value) = event;
-            this.volume_slider_value = *value;
+            let sound_device_name = ShellState::global(cx).clone().default_sound_device;
 
             if let Some(mut tx) = volume_tx.clone() {
-                let sink_name = this
-                    .volume_device_name
+                let sink_name = sound_device_name
                     .clone()
+                    .name
                     .unwrap_or_else(|| "default".to_string());
                 let volume = *value;
 
@@ -273,10 +273,11 @@ impl SettingsDrawer {
                     .detach();
             }
 
-            this.volume_mute = *value <= 0.0;
-            this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
+            let is_mute = *value <= 0.0;
+            let volume_value = if is_mute { 0.0 } else { *value };
+            this.volume_mute = is_mute;
             this.volume_slider_state.update(cx, |state, _cx| {
-                state.value = value.clamp(state.min, state.max);
+                state.value = volume_value.clamp(state.min, state.max);
             });
 
             cx.notify();
@@ -1276,14 +1277,14 @@ impl SettingsDrawer {
             brightness_high,
             ..
         } = Icons::global(cx).settings_drawer.clone();
-        let brightness_icon =
-            if self.brightness_slider_value >= 0.0 && self.brightness_slider_value <= 33.0 {
-                brightness_low
-            } else if self.brightness_slider_value > 33.0 && self.brightness_slider_value <= 66.0 {
-                brightness_medium
-            } else {
-                brightness_high
-            };
+        let brightness_value = ShellState::global(cx).clone().brightness_value.clone();
+        let brightness_icon = if brightness_value >= 0.0 && brightness_value <= 33.0 {
+            brightness_low
+        } else if brightness_value > 33.0 && brightness_value <= 66.0 {
+            brightness_medium
+        } else {
+            brightness_high
+        };
         div()
             .flex()
             .flex_row()
@@ -1349,12 +1350,16 @@ impl SettingsDrawer {
             ..
         } = Icons::global(cx).settings_drawer.clone();
 
-        let volume_icon = if self.volume_mute {
+        let volume_tx = ShellState::global(cx).clone().volume_tx.clone().unwrap();
+        let default_sound_device = ShellState::global(cx).clone().default_sound_device.clone();
+
+        let volume_slider_value = default_sound_device.volume;
+        let volume_icon = if self.volume_mute || volume_slider_value == 0. {
             volume_off
         } else {
-            if self.volume_slider_value >= 0.0 && self.volume_slider_value <= 33.0 {
+            if volume_slider_value >= 0.0 && volume_slider_value <= 33.0 {
                 volume_low
-            } else if self.volume_slider_value > 33.0 && self.volume_slider_value <= 66.0 {
+            } else if volume_slider_value > 33.0 && volume_slider_value <= 66.0 {
                 volume_medium
             } else {
                 volume_high
@@ -1365,9 +1370,6 @@ impl SettingsDrawer {
         } else {
             colors.accent_200
         };
-
-        let volume_tx = ShellState::global(cx).volume_tx.clone().unwrap();
-        let colors = cx.theme().colors.clone();
 
         div()
             .id("id_volume")
@@ -1395,11 +1397,10 @@ impl SettingsDrawer {
                               _window: &mut Window,
                               cx: &mut Context<Self>| {
                             let mut volume_tx = volume_tx.clone();
-
                             this.volume_mute = !this.volume_mute;
                             let is_mute = this.volume_mute;
-                            let sink_name = this
-                                .volume_device_name
+                            let sink_name = default_sound_device
+                                .name
                                 .clone()
                                 .unwrap_or_else(|| "default".to_string());
 
