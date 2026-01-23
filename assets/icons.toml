@@ -171,3 +171,8 @@ detached = "assets/icons/homescreen/extensions/detached.png"
 
 [homescreen.clock]
 dashed = "assets/icons/homescreen/clock/dashed.png"
+
+[toast]
+extension-attached = "assets/icons/toast/extension_attached.png"
+extension-detached = "assets/icons/toast/extension_detached.png"
+close = "assets/icons/toast/cross.png"

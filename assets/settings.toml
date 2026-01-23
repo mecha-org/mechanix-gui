@@ -121,3 +121,16 @@ files = "Mechanix Files"
 settings = "Mechanix Settings"
 terminal = "Alacritty"
 camera = "Mechanix Camera"
+
+[toast]
+timeout_ms = 3000
+
+[toast.layer_shell]
+layer = "overlay"
+anchor = ["top", "left", "right"]
+namespace = "mechanix.toast"
+exclusive_zone = 0.0
+size = { width = 540.0, height = 48.0 }
+
+[toast.input_regions]
+maximized = { origin = { x = 91.0, y = 0.0 }, size = { width = 358.0, height = 48.0 } }
