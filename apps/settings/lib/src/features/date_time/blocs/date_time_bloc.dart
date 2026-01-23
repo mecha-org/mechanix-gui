@@ -137,6 +137,10 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
     Emitter<DateTimeState> emit,
   ) async {
     try {
+      emit(state.copyWith(
+        autoDateTime: event.enabled,
+      ));
+
       final object = _dBusService.object!;
 
       await object.callMethod(
@@ -145,53 +149,10 @@ class DateTimeBloc extends Bloc<DateTimeEvent, DateTimeState> {
         [DBusBoolean(event.enabled), const DBusBoolean(interactiveBoolean)],
       );
 
-      emit(state.copyWith(
-        autoDateTime: event.enabled,
-      ));
-
-      final ntp = await object.getProperty(DBusService.interface, 'NTP');
-
-      final ntpEnabled = (ntp as DBusBoolean).value;
-
-      if (ntpEnabled) {
-        final ntpSynchronized =
-            await object.getProperty(DBusService.interface, 'NTPSynchronized');
-
-        final ntpSynchronizedEnabled = (ntpSynchronized as DBusBoolean).value;
-
-        if (ntpSynchronizedEnabled) {
-          add(GetDateTimeData());
-        } else {
-          _waitForNTPSynchronization(object, emit);
-        }
-      }
       logger.i("Auto Date Time set to: ${event.enabled}");
     } catch (e) {
       logger.e("Error toggling auto date time: $e");
       emit(state.copyWith(error: "Failed to toggle auto date time"));
-    }
-  }
-
-  Future<void> _waitForNTPSynchronization(
-      DBusRemoteObject object, Emitter<DateTimeState> emit) async {
-    const maxRetries = 5;
-    const retryDelay = Duration(seconds: 1);
-
-    for (var i = 0; i < maxRetries; i++) {
-      await Future.delayed(retryDelay);
-
-      try {
-        final ntpSynchronized =
-            await object.getProperty(interface, 'NTPSynchronized');
-        final ntpSynchronizedEnabled = (ntpSynchronized as DBusBoolean).value;
-
-        if (ntpSynchronizedEnabled) {
-          add(GetDateTimeData());
-          return;
-        }
-      } catch (e) {
-        logger.e('NTP synchronization error  $e');
-      }
     }
   }
 
