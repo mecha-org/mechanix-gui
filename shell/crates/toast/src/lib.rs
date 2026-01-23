@@ -15,7 +15,6 @@ pub fn run_app(cx: &mut App) {
     let settings = Settings::global(cx).toast.clone();
 
     let layer_shell = settings.layer_shell;
-    let input_region = settings.input_regions.maximized;
 
     let window = cx.open_window(
         WindowOptions {
@@ -29,17 +28,7 @@ pub fn run_app(cx: &mut App) {
             }),
             ..Default::default()
         },
-        |window, cx| {
-            // Set input region based on toast visibility
-            window.set_input_regions(Some(vec![gpui::Bounds {
-                origin: point(input_region.origin.x, input_region.origin.y),
-                size: gpui::Size {
-                    width: input_region.size.width,
-                    height: input_region.size.height,
-                },
-            }]));
-            cx.new(|cx| Toast::new(cx))
-        },
+        |_window, cx| cx.new(|cx| Toast::new(cx)),
     );
 
     if let Ok(window) = window {
