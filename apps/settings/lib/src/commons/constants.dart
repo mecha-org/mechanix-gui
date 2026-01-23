@@ -94,6 +94,16 @@ class Images {
   static const String wallpaper3 = "assets/images/wallpaper_3.jpg";
   static const String wallpaper4 = "assets/images/wallpaper_4.jpg";
   static const String wallpaper5 = "assets/images/wallpaper_5.jpg";
+  static const String wallpaperPreview1 =
+      "assets/images/wallpaper_preview_1.png";
+  static const String wallpaperPreview2 =
+      "assets/images/wallpaper_preview_2.png";
+  static const String wallpaperPreview3 =
+      "assets/images/wallpaper_preview_3.png";
+  static const String wallpaperPreview4 =
+      "assets/images/wallpaper_preview_4.png";
+  static const String wallpaperPreview5 =
+      "assets/images/wallpaper_preview_5.png";
   static const String themeAmber = "assets/images/theme_preview_amber.png";
   static const String themeBlue = 'assets/images/theme_preview_blue.png';
   static const String themeCoral = 'assets/images/theme_preview_coral.png';

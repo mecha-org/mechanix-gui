@@ -10,7 +10,12 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
   final SoundRepository soundRepository;
   final logger = Logger();
 
-  StreamSubscription? soundEventsSubscription;
+  // Separate subscriptions for each stream
+  StreamSubscription? _serverInfoSubscription;
+  StreamSubscription? _sourceSubscription;
+  StreamSubscription? _sinkSubscription;
+  StreamSubscription? _sourceRemovedSubscription;
+  StreamSubscription? _sinkRemovedSubscription;
 
   SoundBloc({required this.soundRepository})
       : super(const SoundState(
@@ -47,6 +52,7 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
 
     on<SetNotificationSoundEvent>(_setNotificationSound);
 
+    // Initialize all streams
     _initializeServerInfoStream();
     _initializeSourceStream();
     _initializeSinkStream();
@@ -56,7 +62,15 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
 
   @override
   Future<void> close() {
-    soundEventsSubscription?.cancel();
+    print("sound bloc closing...");
+    // Cancel all subscriptions
+    _serverInfoSubscription?.cancel();
+    _sourceSubscription?.cancel();
+    _sinkSubscription?.cancel();
+    _sourceRemovedSubscription?.cancel();
+    _sinkRemovedSubscription?.cancel();
+
+    soundRepository.close();
     return super.close();
   }
 
@@ -88,6 +102,9 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
       logger.i(
           "Default Output Device: ${defaultSinkObject.volume} ---> ${defaultSinkObject.description}");
 
+      add(GetInputDeviceList());
+      add(GetOutputDeviceList());
+
       emit(state.copyWith(
         defaultInputDevice: defaultSourceObject,
         defaultOutputDevice: defaultSinkObject,
@@ -104,11 +121,11 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     }
   }
 
-// This method initializes the stream for sound server events like default source/sink name change
+  // This method initializes the stream for sound server events like default source/sink name change
   Future<void> _initializeServerInfoStream() async {
     try {
       final serverStream = await soundRepository.streamSoundServerEvents();
-      soundEventsSubscription = serverStream.listen((event) {
+      _serverInfoSubscription = serverStream.listen((event) {
         logger.i("Sound event received: $event");
         if (event.defaultSourceName != state.defaultInputDevice?.name ||
             event.defaultSinkName != state.defaultOutputDevice?.name &&
@@ -117,15 +134,15 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
         }
       });
     } catch (e) {
-      logger.i("Error initializing sound stream: $e");
+      print("Error initializing sound server stream: $e");
     }
   }
 
-// This method initializes the stream for sound source events change like mute/volume change
+  // This method initializes the stream for sound source events change like mute/volume change
   Future<void> _initializeSourceStream() async {
     try {
-      final serverStream = await soundRepository.streamSoundSourceEvents();
-      soundEventsSubscription = serverStream.listen((event) {
+      final sourceStream = await soundRepository.streamSoundSourceEvents();
+      _sourceSubscription = sourceStream.listen((event) {
         logger.i("Sound SOURCE event received: $event");
         if (!isClosed) {
           // ignore: invalid_use_of_visible_for_testing_member
@@ -133,44 +150,45 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
         }
       });
     } catch (e) {
-      logger.i("Error initializing sound stream: $e");
+      print("Error initializing sound source stream: $e");
     }
   }
 
   Future<void> _initializeSinkStream() async {
     try {
-      final serverStream = await soundRepository.streamSoundSinkEvents();
-      soundEventsSubscription = serverStream.listen((event) {
-        logger.i("Sound SINK event received: $event");
+      final sinkStream = await soundRepository.streamSoundSinkEvents();
+      _sinkSubscription = sinkStream.listen((event) {
+        print("Sound SINK event received: $event");
         if (!isClosed) {
           // ignore: invalid_use_of_visible_for_testing_member
           emit(state.copyWith(defaultOutputDevice: event));
         }
       });
     } catch (e) {
-      logger.i("Error initializing sound stream: $e");
+      print("Error initializing sound sink stream: $e");
     }
   }
 
   Future<void> _initializeSinkRemoveStream() async {
     try {
-      final serverStream = await soundRepository.streamSoundSinkRemovedEvents();
-      soundEventsSubscription = serverStream.listen((event) {
+      final sinkRemovedStream =
+          await soundRepository.streamSoundSinkRemovedEvents();
+      _sinkRemovedSubscription = sinkRemovedStream.listen((event) {
         print("Sound SINK removed event received: $event");
         if (!isClosed) {
           add(UpdateAvailableDevices(index: event));
         }
       });
     } catch (e) {
-      print("Error initializing sound stream: $e");
+      print("Error initializing sound sink removed stream: $e");
     }
   }
 
   Future<void> _initializeSourceRemoveStream() async {
     try {
-      final serverStream =
+      final sourceRemovedStream =
           await soundRepository.streamSoundSourceRemovedEvents();
-      soundEventsSubscription = serverStream.listen((event) {
+      _sourceRemovedSubscription = sourceRemovedStream.listen((event) {
         print("Sound SOURCE removed event received: $event");
         if (!isClosed) {
           add(UpdateAvailableDevices(index: event, isSinkRemove: false));

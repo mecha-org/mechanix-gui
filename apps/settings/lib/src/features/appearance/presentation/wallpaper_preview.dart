@@ -25,10 +25,14 @@ class _WallpaperPreviewState extends State<WallpaperPreview> {
 
   @override
   Widget build(BuildContext context) {
-    final wallpaper = context.read<AppearanceBloc>().state.wallpaperFileName;
+    final currentWallpaper =
+        context.read<AppearanceBloc>().state.wallpaperFileName;
     final appliedVariant = context.read<AppearanceBloc>().state.appliedVariant;
     final accentImage = accentPreviewImages
         .firstWhere((accent) => accent.accent == appliedVariant);
+    final wallpaperPreview = wallpapersList
+        .firstWhere((wallpaper) => wallpaper.wallpaper == currentWallpaper)
+        .wallpaperPreview;
 
     return Scaffold(
       body: ContainerWidget(
@@ -38,8 +42,7 @@ class _WallpaperPreviewState extends State<WallpaperPreview> {
             Center(
               child: Container(
                 width: 388.39,
-                height: 440,
-                padding: EdgeInsets.all(20),
+                height: 445,
                 color: context.secondary,
                 child: Center(
                   child: SizedBox(
@@ -47,17 +50,23 @@ class _WallpaperPreviewState extends State<WallpaperPreview> {
                     height: 400,
                     child: Stack(
                       children: [
-                        Image.asset(
-                          accentImage.wallpaperPreview,
-                          width: 348,
+                        Positioned(
+                          bottom: 0,
+                          child: Image.asset(
+                            accentImage.wallpaperPreview,
+                            width: 348,
+                          ),
                         ),
-                        Container(
-                          width: 348,
-                          height: 353,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage(wallpaper),
-                              fit: BoxFit.cover,
+                        Positioned(
+                          top: 0,
+                          child: Container(
+                            width: 348,
+                            height: 350,
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage(wallpaperPreview),
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),

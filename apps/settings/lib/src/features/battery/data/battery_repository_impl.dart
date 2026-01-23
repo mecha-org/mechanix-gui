@@ -13,20 +13,31 @@ class BatteryRepositoryImpl implements BatteryRepository {
   final UPowerClient _client = UPowerClient();
 
   BatteryRepositoryImpl() {
-    _init();
+    init();
   }
 
-  Future<void> _init() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
+  @override
+  Future<void> init() async {
+    try {
+      print("before _connected - $_connected");
+      if (!_connected) {
+        await _client.connect();
+        _connected = true;
+      }
+      print("after _connected - $_connected");
+    } catch (e) {
+      print("IMPL :- battery initialize");
     }
   }
 
   Future<void> _ensureConnected() async {
-    if (!_connected) {
-      await _client.connect();
-      _connected = true;
+    try {
+      if (!_connected) {
+        await _client.connect();
+        _connected = true;
+      }
+    } catch (e) {
+      print("IMPL :- ensure battery initialize");
     }
   }
 
@@ -169,6 +180,17 @@ class BatteryRepositoryImpl implements BatteryRepository {
     } catch (e, stackTrace) {
       print('Error initializing battery stream $e, $stackTrace ');
       return null;
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    try {
+      print("impl battery bloc closing...");
+      _connected = false;
+      await _client.close();
+    } catch (e) {
+      print("close repository...");
     }
   }
 }

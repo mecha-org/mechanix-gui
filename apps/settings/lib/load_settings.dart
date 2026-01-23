@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
-import 'package:logger/web.dart';
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -130,6 +129,8 @@ class ThemeSettingsService {
       final String body =
           '{type = "object", default = { accent = "$accentString", background = "$backgroundString", foreground = "$foregroundString" }, description = "Theme color palette"}';
 
+      print("SET THEME ========>>>> $body");
+
       await remoteObj.callMethod(
         _busInterface,
         'SetSetting',
@@ -168,8 +169,6 @@ class ThemeSettingsService {
 
   /// Parse theme colors from DBus response string
   Map<String, String>? _parseThemeColors(String description) {
-    final logger = Logger();
-
     final accentMatch =
         RegExp(r'accent\s*=\s*"([^"]+)"').firstMatch(description);
     final backgroundMatch =
@@ -177,17 +176,19 @@ class ThemeSettingsService {
     final foregroundMatch =
         RegExp(r'foreground\s*=\s*"([^"]+)"').firstMatch(description);
 
-    if (accentMatch == null ||
-        backgroundMatch == null ||
-        foregroundMatch == null) {
-      logger.w('Failed to parse theme colors from: $description');
+    print("accentMatch - ${accentMatch}");
+    print("backgroundMatch - ${backgroundMatch}");
+    print("foregroundMatch - ${foregroundMatch}");
+
+    if (accentMatch == null) {
+      print('Failed to parse theme colors from: $description');
       return null;
     }
 
     return {
       'accent': accentMatch.group(1)!,
-      'background': backgroundMatch.group(1)!,
-      'foreground': foregroundMatch.group(1)!,
+      // 'background': backgroundMatch.group(1)!,
+      // 'foreground': foregroundMatch.group(1)!,
     };
   }
 
@@ -205,8 +206,8 @@ class ThemeSettingsService {
 
     return MechanixThemeData(
       mechanixVariant: MechanixVariant.custom(accent),
-      mechanixBackgroundVariant: MechanixVariant.custom(background),
-      mechanixForegroundVariant: MechanixVariant.custom(foreground),
+      mechanixBackgroundVariant: MechanixVariant.custom(defaultBackgroundColor),
+      mechanixForegroundVariant: MechanixVariant.custom(defaultForegroundColor),
     );
   }
 

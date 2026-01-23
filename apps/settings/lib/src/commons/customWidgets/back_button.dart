@@ -9,14 +9,15 @@ extension BackButtonExtension on BuildContext {
   }
 
   BottomBarButton get backButton => BottomBarButton.widget(
-          widget: IconButton(
-        onPressed: () => _onBackIcon(this),
-        icon: const IconWidget(
-          iconPath: Images.back,
-          boxWidth: 48,
-          boxHeight: 48,
-          iconWidth: 12.13,
-          iconHeight: 20.38,
-        ),
-      ));
+        widget: IconButton(
+          onPressed: () => _onBackIcon(this),
+          icon: const IconWidget(
+            iconPath: Images.back,
+            boxWidth: 48,
+            boxHeight: 48,
+            iconWidth: 12.13,
+            iconHeight: 20.38,
+          ),
+        ).padLeft(12),
+      );
 }

@@ -54,16 +54,19 @@ class _SetUpThemeState extends State<SetUpTheme> {
                   final accentImage = accentPreviewImages
                       .firstWhere((variant) => variant.accent == accent);
 
-                  return Container(
-                    key: ValueKey(accent),
-                    width: 500,
-                    height: 267,
-                    margin: const EdgeInsets.only(top: 44),
-                    child: Image.asset(
-                      accentImage.themePreview,
-                      key: ValueKey(accentImage.themePreview),
+                  return Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      key: ValueKey(accent),
                       width: 500,
                       height: 267,
+                      margin: const EdgeInsets.only(top: 44),
+                      child: Image.asset(
+                        accentImage.themePreview,
+                        key: ValueKey(accentImage.themePreview),
+                        width: 500,
+                        height: 267,
+                      ),
                     ),
                   );
                 },

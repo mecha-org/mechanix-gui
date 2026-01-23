@@ -8,7 +8,7 @@ abstract class AppearanceEvent extends Equatable {
 class AppearanceInit extends AppearanceEvent {}
 
 class SetWallpaperEvent extends AppearanceEvent {
-  final String fileName;
+  final WallpaperPreviewType fileName;
 
   SetWallpaperEvent(this.fileName);
 

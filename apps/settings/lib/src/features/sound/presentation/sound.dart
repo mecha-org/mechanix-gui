@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
@@ -9,6 +8,7 @@ import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_state.dart';
 import 'package:mechanix_settings/src/features/sound/data/types.dart';
+import 'package:mechanix_settings/src/features/sound/presentation/notification_sound.dart';
 import 'package:mechanix_settings/src/features/sound/presentation/volume.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
@@ -20,6 +20,20 @@ class Sound extends StatelessWidget {
 
   void backNavigation(BuildContext context) {
     Navigator.pop(context);
+  }
+
+  void _onNotificationSoundTap(BuildContext context) {
+    final bloc = context.read<SoundBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const NotificationSounds(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -67,8 +81,7 @@ class Sound extends StatelessWidget {
                     ),
                     SimpleListItems(
                       title: 'Notification Sound',
-                      onTap: () => Navigator.pushNamed(
-                          context, AppRoutes.notificationSound),
+                      onTap: () => _onNotificationSoundTap(context),
                       trailing: CustomTrailingText(
                               title: notificationSoundLabel(
                                   state.notificationSound))

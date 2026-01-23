@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
@@ -11,6 +10,9 @@ import 'package:mechanix_settings/src/features/date_time/blocs/date_time_bloc.da
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_event.dart';
 import 'package:mechanix_settings/src/features/date_time/blocs/date_time_state.dart';
 import 'package:mechanix_settings/src/features/date_time/models/types.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/date_settings.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/time_settings.dart';
+import 'package:mechanix_settings/src/features/date_time/presentation/time_zone_list.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
@@ -26,6 +28,45 @@ class DateTimeSettings extends StatefulWidget {
 class _DateTimeSettingsState extends State<DateTimeSettings> {
   void backNavigation(BuildContext context) {
     Navigator.pop(context);
+  }
+
+  void _onSetTimezoneTap() {
+    final bloc = context.read<DateTimeBloc>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const TimeZoneList(),
+        ),
+      ),
+    );
+  }
+
+  void _onSetTimeSettingsTap() {
+    final bloc = context.read<DateTimeBloc>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const TimeSettings(),
+        ),
+      ),
+    );
+  }
+
+  void _onSetDateSettingsTap() {
+    final bloc = context.read<DateTimeBloc>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const DateSettings(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -91,14 +132,10 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                         ),
                         SimpleListItems(
                           title: 'Time zone',
-                          onTap: () {
-                            Navigator.pushNamed(context, AppRoutes.timeZone);
-                          },
+                          onTap: _onSetTimezoneTap,
                           trailing: Row(
                             children: [
-                              CustomTrailingText(
-                                title: '${state.selectedTimezone}',
-                              ),
+                              CustomTrailingText(title: state.selectedTimezone),
                               IconWidget(
                                 iconWidth: 10,
                                 iconHeight: 17,
@@ -112,8 +149,7 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                           SimpleListItems(
                             title: 'Set Time',
                             disabled: state.autoDateTime,
-                            onTap: () => Navigator.pushNamed(
-                                context, AppRoutes.timeSettings),
+                            onTap: _onSetTimeSettingsTap,
                             trailing: Row(
                               children: [
                                 CustomTrailingText(
@@ -133,8 +169,7 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                           SimpleListItems(
                             title: 'Set Date',
                             disabled: state.autoDateTime,
-                            onTap: () => Navigator.pushNamed(
-                                context, AppRoutes.dateSettings),
+                            onTap: _onSetDateSettingsTap,
                             trailing: Row(
                               children: [
                                 CustomTrailingText(

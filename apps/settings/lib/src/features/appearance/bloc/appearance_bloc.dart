@@ -3,6 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_settings/src/features/appearance/data/appearance_repository.dart';
+import 'package:mechanix_settings/src/features/appearance/models/types.dart';
 import 'package:widgets/mechanix.dart';
 
 part 'appearance_event.dart';
@@ -58,7 +59,7 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
 
   Future<void> _onSetWallpaper(
       SetWallpaperEvent event, Emitter<AppearanceState> emit) async {
-    emit(state.copyWith(wallpaperFileName: event.fileName));
+    emit(state.copyWith(wallpaperFileName: event.fileName.wallpaper));
   }
 
   Future<void> _onSetThemeVariant(

@@ -99,13 +99,9 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             IconButton(
                               onPressed: () =>
                                   onInfoTap(state.connectedNetwork!, context),
-                              icon: Row(
-                                children: [
-                                  IconWidget(
-                                    iconPath: Images.settings,
-                                    iconColor: context.onSurface,
-                                  )
-                                ],
+                              icon: IconWidget(
+                                iconPath: Images.settings,
+                                iconColor: context.onSurface,
                               ),
                             ),
                           ],
@@ -160,6 +156,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 context.read<WirelessSettingsBloc>().add(RefreshWifiList());
               },
               iconTheme: const MechanixBottomBarIconThemeData(
+                hoverColor: Colors.redAccent,
                 buttonSize: Size(44, 44),
                 iconBoxSize: Size(28, 28),
                 iconSize: Size(21.88, 21.45),
