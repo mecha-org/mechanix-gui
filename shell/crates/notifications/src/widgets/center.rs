@@ -1875,6 +1875,7 @@ impl NotificationCenter {
                             .w(px(28.))
                             .h(px(28.)),
                     )
+                    .gap_2()
                     .child("No new notifications")
                 )                
                 .into_any()
