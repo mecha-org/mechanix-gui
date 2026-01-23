@@ -619,11 +619,11 @@ impl AppDrawer {
                                             .grid()
                                             .grid_cols(6)
                                             .gap(px(28.0))
-                                            .bg(colors.background_900)
+                                            .bg(colors.background_800)
                                             .p(px(20.0))
                                             .rounded(px(8.0))
                                             .border(px(1.0))
-                                            .border_color(colors.background_700)
+                                            .border_color(colors.background_600)
                                             .w_full()
                                             .h(px(GRID_ROW_HEIGHT))
                                             .justify_center()
@@ -935,8 +935,8 @@ impl AppDrawer {
                     .id("subwindow-modal-bg")
                     .absolute()
                     .size_full()
-                    .bg(colors.background_900)
-                    .opacity(0.6 * opacity)
+                    .bg(colors.background_1000)
+                    .opacity(0.8 * opacity)
                     .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
                         this.show_subwindow_modal = false;
                         this.subwindow = None;
@@ -1047,6 +1047,7 @@ impl Render for AppDrawer {
                         .flex()
                         .flex_col()
                         .size_full()
+                        .bg(colors.background_800)
                         .child(
                             div()
                                 .flex_1()
