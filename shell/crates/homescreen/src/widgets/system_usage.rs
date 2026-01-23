@@ -93,7 +93,7 @@ impl HomescreenWidget for SystemUsage {
                                     .font_weight(FontWeight::MEDIUM)
                                     .text_color(value_color)
                                     .line_height(relative(1.25))
-                                    .child(memory_usage),
+                                    .child(format!("{} GB", memory_usage)),
                             )
                             .child(
                                 div()

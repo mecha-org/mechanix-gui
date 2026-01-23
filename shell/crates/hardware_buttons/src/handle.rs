@@ -1,13 +1,12 @@
-use std::fmt;
-use std::time::Duration;
 use dispatcher::Message;
 use hw_buttons::{Key, KeyEvent};
-use log::info;
+use mxconf_dbus::set_setting;
 use rusb::{
-    ConfigDescriptor, DeviceDescriptor, DeviceHandle, DeviceList, EndpointDescriptor,
-    InterfaceDescriptor, Language, Result, Speed, UsbContext,
+    DeviceHandle, DeviceList
+    , Language, Result, UsbContext,
 };
-use mxconf_dbus::{get_setting, set_setting};
+use std::fmt;
+use std::time::Duration;
 
 struct UsbDevice<T: UsbContext> {
     handle: DeviceHandle<T>,
@@ -22,7 +21,6 @@ pub enum Extension {
     Gpio,
     Unknown,
 }
-
 
 impl fmt::Display for Extension {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -104,32 +102,38 @@ pub async fn build_message_for_event(event: KeyEvent) -> Option<Message> {
 
         KeyEvent::Pressed(Key::ExtensionDetection) => {
             println!("HARDWARE EXTENTION DETCTION EVENT:PRESSED");
-            set_setting("org.mechanix.desktop.settings.extension.detected", "true").await;
+            message = Some(Message::SetExtensionDetected(true));
             let detected_extension_name = match get_detected_extension_name().await {
                 Ok(extension) => extension,
-                Err(_) => {
-                    Extension::Unknown
-                }
+                Err(_) => Extension::Unknown,
             };
+            message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
+            set_setting("org.mechanix.desktop.settings.extension.detected", "true").await;
             set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
-
-
             println!("hardware_buttons: extension detection pressed");
         }
         KeyEvent::Pressing(Key::ExtensionDetection) => {
-            println!("HARDWARE EXTENTION DETCTION EVENT:PREssing");
             println!("hardware_buttons: extension detection pressing");
+            message = Some(Message::SetExtensionDetected(true));
+            let detected_extension_name = match get_detected_extension_name().await {
+                Ok(extension) => extension,
+                Err(_) => Extension::Unknown,
+            };
+            set_setting("org.mechanix.desktop.settings.extension.detected", "true").await;
+            set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
+            message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
         }
         KeyEvent::Released(Key::ExtensionDetection) => {
             println!("HARDWARE EXTENTION DETCTION EVENT:released");
-            set_setting("org.mechanix.desktop.settings.extension.detected", "false").await;
+            message = Some(Message::SetExtensionDetected(false));
             let detected_extension_name = match get_detected_extension_name().await {
                 Ok(extension) => extension,
-                Err(_) => {
-                    Extension::Unknown
-                }
+                Err(_) => Extension::Unknown,
             };
+            set_setting("org.mechanix.desktop.settings.extension.detected", "false").await;
             set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
+
+            message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
             println!("hardware_buttons: extension detection released");
         }
         KeyEvent::Unknown(Key::ExtensionDetection) => {
@@ -199,10 +203,7 @@ async fn get_detected_extension_name() -> Result<Extension> {
     Ok(Extension::Unknown)
 }
 
-pub fn extension_from_vid_pid(
-    vendor_id: u16,
-    product_id: u16,
-) -> Option<Extension> {
+pub fn extension_from_vid_pid(vendor_id: u16, product_id: u16) -> Option<Extension> {
     match (vendor_id, product_id) {
         (0xCE07, 0x0001) => Some(Extension::Keyboard),
         (0xCE07, 0x0002) => Some(Extension::Gamepad),

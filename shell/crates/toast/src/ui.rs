@@ -1,7 +1,7 @@
 use dispatcher::Dispatcher;
 use gpui::*;
 use icons::prelude::Icons;
-use settings::prelude::{Settings, ToastSettings};
+use settings::prelude::Settings;
 use std::path::PathBuf;
 use std::time::Duration;
 use theme::{ActiveFonts, ActiveTheme};
@@ -31,7 +31,7 @@ impl Toast {
         Self {
             message: None,
             icon_path: None,
-            visible: false,
+            visible: true,
             dismiss_task: None,
         }
     }
@@ -107,7 +107,7 @@ impl Toast {
 impl Render for Toast {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let show = self.visible && self.message.is_some() && self.icon_path.is_some();
-
+        println!("is visiable: {:?}, message {:?}, icon: {:?}", self.visible, self.message.is_some(), self.icon_path.is_some());
         self.update_input_regions(window, show, cx);
 
         if !show {
@@ -247,8 +247,9 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
                         .timer(Duration::from_millis(50))
                         .await;
 
+                    let ext_formatted_name = capitalize_first(&ext_name);
                     if detected {
-                        let toast_message = format!("{} was attached", ext_name);
+                        let toast_message = format!("{} was attached", ext_formatted_name);
                         let icon = icon_attached.clone();
                         let _ = cx.update(|cx| {
                             let _ = toast_entity.update(cx, |toast, cx| {
@@ -256,7 +257,7 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
                             });
                         });
                     } else {
-                        let toast_message = format!("{} was detached", ext_name);
+                        let toast_message = format!("{} was detached", ext_formatted_name);
                         let icon = icon_detached.clone();
                         let _ = cx.update(|cx| {
                             let _ = toast_entity.update(cx, |toast, cx| {
@@ -270,4 +271,17 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
         }
     })
     .detach();
+}
+
+pub fn capitalize_first(input: &str) -> String {
+    let mut chars = input.chars();
+
+    match chars.next() {
+        None => String::new(),
+        Some(first) => {
+            let first = first.to_uppercase().to_string();
+            let rest = chars.as_str().to_lowercase();
+            first + &rest
+        }
+    }
 }
