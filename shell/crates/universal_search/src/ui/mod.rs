@@ -637,9 +637,9 @@ impl UniversalSearch {
         )
         .child(
             div()
-                .h(px(SEARCH_BAR_HEIGHT+90.))
+                .h(px(SEARCH_BAR_HEIGHT+40.))
                 .w_full()
-                .bottom(px(-90.0+36.0))
+                .bottom(px(-30.0))
                 .child(
                     div()
                         .size_full()
