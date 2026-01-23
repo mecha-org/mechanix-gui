@@ -7393,6 +7393,7 @@ dependencies = [
  "dispatcher",
  "futures",
  "gpui",
+ "mxconf_dbus",
  "palette",
 ]
 
