@@ -19,7 +19,7 @@ impl From<evdev::Key> for Key {
         match value {
             // todo: replace actual keys instead of using shift keys
             evdev::Key::KEY_POWER => Key::Power,
-            evdev::Key::KEY_FN_F1 => Key::Home,
+            evdev::Key::KEY_HOME => Key::Home,
             evdev::Key::KEY_F24 => Key::ExtensionDetection,
             evdev::Key::KEY_UP => Key::VolumeUp,
             evdev::Key::KEY_DOWN => Key::VolumeDown,
