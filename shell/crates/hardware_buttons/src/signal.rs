@@ -105,7 +105,7 @@ async fn listen_on_path(label: &str, path: &str, mut tx: mpsc::Sender<KeyEvent>)
             let event = payload.event;
             info!(
                 target: "hw-buttons",
-                "received {label} signal from {path}: {event:?}"
+                "received {label} on evdev signal from {path}: {event:?}"
             );
             if tx.send(event).await.is_err() {
                 warn!("event channel closed; stopping {label} listener");

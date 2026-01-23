@@ -34,7 +34,7 @@ impl fmt::Display for Extension {
     }
 }
 pub async fn build_message_for_event(event: KeyEvent) -> Option<Message> {
-    println!("hardware_buttons: received hardware button event: {event:?}");
+    println!("hardware_buttons: received hardware button event from evdev: {event:?}");
 
     let mut message: Option<Message> = None;
 
