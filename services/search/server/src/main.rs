@@ -77,7 +77,7 @@ async fn main() -> Result<(), ServerError> {
         Err(e) => return Err(ServerError::FailedBuildConnection(e)),
     };
 
-    debug!("D-Bus connection built");
+    debug!("D-Bus connection built successfully");
 
     let mut app_search_service_opt: Option<AppSearchService> = None;
     if config.apps.enable_search {
