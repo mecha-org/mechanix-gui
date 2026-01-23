@@ -206,7 +206,7 @@ impl Homescreen {
         // );
 
         state.create_widget(
-            Time::new(colors.accent_200, colors.background_700, true),
+            Time::new(gpui::transparent_black(), colors.background_700, false),
             1,
             Bounds {
                 origin: point(0, 0),

@@ -28,6 +28,8 @@ pub struct Icons {
     pub lockscreen: LockscreenIcons,
     #[serde(default)]
     pub homescreen: HomeScreenIcons,
+    #[serde(default)]
+    pub toast: ToastIcons,
 }
 
 #[derive(Debug, Clone, Deserialize, PartialEq)]
@@ -729,6 +731,24 @@ impl Default for ClockIcons {
     fn default() -> Self {
         Self {
             dashed: PathBuf::from(format!("{}homescreen/clock/dashed.png", ICONS_BASE_PATH)),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct ToastIcons {
+    pub extension_attached: PathBuf,
+    pub extension_detached: PathBuf,
+    pub close: PathBuf,
+}
+
+impl Default for ToastIcons {
+    fn default() -> Self {
+        Self {
+            extension_attached: PathBuf::from(format!("{}toast/extension_attached.png", ICONS_BASE_PATH)),
+            extension_detached: PathBuf::from(format!("{}toast/extension_detached.png", ICONS_BASE_PATH)),
+            close: PathBuf::from(format!("{}toast/cross.png", ICONS_BASE_PATH)),
         }
     }
 }
