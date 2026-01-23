@@ -82,13 +82,6 @@ date_format = "%A, %-d %b"
 [lockscreen.input_regions]
 maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 620.0 } }
 
-[app_drawer.layer_shell]
-layer = "top"
-anchor = ["top"]
-namespace = "mechanix.app.drawer"
-exclusive_zone = 0.0
-size = { width = 540.0, height = 554.0 }
-
 [volume_slider.layer_shell]
 layer = "overlay"
 anchor = ["left"]
@@ -135,7 +128,7 @@ layer = "overlay"
 anchor = ["top", "left", "right"]
 namespace = "mechanix.toast"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 48.0 }
+size = { width = 540.0, height = 620.0 }
 
 [toast.input_regions]
 maximized = { origin = { x = 91.0, y = 0.0 }, size = { width = 358.0, height = 48.0 } }
