@@ -21,8 +21,8 @@ impl From<evdev::Key> for Key {
             evdev::Key::KEY_POWER => Key::Power,
             evdev::Key::KEY_HOME => Key::Home,
             evdev::Key::KEY_F24 => Key::ExtensionDetection,
-            evdev::Key::KEY_UP => Key::VolumeUp,
-            evdev::Key::KEY_DOWN => Key::VolumeDown,
+            evdev::Key::KEY_VOLUMEUP => Key::VolumeUp,
+            evdev::Key::KEY_VOLUMEDOWN => Key::VolumeDown,
             _ => Key::Unknown,
         }
     }
