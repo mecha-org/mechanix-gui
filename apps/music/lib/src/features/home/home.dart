@@ -45,7 +45,13 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _initialiseMediaKit();
+  }
+
+  void _initialiseMediaKit() async {
+    await Future<void>.delayed(Duration(milliseconds: 300));
     MediaKit.ensureInitialized();
+    if (mounted) context.read<SongsBloc>().add(MediaKitInitialised());
   }
 
   @override

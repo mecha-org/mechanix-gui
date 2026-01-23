@@ -66,9 +66,9 @@ class _HomeTabState extends State<HomeTab> {
         child: BlocSelector<SongsBloc, SongsState, bool>(
           selector: (state) => state.isLoading,
           builder: (context, isLoading) {
-            if (isLoading) {
-              return const HomeLoader();
-            }
+            // if (isLoading) {
+            //   return const HomeLoader();
+            // }
 
             return BlocSelector<SongsBloc, SongsState, bool>(
               selector:
@@ -80,26 +80,32 @@ class _HomeTabState extends State<HomeTab> {
                 return SingleChildScrollView(
                   controller: scrollController,
                   physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TitleWidget(
-                        title: "Music",
-                        textStyle: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.w600,
+                  child: BlocSelector<SongsBloc, SongsState, bool>(
+                    selector: (state) => state.isMediaKitInitializing,
+                    builder:
+                        (context, isMediaKitInitializing) => Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TitleWidget(
+                              title: "Music",
+                              textStyle: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ).padOnly(left: 16, top: 12),
+
+                            if (!isEmpty && !isMediaKitInitializing) ...[
+                              const RecentSong(),
+
+                              const TopPlaylists(),
+                              const TopMusic(),
+                              const SizedBox(height: 40),
+                            ] else
+                              EmptyHomeScreen(
+                                isLoading: isMediaKitInitializing,
+                              ),
+                          ],
                         ),
-                      ).padOnly(left: 16, top: 12),
-
-                      if (!isEmpty) ...[
-                        const RecentSong(),
-
-                        const TopPlaylists(),
-                        TopMusic(),
-                        const SizedBox(height: 40),
-                      ] else
-                        const EmptyHomeScreen(),
-                    ],
                   ),
                 );
               },
