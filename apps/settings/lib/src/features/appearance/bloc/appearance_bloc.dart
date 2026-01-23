@@ -2,6 +2,7 @@ import 'package:bloc/bloc.dart';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/features/appearance/data/appearance_repository.dart';
 import 'package:mechanix_settings/src/features/appearance/models/types.dart';
 import 'package:widgets/mechanix.dart';

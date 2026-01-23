@@ -89,21 +89,16 @@ class Images {
   static const String systemUpdateIcon = 'assets/images/arrows_clock_wise.png';
   static const String blogImage = 'assets/images/blog_image.png';
   static const String blockIcon = 'assets/images/block_icon.png';
-  static const String wallpaper1 = "assets/images/wallpaper_1.jpg";
-  static const String wallpaper2 = "assets/images/wallpaper_2.jpg";
-  static const String wallpaper3 = "assets/images/wallpaper_3.jpg";
-  static const String wallpaper4 = "assets/images/wallpaper_4.jpg";
-  static const String wallpaper5 = "assets/images/wallpaper_5.jpg";
-  static const String wallpaperPreview1 =
-      "assets/images/wallpaper_preview_1.png";
-  static const String wallpaperPreview2 =
-      "assets/images/wallpaper_preview_2.png";
-  static const String wallpaperPreview3 =
-      "assets/images/wallpaper_preview_3.png";
-  static const String wallpaperPreview4 =
-      "assets/images/wallpaper_preview_4.png";
-  static const String wallpaperPreview5 =
-      "assets/images/wallpaper_preview_5.png";
+  static const String wallpaper1 = "assets/images/gallery_1.jpg";
+  static const String wallpaper2 = "assets/images/gallery_2.jpg";
+  static const String wallpaper3 = "assets/images/gallery_3.jpg";
+  static const String wallpaper4 = "assets/images/gallery_4.jpg";
+  static const String wallpaper5 = "assets/images/gallery_5.jpg";
+  static const String wallpaperPreview1 = "assets/images/wallpaper_1.png";
+  static const String wallpaperPreview2 = "assets/images/wallpaper_2.png";
+  static const String wallpaperPreview3 = "assets/images/wallpaper_3.png";
+  static const String wallpaperPreview4 = "assets/images/wallpaper_4.png";
+  static const String wallpaperPreview5 = "assets/images/wallpaper_5.png";
   static const String themeAmber = "assets/images/theme_preview_amber.png";
   static const String themeBlue = 'assets/images/theme_preview_blue.png';
   static const String themeCoral = 'assets/images/theme_preview_coral.png';

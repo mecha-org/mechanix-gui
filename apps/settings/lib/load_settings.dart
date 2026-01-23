@@ -17,7 +17,8 @@ class ThemeSettingsService {
       'org.mechanix.desktop.settings.lockscreen.wallpaper';
 
   static const String _fixedWallpaperPath =
-      '/usr/share/backgrounds/lock-screen';
+      '/usr/share/backgrounds/lock-screen/';
+  static const String _appWallpaperPath = 'assets/images/';
 
   final DBusClient _bus;
   StreamSubscription<DBusSignal>? _signalSubscription;
@@ -44,7 +45,11 @@ class ThemeSettingsService {
         final dBusValue = dict.children[const DBusString(_wallpaperKey)];
 
         if (dBusValue is DBusString) {
-          return dBusValue.value.replaceAll(_fixedWallpaperPath, '');
+          final str = dBusValue.value.replaceAll(_fixedWallpaperPath, '');
+
+          final formattedStr = _appWallpaperPath + str;
+
+          return formattedStr;
         }
       }
       return null;
@@ -152,13 +157,15 @@ class ThemeSettingsService {
         path: DBusObjectPath(_busPath),
       );
 
+      final formattedFilename = filename.replaceAll(_appWallpaperPath, '');
+
       await remoteObj.callMethod(
         _busInterface,
         'SetSetting',
         [
           DBusStruct([
             const DBusString(_wallpaperKey),
-            DBusString(_fixedWallpaperPath + filename)
+            DBusString(_fixedWallpaperPath + formattedFilename)
           ])
         ],
       );

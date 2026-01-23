@@ -153,28 +153,3 @@ class _AppearanceState extends State<Appearance> {
     );
   }
 }
-
-Widget buildRoundedImage(
-    String imagePath, bool currentWallpaper, VoidCallback onTap) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: currentWallpaper ? Colors.lightBlue : Colors.grey,
-          width: 2,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.asset(
-          imagePath,
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-  );
-}
