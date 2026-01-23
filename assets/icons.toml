@@ -16,6 +16,7 @@
 "close" = "assets/icons/notifications/close.svg"
 "navbar-gray" = "assets/icons/notifications/navbar-gray.png"
 "navbar" = "assets/icons/notifications/navbar.png"
+"bell" = "assets/icons/notifications/bell.svg"
 
 [power_options]
 "down-arrow" = "assets/icons/power-options/down-arrow.svg"

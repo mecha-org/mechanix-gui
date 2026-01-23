@@ -323,7 +323,7 @@ impl RunningApps {
                                                         .child(
                                                             div()
                                                                 .rounded(px(20.0))
-                                                                .bg(colors.background_700)
+                                                                // .bg(colors.background_700)
                                                                 .flex()
                                                                 .w(w * 0.45)
                                                                 .h(h * 0.35)
