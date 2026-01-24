@@ -123,7 +123,7 @@ impl Render for Lockscreen {
 
         self.update_input_regions(window, show, cx);
 
-        let overlay_color = hsla(0.0, 0.0, 0.0, 0.75);
+        let overlay_color = hsla(0.0, 0.0, 0.0, 0.95);
         let text_color = colors.accent_200;
         let unlock_prompt_bg_color = colors.background_1000;
         let show_arrow_prompt = self.show_arrow_prompt;
