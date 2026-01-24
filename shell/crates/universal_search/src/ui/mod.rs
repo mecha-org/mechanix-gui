@@ -21,6 +21,7 @@ const ROW_SECTION_HEIGHT: f32 = 52.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
 const SEARCH_HEADER_HEIGHT: f32 = 44.;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
+const SEARCH_BAR_AREA: f32 = 86.0;
 const MIN_SEARCH_QUERY_LEN: usize = 3;
 
 impl DragInfo {
@@ -174,7 +175,7 @@ impl UniversalSearch {
         app_size: Size<Pixels>,
         content_height: Pixels,
     ) -> (Pixels, Pixels) {
-        let container_height = app_size.height - px(SEARCH_BAR_HEIGHT) - px(SEARCH_HEADER_HEIGHT);
+        let container_height = app_size.height - px(SEARCH_BAR_AREA) - px(SEARCH_HEADER_HEIGHT);
 
         if content_height <= container_height {
             return (px(0.0), px(0.0));
@@ -637,17 +638,20 @@ impl UniversalSearch {
         )
         .child(
             div()
-                .h(px(SEARCH_BAR_HEIGHT+40.))
+            .h(px(SEARCH_BAR_AREA))
+            .bottom(px(0.))
+            .bg(colors.accent_300.with_alpha(0.1))
+            .child(
+                div()
+                .h(px(SEARCH_BAR_HEIGHT))
                 .w_full()
-                .bottom(px(-30.0))
                 .child(
                     div()
                         .size_full()
                         .flex()
                         .flex_row()
                         .items_start()
-                        .bg(colors.accent_300.with_alpha(0.1))
-                        .border_1()
+                        // .bg(colors.accent_300.with_alpha(0.1))
                         .py(px(6.))
                         .child(
                             div()
@@ -728,6 +732,8 @@ impl UniversalSearch {
                             )
     })
                 )
-        )
+     
+            )
+               )
     }
 }

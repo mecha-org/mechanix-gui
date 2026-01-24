@@ -189,7 +189,7 @@ impl Default for HomescreenSettings {
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
                 namespace: "mechanix.homescreen".into(),
                 exclusive_zone: px(0.0),
-                size: Size::new(px(540.0), px(591.5)),
+                size: Size::new(px(540.0), px(620.0)),
             },
             time_format: "%H:%M".into(),
         }

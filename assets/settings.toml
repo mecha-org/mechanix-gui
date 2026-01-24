@@ -58,7 +58,7 @@ layer = "bottom"
 anchor = ["top", "left", "right", "bottom"]
 namespace = "mechanix.homescreen"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 591.5 }
+size = { width = 540.0, height = 620.0 }
 
 
 [power_options.layer_shell]
