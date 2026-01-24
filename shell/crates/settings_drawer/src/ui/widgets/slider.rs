@@ -18,7 +18,9 @@ pub struct SliderState {
     pub max: f32,
     pub value: f32,
     pub bounds: Bounds<Pixels>,
+    pub drag_bounds: Option<Bounds<Pixels>>,
     pub pattern: SliderPattern,
+    pub id: ElementId,
 }
 
 pub enum SliderEvent {
@@ -26,13 +28,15 @@ pub enum SliderEvent {
 }
 
 impl SliderState {
-    pub fn new() -> Self {
+    pub fn new(id: impl Into<ElementId>) -> Self {
         Self {
             min: 0.,
             max: 100.,
             value: 0.,
             bounds: Bounds::default(),
+            drag_bounds: None,
             pattern: SliderPattern::Dots,
+            id: id.into(),
         }
     }
 
@@ -57,7 +61,11 @@ impl SliderState {
     }
 
     pub fn set_value(&mut self, value: f32, _: &mut Window, cx: &mut Context<Self>) {
-        self.value = value.clamp(self.min, self.max);
+        let new_value = value.clamp(self.min, self.max);
+        if (self.value - new_value).abs() < f32::EPSILON {
+            return;
+        }
+        self.value = new_value;
         cx.emit(SliderEvent::Change(self.value));
         cx.notify();
     }
@@ -68,47 +76,60 @@ impl SliderState {
 
     fn value_to_pixels(&self, width: f32) -> f32 {
         if self.max == self.min || width == 0.0 {
-            return 0.0;
+            0.0
+        } else {
+            ((self.value - self.min) / (self.max - self.min)) * width
         }
-
-        let normalized = (self.value - self.min) / (self.max - self.min);
-        let pixels = normalized * width;
-        pixels
     }
 
     fn pixels_to_value(&self, pixels: f32, width: f32) -> f32 {
         if self.max == self.min || width == 0.0 {
-            return self.min;
+            self.min
+        } else {
+            let normalized = pixels.clamp(0.0, width) / width;
+            self.min + normalized * (self.max - self.min)
         }
-
-        let clamped = pixels.clamp(0.0, width);
-        let normalized = clamped / width;
-        self.min + (normalized * (self.max - self.min))
     }
 
+    fn dot_fill_ratio(active_width: f32, idx: usize, unit_size: f32) -> f32 {
+        let dot_start = idx as f32 * unit_size;
+        let dot_end = dot_start + DOT_SIZE;
+
+        if active_width <= dot_start {
+            0.0
+        } else if active_width >= dot_end {
+            1.0
+        } else {
+            ((active_width - dot_start) / DOT_SIZE).clamp(0.0, 1.0)
+        }
+    }
     fn update_value_by_position(
         &mut self,
         position: Point<Pixels>,
-        width: f32,
-        _: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let inner_pos = position.x - self.bounds.left();
-        let new_value = self
-            .pixels_to_value(inner_pos.into(), width)
-            .clamp(self.min, self.max);
+        // Use drag_bounds if actively dragging, otherwise use bounds
+        let bounds = self.drag_bounds.as_ref().unwrap_or(&self.bounds);
+        let width = bounds.size.width;
 
-        let previous_value = self.value;
-
-        let prev_u32 = previous_value as u32;
-        let new_u32 = new_value as u32;
-        if prev_u32 == new_u32 {
+        if width <= px(0.) {
             return;
-        } else {
-            self.value = new_value;
-            cx.emit(SliderEvent::Change(self.value));
-            cx.notify();
         }
+
+        let inner_x = (position.x - bounds.origin.x).clamp(px(0.), width);
+        let new_value = self.pixels_to_value(inner_x.into(), width.into());
+        self.set_value(new_value, window, cx);
+    }
+
+    fn start_drag(&mut self) {
+        // Freeze bounds at drag start
+        self.drag_bounds = Some(self.bounds);
+    }
+
+    fn end_drag(&mut self) {
+        // Clear frozen bounds
+        self.drag_bounds = None;
     }
 }
 
@@ -152,22 +173,16 @@ impl Slider {
 impl RenderOnce for Slider {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
-
-        let theme_inactive_bar_color = colors.background_600;
-        let theme_active_bar_color = colors.accent_200;
-        let theme_bg_color = colors.background_900;
+        let theme_inactive = colors.background_600;
+        let theme_active = colors.accent_200;
+        let theme_bg = colors.background_900;
 
         let state = self.state.read(cx);
-
         let width = self.width.unwrap_or(167.0);
         let height = self.height.unwrap_or(66.0);
-
         let active_width = state.value_to_pixels(width);
-
         let pattern = state.pattern;
         let entity_id = self.state.entity_id();
-        let slider_width_copy = width;
-        let slider_width_drag_copy = width;
 
         let accent_dots_column = Icons::global(cx)
             .settings_drawer
@@ -179,203 +194,152 @@ impl RenderOnce for Slider {
             .slider_gray_dot_column
             .clone();
 
+        let active_dot_path = SharedString::from(accent_dots_column.to_string_lossy().to_string());
+        let inactive_dot_path =
+            SharedString::from(slider_gray_dot_column.to_string_lossy().to_string());
+
+        let render_dot = |active: bool| {
+            svg()
+                .external_path(if active {
+                    active_dot_path.clone()
+                } else {
+                    inactive_dot_path.clone()
+                })
+                .text_color(if active {
+                    colors.accent_200
+                } else {
+                    colors.background_600
+                })
+                .w(px(DOT_SIZE))
+                .h(px(height))
+        };
+
+        let unit_size = match pattern {
+            SliderPattern::Dots => DOT_SIZE + DOT_GAP,
+            SliderPattern::Bars => BAR_SEGMENT_WIDTH + BAR_GAP_WIDTH,
+        };
+        let total_segments = (width / unit_size).floor() as usize;
+
+        let segments = (0..total_segments)
+            .map(|idx| {
+                let end_pos = (idx as f32 + 1.0) * unit_size;
+                let is_active = end_pos <= active_width;
+
+                match pattern {
+                    SliderPattern::Dots => {
+                        let dot_div = div().w(px(DOT_SIZE)).h_full().child(render_dot(is_active));
+                        let gap_div = div().w(px(DOT_GAP)).h(px(height)).bg(theme_bg);
+                        div()
+                            .flex()
+                            .flex_row()
+                            .gap_0()
+                            .children(vec![dot_div, gap_div])
+                    }
+                    SliderPattern::Bars => {
+                        let bar_div =
+                            div()
+                                .w(px(BAR_SEGMENT_WIDTH))
+                                .h(px(height))
+                                .bg(if is_active {
+                                    theme_active
+                                } else {
+                                    theme_inactive
+                                });
+                        let gap_div = div().w(px(BAR_GAP_WIDTH)).h(px(height)).bg(theme_bg);
+                        div()
+                            .flex()
+                            .flex_row()
+                            .gap_0()
+                            .children(vec![bar_div, gap_div])
+                    }
+                }
+            })
+            .collect::<Vec<_>>();
+
         div()
-            .id(self.id.clone())
+            .id(self.id)
             .w(px(width))
             .h(px(height))
             .flex()
             .pl_2()
-            .child(match pattern {
-                SliderPattern::Dots => {
-                    let unit_size = DOT_SIZE + DOT_GAP;
-                    let total_columns = (width / unit_size).floor() as usize;
-
-                    let active_dot_path =
-                        SharedString::from(accent_dots_column.to_string_lossy().to_string());
-                    let inactive_dot_path =
-                        SharedString::from(slider_gray_dot_column.to_string_lossy().to_string());
-
-                    let render_dot = |is_active: bool| {
-                        svg()
-                            .external_path(if is_active {
-                                active_dot_path.clone()
-                            } else {
-                                inactive_dot_path.clone()
-                            })
-                            .text_color(if is_active {
-                                colors.accent_200
-                            } else {
-                                colors.background_600
-                            })
-                            .w(px(DOT_SIZE))
-                            .h(px(height))
-                    };
-
-                    let dots = (0..total_columns).map(|idx| {
-                        let dot_end_pos = (idx as f32 * unit_size) + DOT_SIZE;
-                        let is_active = dot_end_pos <= active_width;
-
-                        div().w(px(DOT_SIZE)).h_full().child(render_dot(is_active))
-                    });
-
-                    div()
-                        .flex()
-                        .relative()
-                        .w_full()
-                        .h_full()
-                        .items_center()
-                        .child(
-                            div()
-                                .id("container-track")
-                                .absolute()
-                                .w_full()
-                                .h_full()
-                                .flex()
-                                .flex_row()
-                                .gap(px(DOT_GAP))
-                                .bg(theme_bg_color)
-                                .children(dots)
-                                .on_mouse_down(
-                                    MouseButton::Left,
-                                    window.listener_for(
-                                        &self.state,
-                                        move |state, e: &MouseDownEvent, window, cx| {
-                                            cx.stop_propagation();
-                                            state.update_value_by_position(
-                                                e.position,
-                                                slider_width_copy,
-                                                window,
-                                                cx,
-                                            );
-                                        },
-                                    ),
-                                )
-                                .on_drag(DragThumb(entity_id), |drag, _, _, cx| {
-                                    cx.stop_propagation();
-                                    cx.new(|_| drag.clone())
-                                })
-                                .on_drag_move(window.listener_for(
+            .child(
+                div()
+                    .flex()
+                    .relative()
+                    .w_full()
+                    .h_full()
+                    .items_center()
+                    .child(
+                        div()
+                            .id("container-track")
+                            .absolute()
+                            .w_full()
+                            .h_full()
+                            .flex()
+                            .flex_row()
+                            .gap_0()
+                            .bg(theme_bg)
+                            .children(segments)
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                window.listener_for(
                                     &self.state,
-                                    move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
-                                        let DragThumb(id) = event.drag(cx);
-                                        if *id != entity_id {
-                                            return;
-                                        }
-
+                                    move |state, e: &MouseDownEvent, window, cx| {
                                         cx.stop_propagation();
-                                        state.update_value_by_position(
-                                            event.event.position,
-                                            slider_width_drag_copy,
-                                            window,
-                                            cx,
-                                        );
+                                        state.update_value_by_position(e.position, window, cx);
                                     },
-                                ))
-                                .child({
-                                    let state = self.state.clone();
-                                    canvas(
-                                        move |bounds, _, cx| {
-                                            state.update(cx, |s, _| s.bounds = bounds);
-                                        },
-                                        |_, _, _, _| {},
-                                    )
-                                    .absolute()
-                                    .size_full()
-                                }),
-                        )
-                }
-                SliderPattern::Bars => {
-                    let unit_width = BAR_SEGMENT_WIDTH + BAR_GAP_WIDTH;
-                    let no_of_segments = (width / unit_width).floor() as usize;
-
-                    let track_segments =
-                        (0..no_of_segments).map(|idx| {
-                            let segment_end_pos = (idx as f32 * unit_width) + BAR_SEGMENT_WIDTH;
-                            let is_active = segment_end_pos <= active_width;
-
-                            div()
-                                .flex()
-                                .flex_row()
-                                .gap_0()
-                                .child(div().w(px(BAR_SEGMENT_WIDTH)).h(px(height)).bg(
-                                    if is_active {
-                                        theme_active_bar_color
-                                    } else {
-                                        theme_inactive_bar_color
-                                    },
-                                ))
-                                .child(div().w(px(BAR_GAP_WIDTH)).h(px(height)).bg(theme_bg_color))
-                        });
-
-                    div()
-                        .flex()
-                        .relative()
-                        .w_full()
-                        .h_full()
-                        .items_center()
-                        .child(
-                            div()
-                                .id("container-track")
-                                .absolute()
-                                .w_full()
-                                .h_full()
-                                .flex()
-                                .flex_row()
-                                .gap_0()
-                                .bg(theme_bg_color)
-                                .children(track_segments)
-                                .on_mouse_down(
-                                    MouseButton::Left,
-                                    window.listener_for(
-                                        &self.state,
-                                        move |state, e: &MouseDownEvent, window, cx| {
+                                ),
+                            )
+                            .on_drag(DragThumb(entity_id), {
+                                let state = self.state.clone();
+                                move |drag, _, _, cx| {
+                                    cx.stop_propagation();
+                                    state.update(cx, |s, _| s.start_drag());
+                                    cx.new(move |_| drag.clone())
+                                }
+                            })
+                            .on_drag_move(window.listener_for(
+                                &self.state,
+                                move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
+                                    match event.drag(cx) {
+                                        DragThumb(id) => {
+                                            if *id != entity_id {
+                                                return;
+                                            }
                                             cx.stop_propagation();
                                             state.update_value_by_position(
-                                                e.position,
-                                                slider_width_copy,
+                                                event.event.position,
                                                 window,
                                                 cx,
                                             );
-                                        },
-                                    ),
-                                )
-                                .on_drag(DragThumb(entity_id), |drag, _, _, cx| {
-                                    cx.stop_propagation();
-                                    cx.new(|_| drag.clone())
-                                })
-                                .on_drag_move(window.listener_for(
-                                    &self.state,
-                                    move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
-                                        match event.drag(cx) {
-                                            DragThumb(id) => {
-                                                if *id != entity_id {
-                                                    return;
-                                                }
-                                                cx.stop_propagation();
-                                                state.update_value_by_position(
-                                                    event.event.position,
-                                                    slider_width_drag_copy,
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
                                         }
-                                    },
-                                ))
-                                .child({
-                                    let state = self.state.clone();
-                                    canvas(
-                                        move |bounds, _, cx| {
-                                            state.update(cx, |s, _| s.bounds = bounds);
-                                        },
-                                        |_, _, _, _| {},
-                                    )
-                                    .absolute()
-                                    .size_full()
+                                    }
+                                },
+                            ))
+                            .on_mouse_up(
+                                MouseButton::Left,
+                                window.listener_for(&self.state, move |state, _, _, cx| {
+                                    // Clear frozen bounds when drag ends
+                                    state.end_drag();
+                                    cx.notify();
                                 }),
-                        )
-                }
-            })
+                            )
+                            .child({
+                                let state = self.state.clone();
+                                canvas(
+                                    move |bounds, _, cx| {
+                                        // Only update bounds, never drag_bounds
+                                        state.update(cx, |s, _| {
+                                            s.bounds = bounds;
+                                        });
+                                    },
+                                    |_, _, _, _| {},
+                                )
+                                .absolute()
+                                .size_full()
+                            }),
+                    ),
+            )
     }
 }
 
