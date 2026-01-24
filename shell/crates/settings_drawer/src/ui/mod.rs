@@ -262,10 +262,11 @@ impl SettingsDrawer {
                 }
 
                 // // Update UI
-                // this.brightness_slider_state.update(cx, |state, inner_cx| {
-                //     state.value = this.brightness_slider_value;
-                //     inner_cx.notify();
-                // });
+                this.brightness_slider_state.update(cx, |state, inner_cx| {
+                    // state.value = this.brightness_slider_value;
+                    state.set_value(this.brightness_slider_value, inner_cx);
+                    inner_cx.notify();
+                });
 
                 // Debounce the service call
                 if let Some(mut tx) = brightness_tx.clone() {
@@ -326,7 +327,10 @@ impl SettingsDrawer {
 
             // update UI
             this.volume_slider_state.update(cx, |state, inner_cx| {
-                state.value = this.volume_slider_value;
+                // state.value = this.volume_slider_value;
+                state.set_value(this.volume_slider_value, inner_cx);
+                this.last_volume_sent = this.volume_slider_value;
+
                 inner_cx.notify();
             });
 
@@ -443,7 +447,6 @@ impl Render for SettingsDrawer {
 
         let threshold_px = 40.;
         self.update_input_regions(self.is_visible, window, cx);
-
 
         let bg_color = if self.drag_offset.is_some() || self.is_visible {
             colors.background_1000
@@ -1413,29 +1416,7 @@ impl SettingsDrawer {
             )
     }
 
-    fn render_sound_control_div(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let colors = cx.theme().colors.clone();
-
-        div()
-            .id("id_sound")
-            .flex()
-            .items_center()
-            .justify_center()
-            .w_full()
-            .h_full()
-            .col_span(2)
-            .bg(colors.background_900)
-            .rounded(px(8.))
-            .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
-                    cx.stop_propagation();
-                })),
-            )
-            .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
-            .child(self.render_volume_slider(cx))
-    }
-
-    fn render_volume_slider(&self, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render_sound_control_div(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let SettingsDrawerIcons {
             volume_off,
@@ -1447,6 +1428,7 @@ impl SettingsDrawer {
 
         let volume_tx = ShellState::global(cx).clone().volume_tx.clone().unwrap();
         let default_sound_device = ShellState::global(cx).clone().default_sound_device.clone();
+        self.volume_slider_value = default_sound_device.volume as f32;
 
         let volume_icon = if self.volume_mute || self.volume_slider_value == 0. {
             volume_off
@@ -1466,95 +1448,117 @@ impl SettingsDrawer {
         };
 
         div()
-            .id("id_volume")
+            .id("id_sound")
             .flex()
-            .flex_row()
-            .w_full()
             .items_center()
-            .justify_start()
-            .pl_2()
-            .child(
-                div()
-                    .id("volume_icon")
-                    .bg(colors.background_900)
-                    .child(
-                        svg()
-                            .external_path(SharedString::from(
-                                volume_icon.to_string_lossy().to_string(),
-                            ))
-                            .text_color(volume_icon_color)
-                            .size(px(32.)),
-                    )
-                    .on_click(cx.listener(
-                        move |this: &mut SettingsDrawer,
-                              _event: &ClickEvent,
-                              window: &mut Window,
-                              cx: &mut Context<Self>| {
-                            let mut volume_tx = volume_tx.clone();
-                            this.volume_mute = !this.volume_mute;
-                            let is_mute = this.volume_mute;
-                            let sink_name = default_sound_device
-                                .name
-                                .clone()
-                                .unwrap_or_else(|| "default".to_string());
-
-                            if is_mute {
-                                // Muting - set slider to 0 but remember actual volume
-                                cx.background_executor()
-                                    .spawn(async move {
-                                        let _ = volume_tx
-                                            .send(VolumeMessage::MuteSink {
-                                                name: sink_name.clone(),
-                                            })
-                                            .await;
-                                    })
-                                    .detach();
-
-                                // Update slider to show 0
-                                this.volume_slider_state.update(cx, |state, inner_cx| {
-                                    state.set_value(0.0, window, inner_cx);
-                                });
-                                this.volume_slider_value = 0.0;
-                            } else {
-                                // Unmuting - restore previous volume
-                                cx.background_executor()
-                                    .spawn(async move {
-                                        let _ = volume_tx
-                                            .send(VolumeMessage::UnmuteSink {
-                                                name: sink_name.clone(),
-                                            })
-                                            .await;
-                                    })
-                                    .detach();
-
-                                // Restore to previous volume (or default)
-                                let restore_volume = if this.actual_volume > 0.0 {
-                                    this.actual_volume
-                                } else if this.last_volume_sent > 0.0 {
-                                    this.last_volume_sent
-                                } else {
-                                    default_sound_device.volume as f32
-                                };
-
-                                // Update slider state to restore volume
-                                this.volume_slider_state.update(cx, |state, inner_cx| {
-                                    state.set_value(restore_volume, window, inner_cx);
-                                });
-                                this.volume_slider_value = restore_volume;
-                                this.actual_volume = restore_volume;
-                            }
-
-                            cx.notify();
-                        },
-                    )),
+            .justify_center()
+            .w_full()
+            .h_full()
+            .col_span(2)
+            .bg(colors.background_900)
+            .rounded(px(8.))
+            .on_click(
+                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                    cx.stop_propagation();
+                })),
             )
+            .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
+            // .child(self.render_volume_slider(cx))
             .child(
                 div()
+                    .id("id_volume")
                     .flex()
-                    .justify_center()
-                    .items_end()
-                    .w(px(167.0))
-                    .child(Slider::new("volume-slider", &self.volume_slider_state).height(66.0)),
+                    .flex_row()
+                    .w_full()
+                    .items_center()
+                    .justify_start()
+                    .pl_2()
+                    .child(
+                        div()
+                            .id("volume_icon")
+                            .bg(colors.background_900)
+                            .child(
+                                svg()
+                                    .external_path(SharedString::from(
+                                        volume_icon.to_string_lossy().to_string(),
+                                    ))
+                                    .text_color(volume_icon_color)
+                                    .size(px(32.)),
+                            )
+                            .on_click(cx.listener(
+                                move |this: &mut SettingsDrawer,
+                                      _event: &ClickEvent,
+                                      window: &mut Window,
+                                      cx: &mut Context<Self>| {
+                                    let mut volume_tx = volume_tx.clone();
+                                    this.volume_mute = !this.volume_mute;
+                                    let is_mute = this.volume_mute;
+                                    let sink_name = default_sound_device
+                                        .name
+                                        .clone()
+                                        .unwrap_or_else(|| "default".to_string());
+
+                                    if is_mute {
+                                        // Muting - set slider to 0 but remember actual volume
+                                        cx.background_executor()
+                                            .spawn(async move {
+                                                let _ = volume_tx
+                                                    .send(VolumeMessage::MuteSink {
+                                                        name: sink_name.clone(),
+                                                    })
+                                                    .await;
+                                            })
+                                            .detach();
+
+                                        // Update slider to show 0
+                                        this.volume_slider_state.update(cx, |state, inner_cx| {
+                                            state.set_value(0.0, inner_cx);
+                                        });
+                                        this.volume_slider_value = 0.0;
+                                    } else {
+                                        // Unmuting - restore previous volume
+                                        cx.background_executor()
+                                            .spawn(async move {
+                                                let _ = volume_tx
+                                                    .send(VolumeMessage::UnmuteSink {
+                                                        name: sink_name.clone(),
+                                                    })
+                                                    .await;
+                                            })
+                                            .detach();
+
+                                        // Restore to previous volume (or default)
+                                        let restore_volume = if this.actual_volume > 0.0 {
+                                            this.actual_volume
+                                        } else if this.last_volume_sent > 0.0 {
+                                            this.last_volume_sent
+                                        } else {
+                                            default_sound_device.volume as f32
+                                        };
+
+                                        // Update slider state to restore volume
+                                        this.volume_slider_state.update(cx, |state, inner_cx| {
+                                            state.set_value(restore_volume, inner_cx);
+                                        });
+                                        this.volume_slider_value = restore_volume;
+                                        this.actual_volume = restore_volume;
+                                    }
+
+                                    cx.notify();
+                                },
+                            )),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .justify_center()
+                            .items_end()
+                            .w(px(167.0))
+                            .child(
+                                Slider::new("volume-slider", &self.volume_slider_state)
+                                    .height(66.0),
+                            ),
+                    ),
             )
     }
 }

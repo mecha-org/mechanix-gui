@@ -60,7 +60,7 @@ impl SliderState {
         self
     }
 
-    pub fn set_value(&mut self, value: f32, _: &mut Window, cx: &mut Context<Self>) {
+    pub fn set_value(&mut self, value: f32, cx: &mut Context<Self>) {
         let new_value = value.clamp(self.min, self.max);
 
         if (self.value - new_value).abs() < f32::EPSILON {
@@ -98,7 +98,7 @@ impl SliderState {
     fn update_value_by_position(
         &mut self,
         position: Point<Pixels>,
-        window: &mut Window,
+        _: &mut Window,
         cx: &mut Context<Self>,
     ) {
         let bounds = self.drag_bounds.as_ref().unwrap_or(&self.bounds);
@@ -110,7 +110,7 @@ impl SliderState {
 
         let inner_x = (position.x - bounds.origin.x).clamp(px(0.), track_width);
         let new_value = self.pixels_to_value(inner_x.into(), track_width.into());
-        self.set_value(new_value, window, cx);
+        self.set_value(new_value, cx);
     }
 
     fn start_drag(&mut self) {
@@ -282,7 +282,7 @@ impl Slider {
                         &self.state,
                         move |state, _event: &DragMoveEvent<DragThumb>, _window, cx| {
                             cx.stop_propagation();
-                            
+
                             state.end_drag();
                             cx.notify();
                         },
