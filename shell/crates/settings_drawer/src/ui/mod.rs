@@ -64,12 +64,18 @@ pub struct SettingsDrawer {
 
     pub brightness_slider_state: Entity<SliderState>,
     pub brightness_slider_value: f32,
+    brightness_debounce_task: Option<Task<()>>,
+    last_brightness_sent: f32,
+
     pub auto_brightness: bool,
     pub dark_mode: bool,
 
     pub volume_slider_state: Entity<SliderState>,
     pub volume_slider_value: f32,
     pub volume_mute: bool,
+    pub actual_volume: f32,
+    last_volume_sent: f32,
+    volume_debounce_task: Option<Task<()>>,
 
     pub open_modal: bool,
     pub animation_progress: f32,
@@ -84,11 +90,6 @@ pub struct SettingsDrawer {
     pub current_modal: ModalKind,
 
     _subscriptions: Vec<Subscription>,
-    brightness_debounce_task: Option<Task<()>>,
-    volume_debounce_task: Option<Task<()>>,
-
-    last_brightness_sent: f32,
-    last_volume_sent: f32,
 
     pub position: f32,
     drag_offset: Option<f32>,
@@ -125,7 +126,6 @@ impl SettingsDrawer {
             brightness_tx,
             volume,
             default_sound_device,
-            brightness_value,
             ..
         } = ShellState::global(cx).clone();
 
@@ -171,6 +171,7 @@ impl SettingsDrawer {
             volume_slider_state: volume_slider,
             volume_slider_value: volume as f32,
             volume_mute: default_sound_device.mute,
+            actual_volume: 0.0,
             open_modal: false,
             animation_progress: 0.0,
             animation_state: ModalAnimationState::None,
@@ -259,15 +260,12 @@ impl SettingsDrawer {
                 if brightness_value as u32 == last_sent as u32 {
                     return;
                 }
-                // // // Update UI immediately for responsiveness
-                // this.brightness_slider_state.update(cx, |state, _cx| {
-                //     state.value = this.brightness_slider_value;
-                // });
 
-                println!(
-                    "-----> SUBS Brightness value: {}",
-                    this.brightness_slider_value
-                );
+                // // Update UI
+                // this.brightness_slider_state.update(cx, |state, inner_cx| {
+                //     state.value = this.brightness_slider_value;
+                //     inner_cx.notify();
+                // });
 
                 // Debounce the service call
                 if let Some(mut tx) = brightness_tx.clone() {
@@ -306,16 +304,31 @@ impl SettingsDrawer {
     ) -> Subscription {
         cx.subscribe(volume_slider, move |this, _, event: &SliderEvent, cx| {
             let SliderEvent::Change(value) = event;
-            this.volume_slider_value = *value;
 
-            // Update UI immediately for responsiveness
-            this.volume_mute = *value <= 0.0;
-            this.volume_slider_value = if this.volume_mute { 0.0 } else { *value };
+            // If currently muted and user is dragging, unmute first
+            if this.volume_mute && *value > 0.0 {
+                this.volume_mute = false;
+            }
+
+            // Update the actual volume - this is what the slider represents
+            this.actual_volume = *value;
+            this.volume_slider_value = *value;
 
             // Cancel previous debounce task if it exists
             if let Some(task) = this.volume_debounce_task.take() {
                 drop(task);
             }
+
+            // // Avoid sending duplicate values
+            if *value as u32 == this.last_volume_sent as u32 {
+                return;
+            }
+
+            // update UI
+            this.volume_slider_state.update(cx, |state, inner_cx| {
+                state.value = this.volume_slider_value;
+                inner_cx.notify();
+            });
 
             let sink_name = ShellState::global(cx)
                 .clone()
@@ -323,40 +336,32 @@ impl SettingsDrawer {
                 .name
                 .unwrap_or_else(|| "default".to_string());
 
-            if this.volume_slider_value as u32 == this.last_volume_sent as u32 {
-                return;
-            }
-
-            println!("1. SUBS volume subs ---- {:?}  ", this.volume_slider_value);
-
-            // this.volume_slider_state.update(cx, |state, _cx| {
-            //     state.value = this.volume_slider_value;
-            // });
-
             // Debounce the service call
             if let Some(mut tx) = volume_tx.clone() {
                 let volume = *value;
 
-                let task = cx.spawn(async move |this, cx| {
-                    // Wait for debounce delay
-                    cx.background_executor()
-                        .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
-                        .await;
+                let task = cx.spawn(
+                    async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
+                        // Wait for debounce delay
+                        cx.background_executor()
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
+                            .await;
 
-                    // Send the volume change message
-                    let _ = tx
-                        .send(VolumeMessage::VolumeChanged {
-                            name: sink_name,
-                            value: volume,
+                        // Send the volume change message
+                        let _ = tx
+                            .send(VolumeMessage::VolumeChanged {
+                                name: sink_name,
+                                value: volume,
+                            })
+                            .await;
+
+                        // Update last sent value
+                        this.update(cx, |this, _| {
+                            this.last_volume_sent = volume;
                         })
-                        .await;
-
-                    // Update last sent value
-                    this.update(cx, |this, _| {
-                        this.last_volume_sent = volume;
-                    })
-                    .ok();
-                });
+                        .ok();
+                    },
+                );
 
                 this.volume_debounce_task = Some(task);
             }
@@ -1446,7 +1451,7 @@ impl SettingsDrawer {
                 volume_high
             }
         };
-        let volume_icon_color = if self.volume_mute {
+        let volume_icon_color = if self.volume_mute || self.volume_slider_value == 0. {
             colors.foreground_0
         } else {
             colors.accent_200
@@ -1475,7 +1480,7 @@ impl SettingsDrawer {
                     .on_click(cx.listener(
                         move |this: &mut SettingsDrawer,
                               _event: &ClickEvent,
-                              _window: &mut Window,
+                              window: &mut Window,
                               cx: &mut Context<Self>| {
                             let mut volume_tx = volume_tx.clone();
                             this.volume_mute = !this.volume_mute;
@@ -1486,6 +1491,7 @@ impl SettingsDrawer {
                                 .unwrap_or_else(|| "default".to_string());
 
                             if is_mute {
+                                // Muting - set slider to 0 but remember actual volume
                                 cx.background_executor()
                                     .spawn(async move {
                                         let _ = volume_tx
@@ -1495,13 +1501,14 @@ impl SettingsDrawer {
                                             .await;
                                     })
                                     .detach();
-                                this.last_volume_sent = this.volume_slider_value;
-                                this.volume_slider_value = 0.0;
-                                this.volume_slider_state.update(cx, |state, _cx| {
-                                    state.value = 0.0;
+
+                                // Update slider to show 0
+                                this.volume_slider_state.update(cx, |state, inner_cx| {
+                                    state.set_value(0.0, window, inner_cx);
                                 });
+                                this.volume_slider_value = 0.0;
                             } else {
-                                println!("SETTING --- unmute --- {:?}", this.last_volume_sent);
+                                // Unmuting - restore previous volume
                                 cx.background_executor()
                                     .spawn(async move {
                                         let _ = volume_tx
@@ -1511,19 +1518,25 @@ impl SettingsDrawer {
                                             .await;
                                     })
                                     .detach();
-                                let volume_value = default_sound_device.volume as f32;
-                                this.volume_slider_value = if volume_value != 0. {
-                                    volume_value
-                                } else if volume_value != this.last_volume_sent {
+
+                                // Restore to previous volume (or default)
+                                let restore_volume = if this.actual_volume > 0.0 {
+                                    this.actual_volume
+                                } else if this.last_volume_sent > 0.0 {
                                     this.last_volume_sent
                                 } else {
-                                    this.last_volume_sent
+                                    default_sound_device.volume as f32
                                 };
-                                this.volume_slider_state.update(cx, |state, _cx| {
-                                    state.value =
-                                        this.volume_slider_value.clamp(state.min, state.max);
+
+                                // Update slider state to restore volume
+                                this.volume_slider_state.update(cx, |state, inner_cx| {
+                                    state.set_value(restore_volume, window, inner_cx);
                                 });
+                                this.volume_slider_value = restore_volume;
+                                this.actual_volume = restore_volume;
                             }
+
+                            cx.notify();
                         },
                     )),
             )
