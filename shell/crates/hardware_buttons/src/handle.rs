@@ -205,9 +205,9 @@ async fn get_detected_extension_name() -> Result<Extension> {
 
 pub fn extension_from_vid_pid(vendor_id: u16, product_id: u16) -> Option<Extension> {
     match (vendor_id, product_id) {
-        (0xCE07, 0x0001) => Some(Extension::Keyboard),
-        (0xCE07, 0x0002) => Some(Extension::Gamepad),
-        (0xCE07, 0x0003) => Some(Extension::Gpio),
-        _ => Some(Extension::Gpio),
+        (0xce07, 0x0001) => Some(Extension::Keyboard),
+        (0xce07, 0x0002) => Some(Extension::Gamepad),
+        (0xce07, 0x0003) => Some(Extension::Gpio),
+        _ => None, // ← IMPORTANT
     }
 }
