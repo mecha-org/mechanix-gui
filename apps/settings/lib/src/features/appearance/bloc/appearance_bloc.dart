@@ -39,12 +39,15 @@ class AppearanceBloc extends Bloc<AppearanceEvent, AppearanceState> {
 
       final wallpaper = setting.currentWallPaper ?? '';
 
-      final appliedVariant = MechanixVariant.getAllVariants()
-          .firstWhereOrNull((variant) => variant.color == accent);
+      final appliedVariant = MechanixVariant.getAllVariants().firstWhereOrNull(
+          (variant) =>
+              variant.color.r == accent?.r &&
+              variant.color.g == accent?.g &&
+              variant.color.b == accent?.b);
 
       final appliedWallpaper = wallpapersList
-          .firstWhere((w) => w.wallpaperPreview == wallpaper)
-          .wallpaper;
+          .firstWhereOrNull((w) => w.wallpaperPreview == wallpaper)
+          ?.wallpaper;
 
       if (appliedVariant != null) {
         emit(state.copyWith(
