@@ -102,30 +102,30 @@ pub async fn build_message_for_event(event: KeyEvent) -> Option<Message> {
 
         KeyEvent::Pressed(Key::ExtensionDetection) => {
             println!("HARDWARE EXTENTION DETCTION EVENT:PRESSED");
-            message = Some(Message::SetExtensionDetected(true));
+            // message = Some(Message::SetExtensionDetected(true));
             let detected_extension_name = match get_detected_extension_name().await {
                 Ok(extension) => extension,
                 Err(_) => Extension::Unknown,
             };
-            message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
+            // message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
             set_setting("org.mechanix.desktop.settings.extension.detected", "true").await;
             set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
             println!("hardware_buttons: extension detection pressed");
         }
         KeyEvent::Pressing(Key::ExtensionDetection) => {
             println!("hardware_buttons: extension detection pressing");
-            message = Some(Message::SetExtensionDetected(true));
+            // message = Some(Message::SetExtensionDetected(true));
             let detected_extension_name = match get_detected_extension_name().await {
                 Ok(extension) => extension,
                 Err(_) => Extension::Unknown,
             };
             set_setting("org.mechanix.desktop.settings.extension.detected", "true").await;
             set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
-            message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
+            // message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
         }
         KeyEvent::Released(Key::ExtensionDetection) => {
             println!("HARDWARE EXTENTION DETCTION EVENT:released");
-            message = Some(Message::SetExtensionDetected(false));
+            // message = Some(Message::SetExtensionDetected(false));
             let detected_extension_name = match get_detected_extension_name().await {
                 Ok(extension) => extension,
                 Err(_) => Extension::Unknown,
@@ -133,7 +133,7 @@ pub async fn build_message_for_event(event: KeyEvent) -> Option<Message> {
             set_setting("org.mechanix.desktop.settings.extension.detected", "false").await;
             set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
 
-            message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
+            // message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
             println!("hardware_buttons: extension detection released");
         }
         KeyEvent::Unknown(Key::ExtensionDetection) => {
