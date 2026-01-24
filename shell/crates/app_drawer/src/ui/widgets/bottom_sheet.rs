@@ -63,7 +63,7 @@ impl AppDrawer {
                     .child(
                         div()
                             .id("app-icon")
-                            .bg(Theme::global(cx).colors.background_800)
+                            .bg(Theme::global(cx).colors.background_700)
                             .flex()
                             .items_center()
                             .justify_center()
