@@ -53,28 +53,6 @@ pub fn run_app(cx: &mut App) {
 
             cx.new(|cx| {
                 cx.observe_global::<ShellState>(|this: &mut SettingsDrawer, cx| {
-                    let ShellState {
-                        default_sound_device,
-                        brightness_value,
-                        ..
-                    } = ShellState::global(cx).clone();
-
-                    let sound_device = Some(default_sound_device).clone().unwrap();
-                    this.volume_mute = sound_device.mute;
-                    let volume_slider_value = if this.volume_mute {
-                        0.0
-                    } else {
-                        sound_device.volume as f32
-                    };
-                    this.volume_slider_state.update(cx, |state, _cx| {
-                        state.value = volume_slider_value.clamp(state.min, state.max);
-                    });
-
-                    this.brightness_slider_state.update(cx, |state, _cx| {
-                        state.value = brightness_value.clone().clamp(state.min, state.max);
-                    });
-
-                    cx.notify();
                 })
                 .detach();
 

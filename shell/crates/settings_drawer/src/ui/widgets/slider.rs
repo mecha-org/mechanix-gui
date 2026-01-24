@@ -18,7 +18,9 @@ pub struct SliderState {
     pub max: f32,
     pub value: f32,
     pub bounds: Bounds<Pixels>,
+    pub drag_bounds: Option<Bounds<Pixels>>,
     pub pattern: SliderPattern,
+    pub id: ElementId,
 }
 
 pub enum SliderEvent {
@@ -26,13 +28,15 @@ pub enum SliderEvent {
 }
 
 impl SliderState {
-    pub fn new() -> Self {
+    pub fn new(id: impl Into<ElementId>) -> Self {
         Self {
             min: 0.,
             max: 100.,
             value: 0.,
             bounds: Bounds::default(),
+            drag_bounds: None,
             pattern: SliderPattern::Dots,
+            id: id.into(),
         }
     }
 
@@ -56,8 +60,14 @@ impl SliderState {
         self
     }
 
-    pub fn set_value(&mut self, value: f32, _: &mut Window, cx: &mut Context<Self>) {
-        self.value = value.clamp(self.min, self.max);
+    pub fn set_value(&mut self, value: f32, cx: &mut Context<Self>) {
+        let new_value = value.clamp(self.min, self.max);
+
+        if (self.value - new_value).abs() < f32::EPSILON {
+            return;
+        }
+
+        self.value = new_value;
         cx.emit(SliderEvent::Change(self.value));
         cx.notify();
     }
@@ -66,49 +76,49 @@ impl SliderState {
         self.value
     }
 
-    fn value_to_pixels(&self, width: f32) -> f32 {
-        if self.max == self.min || width == 0.0 {
-            return 0.0;
+    fn value_to_pixels(&self, track_width: f32) -> f32 {
+        if track_width <= 0.0 {
+            0.0
+        } else {
+            // value is 0-100, convert to pixels
+            (self.value / 100.0) * track_width
         }
-
-        let normalized = (self.value - self.min) / (self.max - self.min);
-        let pixels = normalized * width;
-        pixels
     }
 
-    fn pixels_to_value(&self, pixels: f32, width: f32) -> f32 {
-        if self.max == self.min || width == 0.0 {
-            return self.min;
+    /// Converts a pixel position to a percentage value (0-100)
+    fn pixels_to_value(&self, pixels: f32, track_width: f32) -> f32 {
+        if track_width <= 0.0 {
+            self.min
+        } else {
+            (pixels / track_width) * 100.0
         }
-
-        let clamped = pixels.clamp(0.0, width);
-        let normalized = clamped / width;
-        self.min + (normalized * (self.max - self.min))
     }
 
+    /// Updates the slider value based on mouse position
     fn update_value_by_position(
         &mut self,
         position: Point<Pixels>,
-        width: f32,
         _: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        let inner_pos = position.x - self.bounds.left();
-        let new_value = self
-            .pixels_to_value(inner_pos.into(), width)
-            .clamp(self.min, self.max);
+        let bounds = self.drag_bounds.as_ref().unwrap_or(&self.bounds);
+        let track_width = bounds.size.width;
 
-        let previous_value = self.value;
-
-        let prev_u32 = previous_value as u32;
-        let new_u32 = new_value as u32;
-        if prev_u32 == new_u32 {
+        if track_width <= px(0.) {
             return;
-        } else {
-            self.value = new_value;
-            cx.emit(SliderEvent::Change(self.value));
-            cx.notify();
         }
+
+        let inner_x = (position.x - bounds.origin.x).clamp(px(0.), track_width);
+        let new_value = self.pixels_to_value(inner_x.into(), track_width.into());
+        self.set_value(new_value, cx);
+    }
+
+    fn start_drag(&mut self) {
+        self.drag_bounds = Some(self.bounds);
+    }
+
+    fn end_drag(&mut self) {
+        self.drag_bounds = None;
     }
 }
 
@@ -147,37 +157,303 @@ impl Slider {
         self.height = Some(height);
         self
     }
+    fn render_dots_pattern(
+        &self,
+        track_width: f32,
+        height: f32,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Div {
+        let colors = &Theme::global(cx).colors;
+        let icons = Icons::global(cx);
+        let state = self.state.read(cx);
+
+        let unit_size = DOT_SIZE + DOT_GAP;
+        let total_columns = (track_width / unit_size).floor() as usize;
+
+        let fill_width = state.value_to_pixels(track_width);
+
+        let inactive_dot_path = SharedString::from(
+            icons
+                .settings_drawer
+                .slider_gray_dot_column
+                .to_string_lossy()
+                .to_string(),
+        );
+        let active_dot_path = SharedString::from(
+            icons
+                .settings_drawer
+                .slider_accent_dots_column
+                .to_string_lossy()
+                .to_string(),
+        );
+
+        let entity_id = self.state.entity_id();
+
+        let inactive_dots = (0..total_columns).map(|_idx| {
+            div().w(px(DOT_SIZE)).h_full().child(
+                svg()
+                    .external_path(inactive_dot_path.clone())
+                    .text_color(colors.background_600)
+                    .w(px(DOT_SIZE))
+                    .h(px(height)),
+            )
+        });
+
+        let active_dots = (0..total_columns).map(|_idx| {
+            div().w(px(DOT_SIZE)).h_full().child(
+                svg()
+                    .external_path(active_dot_path.clone())
+                    .text_color(colors.accent_200)
+                    .w(px(DOT_SIZE))
+                    .h(px(height)),
+            )
+        });
+
+        div()
+            .flex()
+            .relative()
+            .w_full()
+            .h_full()
+            .items_center()
+            .child(
+                // Background track with inactive dots
+                div()
+                    .id("inactive-track")
+                    .absolute()
+                    .w_full()
+                    .h_full()
+                    .flex()
+                    .flex_row()
+                    .gap(px(DOT_GAP))
+                    .bg(colors.background_900)
+                    .children(inactive_dots),
+            )
+            .child(
+                // Active overlay with clipped active dots
+                div()
+                    .id("active-overlay")
+                    .absolute()
+                    .w(px(fill_width))
+                    .h_full()
+                    .flex()
+                    .flex_row()
+                    .gap(px(DOT_GAP))
+                    .overflow_hidden()
+                    .children(active_dots),
+            )
+            .child(
+                // Interactive layer for mouse events
+                div()
+                    .id("interactive-layer")
+                    .absolute()
+                    .w_full()
+                    .h_full()
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        window.listener_for(
+                            &self.state,
+                            move |state, e: &MouseDownEvent, window, cx| {
+                                cx.stop_propagation();
+                                state.update_value_by_position(e.position, window, cx);
+                            },
+                        ),
+                    )
+                    .on_drag(DragThumb(entity_id), {
+                        let state = self.state.clone();
+                        move |drag, _, _, cx| {
+                            cx.stop_propagation();
+                            state.update(cx, |s, _| s.start_drag());
+                            cx.new(move |_| drag.clone())
+                        }
+                    })
+                    .on_drag_move(window.listener_for(
+                        &self.state,
+                        move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
+                            let DragThumb(id) = event.drag(cx);
+                            if *id != entity_id {
+                                return;
+                            }
+                            cx.stop_propagation();
+                            state.update_value_by_position(event.event.position, window, cx);
+                        },
+                    ))
+                    .on_drop(window.listener_for(
+                        &self.state,
+                        move |state, _event: &DragMoveEvent<DragThumb>, _window, cx| {
+                            cx.stop_propagation();
+
+                            state.end_drag();
+                            cx.notify();
+                        },
+                    ))
+                    .child({
+                        let state = self.state.clone();
+                        canvas(
+                            move |bounds, _, cx| {
+                                state.update(cx, |s, _| s.bounds = bounds);
+                            },
+                            |_, _, _, _| {},
+                        )
+                        .absolute()
+                        .size_full()
+                    }),
+            )
+    }
+
+    /// Renders the bars pattern slider with overlay approach
+    fn render_bars_pattern(
+        &self,
+        track_width: f32,
+        height: f32,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Div {
+        let colors = &Theme::global(cx).colors;
+        let state = self.state.read(cx);
+
+        let unit_width = BAR_SEGMENT_WIDTH + BAR_GAP_WIDTH;
+        let no_of_segments = (track_width / unit_width).floor() as usize;
+
+        let fill_width = state.value_to_pixels(track_width);
+        let entity_id = self.state.entity_id();
+
+        let inactive_segments = (0..no_of_segments).map(|_idx| {
+            div()
+                .flex()
+                .flex_row()
+                .gap_0()
+                .child(
+                    div()
+                        .w(px(BAR_SEGMENT_WIDTH))
+                        .h(px(height))
+                        .bg(colors.background_600),
+                )
+                .child(
+                    div()
+                        .w(px(BAR_GAP_WIDTH))
+                        .h(px(height))
+                        .bg(colors.background_900),
+                )
+        });
+
+        // Render active bars for the filled overlay
+        let active_segments = (0..no_of_segments).map(|_idx| {
+            div()
+                .flex()
+                .flex_row()
+                .gap_0()
+                .child(
+                    div()
+                        .w(px(BAR_SEGMENT_WIDTH))
+                        .h(px(height))
+                        .bg(colors.accent_200),
+                )
+                .child(
+                    div()
+                        .w(px(BAR_GAP_WIDTH))
+                        .h(px(height))
+                        .bg(colors.background_900),
+                )
+        });
+
+        div()
+            .flex()
+            .relative()
+            .w_full()
+            .h_full()
+            .items_center()
+            .child(
+                // Background track with inactive bars
+                div()
+                    .id("inactive-track")
+                    .absolute()
+                    .w_full()
+                    .h_full()
+                    .flex()
+                    .flex_row()
+                    .gap_0()
+                    .bg(colors.background_900)
+                    .children(inactive_segments),
+            )
+            .child(
+                // Active overlay with clipped active bars
+                div()
+                    .id("active-overlay")
+                    .absolute()
+                    .w(px(fill_width))
+                    .h_full()
+                    .flex()
+                    .flex_row()
+                    .gap_0()
+                    .overflow_hidden()
+                    .children(active_segments),
+            )
+            .child(
+                // Interactive layer for mouse events
+                div()
+                    .id("interactive-layer")
+                    .absolute()
+                    .w_full()
+                    .h_full()
+                    .on_mouse_down(
+                        MouseButton::Left,
+                        window.listener_for(
+                            &self.state,
+                            move |state, e: &MouseDownEvent, window, cx| {
+                                cx.stop_propagation();
+                                state.update_value_by_position(e.position, window, cx);
+                            },
+                        ),
+                    )
+                    .on_drag(DragThumb(entity_id), {
+                        let state = self.state.clone();
+                        move |drag, _, _, cx| {
+                            cx.stop_propagation();
+                            state.update(cx, |s, _| s.start_drag());
+                            cx.new(move |_| drag.clone())
+                        }
+                    })
+                    .on_drag_move(window.listener_for(
+                        &self.state,
+                        move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
+                            let DragThumb(id) = event.drag(cx);
+                            if *id != entity_id {
+                                return;
+                            }
+                            cx.stop_propagation();
+                            state.update_value_by_position(event.event.position, window, cx);
+                        },
+                    ))
+                    .on_drop(window.listener_for(
+                        &self.state,
+                        move |state, _event: &DragMoveEvent<DragThumb>, _window, cx| {
+                            state.end_drag();
+                            cx.notify();
+                        },
+                    ))
+                    .child({
+                        let state = self.state.clone();
+                        canvas(
+                            move |bounds, _, cx| {
+                                state.update(cx, |s, _| s.bounds = bounds);
+                            },
+                            |_, _, _, _| {},
+                        )
+                        .absolute()
+                        .size_full()
+                    }),
+            )
+    }
 }
 
 impl RenderOnce for Slider {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let colors = Theme::global(cx).colors.clone();
-
-        let theme_inactive_bar_color = colors.background_600;
-        let theme_active_bar_color = colors.accent_200;
-        let theme_bg_color = colors.background_900;
-
         let state = self.state.read(cx);
 
         let width = self.width.unwrap_or(167.0);
         let height = self.height.unwrap_or(66.0);
-
-        let active_width = state.value_to_pixels(width);
-
         let pattern = state.pattern;
-        let entity_id = self.state.entity_id();
-        let slider_width_copy = width;
-        let slider_width_drag_copy = width;
-
-        let accent_dots_column = Icons::global(cx)
-            .settings_drawer
-            .slider_accent_dots_column
-            .clone();
-
-        let slider_gray_dot_column = Icons::global(cx)
-            .settings_drawer
-            .slider_gray_dot_column
-            .clone();
 
         div()
             .id(self.id.clone())
@@ -186,195 +462,8 @@ impl RenderOnce for Slider {
             .flex()
             .pl_2()
             .child(match pattern {
-                SliderPattern::Dots => {
-                    let unit_size = DOT_SIZE + DOT_GAP;
-                    let total_columns = (width / unit_size).floor() as usize;
-
-                    let active_dot_path =
-                        SharedString::from(accent_dots_column.to_string_lossy().to_string());
-                    let inactive_dot_path =
-                        SharedString::from(slider_gray_dot_column.to_string_lossy().to_string());
-
-                    let render_dot = |is_active: bool| {
-                        svg()
-                            .external_path(if is_active {
-                                active_dot_path.clone()
-                            } else {
-                                inactive_dot_path.clone()
-                            })
-                            .text_color(if is_active {
-                                colors.accent_200
-                            } else {
-                                colors.background_600
-                            })
-                            .w(px(DOT_SIZE))
-                            .h(px(height))
-                    };
-
-                    let dots = (0..total_columns).map(|idx| {
-                        let dot_end_pos = (idx as f32 * unit_size) + DOT_SIZE;
-                        let is_active = dot_end_pos <= active_width;
-
-                        div().w(px(DOT_SIZE)).h_full().child(render_dot(is_active))
-                    });
-
-                    div()
-                        .flex()
-                        .relative()
-                        .w_full()
-                        .h_full()
-                        .items_center()
-                        .child(
-                            div()
-                                .id("container-track")
-                                .absolute()
-                                .w_full()
-                                .h_full()
-                                .flex()
-                                .flex_row()
-                                .gap(px(DOT_GAP))
-                                .bg(theme_bg_color)
-                                .children(dots)
-                                .on_mouse_down(
-                                    MouseButton::Left,
-                                    window.listener_for(
-                                        &self.state,
-                                        move |state, e: &MouseDownEvent, window, cx| {
-                                            cx.stop_propagation();
-                                            state.update_value_by_position(
-                                                e.position,
-                                                slider_width_copy,
-                                                window,
-                                                cx,
-                                            );
-                                        },
-                                    ),
-                                )
-                                .on_drag(DragThumb(entity_id), |drag, _, _, cx| {
-                                    cx.stop_propagation();
-                                    cx.new(|_| drag.clone())
-                                })
-                                .on_drag_move(window.listener_for(
-                                    &self.state,
-                                    move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
-                                        let DragThumb(id) = event.drag(cx);
-                                        if *id != entity_id {
-                                            return;
-                                        }
-
-                                        cx.stop_propagation();
-                                        state.update_value_by_position(
-                                            event.event.position,
-                                            slider_width_drag_copy,
-                                            window,
-                                            cx,
-                                        );
-                                    },
-                                ))
-                                .child({
-                                    let state = self.state.clone();
-                                    canvas(
-                                        move |bounds, _, cx| {
-                                            state.update(cx, |s, _| s.bounds = bounds);
-                                        },
-                                        |_, _, _, _| {},
-                                    )
-                                    .absolute()
-                                    .size_full()
-                                }),
-                        )
-                }
-                SliderPattern::Bars => {
-                    let unit_width = BAR_SEGMENT_WIDTH + BAR_GAP_WIDTH;
-                    let no_of_segments = (width / unit_width).floor() as usize;
-
-                    let track_segments =
-                        (0..no_of_segments).map(|idx| {
-                            let segment_end_pos = (idx as f32 * unit_width) + BAR_SEGMENT_WIDTH;
-                            let is_active = segment_end_pos <= active_width;
-
-                            div()
-                                .flex()
-                                .flex_row()
-                                .gap_0()
-                                .child(div().w(px(BAR_SEGMENT_WIDTH)).h(px(height)).bg(
-                                    if is_active {
-                                        theme_active_bar_color
-                                    } else {
-                                        theme_inactive_bar_color
-                                    },
-                                ))
-                                .child(div().w(px(BAR_GAP_WIDTH)).h(px(height)).bg(theme_bg_color))
-                        });
-
-                    div()
-                        .flex()
-                        .relative()
-                        .w_full()
-                        .h_full()
-                        .items_center()
-                        .child(
-                            div()
-                                .id("container-track")
-                                .absolute()
-                                .w_full()
-                                .h_full()
-                                .flex()
-                                .flex_row()
-                                .gap_0()
-                                .bg(theme_bg_color)
-                                .children(track_segments)
-                                .on_mouse_down(
-                                    MouseButton::Left,
-                                    window.listener_for(
-                                        &self.state,
-                                        move |state, e: &MouseDownEvent, window, cx| {
-                                            cx.stop_propagation();
-                                            state.update_value_by_position(
-                                                e.position,
-                                                slider_width_copy,
-                                                window,
-                                                cx,
-                                            );
-                                        },
-                                    ),
-                                )
-                                .on_drag(DragThumb(entity_id), |drag, _, _, cx| {
-                                    cx.stop_propagation();
-                                    cx.new(|_| drag.clone())
-                                })
-                                .on_drag_move(window.listener_for(
-                                    &self.state,
-                                    move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
-                                        match event.drag(cx) {
-                                            DragThumb(id) => {
-                                                if *id != entity_id {
-                                                    return;
-                                                }
-                                                cx.stop_propagation();
-                                                state.update_value_by_position(
-                                                    event.event.position,
-                                                    slider_width_drag_copy,
-                                                    window,
-                                                    cx,
-                                                );
-                                            }
-                                        }
-                                    },
-                                ))
-                                .child({
-                                    let state = self.state.clone();
-                                    canvas(
-                                        move |bounds, _, cx| {
-                                            state.update(cx, |s, _| s.bounds = bounds);
-                                        },
-                                        |_, _, _, _| {},
-                                    )
-                                    .absolute()
-                                    .size_full()
-                                }),
-                        )
-                }
+                SliderPattern::Dots => self.render_dots_pattern(width, height, window, cx),
+                SliderPattern::Bars => self.render_bars_pattern(width, height, window, cx),
             })
     }
 }
