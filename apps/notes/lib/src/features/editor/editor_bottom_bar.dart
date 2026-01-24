@@ -215,7 +215,7 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 ),
               ),
               dropdownPosition: DropdownPosition.topCenter,
-              offset: const Offset(90, -8),
+              offset: const Offset(94, -8),
               floatingActionBarController: textEditorController,
               iconWidget: IconWidget(
                 iconPath: NotesIcon.textStyleIcon,
@@ -249,7 +249,7 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
                 ),
               ),
 
-              offset: const Offset(30, -8),
+              offset: const Offset(34, -12),
               outsideClickDisabled: true,
               isSelected: toolbarSelected == ToolbarEnum.align,
 
