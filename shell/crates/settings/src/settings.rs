@@ -173,7 +173,7 @@ pub struct HomescreenSettings {
     #[serde(default)]
     pub status_bar_size: Size<Pixels>,
 
-        #[serde(default)]
+    #[serde(default)]
     pub navbar_size: Size<Pixels>,
 
     #[serde(default)]

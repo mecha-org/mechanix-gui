@@ -19,11 +19,10 @@ use theme::prelude::{AlphaExt, Fonts, Theme};
 const APP_SECTION_HEIGHT: f32 = 76.0;
 const ROW_SECTION_HEIGHT: f32 = 52.0;
 const FILE_SECTION_DIVIDER_HEIGHT: f32 = 1.0;
-const SEARCH_HEADER_HEIGHT: f32 = 44.;
+const SEARCH_HEADER_HEIGHT: f32 = 44.0;
 const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const SEARCH_BAR_AREA: f32 = 86.0;
 const MIN_SEARCH_QUERY_LEN: usize = 3;
-
 
 impl DragInfo {
     fn new() -> Self {
@@ -165,9 +164,9 @@ impl UniversalSearch {
     }
 
     fn reset_scroll_state(&mut self) {
-        self.scroll_offset = px(0.);
-        self.last_scroll_offset = px(0.);
-        self.drag_start_y = px(0.);
+        self.scroll_offset = px(0.0);
+        self.last_scroll_offset = px(0.0);
+        self.drag_start_y = px(0.0);
         self.is_dragging = false;
     }
 
@@ -192,7 +191,7 @@ impl UniversalSearch {
         if total_rows_count == 0 {
             return px(0.0);
         }
-        px(total_rows_count as f32 * ROW_SECTION_HEIGHT) + px(ROW_SECTION_HEIGHT)
+        px((total_rows_count as f32) * ROW_SECTION_HEIGHT) + px(ROW_SECTION_HEIGHT)
     }
 
     fn is_search_result_empty(&self) -> bool {
@@ -373,7 +372,7 @@ impl UniversalSearch {
                                                                     .to_string(),
                                                             ))
                                                             .text_color(colors.foreground_900)
-                                                            .size(px(22.00)),
+                                                            .size(px(22.0)),
                                                     )
                                                 })
                                                 .when_some(search.path.clone(), |this, path| {
@@ -387,7 +386,7 @@ impl UniversalSearch {
                                                                         .to_string(),
                                                                 ))
                                                                 .text_color(colors.foreground_900)
-                                                                .size(px(22.00)),
+                                                                .size(px(22.0)),
                                                         )
                                                     } else {
                                                         this.child(
@@ -499,7 +498,7 @@ impl UniversalSearch {
         let navbar_bar_size = Settings::global(cx).homescreen.clone().navbar_size;
         let app_size = gpui::size(
             homesceen_size.width,
-            homesceen_size.height - status_bar_size.height + navbar_bar_size.height ,
+            homesceen_size.height - status_bar_size.height + navbar_bar_size.height,
         );
 
         // Initialize text input
@@ -532,28 +531,28 @@ impl UniversalSearch {
         let entity = cx.entity();
 
         div()
-        .w_full()
-        .h(app_size.height)
-        .flex()
-        .flex_col()
-        .bg(colors.background_1000)
-        .font_family(primary_font.clone())
-        .child(
-            div()
-                .id("content-container")
-                .flex()
-                .flex_col()
-                .relative()
-                .h_full()
-                .overflow_hidden()
-                .px_4()
-                .child(
-                    div()
-                        .w_full()
-                        .h(px(SEARCH_HEADER_HEIGHT))
-                        .flex()
-                        .flex_col()
-                        .child(
+            .w_full()
+            .h(app_size.height)
+            .flex()
+            .flex_col()
+            .bg(colors.background_1000)
+            .font_family(primary_font.clone())
+            .child(
+                div()
+                    .id("content-container")
+                    .flex()
+                    .flex_col()
+                    .relative()
+                    .h_full()
+                    .overflow_hidden()
+                    .px_4()
+                    .child(
+                        div()
+                            .w_full()
+                            .h(px(SEARCH_HEADER_HEIGHT))
+                            .flex()
+                            .flex_col()
+                            .child(
                                 div()
                                     .flex()
                                     .flex_row()
@@ -567,175 +566,193 @@ impl UniversalSearch {
                                             .text_size(px(24.0))
                                             .line_height(px(1.2))
                                             .text_color(colors.foreground_200)
-                                            .child("Search"),
+                                            .child("Search")
                                     )
                                     .child(
                                         div()
                                             .id("clear-result")
                                             .text_size(px(16.0))
-                                            .text_color(if all_results.len() == 0 {
-                                                colors.background_800
-                                            } else {
-                                                colors.foreground_100
-                                            })
-                                            .on_click(cx.listener(
-                                                |this: &mut Self, _event, window, cx| {
+                                            .text_color(
+                                                if all_results.len() == 0 {
+                                                    colors.background_800
+                                                } else {
+                                                    colors.foreground_100
+                                                }
+                                            )
+                                            .on_click(
+                                                cx.listener(|this: &mut Self, _event, window, cx| {
                                                     this.clear_search_results(cx);
                                                     this.clear_text_input(cx, window);
-                                                },
-                                            ))
-                                            .child("Clear all"),
-                                    ),
-                        ),
-                )
-                .child(
-                    div()
-                        .id("scroll-viewport")
-                        .relative()
-                        .flex_1()  
-                        .overflow_hidden()
-                        .on_drop(cx.listener(Self::on_drop))
-                        .on_drag_move(cx.listener(Self::on_drag_move))
-                        .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
-                            entity.update(cx, |this, cx| {
-                                this.drag_start_y = position.y;
-                                this.last_scroll_offset = this.scroll_offset;
-                                this.is_dragging = true;
-                                cx.stop_propagation();
-                                cx.notify();
-                            });
-
-                            cx.new(|_| DragInfo::new().position(position))
-                        })
-                        .when(content_children.len() == 0, |viewport| {
-                            viewport.child(
-                                div()
-                                    .flex()
-                                    .items_start()
-                                    .justify_start()
-                                    .h(px(16.)).py(px(10.))
-                                    .child(
-                                        div()
-                                            .font_weight(FontWeight::LIGHT)
-                                            .line_height(px(1.2))
-                                            .text_size(px(16.0))
-                                            .text_color(colors.foreground_900)
-                                            .child("Search an app, a file, a word or anything literally"),
+                                                })
+                                            )
+                                            .child("Clear all")
                                     )
                             )
-                        })
-                        .when(content_children.len() > 0, |viewport| {
-                            viewport.child(
-                                div()
-                                    .absolute()
-                                    .top(self.scroll_offset)
-                                    .left(px(0.0))
-                                    .right(px(0.0))
-                                    .flex()
-                                    .flex_col()
-                                    .children(content_children),
-                            )
-                        }),
-                ),
-        )
-        .child(
-            div()
-            .h(px(SEARCH_BAR_AREA))
-            .bottom(px(0.))
-            .bg(colors.accent_300.with_alpha(0.1))
-            .child(
-                div()
-                .h(px(SEARCH_BAR_HEIGHT))
-                .w_full()
-                .child(
-                    div()
-                        .size_full()
-                        .flex()
-                        .flex_row()
-                        .items_start()
-                        // .bg(colors.accent_300.with_alpha(0.1))
-                        .py(px(6.))
-                        .child(
-                            div()
-                                .w(px(488.))
-                                .h(px(44.))
-                                .ml_2()
-                                .flex()
-                                .flex_row()
-                                .justify_between()
-                                .items_center()
-                        // .bg(colors.background_900)
+                    )
+                    .child(
+                        div()
+                            .id("scroll-viewport")
+                            .relative()
+                            .flex_1()
+                            .overflow_hidden()
+                            .on_drop(cx.listener(Self::on_drop))
+                            .on_drag_move(cx.listener(Self::on_drag_move))
+                            .on_drag(DragInfo::new(), move |_: &DragInfo, position, _, cx| {
+                                entity.update(cx, |this, cx| {
+                                    this.drag_start_y = position.y;
+                                    this.last_scroll_offset = this.scroll_offset;
+                                    this.is_dragging = true;
+                                    cx.stop_propagation();
+                                    cx.notify();
+                                });
 
-                                // .bg(colors.accent_200)
-                                .border_1()
-                                .rounded_sm()
-                                .child(
+                                cx.new(|_| DragInfo::new().position(position))
+                            })
+                            .when(content_children.len() == 0, |viewport| {
+                                viewport.child(
                                     div()
                                         .flex()
-                                        .flex_row()
-                                        .items_center()
-                                        .justify_center()
+                                        .items_start()
+                                        .justify_start()
+                                        .h(px(16.0))
+                                        .py(px(10.0))
                                         .child(
                                             div()
-                                                .flex()
-                                                .flex_row()
-                                                .items_center()
-                                                .justify_center()
-                                                .py_2()
-                                                .ml_3()
-                                                .mr_2()
-                                                .w(px(24.0))
-                                                .h(px(24.0))
-                                                .rounded(px(8.0))
+                                                .font_weight(FontWeight::LIGHT)
+                                                .line_height(px(1.2))
+                                                .text_size(px(16.0))
+                                                .text_color(colors.foreground_900)
                                                 .child(
-                                                    svg()
-                                                        .external_path(SharedString::from(
-                                                            search_icon
-                                                                .to_string_lossy()
-                                                                .to_string(),
-                                                        ))
-                                                        .size(px(24.0))
-                                                        .text_color(colors.accent_300),
-                                                ),
+                                                    "Search an app, a file, a word or anything literally"
+                                                )
                                         )
-                                        .child(
-                                            div()
-                                                .font_weight(FontWeight::MEDIUM)
-                                                .line_height(px(1.25))
-                                                .text_size(px(18.0))
-                                                .text_color(colors.foreground_200)
-                                                .items_center()
-                                                .justify_center()
-                                                .child(text_input),
-                                        ),
-                                ),
-                        )
-                        .when(self.text_input.read(cx).content.clone().len() > 0, |search_bar| {  
-                        search_bar.child(
-                            div()
-                                .w(px(40.))
-                                .h(px(40.))
-                                .flex()
-                                .flex_row()
-                                .items_center()
-                                .justify_center()
-                                .id("cancel-button")
-                                .on_click(cx.listener(|this: &mut Self, _event, window, cx| {
-                                    this.clear_text_input(cx, window);
-                                }))
-                                .child(
-                                    svg()
-                                        .external_path(SharedString::from(
-                                            x_icon.to_string_lossy().to_string(),
-                                        ))
-                                        .size(px(24.0))
-                                        .text_color(colors.foreground_400),
                                 )
-                            )
-    })
-                )
-     
+                            })
+                            .when(content_children.len() > 0, |viewport| {
+                                viewport.child(
+                                    div()
+                                        .absolute()
+                                        .top(self.scroll_offset)
+                                        .left(px(0.0))
+                                        .right(px(0.0))
+                                        .flex()
+                                        .flex_col()
+                                        .children(content_children)
+                                )
+                            })
+                    )
             )
-               )
+            .child(
+                div()
+                    .h(px(SEARCH_BAR_AREA))
+                    .bottom(px(0.0))
+                    .bg(colors.accent_300.with_alpha(0.1))
+                    .child(
+                        div()
+                            .h(px(SEARCH_BAR_HEIGHT))
+                            .w_full()
+                            .child(
+                                div()
+                                    .size_full()
+                                    .flex()
+                                    .flex_row()
+                                    .items_start()
+                                    // .bg(colors.accent_300.with_alpha(0.1))
+                                    .py(px(6.0))
+                                    .child(
+                                        div()
+                                            .w(px(488.0))
+                                            .h(px(44.0))
+                                            .ml_2()
+                                            .flex()
+                                            .flex_row()
+                                            .justify_between()
+                                            .items_center()
+
+                                            // .bg(colors.background_900)
+
+                                            // .bg(colors.accent_200)
+                                            .border_1()
+                                            .rounded_sm()
+                                            .child(
+                                                div()
+                                                    .flex()
+                                                    .flex_row()
+                                                    .items_center()
+                                                    .justify_center()
+                                                    .child(
+                                                        div()
+                                                            .flex()
+                                                            .flex_row()
+                                                            .items_center()
+                                                            .justify_center()
+                                                            .py_2()
+                                                            .ml_3()
+                                                            .mr_2()
+                                                            .w(px(24.0))
+                                                            .h(px(24.0))
+                                                            .rounded(px(8.0))
+                                                            .child(
+                                                                svg()
+                                                                    .external_path(
+                                                                        SharedString::from(
+                                                                            search_icon
+                                                                                .to_string_lossy()
+                                                                                .to_string()
+                                                                        )
+                                                                    )
+                                                                    .size(px(24.0))
+                                                                    .text_color(colors.accent_300)
+                                                            )
+                                                    )
+                                                    .child(
+                                                        div()
+                                                            .font_weight(FontWeight::MEDIUM)
+                                                            .line_height(px(1.25))
+                                                            .text_size(px(18.0))
+                                                            .text_color(colors.foreground_200)
+                                                            .items_center()
+                                                            .justify_center()
+                                                            .child(text_input)
+                                                    )
+                                            )
+                                    )
+                                    .when(
+                                        self.text_input.read(cx).content.clone().len() > 0,
+                                        |search_bar| {
+                                            search_bar.child(
+                                                div()
+                                                    .w(px(40.0))
+                                                    .h(px(40.0))
+                                                    .flex()
+                                                    .flex_row()
+                                                    .items_center()
+                                                    .justify_center()
+                                                    .id("cancel-button")
+                                                    .on_click(
+                                                        cx.listener(
+                                                            |this: &mut Self, _event, window, cx| {
+                                                                this.clear_text_input(cx, window);
+                                                            }
+                                                        )
+                                                    )
+                                                    .child(
+                                                        svg()
+                                                            .external_path(
+                                                                SharedString::from(
+                                                                    x_icon
+                                                                        .to_string_lossy()
+                                                                        .to_string()
+                                                                )
+                                                            )
+                                                            .size(px(24.0))
+                                                            .text_color(colors.foreground_400)
+                                                    )
+                                            )
+                                        }
+                                    )
+                            )
+                    )
+            )
     }
 }
