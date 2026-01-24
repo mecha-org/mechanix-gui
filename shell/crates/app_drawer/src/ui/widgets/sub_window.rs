@@ -234,7 +234,7 @@ impl SubWindow {
                     .child(
                         div()
                             .id(idx)
-                            .bg(colors.background_800)
+                            .bg(colors.background_700)
                             .size(px(ICON_BOX_SIZE))
                             .rounded(px(15.3))
                             .flex()

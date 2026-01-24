@@ -643,7 +643,7 @@ impl AppDrawer {
 
                                                         div()
                                                             .id(id + idx)
-                                                            .bg(colors.background_800)
+                                                            .bg(colors.background_700)
                                                             .flex()
                                                             .items_center()
                                                             .justify_center()
