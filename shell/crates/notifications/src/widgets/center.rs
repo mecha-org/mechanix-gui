@@ -22,8 +22,8 @@ use theme::prelude::{AlphaExt, Fonts};
 
 use settings::prelude::Settings;
 
-const COLLAPSED_CARD_HEIGHT: f32 = 100.0; // header + body (max 2 lines)
-const EXPANDED_FIRST_HEIGHT: f32 = 100.0; // first card (same as collapsed)
+const COLLAPSED_CARD_HEIGHT: f32 = 120.0; // header + body (max 2 lines)
+const EXPANDED_FIRST_HEIGHT: f32 = 120.0; // first card (same as collapsed)
 const EXPANDED_ITEM_HEIGHT: f32 = 100.0; // body-only cards
 const CARD_GAP: f32 = 8.0; // mt_2()
 const GROUP_GAP: f32 = 10.0; // gap_2p5()
@@ -32,7 +32,6 @@ const LIST_PADDING_BOTTOM: f32 = 12.0;
 
 const ANIMATION_DURATION_MS: f32 = 250.0;
 const ANIMATION_FRAME_MS: u64 = 16;
-
 
 pub struct DragInfo {
     pub position: Point<Pixels>,
@@ -431,6 +430,22 @@ impl NotificationCenter {
         self.is_visible
     }
 
+    fn collapse_all_groups(&mut self, cx: &mut Context<Self>) {
+        let mut changed = false;
+
+        for expanded in self.expanded_groups.values_mut() {
+            if *expanded {
+                *expanded = false;
+                changed = true;
+            }
+        }
+
+        if changed {
+            self.reclamp_scroll(cx);
+            cx.notify();
+        }
+    }
+
     fn bump_row_animation(&mut self, group_id: u64) {
         if let Some(row) = self.rows.iter_mut().find(|r| r.id == group_id) {
             row.anim_epoch = row.anim_epoch.wrapping_add(1);
@@ -724,6 +739,7 @@ impl NotificationCenter {
             self.is_visible = true;
         } else if target == closed_pos {
             self.is_visible = false;
+            self.collapse_all_groups(cx);
         }
 
         cx.spawn(
@@ -784,6 +800,12 @@ impl Render for NotificationCenter {
         let closed_y = Self::closed_pos(cx);
 
         let threshold_px = 40.;
+
+        let bg_color = if (self.is_dragging || self.drag_offset.is_some()) || self.is_visible {
+            colors.background_1000
+        } else {
+            colors.background_800
+        };
 
         div()
             .w_full()
@@ -855,20 +877,16 @@ impl Render for NotificationCenter {
                     .child(div().id("left-wing").child({
                         let mut w = wing()
                             .w(notifications_center_size.width)
-                            .h(notifications_center_size.height)
+                            .h(notifications_center_size.height + navbar_size.height)
                             .border_color(colors.background_700)
                             .flex()
                             .flex_col()
                             .justify_end()
                             .items_end()
-                            .bg(if self.is_visible {
-                                colors.background_1000
-                            } else {
-                                colors.background_800
-                            })
+                            .bg(bg_color)
                             .child(self.render_content(window, cx));
 
-                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                        w.upper_wing_size(size(navbar_size.width, navbar_size.height * 1.6));
                         w.upper_wing_side(WingSide::Left);
                         w.border_width(px(1.0));
                         w.corner_radii(CornerRadii {
@@ -980,7 +998,6 @@ impl NotificationCenter {
             .items_center()
             .justify_between()
             .px_4()
-            .pt_4()
             .pb_3()
             .font_family(primary_font)
             .child(
@@ -1065,21 +1082,34 @@ impl NotificationCenter {
                     outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
-
-                    let mut inner_wing = wing()
-                        .relative()
-                        .overflow_hidden()
-                        .w_full()
-                    .bg(if self.is_visible {
-                            colors.accent_200.with_alpha(0.2)
-                        } else {
-                            colors.accent_200.with_alpha(0.1)
+                    outer_wing.corner_radii(CornerRadii {
+                            top_left: px(0.0),
+                            top_right: px(8.0),
+                            bottom_right: px(0.0),
+                            bottom_left: px(0.0),
                         });
+
+                    let mut inner_wing =
+                        wing()
+                            .relative()
+                            .overflow_hidden()
+                            .w_full()
+                            .bg(if self.is_visible {
+                                colors.accent_200.with_alpha(0.2)
+                            } else {
+                                colors.accent_200.with_alpha(0.1)
+                            });
 
                     inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     inner_wing.upper_wing_side(WingSide::Left);
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_width(px(1.0));
+                    inner_wing.corner_radii(CornerRadii {
+                            top_left: px(0.0),
+                            top_right: px(8.0),
+                            bottom_right: px(0.0),
+                            bottom_left: px(0.0),
+                        });
 
                     let inner = inner_wing.into_any();
                     row = row.child(outer_wing.child(inner).into_any());
@@ -1100,20 +1130,33 @@ impl NotificationCenter {
                     outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
-
-                    let mut inner_wing = wing()
-                        .relative()
-                        .overflow_hidden()
-                        .w_full()
-                        .bg(if self.is_visible {
-                            colors.accent_200.with_alpha(0.2)
-                        } else {
-                            colors.accent_200.with_alpha(0.1)
+                    outer_wing.corner_radii(CornerRadii {
+                            top_left: px(0.0),
+                            top_right: px(8.0),
+                            bottom_right: px(0.0),
+                            bottom_left: px(0.0),
                         });
+
+                    let mut inner_wing =
+                        wing()
+                            .relative()
+                            .overflow_hidden()
+                            .w_full()
+                            .bg(if self.is_visible {
+                                colors.accent_200.with_alpha(0.2)
+                            } else {
+                                colors.accent_200.with_alpha(0.1)
+                            });
 
                     inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_width(px(1.0));
+                    inner_wing.corner_radii(CornerRadii {
+                            top_left: px(0.0),
+                            top_right: px(8.0),
+                            bottom_right: px(0.0),
+                            bottom_left: px(0.0),
+                    });
 
                     let inner = inner_wing.into_any();
                     row = row.child(outer_wing.child(inner).into_any());
@@ -1284,14 +1327,13 @@ impl NotificationCenter {
                 content = content.child(body);
 
                 let card_inner: AnyElement = if show_header {
-
-                     let mut outer_wing = wing()
+                    let mut outer_wing = wing()
                         .w_128()
                         .group("")
                         .overflow_hidden()
                         .relative()
                         .border_1()
-                        .border_color(colors.accent_200.with_alpha(0.6))                        
+                        .border_color(colors.accent_200.with_alpha(0.6))
                         .bg(if is_expanded {
                             colors.background_900
                         } else {
@@ -1328,7 +1370,7 @@ impl NotificationCenter {
                     inner_wing.border_width(px(1.0));
 
                     let inner = inner_wing.child(content).into_any();
-                        
+
                     outer_wing.child(inner).into_any()
                 } else {
                     div()
@@ -1777,7 +1819,12 @@ impl NotificationCenter {
         let entity2 = cx.entity();
         let viewport_entity = entity.clone();
         let content_entity = entity.clone();
+        let notification_list = self.groups.clone();
+        let show_list = !notification_list.is_empty();
 
+        let bell = Icons::global(cx).notifications.bell.clone();
+        let primary_font = Fonts::global(cx).primary.clone();
+       
         // Main container
         div()
             .relative()
@@ -1786,6 +1833,7 @@ impl NotificationCenter {
             .w(notifications_center_size.width - px(1.5))
             .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)
+            .font_family(primary_font)
             .on_mouse_down(
                 MouseButton::Left,
                 cx.listener(|this, event: &MouseDownEvent, _, cx| {
@@ -1795,7 +1843,45 @@ impl NotificationCenter {
                     cx.notify();
                 }),
             )
-            .child(
+            .child( if !show_list {
+                 div()
+                .id("nc-center-empty-list")
+                .relative()
+                .w_full()
+                .h_full()
+                .child(
+                    div()
+                    .absolute()
+                    .id("nc-center-header")
+                    .rounded(px(14.0))
+                    .shadow_lg()
+                    .flex()
+                    .flex_col()
+                    .child(header)                                        
+                )
+                .child(
+                     div()
+                    .id("nc-center-empty-list")
+                    .text_color(colors.foreground_1000)
+                    .text_size(px(16.0))
+                    .flex()
+                    .flex_col()
+                    .items_center()
+                    .justify_center()
+                    .w_full()
+                    .h_full()
+                    .child(
+                         svg()
+                            .external_path(SharedString::from(bell.to_string_lossy().to_string()))
+                            .text_color(colors.accent_200)
+                            .w(px(28.))
+                            .h(px(28.)),
+                    )
+                    .gap_2()
+                    .child("No new notifications")
+                )                
+                .into_any()
+            } else {           
                 div()
                     .id("nc-center-container")
                     .rounded(px(14.0))
@@ -1816,6 +1902,9 @@ impl NotificationCenter {
                                     .id("nc-center-list")
                                     .relative()
                                     .top(self.scroll_offset)
+                                    .on_mouse_down(MouseButton::Left, cx.listener(|_, _, _, cx| {
+                                        cx.stop_propagation();
+                                    }))
                                     .on_drag(
                                         DragInfo::new(),
                                         move |_: &DragInfo, position, _, cx| {
@@ -1832,7 +1921,7 @@ impl NotificationCenter {
                                     )
                                     .child(list),
                             ),
-                    ),
-            )
+                    ).into_any()
+             })
     }
 }

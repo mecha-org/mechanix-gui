@@ -7,6 +7,8 @@ abstract class DateTimeEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class InitializeDateTime extends DateTimeEvent {}
+
 class GetDateTimeData extends DateTimeEvent {}
 
 class ToggleAutoDateTime extends DateTimeEvent {

@@ -8,9 +8,8 @@ use pulseaudio::service::PulseAudioService;
 pub const MAX_DEVICE_BRIGHTNESS: u32 = 254;
 pub const DEFAULT_MIN_BRIGHTNESS: f32 = 10.;
 
-pub fn get_current_datetime() -> String {
-    let now = Local::now();
-    format!("{}", now.format("%H:%M"))
+pub fn get_current_datetime() -> chrono::DateTime<Local> {
+     Local::now()
 }
 
 pub async fn sync_connected_network(

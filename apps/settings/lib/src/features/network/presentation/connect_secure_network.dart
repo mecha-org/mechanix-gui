@@ -113,6 +113,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                                 return null;
                               },
                               theme: MechanixTextInputThemeData(
+                                widgetHeight: 56,
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
                                   color: context.outlineVariant,
@@ -142,7 +143,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                   ),
 
                   // // NOTE: Not in use currently
-                  WirelessProtocols(accessPoint: accessPoint),
+                  WirelessProtocols(accessPoint: accessPoint, isDisabled: true),
                 ],
               ).padTop(8),
             ),

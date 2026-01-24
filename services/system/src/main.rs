@@ -17,7 +17,7 @@ pub const POWER_BUTTON_PATH: &str = "/dev/input/event0";
 pub const HOME_BUTTON_PATH: &str = "/dev/input/event2";
 pub const VOLUME_UP_BUTTON_PATH: &str = "/dev/input/event3";
 pub const VOLUME_DOWN_BUTTON_PATH: &str = "/dev/input/event4";
-pub const EXTENSION_PATH: &str = "/dev/input/event3";
+pub const EXTENSION_PATH: &str = "/dev/input/event5";
 pub const SERVED_AT: &str = "/org/mechanix/services/Display";
 
 struct SystemPaths {

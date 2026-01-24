@@ -31,7 +31,7 @@ const UNLOCK_PROMPT_BOTTOM_OFFSET: f32 = 45.0;
 const PANEL_WEDGE_GAP: f32 = 8.0;
 
 // Fractions of the slider's vertical travel applied in the opposite direction to each wedge
-const LEFT_WEDGE_PARALLAX_FRACTION: f32 = 0.20;
+const LEFT_WEDGE_PARALLAX_FRACTION: f32 = 0.2;
 const RIGHT_WEDGE_PARALLAX_FRACTION: f32 = 0.25;
 
 // The current wedge SVGs extend beyond their viewBox heights (left path to ~118px, right to ~74px),
@@ -134,28 +134,39 @@ impl Render for Lockscreen {
         let panel_height = window_height - WEDGES_AREA_HEIGHT - PANEL_WEDGE_GAP;
         // Move each wedge downward proportionally to the upward panel motion, clamped to limit
         let left_wedge_offset =
-            ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(LEFT_WEDGE_BOTTOM_LIMIT);
+            (-panel_top * LEFT_WEDGE_PARALLAX_FRACTION).min(LEFT_WEDGE_BOTTOM_LIMIT);
         let right_wedge_offset =
-            ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(RIGHT_WEDGE_BOTTOM_LIMIT);
+            (-panel_top * RIGHT_WEDGE_PARALLAX_FRACTION).min(RIGHT_WEDGE_BOTTOM_LIMIT);
         // Move wedges horizontally outward using same fractions, clamped to half the target gap
         let left_wedge_gap =
-            ((-panel_top) * LEFT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
+            (-panel_top * LEFT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
         let right_wedge_gap =
-            ((-panel_top) * RIGHT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
+            (-panel_top * RIGHT_WEDGE_PARALLAX_FRACTION).min(WEDGE_TARGET_GAP * 0.5);
         // Fade icons as slider moves; clamp to [0, 1]
-        let fade_progress = ((-panel_top) / UNLOCK_THRESHOLD).max(0.0).min(1.0);
+        let fade_progress = (-panel_top / UNLOCK_THRESHOLD).max(0.0).min(1.0);
         let left_icon_opacity = 1.0 - fade_progress * LEFT_WEDGE_ICON_FADE_STRENGTH;
         let right_icon_opacity = 1.0 - fade_progress * RIGHT_WEDGE_ICON_FADE_STRENGTH;
         // Additional fade for lock + bell icons so they vanish at the fade threshold
-        let lock_icon_fade = 1.0 - ((-panel_top) / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
+        let lock_icon_fade = 1.0 - (-panel_top / LOCK_ICONS_FADE_THRESHOLD).max(0.0).min(1.0);
         let wallpaper_path = self.wallpaper_path.clone().unwrap_or(icons.wallpaper);
         let unlock_prompt = Icons::global(cx).lockscreen.arrow.clone();
+        let (current_time_date,) = {
+            let shell = ShellState::global(cx);
+            (shell.current_time_date.clone(),)
+        };
+        let date_format = Settings::global(cx).lockscreen.date_format.clone();
+        let time_format = Settings::global(cx).lockscreen.time_format.clone();
+        let time_str = current_time_date.format(time_format.as_str()).to_string();
+        let date_str = current_time_date.format(date_format.as_str()).to_string();
 
         div().size_full().when(show, |this| {
             this.bg(overlay_color)
                 // Slider panel - stops above the wedges
                 .child(
                     div()
+                        .flex()
+                        .justify_center()
+                        .items_center()
                         .absolute()
                         .top(px(panel_top))
                         .left_0()
@@ -171,73 +182,40 @@ impl Render for Lockscreen {
                                     .object_fit(ObjectFit::Cover),
                             ),
                         )
-                        // Content overlay
                         .child(
                             div()
                                 .absolute()
-                                .inset_0()
+                                .top(px(97.))
+                                .w_full()
                                 .flex()
-                                .flex_col()
                                 .items_center()
-                                .justify_end()
-                                .pb(px(UNLOCK_PROMPT_BOTTOM_OFFSET))
-                                .gap_4()
-                                .child(
-                                    div()
-                                        .cursor_pointer()
-                                        .bg(unlock_prompt_bg_color)
-                                        .rounded(px(
-                                            UNLOCK_PROMPT_RADIUS * UNLOCK_PROMPT_SIZE_FACTOR
-                                        ))
-                                        .px(px(14.0 * UNLOCK_PROMPT_SIZE_FACTOR))
-                                        .py(px(10.0 * UNLOCK_PROMPT_SIZE_FACTOR))
-                                        .flex()
-                                        .opacity(0.8)
-                                        .items_center()
-                                        .justify_center()
-                                        .gap(px(8.0 * UNLOCK_PROMPT_SIZE_FACTOR))
-                                        .on_mouse_down(
-                                            MouseButton::Left,
-                                            cx.listener(
-                                                |component, _event: &MouseDownEvent, _, cx| {
-                                                    component.show_arrow_prompt =
-                                                        !component.show_arrow_prompt;
-                                                    cx.notify();
-                                                },
-                                            ),
-                                        )
-                                        .child({
-                                            let mut inner = div();
-                                            if show_arrow_prompt {
-                                                inner = inner.child(
-                                                    svg()
-                                                        .external_path(SharedString::from(
-                                                            unlock_prompt
-                                                                .to_string_lossy()
-                                                                .to_string(),
-                                                        ))
-                                                        .w(px(UNLOCK_PROMPT_ARROW_SIZE
-                                                            * UNLOCK_PROMPT_SIZE_FACTOR))
-                                                        .h(px(UNLOCK_PROMPT_ARROW_SIZE
-                                                            * UNLOCK_PROMPT_SIZE_FACTOR))
-                                                        .text_color(text_color),
-                                                );
-                                            } else {
-                                                inner = inner
-                                                    .text_size(px(18.0 * UNLOCK_PROMPT_SIZE_FACTOR))
-                                                    .text_color(text_color)
-                                                    .font_family(primary_font)
-                                                    .font_weight(FontWeight::SEMIBOLD)
-                                                    .opacity(1.0)
-                                                    .child("Swipe up to unlock");
-                                            }
-                                            inner
-                                        }),
-                                ),
+                                .justify_center()
+                                .mx_auto()
+                                .child(time_str)
+                                .text_size(px(42.))
+                                .line_height(px(1.25))
+                                .font_weight(FontWeight::BOLD)
+                                .font_family(Fonts::global(cx).primary.clone())
+                                .text_color(colors.foreground_100),
+                        )
+                        .child(
+                            div()
+                                .absolute()
+                                .top(px(138.))
+                                .w_full()
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .mx_auto()
+                                .child(date_str)
+                                .text_size(px(26.))
+                                .line_height(px(1.25))
+                                .font_family(Fonts::global(cx).primary.clone())
+                                .text_color(colors.foreground_0),
                         )
                         .on_mouse_move(cx.listener(move |this, event: &MouseMoveEvent, _, cx| {
                             if let Some(offset) = this.drag_offset {
-                                let new_y = event.position.y.to_f64() as f32 - offset;
+                                let new_y = (event.position.y.to_f64() as f32) - offset;
                                 // Only allow dragging upward (negative values)
                                 this.position_y = new_y.min(0.0);
                                 cx.notify();
@@ -249,7 +227,7 @@ impl Render for Lockscreen {
                                 cx.stop_propagation();
                                 this.drag_start_mouse_y = event.position.y.to_f64() as f32;
                                 this.drag_offset =
-                                    Some(event.position.y.to_f64() as f32 - this.position_y);
+                                    Some((event.position.y.to_f64() as f32) - this.position_y);
                                 cx.notify();
                             }),
                         )

@@ -8,7 +8,7 @@ part 'about_state.dart';
 class AboutBloc extends Bloc<AboutEvent, AboutState> {
   final AboutRepository aboutRepository;
 
-  AboutBloc({required this.aboutRepository}) : super(AboutState()) {
+  AboutBloc({required this.aboutRepository}) : super(const AboutState()) {
     on<InitializeAbout>(_onInitializeABout);
   }
 

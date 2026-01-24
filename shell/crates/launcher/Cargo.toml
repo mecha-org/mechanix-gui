@@ -105,6 +105,11 @@ assets = [
         "usr/share/mechanix/shell/assets/icons/homescreen/clock/",
         "755",
     ],
+    [
+        "../../../assets/icons/toast/*",
+        "usr/share/mechanix/shell/assets/icons/toast/",
+        "755",
+    ],
 ]
 
 [package.metadata.generate-rpm]
@@ -152,5 +157,8 @@ assets = [
 
     # Homescreen clock icons
     { source = "../../../assets/icons/homescreen/clock/*", dest = "/usr/share/mechanix/shell/assets/icons/homescreen/clock/", mode = "755" },
+
+    # Toast icons
+    { source = "../../../assets/icons/toast/*", dest = "/usr/share/mechanix/shell/assets/icons/toast/", mode = "755" },
 
 ]

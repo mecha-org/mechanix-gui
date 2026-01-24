@@ -10,6 +10,7 @@ import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
+import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
 
 class WirelessProtocolsList extends StatefulWidget {
   const WirelessProtocolsList({
@@ -50,6 +51,10 @@ class _WirelessProtocolsListState extends State<WirelessProtocolsList> {
                     trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
+                        style: MechanixSwitchStyle(
+                          activeTrackColor: context.secondaryContainer,
+                          inactiveTrackColor: context.secondaryContainer,
+                        ),
                         value: true,
                         onChanged: (v) {}))
               ]),

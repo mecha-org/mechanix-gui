@@ -144,19 +144,26 @@ pub fn listen_for_extensions(cx: &mut App) {
 
     let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
     let mut kind: Option<ExtensionKind> = None;
+    let mut is_attached: bool = false;
     cx.spawn(async move |app| {
         while let Ok(message) = dispatcher_rx.recv().await {
             match message {
                 dispatcher::Message::SetExtensionDetected(attached) => {
                     if attached {
                         kind = Some(ExtensionKind::from("UNKNOWN"));
+                        is_attached = true;
                     } else {
                         // Extension detached
                         kind = None;
+                        is_attached = false;
                     }
                 }
                 dispatcher::Message::SetExtensionName(id) => {
-                    kind = Some(ExtensionKind::from(&id));
+                    if is_attached {
+                        kind = Some(ExtensionKind::from(&id));
+                    } else {
+                        kind = None;
+                    }
                 }
                 _ => {}
             }

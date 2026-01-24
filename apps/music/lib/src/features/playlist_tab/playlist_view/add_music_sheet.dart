@@ -171,8 +171,8 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
 
               Container(
                 color: context.secondaryContainer,
-                height: 60,
-                padding: EdgeInsets.symmetric(horizontal: 16),
+                height: 90,
+                padding: const EdgeInsets.only(left: 16, right: 16, bottom: 30),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

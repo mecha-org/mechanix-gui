@@ -23,11 +23,18 @@ class AddToPlaylistSheet extends StatefulWidget {
 class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
   final List<String> selectedPlaylists = [];
   String draftPlaylistName = '';
+  final FocusNode focusNode = FocusNode();
+  bool isFocused = false;
 
   @override
   void initState() {
     super.initState();
+    focusNode.addListener(_handleFocus);
     context.read<SongsBloc>().add(SearchPlaylist(''));
+  }
+
+  void _handleFocus() {
+    setState(() => isFocused = focusNode.hasFocus);
   }
 
   void updateSelection(String id) {
@@ -62,10 +69,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
             children: [
               // Title
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
+                padding: const EdgeInsets.only(left: 16, top: 18, right: 16),
                 child: Text(
                   "Playlists",
                   style: TextStyle(
@@ -152,7 +156,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                                         : () => updateSelection(playlist.id),
                               );
                             },
-                          ),
+                          ).padVertical(6),
                         ),
                       ],
                     );
@@ -162,92 +166,97 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
 
               // Bottom add/search row
               Container(
-                height: 64,
+                height: 65,
                 decoration: BoxDecoration(
                   border: Border(
-                    top: BorderSide(
-                      color: context.colorScheme.surfaceContainerLow,
-                      width: 1,
-                    ),
+                    top: BorderSide(color: context.outline, width: 1),
                   ),
                 ),
                 child: PlaylistBottomSheetAdd(
+                  focusNode: focusNode,
+                  isFocused: isFocused,
                   onDraftChanged: updateDraftName,
                   onDraftCleared: clearDraft,
                 ),
               ),
 
               // Footer actions
-              Container(
-                color: context.secondaryContainer,
-                height: 60,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (selectedPlaylists.isNotEmpty)
-                      RichText(
-                        text: TextSpan(
-                          style: DefaultTextStyle.of(
-                            context,
-                          ).style.copyWith(fontSize: 20, height: 1.3),
+              isFocused
+                  ? SizedBox()
+                  : Container(
+                    color: context.secondaryContainer,
+                    height: 90,
+                    padding: const EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: 30,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (selectedPlaylists.isNotEmpty)
+                          RichText(
+                            text: TextSpan(
+                              style: DefaultTextStyle.of(
+                                context,
+                              ).style.copyWith(fontSize: 20, height: 1.3),
+                              children: [
+                                const TextSpan(text: 'Add track to '),
+                                TextSpan(
+                                  text:
+                                      '${selectedPlaylists.length} playlist${selectedPlaylists.length == 1 ? '' : 's'}',
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          const Text(
+                            'Add track to playlist',
+                            style: TextStyle(fontSize: 20, height: 1.3),
+                          ),
+
+                        Row(
+                          spacing: 12,
                           children: [
-                            const TextSpan(text: 'Add track to '),
-                            TextSpan(
-                              text:
-                                  '${selectedPlaylists.length} playlist${selectedPlaylists.length == 1 ? '' : 's'}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                            MechanixFilledButton(
+                              theme: MechanixFilledButtonThemeData(
+                                buttonSize: Size(100, 40),
+                                buttonColor: context.surfaceContainerHighest,
                               ),
+                              label: "Cancel",
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            MechanixFilledButton(
+                              theme: MechanixFilledButtonThemeData(
+                                buttonSize: const Size(75, 40),
+                                buttonColor: context.primary,
+                                pressedButtonColor: context.primaryContainer,
+                              ),
+                              label: "Add",
+                              onPressed:
+                                  selectedPlaylists.isEmpty
+                                      ? null
+                                      : () {
+                                        context.read<SongsBloc>().add(
+                                          AddToPlaylist(
+                                            songIds: [widget.song.id],
+                                            playlistIds: selectedPlaylists,
+                                          ),
+                                        );
+                                        Navigator.of(context).pop();
+                                      },
                             ),
                           ],
                         ),
-                      )
-                    else
-                      const Text(
-                        'Add track to playlist',
-                        style: TextStyle(fontSize: 20, height: 1.3),
-                      ),
-
-                    Row(
-                      spacing: 12,
-                      children: [
-                        MechanixFilledButton(
-                          theme: MechanixFilledButtonThemeData(
-                            buttonSize: Size(100, 40),
-                            buttonColor: context.surfaceContainerHighest,
-                          ),
-                          label: "Cancel",
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        MechanixFilledButton(
-                          theme: MechanixFilledButtonThemeData(
-                            buttonSize: const Size(75, 40),
-                            buttonColor: context.primary,
-                            pressedButtonColor: context.primaryContainer,
-                          ),
-                          label: "Add",
-                          onPressed:
-                              selectedPlaylists.isEmpty
-                                  ? null
-                                  : () {
-                                    context.read<SongsBloc>().add(
-                                      AddToPlaylist(
-                                        songIds: [widget.song.id],
-                                        playlistIds: selectedPlaylists,
-                                      ),
-                                    );
-                                    Navigator.of(context).pop();
-                                  },
-                        ),
                       ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
             ],
           ),
         );

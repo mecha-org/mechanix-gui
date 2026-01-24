@@ -26,6 +26,7 @@ class SongsState extends Equatable {
   final List<SongInfo> playlistSongs;
   final MusicMode musicMode;
   final CurrentPlaylist currentPlaylist;
+  final bool isMediaKitInitializing;
   final List<SearchInfo> searchItems;
   final List<MusicTabs> tabHistory;
   final PlaylistInfo? selectedPlaylist;
@@ -68,6 +69,7 @@ class SongsState extends Equatable {
     this.favouriteSongs = const [],
     this.currentIndex,
     this.isScrolling = false,
+    this.isMediaKitInitializing = true,
   });
 
   SongsState copyWith({
@@ -99,6 +101,7 @@ class SongsState extends Equatable {
     List<SongInfo>? favouriteSongs,
     int? currentIndex,
     bool? isScrolling,
+    bool? isMediaKitInitializing,
   }) {
     return SongsState(
       songs: songs ?? this.songs,
@@ -129,6 +132,8 @@ class SongsState extends Equatable {
       favouriteSongs: favouriteSongs ?? this.favouriteSongs,
       currentIndex: currentIndex ?? this.currentIndex,
       isScrolling: isScrolling ?? this.isScrolling,
+      isMediaKitInitializing:
+          isMediaKitInitializing ?? this.isMediaKitInitializing,
     );
   }
 
@@ -162,5 +167,6 @@ class SongsState extends Equatable {
     favouriteSongs,
     currentIndex,
     isScrolling,
+    isMediaKitInitializing,
   ];
 }

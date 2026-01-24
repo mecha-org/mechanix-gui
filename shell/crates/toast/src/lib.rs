@@ -15,10 +15,11 @@ pub fn run_app(cx: &mut App) {
     let settings = Settings::global(cx).toast.clone();
 
     let layer_shell = settings.layer_shell;
-
+    let window_bounds = WindowBounds::Windowed(Bounds::centered(None, layer_shell.size, cx));
     let window = cx.open_window(
         WindowOptions {
             window_background: WindowBackgroundAppearance::Transparent,
+            window_bounds: Some(window_bounds),
             kind: WindowKind::LayerShell(LayerShellOptions {
                 namespace: layer_shell.namespace,
                 layer: layer_shell.layer,
@@ -28,7 +29,12 @@ pub fn run_app(cx: &mut App) {
             }),
             ..Default::default()
         },
-        |_window, cx| cx.new(|cx| Toast::new(cx)),
+        |window, cx| {
+            cx.new(|cx| {
+                window.set_input_regions(Some(vec![]));
+                Toast::new(cx)
+            })
+        },
     );
 
     if let Ok(window) = window {

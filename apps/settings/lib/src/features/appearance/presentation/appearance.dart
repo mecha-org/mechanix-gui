@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/right_icon_arrow_widget.dart';
 import 'package:mechanix_settings/src/features/appearance/bloc/appearance_bloc.dart';
+import 'package:mechanix_settings/src/features/appearance/models/types.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/set_up_theme.dart';
+import 'package:mechanix_settings/src/features/appearance/presentation/set_up_wallpaper.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
@@ -20,11 +22,60 @@ class Appearance extends StatefulWidget {
 
 class _AppearanceState extends State<Appearance> {
   void onThemeTap(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.setTheme);
+    final bloc = context.read<AppearanceBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const SetUpTheme(),
+        ),
+      ),
+    );
   }
 
   void onWallpaperTap(BuildContext context) {
-    Navigator.pushNamed(context, AppRoutes.setWallpaper);
+    final bloc = context.read<AppearanceBloc>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BlocProvider.value(
+          value: bloc,
+          child: const SetUpWallpaper(),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _precacheAllThemeImages();
+  }
+
+  Future<void> _precacheAllThemeImages() async {
+    final allPreviewPaths =
+        accentPreviewImages.map((e) => e.themePreview).toList();
+
+    if (mounted) {
+      for (final wallpaper in wallpapersList) {
+        await precacheImage(
+          AssetImage(wallpaper.wallpaper),
+          context,
+          size: const Size(153, 176),
+        );
+      }
+
+      for (final path in allPreviewPaths) {
+        await precacheImage(
+          AssetImage(path),
+          context,
+          size: const Size(500, 267),
+        );
+      }
+    }
   }
 
   @override
@@ -38,7 +89,7 @@ class _AppearanceState extends State<Appearance> {
               listItems: [
                 SimpleListItems(
                   title: 'Dark Mode',
-                  // disabled: true,
+                  disabled: true,
                   trailing:
                       BlocSelector<AppearanceBloc, AppearanceState, ThemeMode>(
                     selector: (state) {
@@ -101,29 +152,4 @@ class _AppearanceState extends State<Appearance> {
       ),
     );
   }
-}
-
-Widget buildRoundedImage(
-    String imagePath, bool currentWallpaper, VoidCallback onTap) {
-  return GestureDetector(
-    onTap: onTap,
-    child: Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: currentWallpaper ? Colors.lightBlue : Colors.grey,
-          width: 2,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.asset(
-          imagePath,
-          fit: BoxFit.cover,
-        ),
-      ),
-    ),
-  );
 }

@@ -4,6 +4,8 @@ class BatteryInfoRequested extends BatteryEvent {
   BatteryInfoRequested();
 }
 
+class BatteryInit extends BatteryEvent {}
+
 class BatteryStreamListen extends BatteryEvent {}
 
 class SetBatteryMode extends BatteryEvent {

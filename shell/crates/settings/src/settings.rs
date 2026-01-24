@@ -174,13 +174,20 @@ pub struct HomescreenSettings {
     pub status_bar_size: Size<Pixels>,
 
     #[serde(default)]
+    pub navbar_size: Size<Pixels>,
+
+    #[serde(default)]
     pub layer_shell: LayerShellSettings,
+
+    #[serde(default)]
+    pub time_format: String,
 }
 
 impl Default for HomescreenSettings {
     fn default() -> Self {
         Self {
             status_bar_size: Size::new(px(540.0), px(36.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
             layer_shell: LayerShellSettings {
                 layer: Layer::Bottom,
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
@@ -188,6 +195,7 @@ impl Default for HomescreenSettings {
                 exclusive_zone: px(0.0),
                 size: Size::new(px(540.0), px(591.5)),
             },
+            time_format: "%H:%M".into(),
         }
     }
 }
@@ -220,6 +228,8 @@ pub struct LockscreenSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub input_regions: InputRegions,
+    pub time_format: String,
+    pub date_format: String,
 }
 
 impl Default for LockscreenSettings {
@@ -242,6 +252,8 @@ impl Default for LockscreenSettings {
                     size: Size::new(px(540.0), px(620.0)),
                 },
             },
+            time_format: "%-I:%M %p".into(),
+            date_format: "%A, %-d %b".into(),
         }
     }
 }

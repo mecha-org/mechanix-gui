@@ -19,53 +19,56 @@ class HomeFloatingButton extends StatelessWidget {
       Navigator.pushNamed(context, AppRoutes.createEditNotes);
     }
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      spacing: 16,
-      children: [
-        BlocSelector<NotesBloc, NotesState, bool>(
-          selector: (state) => state.groupedNotes.isNotEmpty,
-          builder:
-              (context, hasNotes) => Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: context.surfaceContainer,
-                ),
-                child: IconButton(
-                  padding: const EdgeInsets.all(10),
-                  onPressed: hasNotes ? onSearch : null,
-                  icon: IconWidget(
-                    iconColor:
-                        hasNotes ? null : Theme.of(context).disabledColor,
-                    iconPath: NotesIcon.searchIcon,
-                    iconHeight: 24,
-                    iconWidth: 24,
-                    boxHeight: 24,
-                    boxWidth: 24,
+    return Container(
+      margin: EdgeInsets.only(bottom: 30),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        spacing: 16,
+        children: [
+          BlocSelector<NotesBloc, NotesState, bool>(
+            selector: (state) => state.groupedNotes.isNotEmpty,
+            builder:
+                (context, hasNotes) => Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: context.surfaceContainer,
+                  ),
+                  child: IconButton(
+                    padding: const EdgeInsets.all(10),
+                    onPressed: hasNotes ? onSearch : null,
+                    icon: IconWidget(
+                      iconColor:
+                          hasNotes ? null : Theme.of(context).disabledColor,
+                      iconPath: NotesIcon.searchIcon,
+                      iconHeight: 24,
+                      iconWidth: 24,
+                      boxHeight: 24,
+                      boxWidth: 24,
+                    ),
                   ),
                 ),
-              ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color:context.primaryContainer,
           ),
-          child: IconButton(
-            iconSize: 56,
-            padding: const EdgeInsets.all(15),
-            onPressed: createNote,
-            icon: const IconWidget(
-              iconPath: NotesIcon.addIcon,
-              iconHeight: 24,
-              iconWidth: 24,
-              boxHeight: 24,
-              boxWidth: 24,
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: context.primaryContainer,
+            ),
+            child: IconButton(
+              iconSize: 56,
+              padding: const EdgeInsets.all(15),
+              onPressed: createNote,
+              icon: const IconWidget(
+                iconPath: NotesIcon.addIcon,
+                iconHeight: 24,
+                iconWidth: 24,
+                boxHeight: 24,
+                boxWidth: 24,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

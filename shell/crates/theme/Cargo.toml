@@ -15,3 +15,4 @@ gpui = { workspace = true }
 palette = { version = "0.7.6", features = ["serializing"] }
 dispatcher = { path = "../dispatcher" }
 futures = { workspace = true }
+mxconf_dbus = { workspace = true }
