@@ -173,6 +173,9 @@ pub struct HomescreenSettings {
     #[serde(default)]
     pub status_bar_size: Size<Pixels>,
 
+        #[serde(default)]
+    pub navbar_size: Size<Pixels>,
+
     #[serde(default)]
     pub layer_shell: LayerShellSettings,
 
@@ -184,12 +187,13 @@ impl Default for HomescreenSettings {
     fn default() -> Self {
         Self {
             status_bar_size: Size::new(px(540.0), px(36.0)),
+            navbar_size: Size::new(px(199.22), px(28.5)),
             layer_shell: LayerShellSettings {
                 layer: Layer::Bottom,
                 anchor: Anchor::TOP | Anchor::LEFT | Anchor::RIGHT | Anchor::BOTTOM,
                 namespace: "mechanix.homescreen".into(),
                 exclusive_zone: px(0.0),
-                size: Size::new(px(540.0), px(620.0)),
+                size: Size::new(px(540.0), px(591.5)),
             },
             time_format: "%H:%M".into(),
         }

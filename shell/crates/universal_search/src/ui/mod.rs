@@ -24,6 +24,7 @@ const SEARCH_BAR_HEIGHT: f32 = 56.0;
 const SEARCH_BAR_AREA: f32 = 86.0;
 const MIN_SEARCH_QUERY_LEN: usize = 3;
 
+
 impl DragInfo {
     fn new() -> Self {
         Self {
@@ -495,9 +496,10 @@ impl UniversalSearch {
         let primary_font = Fonts::global(cx).primary.clone();
         let homesceen_size = Settings::global(cx).homescreen.clone().layer_shell.size;
         let status_bar_size = Settings::global(cx).homescreen.clone().status_bar_size;
+        let navbar_bar_size = Settings::global(cx).homescreen.clone().navbar_size;
         let app_size = gpui::size(
             homesceen_size.width,
-            homesceen_size.height - status_bar_size.height,
+            homesceen_size.height - status_bar_size.height + navbar_bar_size.height ,
         );
 
         // Initialize text input
@@ -531,7 +533,7 @@ impl UniversalSearch {
 
         div()
         .w_full()
-        .h_full()
+        .h(app_size.height)
         .flex()
         .flex_col()
         .bg(colors.background_1000)

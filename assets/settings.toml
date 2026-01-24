@@ -51,6 +51,7 @@ maximized = { origin = { x = 0.0, y = 0.0 }, size = { width = 540.0, height = 62
 
 [homescreen]
 status_bar_size = { width = 540.0, height = 36.0 }
+navbar_size = { width = 80.0, height = 29.0 }
 time_format = "%H:%M"
 
 [homescreen.layer_shell]
@@ -58,7 +59,7 @@ layer = "bottom"
 anchor = ["top", "left", "right", "bottom"]
 namespace = "mechanix.homescreen"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 620.0 }
+size = { width = 540.0, height = 591.5 }
 
 
 [power_options.layer_shell]
