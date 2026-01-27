@@ -1,5 +1,5 @@
 mod modals;
-mod widgets;
+pub mod widgets;
 use std::time::Duration;
 
 use commons::widgets::{CornerRadii, WingSide, wing};
@@ -8,9 +8,8 @@ use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings};
-use shell_state::DEFAULT_MIN_BRIGHTNESS;
-use shell_state::{BrightnessMessage, ShellState, VolumeMessage};
+use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings, VolumeSliderSettings};
+use shell_state::ShellState;
 use theme::prelude::{AlphaExt, Fonts};
 
 use crate::helper::get_wireless_strength_icon;
@@ -18,7 +17,10 @@ use crate::ui::modals::{
     bluetooth_modal::BluetoothModalScroll, wireless_modal::WirelessModalScroll,
 };
 use crate::ui::widgets::{IconButton, Slider, SliderEvent, SliderState};
-use futures::SinkExt;
+use crate::{
+    get_volume, mute_volume_to_system, set_brightness, set_volume, sync_brightness_to_system,
+    sync_volume_to_system, unmute_volume_to_system,
+};
 use gpui::*;
 use theme::ActiveTheme;
 
@@ -35,7 +37,7 @@ const ROW_12_ICON_H: f32 = 88.0;
 const ANIMATION_DURATION_MS: f32 = 250.0;
 const ANIMATION_FRAME_MS: u64 = 16;
 
-const DEBOUNCE_DELAY_MS: u64 = 150;
+const DEBOUNCE_DELAY_MS: u64 = 300;
 
 #[derive(PartialEq)]
 pub enum ModalAnimationState {
@@ -117,39 +119,109 @@ pub enum ModalKind {
 }
 
 impl SettingsDrawer {
-    pub fn new(cx: &mut Context<Self>) -> Self {
+    pub fn new(
+        cx: &mut Context<Self>,
+        volume_slider_state: Entity<SliderState>,
+        initial_volume_value: f32,
+        initial_is_volume_mute: bool,
+        brightness_slider_state: Entity<SliderState>,
+        initial_brightness_value: f32,
+    ) -> Self {
         let settings = Settings::global(cx).settings_drawer.clone();
         let apps = Settings::global(cx).system_apps.clone();
 
-        let ShellState {
-            volume_tx,
-            brightness_tx,
-            volume,
-            default_sound_device,
-            brightness_value,
-            ..
-        } = ShellState::global(cx).clone();
-        let brightness_value = brightness_value.max(DEFAULT_MIN_BRIGHTNESS);
+        let b_subscription = cx.subscribe(
+            &brightness_slider_state,
+            |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = *event;
+                this.brightness_slider_value = value;
 
-        let brightness_slider = cx.new(|_| {
-            SliderState::new("brightness-slider-state")
-                .min(0.0)
-                .max(100.0)
-                .default_value(brightness_value)
-                .pattern(widgets::SliderPattern::Dots)
-        });
+                // Cancel previous debounce task if it exists
+                if let Some(task) = this.brightness_debounce_task.take() {
+                    drop(task);
+                }
 
-        let volume_slider = cx.new(|_| {
-            SliderState::new("volume-slider-state")
-                .min(0.0)
-                .max(100.0)
-                .default_value(volume as f32)
-                .pattern(widgets::SliderPattern::Bars)
-        });
+                // Avoid sending duplicate values
+                if value as u32 == this.last_brightness_sent as u32 {
+                    return;
+                }
 
-        let b_subscription =
-            Self::create_brightness_subscription(&brightness_slider, brightness_tx, cx);
-        let v_subscription = Self::create_volume_subscription(&volume_slider, volume_tx, cx);
+                // Update UI immediately
+                set_brightness(cx, value);
+
+                // Update last sent value for UI
+                this.last_brightness_sent = value;
+
+                // Debounce the system sync
+                let task = cx.spawn(
+                    async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
+                        // Wait for debounce delay
+                        cx.background_executor()
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS)) // DEBOUNCE_DELAY_MS
+                            .await;
+
+                        // Sync to system after delay
+                        this.update(cx, |this, cx| {
+                            sync_brightness_to_system(value, cx);
+                            this.last_brightness_sent = value;
+                        })
+                        .ok();
+                    },
+                );
+
+                this.brightness_debounce_task = Some(task);
+
+                cx.notify();
+            },
+        );
+
+        let v_subscription =
+            cx.subscribe(&volume_slider_state, |this, _, event: &SliderEvent, cx| {
+                let SliderEvent::Change(value) = *event;
+                this.volume_slider_value = value;
+
+                // Cancel previous debounce task if it exists
+                if let Some(task) = this.volume_debounce_task.take() {
+                    drop(task);
+                }
+
+                // Avoid sending duplicate values
+                if value as u32 == this.last_volume_sent as u32 {
+                    return;
+                }
+
+                if this.volume_slider_value == 0.0 {
+                    this.volume_mute = true;
+                    mute_volume_to_system(cx);
+                }
+
+                // Update UI immediately
+                set_volume(cx, value);
+
+                // Update last sent value for UI
+                this.last_volume_sent = value;
+
+                // Debounce the system sync
+                let task = cx.spawn(
+                    async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
+                        // Wait for debounce delay
+                        cx.background_executor()
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS)) // DEBOUNCE_DELAY_MS
+                            .await;
+
+                        // Sync to system after delay
+                        this.update(cx, |this, cx| {
+                            sync_volume_to_system(value, cx);
+                            this.last_volume_sent = value;
+                        })
+                        .ok();
+                    },
+                );
+
+                this.volume_debounce_task = Some(task);
+
+                cx.notify();
+            });
 
         let mut _subscriptions = vec![b_subscription, v_subscription];
 
@@ -165,14 +237,14 @@ impl SettingsDrawer {
             screen_recording: false,
 
             cell_signal: false,
-            brightness_slider_state: brightness_slider,
-            brightness_slider_value: DEFAULT_MIN_BRIGHTNESS,
+            brightness_slider_state: brightness_slider_state,
+            brightness_slider_value: initial_brightness_value,
             auto_brightness: false,
             dark_mode: false,
 
-            volume_slider_state: volume_slider,
-            volume_slider_value: volume as f32,
-            volume_mute: default_sound_device.mute,
+            volume_slider_state: volume_slider_state,
+            volume_slider_value: initial_volume_value,
+            volume_mute: initial_is_volume_mute,
             actual_volume: 0.0,
             open_modal: false,
             animation_progress: 0.0,
@@ -237,144 +309,6 @@ impl SettingsDrawer {
     pub fn calculate_closed_position(settings: &SettingsDrawerSettings) -> f32 {
         let closed_pos_px = Self::closed_pos(settings.layer_shell.size, settings.navbar_size);
         closed_pos_px.into()
-    }
-
-    fn create_brightness_subscription(
-        brightness_slider: &Entity<SliderState>,
-        brightness_tx: Option<futures::channel::mpsc::Sender<BrightnessMessage>>,
-        cx: &mut Context<Self>,
-    ) -> Subscription {
-        cx.subscribe(
-            brightness_slider,
-            move |this, _, event: &SliderEvent, cx| {
-                let SliderEvent::Change(value) = event;
-                let value = *value;
-                let brightness_value = value.max(DEFAULT_MIN_BRIGHTNESS);
-                this.brightness_slider_value = brightness_value.clone();
-
-                // Cancel previous debounce task if it exists
-                if let Some(task) = this.brightness_debounce_task.take() {
-                    drop(task);
-                }
-
-                // Only send to service if value has changed significantly
-                let last_sent = this.last_brightness_sent;
-                if brightness_value as u32 == last_sent as u32 {
-                    return;
-                }
-
-                // // Update UI
-                this.brightness_slider_state.update(cx, |state, inner_cx| {
-                    // state.value = this.brightness_slider_value;
-                    state.set_value(this.brightness_slider_value, inner_cx);
-                    inner_cx.notify();
-                });
-
-                // Debounce the service call
-                if let Some(mut tx) = brightness_tx.clone() {
-                    let task = cx.spawn(async move |this, cx| {
-                        // Wait for debounce delay
-                        cx.background_executor()
-                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
-                            .await;
-
-                        // Send the brightness change message
-                        let _ = tx
-                            .send(BrightnessMessage::BrightnessChanged {
-                                value: brightness_value,
-                            })
-                            .await;
-
-                        // Update last sent value
-                        this.update(cx, |this, _| {
-                            this.last_brightness_sent = brightness_value;
-                        })
-                        .ok();
-                    });
-
-                    this.brightness_debounce_task = Some(task);
-                }
-
-                cx.notify();
-            },
-        )
-    }
-
-    fn create_volume_subscription(
-        volume_slider: &Entity<SliderState>,
-        volume_tx: Option<futures::channel::mpsc::Sender<VolumeMessage>>,
-        cx: &mut Context<Self>,
-    ) -> Subscription {
-        cx.subscribe(volume_slider, move |this, _, event: &SliderEvent, cx| {
-            let SliderEvent::Change(value) = event;
-
-            // If currently muted and user is dragging, unmute first
-            if this.volume_mute && *value > 0.0 {
-                this.volume_mute = false;
-            }
-
-            // Update the actual volume - this is what the slider represents
-            this.actual_volume = *value;
-            this.volume_slider_value = *value;
-
-            // Cancel previous debounce task if it exists
-            if let Some(task) = this.volume_debounce_task.take() {
-                drop(task);
-            }
-
-            // // Avoid sending duplicate values
-            if *value as u32 == this.last_volume_sent as u32 {
-                return;
-            }
-
-            // update UI
-            this.volume_slider_state.update(cx, |state, inner_cx| {
-                // state.value = this.volume_slider_value;
-                state.set_value(this.volume_slider_value, inner_cx);
-                this.last_volume_sent = this.volume_slider_value;
-
-                inner_cx.notify();
-            });
-
-            let sink_name = ShellState::global(cx)
-                .clone()
-                .default_sound_device
-                .name
-                .unwrap_or_else(|| "default".to_string());
-
-            // Debounce the service call
-            if let Some(mut tx) = volume_tx.clone() {
-                let volume = *value;
-
-                let task = cx.spawn(
-                    async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
-                        // Wait for debounce delay
-                        cx.background_executor()
-                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
-                            .await;
-
-                        // Send the volume change message
-                        let _ = tx
-                            .send(VolumeMessage::VolumeChanged {
-                                name: sink_name,
-                                value: volume,
-                            })
-                            .await;
-
-                        // Update last sent value
-                        this.update(cx, |this, _| {
-                            this.volume_slider_value = volume;
-                            this.last_volume_sent = volume;
-                        })
-                        .ok();
-                    },
-                );
-
-                this.volume_debounce_task = Some(task);
-            }
-
-            cx.notify();
-        })
     }
 
     fn start_animation(&mut self, event: &LongPressEvent, _: &mut Window, cx: &mut Context<Self>) {
@@ -537,6 +471,9 @@ impl Render for SettingsDrawer {
                                     cx.notify();
                                 }),
                             )
+                            .when(self.is_visible, |content_div| {
+                                content_div.size_full().bg(colors.background_1000)
+                            })
                             .child({
                                 let mut w = wing()
                                     .w(settings_drawer_size.width)
@@ -1422,30 +1359,28 @@ impl SettingsDrawer {
 
     fn render_sound_control_div(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let SettingsDrawerIcons {
-            volume_off,
-            volume_low,
-            volume_medium,
-            volume_high,
+        let VolumeSliderSettings {
+            min_volume_level,
+            max_volume_level,
             ..
-        } = Icons::global(cx).settings_drawer.clone();
+        } = Settings::global(cx).volume_slider.clone();
 
-        let volume_tx = ShellState::global(cx).clone().volume_tx.clone().unwrap();
-        let default_sound_device = ShellState::global(cx).clone().default_sound_device.clone();
-        // let volume_value = ShellState::global(cx).clone().volume.clone();
-        self.volume_slider_value = default_sound_device.volume as f32;
+        let icons = Icons::global(cx).settings_drawer.clone();
 
-        let volume_icon = if self.volume_mute || self.volume_slider_value == 0. {
-            volume_off
+        let volume_icon = if self.volume_slider_value <= min_volume_level {
+            icons.volume_off
         } else {
-            if self.volume_slider_value >= 0.0 && self.volume_slider_value <= 33.0 {
-                volume_low
-            } else if self.volume_slider_value > 33.0 && self.volume_slider_value <= 66.0 {
-                volume_medium
+            let range = max_volume_level - min_volume_level;
+            let normalized = (self.volume_slider_value - min_volume_level) / range;
+            if normalized <= 0.33 {
+                icons.volume_low
+            } else if normalized <= 0.66 {
+                icons.volume_medium
             } else {
-                volume_high
+                icons.volume_high
             }
         };
+
         let volume_icon_color = if self.volume_mute || self.volume_slider_value == 0. {
             colors.foreground_0
         } else {
@@ -1462,11 +1397,9 @@ impl SettingsDrawer {
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
-                    cx.stop_propagation();
-                })),
-            )
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                cx.stop_propagation();
+            })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
             // .child(self.render_volume_slider(cx))
             .child(
@@ -1493,60 +1426,37 @@ impl SettingsDrawer {
                             .on_click(cx.listener(
                                 move |this: &mut SettingsDrawer,
                                       _event: &ClickEvent,
-                                      window: &mut Window,
+                                      _: &mut Window,
                                       cx: &mut Context<Self>| {
-                                    let mut volume_tx = volume_tx.clone();
                                     this.volume_mute = !this.volume_mute;
                                     let is_mute = this.volume_mute;
-                                    let sink_name = default_sound_device
-                                        .name
-                                        .clone()
-                                        .unwrap_or_else(|| "default".to_string());
 
                                     if is_mute {
-                                        // Muting - set slider to 0 but remember actual volume
-                                        cx.background_executor()
-                                            .spawn(async move {
-                                                let _ = volume_tx
-                                                    .send(VolumeMessage::MuteSink {
-                                                        name: sink_name.clone(),
-                                                    })
-                                                    .await;
-                                            })
-                                            .detach();
+                                        mute_volume_to_system(cx);
 
-                                        // Update slider to show 0
+                                        // store UI value
+                                        let state_value = this.volume_slider_state.read(cx).value;
+                                        this.actual_volume = state_value;
+
+                                        // update UI
+                                        let new_value = 0.0;
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
-                                            state.set_value(0.0, inner_cx);
+                                            state.set_value(new_value, inner_cx);
                                         });
-                                        this.volume_slider_value = 0.0;
                                     } else {
-                                        // Unmuting - restore previous volume
-                                        cx.background_executor()
-                                            .spawn(async move {
-                                                let _ = volume_tx
-                                                    .send(VolumeMessage::UnmuteSink {
-                                                        name: sink_name.clone(),
-                                                    })
-                                                    .await;
-                                            })
-                                            .detach();
-
-                                        // Restore to previous volume (or default)
-                                        let restore_volume = if this.actual_volume > 0.0 {
-                                            this.actual_volume
-                                        } else if this.last_volume_sent > 0.0 {
-                                            this.last_volume_sent
+                                        unmute_volume_to_system(cx);
+                                        let new_value = if this.actual_volume == 0.0 {
+                                            get_volume(cx)
                                         } else {
-                                            default_sound_device.volume as f32
+                                            this.actual_volume
                                         };
+                                        // get last stored value
+                                        this.volume_slider_value = new_value;
 
-                                        // Update slider state to restore volume
+                                        // update UI
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
-                                            state.set_value(restore_volume, inner_cx);
+                                            state.set_value(this.volume_slider_value, inner_cx);
                                         });
-                                        this.volume_slider_value = restore_volume;
-                                        this.actual_volume = restore_volume;
                                     }
 
                                     cx.notify();
@@ -1561,6 +1471,7 @@ impl SettingsDrawer {
                             .w(px(167.0))
                             .child(
                                 Slider::new("volume-slider", &self.volume_slider_state)
+                                    .width(167.0)
                                     .height(66.0),
                             ),
                     ),

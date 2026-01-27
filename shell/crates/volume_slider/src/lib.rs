@@ -8,7 +8,7 @@ use shell_state::{ShellState, VolumeMessage};
 
 use crate::slider::{SliderEvent, SliderState};
 
-const DEFAULT_VOLUME_LEVEL: f32 = 35.0;
+const DEFAULT_VOLUME_LEVEL: f32 = 0.0;
 const VOLUME_STEP: f32 = 3.0;
 
 /// Sets up dispatcher-driven volume handling and opens the slider UI overlay.
