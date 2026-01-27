@@ -471,6 +471,9 @@ impl Render for SettingsDrawer {
                                     cx.notify();
                                 }),
                             )
+                            .when(self.is_visible, |content_div| {
+                                content_div.size_full().bg(colors.background_1000)
+                            })
                             .child({
                                 let mut w = wing()
                                     .w(settings_drawer_size.width)
