@@ -8,7 +8,7 @@ use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings};
+use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings, VolumeSliderSettings};
 use shell_state::ShellState;
 use theme::prelude::{AlphaExt, Fonts};
 
@@ -18,7 +18,7 @@ use crate::ui::modals::{
 };
 use crate::ui::widgets::{IconButton, Slider, SliderEvent, SliderState};
 use crate::{
-    mute_volume_to_system, set_brightness, set_volume, sync_brightness_to_system,
+    get_volume, mute_volume_to_system, set_brightness, set_volume, sync_brightness_to_system,
     sync_volume_to_system, unmute_volume_to_system,
 };
 use gpui::*;
@@ -188,6 +188,11 @@ impl SettingsDrawer {
                 // Avoid sending duplicate values
                 if value as u32 == this.last_volume_sent as u32 {
                     return;
+                }
+
+                if this.volume_slider_value == 0.0 {
+                    this.volume_mute = true;
+                    mute_volume_to_system(cx);
                 }
 
                 // Update UI immediately
@@ -1351,29 +1356,28 @@ impl SettingsDrawer {
 
     fn render_sound_control_div(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let SettingsDrawerIcons {
-            volume_off,
-            volume_low,
-            volume_medium,
-            volume_high,
+        let VolumeSliderSettings {
+            min_volume_level,
+            max_volume_level,
             ..
-        } = Icons::global(cx).settings_drawer.clone();
+        } = Settings::global(cx).volume_slider.clone();
 
-        let default_sound_device = ShellState::global(cx).clone().default_sound_device.clone();
-        // let volume_value = ShellState::global(cx).clone().volume.clone();
-        self.volume_slider_value = default_sound_device.volume as f32;
+        let icons = Icons::global(cx).settings_drawer.clone();
 
-        let volume_icon = if self.volume_mute || self.volume_slider_value == 0. {
-            volume_off
+        let volume_icon = if self.volume_slider_value <= min_volume_level {
+            icons.volume_off
         } else {
-            if self.volume_slider_value >= 0.0 && self.volume_slider_value <= 33.0 {
-                volume_low
-            } else if self.volume_slider_value > 33.0 && self.volume_slider_value <= 66.0 {
-                volume_medium
+            let range = max_volume_level - min_volume_level;
+            let normalized = (self.volume_slider_value - min_volume_level) / range;
+            if normalized <= 0.33 {
+                icons.volume_low
+            } else if normalized <= 0.66 {
+                icons.volume_medium
             } else {
-                volume_high
+                icons.volume_high
             }
         };
+
         let volume_icon_color = if self.volume_mute || self.volume_slider_value == 0. {
             colors.foreground_0
         } else {
@@ -1390,11 +1394,9 @@ impl SettingsDrawer {
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(
-                cx.listener(Self::click_listener(|_, _event, _window, cx| {
-                    cx.stop_propagation();
-                })),
-            )
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                cx.stop_propagation();
+            })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
             // .child(self.render_volume_slider(cx))
             .child(
@@ -1440,9 +1442,13 @@ impl SettingsDrawer {
                                         });
                                     } else {
                                         unmute_volume_to_system(cx);
-
+                                        let new_value = if this.actual_volume == 0.0 {
+                                            get_volume(cx)
+                                        } else {
+                                            this.actual_volume
+                                        };
                                         // get last stored value
-                                        this.volume_slider_value = this.actual_volume;
+                                        this.volume_slider_value = new_value;
 
                                         // update UI
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
