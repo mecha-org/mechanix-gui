@@ -60,7 +60,7 @@ pub fn run_app(cx: &mut App) {
                 namespace,
                 layer,
                 anchor,
-                keyboard_interactivity: KeyboardInteractivity::OnDemand,
+                keyboard_interactivity: KeyboardInteractivity::None,
                 exclusive_zone: Some(exclusive_zone),
                 ..Default::default()
             }),

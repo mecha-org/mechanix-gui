@@ -128,6 +128,7 @@ pub fn run_app(cx: &mut gpui::App) {
                 layer,
                 anchor,
                 exclusive_zone: Some(exclusive_zone),
+                keyboard_interactivity: layer_shell::KeyboardInteractivity::None,
                 ..Default::default()
             }),
             ..Default::default()
@@ -192,12 +193,12 @@ pub fn run() {
         crate::run_app(cx);
 
         let installed_apps = cx.new(|cx| InstalledApps::new(cx));
+        running_apps::run_app(installed_apps, cx);
 
         // status_bar::run_app(cx);
 
         homescreen::run_app(cx);
-
-        running_apps::run_app(installed_apps, cx);
+    
 
         settings_drawer::run_app(cx);
 
