@@ -10,7 +10,7 @@ use gpui::{
 use settings::prelude::*;
 use shell_state::{BrightnessMessage, DEFAULT_MIN_BRIGHTNESS, ShellState, VolumeMessage};
 use ui::*;
-const DEFAULT_VOLUME_LEVEL: f32 = 35.0;
+const DEFAULT_VOLUME_LEVEL: f32 = 0.0;
 use crate::ui::widgets::SliderState;
 
 pub mod prelude {
