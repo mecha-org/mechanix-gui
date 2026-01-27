@@ -2,7 +2,7 @@ mod ui;
 
 pub use ui::{listen_for_extensions, Toast};
 
-use gpui::layer_shell::LayerShellOptions;
+use gpui::layer_shell::{KeyboardInteractivity, LayerShellOptions};
 use gpui::*;
 use settings::prelude::Settings;
 
@@ -25,6 +25,7 @@ pub fn run_app(cx: &mut App) {
                 layer: layer_shell.layer,
                 anchor: layer_shell.anchor,
                 exclusive_zone: Some(layer_shell.exclusive_zone),
+                keyboard_interactivity: KeyboardInteractivity::None,
                 ..Default::default()
             }),
             ..Default::default()
