@@ -1,7 +1,7 @@
 use commons::assets::Assets;
 use desktop_dbus::NotificationService;
 use futures::{FutureExt, SinkExt, StreamExt, channel::mpsc, select};
-use gpui::*;
+use gpui::{*, layer_shell::KeyboardInteractivity};
 use icons::prelude::*;
 
 use notifications::prelude::AppEvents;
@@ -45,6 +45,7 @@ fn main() {
                         | layer_shell::Anchor::LEFT
                         | layer_shell::Anchor::TOP,
                     exclusive_zone: Some(px(36.0)),
+                    keyboard_interactivity: KeyboardInteractivity::None,
                     ..Default::default()
                 }),
                 ..Default::default()

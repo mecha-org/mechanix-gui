@@ -204,13 +204,13 @@ pub fn run() {
 
         power_options::run_app(cx);
 
-        lockscreen::run_app(cx);
+        // lockscreen::run_app(cx);
 
         notifications::run_app(cx);
-
-        volume_slider::run_app(cx);
-
-        toast::run_app(cx);
+        //
+        // volume_slider::run_app(cx);
+        //
+        // toast::run_app(cx);
 
         cx.activate(true);
         cx.refresh_windows();
