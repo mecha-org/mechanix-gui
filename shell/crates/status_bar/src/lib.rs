@@ -42,6 +42,7 @@ pub fn run_app(cx: &mut App) {
                     layer,
                     anchor,
                     exclusive_zone: Some(exclusive_zone),
+                    keyboard_interactivity: layer_shell::KeyboardInteractivity::None,
                     ..Default::default()
                 }),
                 ..Default::default()
