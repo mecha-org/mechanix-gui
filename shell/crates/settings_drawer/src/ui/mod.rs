@@ -1238,7 +1238,8 @@ impl SettingsDrawer {
                 power_mode_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
-            .label(format!("{}% ", battery_percent))
+            // .label(format!("{}% ", battery_percent)) // integrate performance mode label later
+            .label("Battery".to_string())
             .icon_color(power_mode_icon_color)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
@@ -1359,6 +1360,7 @@ impl SettingsDrawer {
         } = Icons::global(cx).settings_drawer.clone();
 
         let default_sound_device = ShellState::global(cx).clone().default_sound_device.clone();
+        // let volume_value = ShellState::global(cx).clone().volume.clone();
         self.volume_slider_value = default_sound_device.volume as f32;
 
         let volume_icon = if self.volume_mute || self.volume_slider_value == 0. {
