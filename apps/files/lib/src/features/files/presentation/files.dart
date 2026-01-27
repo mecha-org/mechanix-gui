@@ -401,7 +401,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                     valueListenable: viewModeNotifier,
                     builder: (context, isGrid, _) {
                       return isGrid
-                          ? widget.title == 'recent'
+                          ? widget.title == 'Recent'
                               ? buildGridViewForRecentFiles(
                                   context, filteredFilesRecent)
                               : buildGridView(

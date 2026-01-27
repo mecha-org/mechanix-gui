@@ -183,7 +183,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               passwordProvider: _passwordProvider,
               firstAttemptByEmptyPassword: true,
               params: PdfViewerParams(
-                backgroundColor: context.colorScheme.surface,
+                // backgroundColor: context.colorScheme.surface,
                 enableTextSelection: true,
                 maxScale: 4.0,
                 minScale: 1.0,
