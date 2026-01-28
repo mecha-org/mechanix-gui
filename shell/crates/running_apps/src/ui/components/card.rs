@@ -1,11 +1,10 @@
 use crate::config::constants::*;
 use crate::models::models::{AppCardAnimation, GestureType};
 use crate::ui::RunningApps;
-use commons::widgets::wing;
 use gpui::prelude::*;
 use gpui::*;
+use icons::prelude::Icons;
 use theme::ActiveTheme;
-use theme::prelude::AlphaExt;
 
 impl RunningApps {
     fn handle_card_mouse_move(&mut self, event: &MouseMoveEvent, cx: &mut Context<Self>) -> bool {
@@ -131,6 +130,7 @@ impl RunningApps {
                         //     top_level.app_id(),
                         //     app.name
                         // );
+                        println!("closing top level {:?}", top_level.app_id());
                         top_level.close();
                     }
                 }
@@ -184,6 +184,8 @@ impl RunningApps {
         let mut scale_factor = 1.0;
         let mut opacity = 1.0;
 
+        let app_bg = Icons::global(cx).running_apps.running_app_bg.clone();
+
         if let AppCardAnimation::ClearingAll { start_time } = self.animation_state {
             let elapsed = start_time.elapsed().as_secs_f32();
 
@@ -235,9 +237,10 @@ impl RunningApps {
                 .left(left_pos)
                 .w(w)
                 .h(h)
-                .opacity(opacity)
-                .rounded_xl()
-                .shadow_xl()
+                // .bg(gpui::green())
+                // .opacity(opacity)
+                // .rounded_xl()
+                // .shadow_xl()
                 .on_mouse_down(
                     MouseButton::Left,
                     cx.listener(move |this, event, window, cx| {
@@ -260,95 +263,113 @@ impl RunningApps {
                         }
                     }),
                 )
-                .child({
-                    let mut outer_wing = wing();
-                    outer_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
-                    outer_wing.border_radius(px(12.));
-                    outer_wing.border_width(px(2.0));
-                    outer_wing
-                        .border_color(colors.accent_200.with_alpha(0.6))
-                        .size_full()
-                        .flex()
+                .child(img(app_bg).size_full())
+                .child(
+                    div()
                         .absolute()
-                        .bg(colors.background_900)
-                        .child(
-                             div()
-                                .id("inner-wing")   
-                                .flex_1()  
-                                .child({
-                                    let mut inner_wing = wing()
-                                        .size_full()
-                                        .bg(colors.accent_200.with_alpha(0.1))
-                                        .child(
-                                            div()
-                                                .absolute()
-                                                .top(px(0.))
-                                                .left(px(0.))
-                                                .h(upper_wing_height)
-                                                .w_1_2()
-                                                .pt(px(15. * scale_factor))
-                                                .pl(px(20. * scale_factor))
-                                                .flex()
-                                                .flex_row()
-                                                .gap_2()
-                                                .items_center()
-                                                .child(
-                                                    div()
-                                                    .flex_1()
-                                                        .text_color(colors.foreground_200)                                
-                                                        .text_size(px(20.0 * scale_factor))
-                                                        .font_weight(FontWeight::BOLD)
-                                                        .text_ellipsis()
-                                                        .w(upper_wing_width - px(40.0 * scale_factor))
-                                                        .child(app_name)
-                                                )
-                                        )
-                                        .child(
-                                            div()
-                                                .absolute()
-                                                .size_full()
-                                                .flex()
-                                                .items_center()
-                                                .justify_center()
-                                                .p_4()
-                                                .top(upper_wing_height)
-                                                .child(
-                                                    div()
-                                                        .size_full()
-                                                        .rounded_2xl()
-                                                        .bg(colors.background_1000)
-                                                        .flex()
-                                                        .p_8()
-                                                        .relative()
-                                                        .child(
-                                                            div()
-                                                                .rounded(px(20.0))
-                                                                // .bg(colors.background_700)
-                                                                .flex()
-                                                                .w(w * 0.45)
-                                                                .h(h * 0.35)
-                                                                .top(upper_wing_height * 0.30)
-                                                                .left(w * 0.17)
-                                                                .p_6()
-                                                                .items_center()
-                                                                .justify_center()
-                                                                .when_some(app_icon_path, |this, icon| {
-                                                                    this.child(
-                                                                        img(icon)
-                                                                            .w(w * 0.40)
-                                                                            .h(h * 0.35)
-                                                                    )
-                                                                })
-                                                        )
-                                                )
-                                        );
-                                        inner_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
-                                        inner_wing.border_radius(px(12.));
-
-                                        inner_wing
-                                })
-                        )
+                        .top(px(15. * scale_factor))
+                        .left(px(20. * scale_factor))
+                        .h(upper_wing_height)
+                        .w_1_2()
+                        .text_color(colors.foreground_200)
+                        .text_size(px(20.0 * scale_factor))
+                        .font_weight(FontWeight::BOLD)
+                        .items_center()
+                        .text_ellipsis()
+                        .child(app_name),
+                )
+                .when_some(app_icon_path, |this, icon| {
+                    this.child(
+                        div()
+                            .size_full()
+                            .absolute()
+                            .top(px(144.))
+                            .left(px(140.))
+                            .child(img(icon).w(w * 0.40).h(h * 0.35)),
+                    )
                 }),
+            // .child({
+            //     let mut outer_wing = wing();
+            //     outer_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
+            //     outer_wing.border_radius(px(12.));
+            //     outer_wing.border_width(px(2.0));
+            //     outer_wing
+            //         .border_color(colors.accent_200.with_alpha(0.6))
+            //         .size_full()
+            //         .flex()
+            //         .absolute()
+            //         .bg(colors.background_900)
+            //         .child(div().id("inner-wing").flex_1().child({
+            //             let mut inner_wing = wing()
+            //                 .size_full()
+            //                 .bg(colors.accent_200.with_alpha(0.1))
+            //                 .child(
+            //                     div()
+            //                         .absolute()
+            //                         .top(px(0.))
+            //                         .left(px(0.))
+            //                         .h(upper_wing_height)
+            //                         .w_1_2()
+            //                         .pt(px(15. * scale_factor))
+            //                         .pl(px(20. * scale_factor))
+            //                         .flex()
+            //                         .flex_row()
+            //                         .gap_2()
+            //                         .items_center()
+            //                         .child(
+            //                             div()
+            //                                 .flex_1()
+            //                                 .text_color(colors.foreground_200)
+            //                                 .text_size(px(20.0 * scale_factor))
+            //                                 .font_weight(FontWeight::BOLD)
+            //                                 .text_ellipsis()
+            //                                 .w(upper_wing_width - px(40.0 * scale_factor))
+            //                                 .child(app_name),
+            //                         ),
+            //                 )
+            //                 .child(
+            //                     div()
+            //                         .absolute()
+            //                         .size_full()
+            //                         .flex()
+            //                         .items_center()
+            //                         .justify_center()
+            //                         .p_4()
+            //                         .top(upper_wing_height)
+            //                         .child(
+            //                             div()
+            //                                 .size_full()
+            //                                 .rounded_2xl()
+            //                                 .bg(colors.background_1000)
+            //                                 .flex()
+            //                                 .p_8()
+            //                                 .relative()
+            //                                 .child(
+            //                                     div()
+            //                                         .rounded(px(20.0))
+            //                                         // .bg(colors.background_700)
+            //                                         .flex()
+            //                                         .w(w * 0.45)
+            //                                         .h(h * 0.35)
+            //                                         .top(upper_wing_height * 0.30)
+            //                                         .left(w * 0.17)
+            //                                         .p_6()
+            //                                         .items_center()
+            //                                         .justify_center()
+            //                                         .when_some(app_icon_path, |this, icon| {
+            //                                             this.child(
+            //                                                 img(icon).w(w * 0.40).h(h * 0.35),
+            //                                             )
+            //                                         }),
+            //                                 ),
+            //                         ),
+            //                 );
+            //             inner_wing.upper_wing_size(size(upper_wing_width, upper_wing_height));
+            //             inner_wing.border_radius(px(12.));
+
+            //             inner_wing
+            //         }))
+            // })
         )
         .with_priority(i + 1)
     }
