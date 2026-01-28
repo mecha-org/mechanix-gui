@@ -49,6 +49,7 @@ pub struct ShellState {
     pub sound_devices: Vec<DeviceInfo>,
     pub brightness_value: f32,
     pub volume: f32,
+    pub volume_mute: bool,
     pub nm_tx: Option<mpsc::Sender<NmMessage>>,
     pub bt_tx: Option<mpsc::Sender<BtMessage>>,
     pub volume_tx: Option<mpsc::Sender<VolumeMessage>>,
@@ -222,9 +223,13 @@ impl ShellStateManager {
                         ShellStateMessage::OutputSoundDevice { device_info } => {
                             ShellState::global_mut(cx).default_sound_device = device_info.clone();
                             ShellState::global_mut(cx).volume = device_info.clone().volume as f32;
+                            ShellState::global_mut(cx).volume_mute = device_info.clone().mute;
                         }
                         ShellStateMessage::OutputSounds { list } => {
                             ShellState::global_mut(cx).sound_devices = list;
+                        }
+                          ShellStateMessage::UpdateVolumeMute { value } => {
+                            ShellState::global_mut(cx).volume_mute = value;
                         }
                         ShellStateMessage::Brightness { value } => {
                             ShellState::global_mut(cx).brightness_value = if value == 0. {DEFAULT_MIN_BRIGHTNESS} else {value};
@@ -427,6 +432,8 @@ impl ShellStateManager {
                                     match pulse_manager.handle.set_sink_volume_by_name(&name, &value).await {
                                         Ok(_) => {
                                             // get_sound_device_info(&mut message_tx, &pulse_manager).await;
+                                            let mute = value <= 0. ;
+                                            let _ = message_tx.send(ShellStateMessage::UpdateVolumeMute { value : mute }).await;
                                         },
                                         Err(e) => {
                                             eprintln!("Failed to set volume: {}", e);
@@ -436,7 +443,7 @@ impl ShellStateManager {
                                 Some(VolumeMessage::MuteSink { name }) => {
                                     match pulse_manager.handle.set_sink_mute_by_name(&name).await {
                                         Ok(_) => {
-                                            // get_sound_device_info(&mut message_tx, &pulse_manager).await;
+                                            let _ = message_tx.send(ShellStateMessage::UpdateVolumeMute { value : true }).await;
                                         }
                                         Err(e) => {
                                             eprintln!("Failed to set mute: {}", e);
@@ -446,7 +453,7 @@ impl ShellStateManager {
                                 Some(VolumeMessage::UnmuteSink { name }) => {
                                     match pulse_manager.handle.set_sink_unmute_by_name(&name).await {
                                         Ok(_) => {
-                                        // get_sound_device_info(&mut message_tx, &pulse_manager).await; 
+                                            let _ = message_tx.send(ShellStateMessage::UpdateVolumeMute { value : false }).await;
                                         }
                                         Err(e) => {
                                             eprintln!("Failed to unset mute: {}", e);
@@ -456,7 +463,7 @@ impl ShellStateManager {
                                 Some(VolumeMessage::RequestOutputSounds) => {
                                     match pulse_manager.handle.get_sinks().await {
                                         Ok(list) => {
-                                               let _ = message_tx.send(ShellStateMessage::OutputSounds { list }).await;
+                                           let _ = message_tx.send(ShellStateMessage::OutputSounds { list }).await;
                                         }
                                         Err(e) => {
                                             eprintln!("Failed to unset mute: {}", e);
