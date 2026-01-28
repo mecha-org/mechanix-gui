@@ -136,7 +136,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
   TextStyle listItemTitleTextStyle(BuildContext context) {
     return TextStyle(
-      fontSize: 18,
+      fontSize: 20,
       color: context.colorScheme.onSurface,
       fontWeight: FontWeight.w400,
     );
@@ -167,7 +167,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final selectedCount = selectedPaths.length;
     final label = selectedCount > 1
         ? " $selectedCount items"
-        : " '${selectedPaths.first.split('/').last}'";
+        : " ${selectedPaths.first.split('/').last}";
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -206,14 +206,14 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         ), // Navigation bar
         Container(
           color: context.surfaceContainerHigh,
-          height: 60,
+          height: 66,
           child: Row(
             children: [
               if (isSearching) ...[
                 Expanded(
                   child: MechanixTextInput.search(
                     theme: MechanixTextInputThemeData(
-                      widgetHeight: 60,
+                      widgetHeight: 66,
                       widgetDecoration: BoxDecoration(
                         color: context.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(0),
@@ -251,15 +251,15 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 Expanded(
                   child: MechanixBottomBar(
                     theme: MechanixBottomBarThemeData(
-                      height: 50,
-                      decoration: BoxDecoration(
-                          color: context.colorScheme.surfaceContainerHigh),
-                    ),
+                        height: 66,
+                        decoration: BoxDecoration(
+                            color: context.colorScheme.surfaceContainerHigh),
+                        widgetPadding:
+                            const EdgeInsets.only(left: 8, top: 10, right: 8)),
                     leadingWidget: [
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.back,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -270,9 +270,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                     ],
                     anchorWidget: [
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.search,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -281,9 +280,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         },
                       ),
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.home,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -292,9 +290,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         },
                       ),
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.createFolder,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -428,7 +425,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     return Expanded(
       child: MechanixTextInput.textInput(
         theme: MechanixTextInputThemeData(
-          widgetHeight: 64,
+          widgetHeight: 66,
           widgetDecoration: BoxDecoration(
             color: context.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(0),
@@ -439,27 +436,33 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         initialValue: renameText,
         onChanged: (v) => setState(() => renameText = v),
         anchorWidget: showCheck
-            ? IconButton(
-                icon: Icon(Icons.check, color: context.colorScheme.onSurface),
-                onPressed: () {
-                  final filesBloc = context.read<FilesBloc>();
-                  filesBloc.add(
-                    Rename(
-                      oldPath: createdFolderPath,
-                      newName: renameText,
-                      controller: controller,
-                    ),
-                  );
-                  setState(() => showRenameBar = false);
-                  controller.clearNewFolder();
-                },
+            ? Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: IconButton(
+                  icon: const Icon(Icons.check),
+                  onPressed: () {
+                    final filesBloc = context.read<FilesBloc>();
+                    filesBloc.add(
+                      Rename(
+                        oldPath: createdFolderPath,
+                        newName: renameText,
+                        controller: controller,
+                      ),
+                    );
+                    setState(() => showRenameBar = false);
+                    controller.clearNewFolder();
+                  },
+                ),
               )
-            : IconButton(
-                icon: Icon(Icons.close, color: context.colorScheme.onSurface),
-                onPressed: () {
-                  setState(() => showRenameBar = false);
-                  controller.clearNewFolder();
-                },
+            : Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() => showRenameBar = false);
+                    controller.clearNewFolder();
+                  },
+                ),
               ),
       ),
     );
@@ -501,7 +504,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.home,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                   // Downloads
                   SectionListItems.leadingIcon(
                       title: "Downloads",
@@ -512,7 +515,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.downloads,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
 
                   // Documents
                   SectionListItems.leadingIcon(
@@ -524,7 +527,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.homeDocuments,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                 ]),
 
             // Root dir
@@ -533,7 +536,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 theme: MechanixSectionListThemeData(
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     color: context.colorScheme.onSecondaryFixed,
                     fontWeight: FontWeight.w500,
                   ),
@@ -548,7 +551,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.hardDrive,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                 ]),
           ],
         ),
@@ -594,7 +597,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
       context: context,
       notificationType: NotificationType.success,
       message:
-          "Moved $movePathCount item${movePathCount > 1 ? 's' : ''} to '$folderName'",
+          "Moved $movePathCount item${movePathCount > 1 ? 's' : ''} to $folderName",
     );
   }
 }
@@ -675,7 +678,7 @@ Future<void> handleConflictsSequentially(
                   Text(
                     'Would you like to replace?',
                     style: TextStyle(
-                        color: context.colorScheme.onSurface, fontSize: 16),
+                        color: context.colorScheme.onSurface, fontSize: 18),
                   ),
                   const SizedBox(height: 16),
                   Row(

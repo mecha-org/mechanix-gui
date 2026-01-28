@@ -124,7 +124,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
 
   TextStyle listItemTitleTextStyle(BuildContext context) {
     return TextStyle(
-      fontSize: 18,
+      fontSize: 20,
       color: context.colorScheme.onSurface,
       fontWeight: FontWeight.w400,
     );
@@ -145,7 +145,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
     final selectedCount = selectedPaths.length;
     final label = selectedCount > 1
         ? " $selectedCount items"
-        : " '${selectedPaths.first.split('/').last}'";
+        : " ${selectedPaths.first.split('/').last}";
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -184,7 +184,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         ),
         // Navigation bar
         Container(
-          height: 64,
+          height: 66,
           color: context.secondaryContainer,
           child: Row(
             children: [
@@ -192,7 +192,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 Expanded(
                   child: MechanixTextInput.search(
                     theme: MechanixTextInputThemeData(
-                      widgetHeight: 64,
+                      widgetHeight: 66,
                       widgetDecoration: BoxDecoration(
                         color: context.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(0),
@@ -229,13 +229,18 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 Expanded(
                   child: MechanixBottomBar(
                     theme: MechanixBottomBarThemeData(
-                      height: 60,
-                      decoration: BoxDecoration(
-                          color: context.colorScheme.surfaceContainerHigh),
-                    ),
+                        height: 66,
+                        decoration: BoxDecoration(
+                            color: context.colorScheme.surfaceContainerHigh),
+                        widgetPadding:
+                            const EdgeInsets.only(left: 8, top: 10, right: 8)),
                     leadingWidget: [
                       BottomBarButton(
-                        iconPath: Images.back,
+                        iconWidget: const IconWidget(
+                          iconPath: Images.back,
+                          iconHeight: 28,
+                          iconWidth: 28,
+                        ),
                         onPressed: () {
                           (isHomePageDir ? homeNavigation() : handleBack());
                         },
@@ -243,9 +248,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                     ],
                     anchorWidget: [
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.search,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -254,9 +258,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         },
                       ),
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.home,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -265,9 +268,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         },
                       ),
                       BottomBarButton(
-                        iconWidget: IconWidget(
+                        iconWidget: const IconWidget(
                           iconPath: Images.createFolder,
-                          iconColor: context.colorScheme.onSurface,
                           iconHeight: 28,
                           iconWidth: 28,
                         ),
@@ -395,6 +397,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
     return Expanded(
       child: MechanixTextInput.textInput(
         theme: MechanixTextInputThemeData(
+          widgetHeight: 66,
           widgetDecoration: BoxDecoration(
             color: context.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(0),
@@ -405,27 +408,33 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         initialValue: renameText,
         onChanged: (v) => setState(() => renameText = v),
         anchorWidget: showCheck
-            ? IconButton(
-                icon: Icon(Icons.check, color: context.colorScheme.onSurface),
-                onPressed: () {
-                  final filesBloc = context.read<FilesBloc>();
-                  filesBloc.add(
-                    Rename(
-                      oldPath: createdFolderPath,
-                      newName: renameText,
-                      controller: controller,
-                    ),
-                  );
-                  setState(() => showRenameBar = false);
-                  controller.clearNewFolder();
-                },
+            ? Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: IconButton(
+                  icon: const Icon(Icons.check),
+                  onPressed: () {
+                    final filesBloc = context.read<FilesBloc>();
+                    filesBloc.add(
+                      Rename(
+                        oldPath: createdFolderPath,
+                        newName: renameText,
+                        controller: controller,
+                      ),
+                    );
+                    setState(() => showRenameBar = false);
+                    controller.clearNewFolder();
+                  },
+                ),
               )
-            : IconButton(
-                icon: Icon(Icons.close, color: context.colorScheme.onSurface),
-                onPressed: () {
-                  setState(() => showRenameBar = false);
-                  controller.clearNewFolder();
-                },
+            : Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() => showRenameBar = false);
+                    controller.clearNewFolder();
+                  },
+                ),
               ),
       ),
     );
@@ -467,7 +476,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.home,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                   // Downloads
                   SectionListItems.leadingIcon(
                       title: "Downloads",
@@ -478,7 +487,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.downloads,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
 
                   // Documents
                   SectionListItems.leadingIcon(
@@ -490,7 +499,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                       },
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.homeDocuments,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                 ]),
 
             // Root dir
@@ -499,7 +508,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 theme: MechanixSectionListThemeData(
                   backgroundColor: WidgetStateProperty.all(Colors.transparent),
                   titleTextStyle: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     color: context.colorScheme.onSecondaryFixed,
                     fontWeight: FontWeight.w500,
                   ),
@@ -514,7 +523,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                     },
                     iconColor: context.colorScheme.primaryContainer,
                     iconPath: Images.hardDrive,
-                    iconSize: const Size(24, 24),
+                    iconSize: const Size(26, 26),
                   ),
                 ]),
           ],

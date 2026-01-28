@@ -391,7 +391,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
   }
 
   Widget _buildEditorBar(BuildContext context) {
-    const double iconGap = 38;
+    const double iconGap = 40;
     const double sidePadding = 16;
 
     return Container(

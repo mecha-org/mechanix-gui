@@ -162,7 +162,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                         });
                       },
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 14),
                     Expanded(
                         child: SliderTheme(
                       data: SliderTheme.of(context).copyWith(
@@ -190,7 +190,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                         },
                       ),
                     )),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 14),
                     StreamBuilder<double>(
                       stream: player.stream.volume,
                       builder: (_, snapshot) {

@@ -28,6 +28,7 @@ import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
+import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/notification/notification_type.dart';
@@ -245,7 +246,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 MechanixNotification.show(
                   context: context,
                   notificationType: NotificationType.success,
-                  message: "ompression complete",
+                  message: "Compression complete",
                 );
               }
             }
@@ -336,7 +337,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                   ? Text(
                       "${selectedPaths.length} Selected",
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         color: context.colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -815,7 +816,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             color: isZipFileSelected
                 ? context.colorScheme.onSurface
                 : context.colorScheme.onSurfaceVariant,
-            height: 20,
+            height: 22,
           ),
           title: 'Extract',
           onTap: () {
@@ -829,7 +830,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             color: hasSelection
                 ? context.colorScheme.onSurface
                 : context.colorScheme.onSurfaceVariant,
-            height: 20,
+            height: 22,
           ),
           title: 'Compress',
           onTap: hasSelection ? handleCompress : null,
@@ -841,7 +842,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             color: isFileSelected
                 ? context.colorScheme.onSurface
                 : context.colorScheme.onSurfaceVariant,
-            height: 20,
+            height: 22,
           ),
           title: 'Duplicate',
           onTap: isFileSelected
@@ -857,7 +858,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             color: selectedPaths.length == 1
                 ? context.colorScheme.onSurface
                 : context.colorScheme.onSurfaceVariant,
-            height: 20,
+            height: 22,
           ),
           title: 'Rename',
           onTap: selectedPaths.length == 1
@@ -899,7 +900,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
             color: selectedPaths.length == 1
                 ? context.colorScheme.onSurface
                 : context.colorScheme.onSurfaceVariant,
-            height: 20,
+            height: 22,
           ),
           title: 'Properties',
           onTap: selectedPaths.length == 1 ? handleProperties : null,
@@ -944,6 +945,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 ? context.colorScheme.onSurfaceVariant
                 : context.colorScheme.onSurface,
             height: mechanixIconSize,
+            width: mechanixIconSize,
           ),
           disabled: isPasteDisabled,
           onTap: () {
@@ -1241,48 +1243,52 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         });
                       },
                       anchorWidget: showCheck
-                          ? IconButton(
-                              icon: Icon(Icons.check,
-                                  color: context.colorScheme.onSurface),
-                              onPressed: () async {
-                                final trimmed = currentName.trim();
+                          ? Padding(
+                              padding: const EdgeInsets.only(left: 5),
+                              child: IconButton(
+                                icon: const Icon(Icons.check),
+                                onPressed: () async {
+                                  final trimmed = currentName.trim();
 
-                                if (trimmed.isEmpty) return;
+                                  if (trimmed.isEmpty) return;
 
-                                final zipPath = p.join(
-                                  destinationDirPath,
-                                  trimmed.endsWith('.zip')
-                                      ? trimmed
-                                      : '$trimmed.zip',
-                                );
+                                  final zipPath = p.join(
+                                    destinationDirPath,
+                                    trimmed.endsWith('.zip')
+                                        ? trimmed
+                                        : '$trimmed.zip',
+                                  );
 
-                                final exists = await File(zipPath).exists();
-                                if (exists) {
-                                  setState(() {
-                                    currentName = "";
-                                  });
-                                  return;
-                                }
+                                  final exists = await File(zipPath).exists();
+                                  if (exists) {
+                                    setState(() {
+                                      currentName = "";
+                                    });
+                                    return;
+                                  }
 
-                                entry?.remove();
+                                  entry?.remove();
 
-                                filesBloc.add(
-                                  CompressEntitiesEvent(
-                                    sourcePaths: selectedPaths.toList(),
-                                    destinationZipPath: zipPath,
-                                    controller: controller,
-                                  ),
-                                );
+                                  filesBloc.add(
+                                    CompressEntitiesEvent(
+                                      sourcePaths: selectedPaths.toList(),
+                                      destinationZipPath: zipPath,
+                                      controller: controller,
+                                    ),
+                                  );
 
-                                clearSelection();
-                              },
+                                  clearSelection();
+                                },
+                              ),
                             )
-                          : IconButton(
-                              icon: Icon(Icons.close,
-                                  color: context.colorScheme.onSurface),
-                              onPressed: () {
-                                entry?.remove();
-                              },
+                          : Padding(
+                              padding: const EdgeInsets.only(left: 5),
+                              child: IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  entry?.remove();
+                                },
+                              ),
                             ),
                     ),
                   ),
@@ -1589,44 +1595,44 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         },
                         initialValue: initialName,
                         anchorWidget: showCheck
-                            ? IconButton(
-                                icon: Icon(Icons.check,
-                                    color: context.colorScheme.onSurface),
-                                onPressed: () {
-                                  entry?.remove();
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 5),
+                                child: IconButton(
+                                  icon: const Icon(Icons.check),
+                                  onPressed: () {
+                                    entry?.remove();
 
-                                  final newFullPath = p.join(
-                                    p.dirname(oldPath),
-                                    folderName,
-                                  );
+                                    final newFullPath = p.join(
+                                      p.dirname(oldPath),
+                                      folderName,
+                                    );
 
-                                  filesBloc.add(
-                                    Rename(
-                                      oldPath: oldPath,
-                                      newName: folderName,
-                                      controller: controller,
-                                    ),
-                                  );
+                                    filesBloc.add(
+                                      Rename(
+                                        oldPath: oldPath,
+                                        newName: folderName,
+                                        controller: controller,
+                                      ),
+                                    );
 
-                                  controller.clearLiveRename();
-                                  controller.clearNewFolder();
+                                    controller.clearLiveRename();
+                                    controller.clearNewFolder();
 
-                                  completer.complete(newFullPath);
-                                },
-                              )
-                            : IconButton(
-                                icon: Icon(
-                                  Icons.close,
-                                  color: context.colorScheme.onSurface,
-                                  size: 24,
+                                    completer.complete(newFullPath);
+                                  },
                                 ),
-                                onPressed: () {
-                                  entry?.remove();
-                                  controller.clearLiveRename();
-                                  controller.clearNewFolder();
-                                  // Return null (cancel)
-                                  completer.complete(null);
-                                },
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.only(left: 5),
+                                child: IconButton(
+                                  icon: const Icon(Icons.close),
+                                  onPressed: () {
+                                    entry?.remove();
+                                    controller.clearLiveRename();
+                                    controller.clearNewFolder();
+                                    completer.complete(null);
+                                  },
+                                ),
                               ),
                       ),
                     ),
@@ -1744,7 +1750,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 Text(
                   message,
                   style: TextStyle(
-                      color: context.colorScheme.onSurface, fontSize: 16),
+                      color: context.colorScheme.onSurface, fontSize: 18),
                 ),
                 const SizedBox(height: 16),
                 Row(

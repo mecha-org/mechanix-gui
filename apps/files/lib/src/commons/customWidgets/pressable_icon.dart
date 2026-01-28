@@ -32,6 +32,8 @@ class _PressableIconState extends State<PressableIcon> {
       onTap: disabled ? null : widget.onTap,
       child: IconWidget(
         iconPath: widget.iconPath,
+        iconHeight: 26,
+        iconWidth: 26,
         iconColor: disabled
             ? context.colorScheme.outline
             : pressed

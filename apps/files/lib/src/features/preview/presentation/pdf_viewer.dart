@@ -137,13 +137,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                         password = value;
                       },
                       anchorWidget: Padding(
-                        padding: const EdgeInsets.only(left: 2.0, right: 2.0),
+                        padding: const EdgeInsets.only(left: 5.0, right: 2.0),
                         child: IconButton(
-                          icon: Icon(
-                            Icons.close,
-                            color: context.colorScheme.onSurface,
-                            size: 24,
-                          ),
+                          icon: const Icon(Icons.close),
                           onPressed: () {
                             password = '';
                             Navigator.of(bottomSheetContext).pop();
@@ -252,7 +248,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   'Page $_currentPage of $_pageCount',
                   style: TextStyle(
                     color: context.colorScheme.onSurface,
-                    fontSize: 12,
+                    fontSize: 18,
                     fontWeight: FontWeight.w500,
                     decoration: TextDecoration.none,
                   ),

@@ -65,7 +65,7 @@ class FileHomePageState extends State<FileHomePage> {
         title: Text(
           "Files",
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 26,
             color: context.colorScheme.primary,
             fontWeight: FontWeight.w600,
           ),
@@ -84,35 +84,35 @@ class FileHomePageState extends State<FileHomePage> {
                       onTap: () => onTap(context, homeDir, "Home"),
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.home,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                   SectionListItems.leadingIcon(
                       title: "Recents",
                       titleTextStyle: listItemTitleTextStyle(context),
                       onTap: () => onTap(context, recentDir, "Recents"),
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.recent,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                   SectionListItems.leadingIcon(
                       title: "Downloads",
                       titleTextStyle: listItemTitleTextStyle(context),
                       onTap: () => onTap(context, downloadsDir, "Downloads"),
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.downloads,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                   SectionListItems.leadingIcon(
                       title: "Documents",
                       titleTextStyle: listItemTitleTextStyle(context),
                       onTap: () => onTap(context, documentsDir, "Documents"),
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.homeDocuments,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                 ],
               ),
               MechanixSectionList(
                 title: 'Hard Drive',
                 theme: MechanixSectionListThemeData(
                   titleTextStyle: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     color: context.colorScheme.onSecondaryFixed,
                     fontWeight: FontWeight.w500,
                   ),
@@ -124,7 +124,7 @@ class FileHomePageState extends State<FileHomePage> {
                       onTap: () => onTap(context, "/", "Root"),
                       iconColor: context.colorScheme.primaryContainer,
                       iconPath: Images.hardDrive,
-                      iconSize: const Size(24, 24)),
+                      iconSize: const Size(26, 26)),
                 ],
               ),
             ],
@@ -136,7 +136,7 @@ class FileHomePageState extends State<FileHomePage> {
 
   TextStyle listItemTitleTextStyle(BuildContext context) {
     return TextStyle(
-      fontSize: 18,
+      fontSize: 20,
       color: context.colorScheme.onSurface,
       fontWeight: FontWeight.w500,
     );
