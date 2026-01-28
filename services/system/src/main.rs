@@ -5,7 +5,7 @@ mod interfaces;
 use crate::display::DisplayInterface;
 use crate::interfaces::hardware_buttons::{hw_buttons_notification_stream, HwButtonInterface};
 use anyhow::Result;
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use tokio::task::JoinHandle;
 use zbus::connection;
 
@@ -20,6 +20,7 @@ pub const VOLUME_DOWN_BUTTON_PATH: &str = "/dev/input/event4";
 pub const EXTENSION_PATH: &str = "/dev/input/event5";
 pub const SERVED_AT: &str = "/org/mechanix/services/Display";
 
+#[derive(Debug)]
 struct SystemPaths {
     display_brightness_path: String,
     power_button_path: String,
@@ -70,10 +71,12 @@ async fn main() -> Result<()> {
     env_logger::init();
     let paths = get_system_paths();
 
+    info!("system paths for services: {:?}", paths);
     let mut handles: Vec<JoinHandle<()>> = Vec::new();
     let display_config = DisplayInterface {
         path: paths.display_brightness_path,
     };
+
 
     let _display_bus_connection = connection::Builder::system()?
         .name(DISPLAY_CONNECTION_BUS_NAME)?

@@ -120,11 +120,11 @@ impl Render for RunningApps {
                         .h(bar_size.height)
                         .child(
                             div()
-                            .id("center-bar")
-                            .bg(colors.accent_200)
-                            .w(bar_size.width)
-                            .h(px(4.0))
-                            .rounded(px(4.0)),
+                                .id("center-bar")
+                                .bg(colors.accent_200)
+                                .w(bar_size.width)
+                                .h(px(4.0))
+                                .rounded(px(4.0)),
                         ),
                 )
                 .priority(1000),
@@ -180,6 +180,7 @@ impl RunningApps {
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        println!("update_running_apps() {:?}", top_levels.len());
         let mut apps: Vec<(ForeignToplevelHandle, commons::prelude::App)> = Vec::new();
         for top_level in top_levels {
             let Some(app_id) = top_level.app_id() else {
@@ -264,7 +265,7 @@ impl RunningApps {
         cx.notify();
     }
 
-    fn running_apps(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn running_apps(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let has_apps = !self.apps.is_empty();
         let colors = Theme::global(cx).colors.clone();
         let primary_font = Fonts::global(cx).primary.clone();
@@ -278,7 +279,9 @@ impl RunningApps {
             .justify_center()
             .bg(colors.background_1000)
             .font_family(primary_font)
-            .when(has_apps, |this| this.child(self.scroller_container(cx)))
+            .when(has_apps, |this| {
+                this.child(self.scroller_container(window, cx))
+            })
             .when(!has_apps, |this| {
                 this.child(
                     div()
@@ -292,7 +295,7 @@ impl RunningApps {
                                 .text_size(px(16.0))
                                 .line_height(px(24.0))
                                 .text_center()
-                                .font_weight(FontWeight(500.0))                                
+                                .font_weight(FontWeight(500.0))
                                 .max_w(px(300.0))
                                 .child("There are no apps or droids")
                                 .child(div().child("you are looking for.")),
