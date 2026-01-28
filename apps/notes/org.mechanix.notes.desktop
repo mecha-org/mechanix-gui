@@ -7,4 +7,4 @@ TryExec=mechanix_notes -b /usr/share/mechanix/mechanix-notes -w 540 -h 620 -k -s
 Exec=mechanix_notes -b /usr/share/mechanix/mechanix-notes -w 540 -h 620 -k -s 1
 Icon=mechanix_notes
 Terminal=false
-Categories=System;
+Categories=Productivity;
