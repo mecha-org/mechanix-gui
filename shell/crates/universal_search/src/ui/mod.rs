@@ -284,6 +284,10 @@ impl UniversalSearch {
         });
         window.blur();
     }
+
+    pub fn blur_search_input(&mut self, window: &mut Window) {
+        window.blur();
+    }
 }
 
 impl Render for UniversalSearch {
