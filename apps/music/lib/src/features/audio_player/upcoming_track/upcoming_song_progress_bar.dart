@@ -98,7 +98,7 @@ class _UpcomingSongProgressBarState extends State<UpcomingSongProgressBar> {
                 textAlign: TextAlign.right,
                 style: TextStyle(
                   color: context.onSecondaryFixedVariant,
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.w500,
                 ),
               ),

@@ -107,7 +107,7 @@ class _SearchTabState extends State<SearchTab> {
                           "Search for Tracks, Playlists and Artists",
                           style: TextStyle(
                             color: context.colorScheme.onSurfaceVariant,
-                            fontSize: 18,
+                            fontSize: 20,
                             height: 1.45,
                           ),
                         ),
@@ -221,7 +221,7 @@ class _SearchTabState extends State<SearchTab> {
                         "No Results Found",
                         style: TextStyle(
                           color: context.colorScheme.onSurfaceVariant,
-                          fontSize: 18,
+                          fontSize: 20,
                           height: 1.45,
                         ),
                       ),

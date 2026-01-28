@@ -90,7 +90,7 @@ class _PlaylistBottomSheetAddState extends State<PlaylistBottomSheetAdd> {
                 widget.onDraftChanged(value);
               },
               theme: MechanixTextInputThemeData(
-                widgetHeight: 65,
+                widgetHeight: 66,
                 widgetDecoration: BoxDecoration(
                   color: context.surfaceContainerHigh,
                 ),

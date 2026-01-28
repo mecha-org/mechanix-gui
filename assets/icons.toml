@@ -24,6 +24,7 @@
 
 [running_apps]
 "cleanup" = "assets/icons/running-apps/cleanup.svg"
+"running-app-bg" = "assets/icons/running-apps/running-app-bg.png"
 
 [lockscreen]
 "arrow" = "assets/icons/lockscreen/arrow.svg"

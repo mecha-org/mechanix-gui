@@ -102,7 +102,7 @@ class PlaylistTopView extends StatelessWidget {
                       Text(
                         "${playlistSongs.length} tracks, $totalDuration",
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           color: context.colorScheme.onSurface,
                           height: 1.35,
                         ),
@@ -114,7 +114,7 @@ class PlaylistTopView extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             height: 1.35,
                             color: context.onSurfaceVariant,
                           ),

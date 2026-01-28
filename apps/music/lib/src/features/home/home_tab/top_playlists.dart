@@ -87,7 +87,7 @@ class _TopPlaylistsState extends State<TopPlaylists> {
                       'Playlists',
                       style: TextStyle(
                         color: context.onSurfaceVariant,
-                        fontSize: 18,
+                        fontSize: 20,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                       ),

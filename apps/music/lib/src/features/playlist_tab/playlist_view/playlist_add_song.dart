@@ -81,7 +81,7 @@ class PlaylistAddSong extends StatelessWidget {
               Text(
                 "Add a track",
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: context.colorScheme.onSurfaceVariant,
                   height: 1.3,
                   // letterSpacing: -1.1,

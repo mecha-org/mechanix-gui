@@ -57,7 +57,7 @@ class EmptyPlaylistView extends StatelessWidget {
                    Text(
                     "Add a new playlist",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       color: context.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),

@@ -260,4 +260,11 @@ class JumpToIndex extends SongsEvent {
 
   const JumpToIndex(this.index);
 }
+
 class MediaKitInitialised extends SongsEvent {}
+
+class AddPlaylistToLiked extends SongsEvent {
+  final String playlistId;
+  final bool isLiked;
+  const AddPlaylistToLiked(this.playlistId, this.isLiked);
+}
