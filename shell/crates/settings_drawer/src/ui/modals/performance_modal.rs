@@ -3,6 +3,7 @@ use gpui::*;
 use icons::prelude::*;
 use theme::prelude::{AlphaExt, Theme};
 
+use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 use crate::{
     prelude::*,
     ui::{
@@ -10,7 +11,6 @@ use crate::{
         modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
     },
 };
-use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 
 #[derive(Debug)]
 struct PerformanceMode {
@@ -69,9 +69,9 @@ impl SettingsDrawer {
                             .flex_1()
                             .relative()
                             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                px(16.)
-                            } else {
                                 px(18.)
+                            } else {
+                                px(20.)
                             })
                             .children(performance_modes.iter().enumerate().map(|(idx, mode)| {
                                 let is_active = mode.is_active;
@@ -92,7 +92,7 @@ impl SettingsDrawer {
                                         .external_path(SharedString::from(
                                             connected.to_string_lossy().to_string(),
                                         ))
-                                        .size(px(24.))
+                                        .size(px(26.))
                                         .text_color(text_color),
                                 );
 
@@ -116,7 +116,7 @@ impl SettingsDrawer {
                                                             .external_path(SharedString::from(
                                                                 icon.to_string_lossy().to_string(),
                                                             ))
-                                                            .size(px(28.))
+                                                            .size(px(30.))
                                                             .text_color(icon_color),
                                                     ),
                                                 )
@@ -149,7 +149,7 @@ impl SettingsDrawer {
                                                             .external_path(SharedString::from(
                                                                 icon.to_string_lossy().to_string(),
                                                             ))
-                                                            .size(px(28.))
+                                                            .size(px(30.))
                                                             .text_color(icon_color),
                                                     ),
                                                 )

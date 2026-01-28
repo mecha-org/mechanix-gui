@@ -901,7 +901,7 @@ impl SettingsDrawer {
 
         IconButton::new("id_rotation")
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 rotation_icon.to_string_lossy().to_string(),
             )))
             .icon_color(colors.foreground_600)
@@ -923,7 +923,7 @@ impl SettingsDrawer {
         IconButton::new("id_airplane")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(airplane.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -957,7 +957,7 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_screen_mirroring")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 screen_mirroring_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -983,7 +983,7 @@ impl SettingsDrawer {
         IconButton::new("id_terminal")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(terminal.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1002,7 +1002,7 @@ impl SettingsDrawer {
         let colors = cx.theme().colors.clone();
         let microphone_off = Icons::global(cx).settings_drawer.microphone_off.clone();
         IconButton::new("id_microphone")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 microphone_off.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1025,7 +1025,7 @@ impl SettingsDrawer {
             .clone();
 
         IconButton::new("id_screen_recording")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 screen_recording_off.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1047,7 +1047,7 @@ impl SettingsDrawer {
         IconButton::new("id_settings")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(settings.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1068,7 +1068,7 @@ impl SettingsDrawer {
         IconButton::new("id_camera")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(camera_off.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1121,7 +1121,7 @@ impl SettingsDrawer {
                     .external_path(SharedString::from(
                         wireless_icon.to_string_lossy().to_string(),
                     ))
-                    .size(px(36.)),
+                    .size(px(38.)),
             )
             .size((px(ICON_W), px(ICON_H)))
             .active(wireless_details.enabled)
@@ -1179,7 +1179,7 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_bluetooth")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 bluetooth_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
@@ -1226,7 +1226,7 @@ impl SettingsDrawer {
             PowerMode::Low => colors.accent_200,
         };
         IconButton::new("id_power_mode")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 power_mode_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
@@ -1251,7 +1251,7 @@ impl SettingsDrawer {
         let colors = cx.theme().colors.clone();
         let cell_signal_none = Icons::global(cx).settings_drawer.cell_signal_none.clone();
         IconButton::new("id_cell_signal")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 cell_signal_none.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
@@ -1402,7 +1402,7 @@ impl SettingsDrawer {
                                         volume_icon.to_string_lossy().to_string(),
                                     ))
                                     .text_color(volume_icon_color)
-                                    .size(px(32.)),
+                                    .size(px(36.)),
                             )
                             .on_click(cx.listener(
                                 move |this: &mut SettingsDrawer,

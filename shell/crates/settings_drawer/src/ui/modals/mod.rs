@@ -31,9 +31,9 @@ impl SettingsDrawer {
             .justify_start()
             .text_color(colors.foreground_200)
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                px(18.)
+                px(20.)
             } else {
-                px(24.)
+                px(26.)
             })
             .font_weight(FontWeight::SEMIBOLD)
             .pl(px(16.))
@@ -52,22 +52,23 @@ impl SettingsDrawer {
             .flex_row()
             .items_end()
             .justify_start()
+            .items_center()
             .bg(colors.background_1000)
             .border_t_1()
             .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
             .rounded_md()
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                px(16.)
+                px(18.)
             } else {
-                px(20.)
+                px(22.)
             })
             .p_4()
             .flex_shrink_0()
             .child(
                 svg()
                     .external_path(SharedString::from(settings.to_string_lossy().to_string()))
-                    .size(px(28.))
+                    .size(px(30.))
                     .text_color(colors.accent_300),
             )
             .child(

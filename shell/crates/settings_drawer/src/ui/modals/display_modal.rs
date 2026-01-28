@@ -79,7 +79,7 @@ impl SettingsDrawer {
                                                             .to_string_lossy()
                                                             .to_string(),
                                                     ))
-                                                    .size(px(28.))
+                                                    .size(px(30.))
                                                     .text_color(auto_brightness_icon_color),
                                             )
                                             .child(
@@ -87,6 +87,13 @@ impl SettingsDrawer {
                                                     .pl_2()
                                                     .font_weight(FontWeight::NORMAL)
                                                     .text_color(auto_brightness_text_color)
+                                                    .text_size(
+                                                        if self.modal_size != FINAL_MODAL_SIZE {
+                                                            px(18.)
+                                                        } else {
+                                                            px(20.)
+                                                        },
+                                                    )
                                                     .child("Auto brightness"),
                                             ),
                                     )
@@ -122,7 +129,7 @@ impl SettingsDrawer {
                                                     .external_path(SharedString::from(
                                                         dark_mode.to_string_lossy().to_string(),
                                                     ))
-                                                    .size(px(28.))
+                                                    .size(px(30.))
                                                     .text_color(dark_mode_icon_color),
                                             )
                                             .child(
@@ -130,6 +137,13 @@ impl SettingsDrawer {
                                                     .pl_2()
                                                     .font_weight(FontWeight::NORMAL)
                                                     .text_color(dark_mode_text_color)
+                                                    .text_size(
+                                                        if self.modal_size != FINAL_MODAL_SIZE {
+                                                            px(18.)
+                                                        } else {
+                                                            px(20.)
+                                                        },
+                                                    )
                                                     .child("Dark mode"),
                                             ),
                                     )
