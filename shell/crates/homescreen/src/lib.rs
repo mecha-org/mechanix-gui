@@ -40,6 +40,7 @@ pub struct Homescreen {
     state: HomescreenState,
     status_bar_size: Size<Pixels>,
     _system_usage_subscription: Subscription,
+    search_handle: Option<Entity<universal_search::prelude::UniversalSearch>>,
 }
 
 pub struct SystemUsageState {
@@ -141,8 +142,11 @@ impl Homescreen {
         })
         .detach();
 
+        let universal_search_widget = UniversalSearchWidget::new(cx, colors.background_1000, false);
+        let search_handle = universal_search_widget.search_handle();
+
         state.create_widget(
-            UniversalSearchWidget::new(cx, colors.background_1000, false),
+            universal_search_widget,
             0,
             Bounds {
                 origin: point(0, 0),
@@ -363,26 +367,38 @@ impl Homescreen {
             state,
             status_bar_size,
             _system_usage_subscription,
+            search_handle: Some(search_handle),
         }
     }
 
     fn handle_mouse_down(
         &mut self,
         event: &MouseDownEvent,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
         InputManager::mouse_down(event, &mut self.state);
+
+        // Blur search input if clicking outside the search widget
+        if !self.is_search_widget_clicked(event.position) {
+            self.blur_search_input(window, cx);
+        }
+
         cx.notify();
     }
 
     fn handle_mouse_move(
         &mut self,
         event: &MouseMoveEvent,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        let old_page = self.state.active_page;
         if InputManager::mouse_move(event, &mut self.state) {
+            // Blur search input if page changed during edge hover
+            if old_page != self.state.active_page {
+                self.blur_search_input(window, cx);
+            }
             cx.notify();
         }
     }
@@ -390,11 +406,36 @@ impl Homescreen {
     fn handle_mouse_up(
         &mut self,
         event: &MouseUpEvent,
-        _window: &mut Window,
+        window: &mut Window,
         cx: &mut Context<Self>,
     ) {
+        let old_page = self.state.active_page;
         InputManager::mouse_up(event, &mut self.state);
+
+        // Blur search input if page changed
+        if old_page != self.state.active_page {
+            self.blur_search_input(window, cx);
+        }
+
         cx.notify();
+    }
+
+    fn blur_search_input(&self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(search_handle) = &self.search_handle {
+            search_handle.update(cx, |search, _cx| {
+                search.blur_search_input(window);
+            });
+        }
+    }
+
+    fn is_search_widget_clicked(&self, position: Point<Pixels>) -> bool {
+        // Check if click is within the search widget (page 0)
+        if self.state.active_page == 0 {
+            // Search widget is on page 0 and takes up the full screen
+            true
+        } else {
+            false
+        }
     }
 }
 
