@@ -106,7 +106,7 @@ pub async fn build_message_for_event(event: KeyEvent, cx: &gpui::AsyncApp) -> Op
             let executor = cx.background_executor().clone();
             cx.background_executor()
                 .spawn(async move {
-                    executor.timer(Duration::from_secs(1)).await;
+                    executor.timer(Duration::from_millis(1200)).await;
                 })
                 .await;
 
@@ -131,12 +131,7 @@ pub async fn build_message_for_event(event: KeyEvent, cx: &gpui::AsyncApp) -> Op
         }
         KeyEvent::Released(Key::ExtensionDetection) => {
             println!("hardware_buttons: extension detection released");
-            let detected_extension_name = match get_detected_extension_name().await {
-                Ok(extension) => extension,
-                Err(_) => Extension::Unknown,
-            };
             set_setting("org.mechanix.desktop.settings.extension.detected", "false").await;
-            set_setting("org.mechanix.desktop.settings.extension.name", &detected_extension_name.to_string()).await;
 
             // message = Some(Message::SetExtensionName(detected_extension_name.to_string()));
 
@@ -200,9 +195,6 @@ async fn get_detected_extension_name() -> Result<Extension> {
                 return Ok(extension);
             }
         }
-        println!("ATEEEEMPPPPP---------------- {:?}", _attempt);
-        // Optional: small delay between retries
-        // tokio::time::sleep(Duration::from_millis(100)).await;
     }
 
     Ok(Extension::Unknown)
@@ -213,8 +205,8 @@ pub fn extension_from_vid_pid(vendor_id: u16, product_id: u16) -> Option<Extensi
     match (vendor_id, product_id) {
         (0xce07, 0x0001) => Some(Extension::Keyboard),
         (0xce07, 0x0002) => Some(Extension::Gamepad),
-        (0xce07, 0x0003) => Some(Extension::Gpio),
         (0x0483, 0x572b) => Some(Extension::Gamepad),
+        (0xce07, 0x0003) => Some(Extension::Gpio),
         _ => None, // ← IMPORTANT
     }
 }
