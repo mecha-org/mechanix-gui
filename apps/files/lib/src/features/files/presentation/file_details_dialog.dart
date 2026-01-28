@@ -79,7 +79,7 @@ class FileDetailsDialog extends StatelessWidget {
                                 style: TextStyle(
                                   color: context
                                       .colorScheme.onSecondaryFixedVariant,
-                                  fontSize: 20,
+                                  fontSize: 22,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -96,7 +96,7 @@ class FileDetailsDialog extends StatelessWidget {
                                         style: TextStyle(
                                           color: context
                                               .colorScheme.onSecondaryContainer,
-                                          fontSize: 20,
+                                          fontSize: 22,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -104,8 +104,8 @@ class FileDetailsDialog extends StatelessWidget {
                                     const SizedBox(width: 8),
                                     Image.asset(
                                       fileItem.iconPath,
-                                      width: 24,
-                                      height: 24,
+                                      width: 26,
+                                      height: 26,
                                       color:
                                           context.colorScheme.primaryContainer,
                                     ),
@@ -143,13 +143,13 @@ Widget buildDetailRow(
         Text(title,
             style: TextStyle(
               color: context.colorScheme.onSurface,
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w400,
             )),
         Text(value,
             style: TextStyle(
               color: context.colorScheme.onSurface,
-              fontSize: 18,
+              fontSize: 20,
               fontWeight: FontWeight.w400,
             )),
       ],

@@ -375,7 +375,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                 cursorColor: context.colorScheme.primaryFixed,
                 textStyle: const TextStyle(
                   fontFamily: 'monospace',
-                  fontSize: 14,
+                  fontSize: 16,
                   height: 1.4,
                 ),
               ),
@@ -393,7 +393,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                       scrollOffset: _scrollController.offset,
                       textStyle: const TextStyle(
                         fontFamily: 'monospace',
-                        fontSize: 14,
+                        fontSize: 16,
                         height: 1.4,
                       ),
                       padding: const EdgeInsets.only(left: 0, top: 12),
@@ -475,7 +475,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
           ),
         ),
       ],
-      anchorWidgetSpacing: 4,
+      anchorWidgetSpacing: 8,
       anchorWidget: [
         BottomBarButton.widget(
             widget: MechanixFilledButton(
@@ -697,7 +697,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     final beforeText = _code.substring(0, matchIndex);
     final lineIndex = '\n'.allMatches(beforeText).length;
 
-    const double lineHeight = 14 * 1.4; // fontSize * height
+    const double lineHeight = 16 * 1.4; // fontSize * height
     const double topPadding = 12;
 
     final offset = lineIndex * lineHeight + topPadding;

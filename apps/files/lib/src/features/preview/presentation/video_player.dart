@@ -186,7 +186,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                       },
                     ),
 
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 14),
 
                     // Seek slider
                     Expanded(
@@ -216,7 +216,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                       ),
                     ),
 
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 14),
 
                     // Volume mute/unmute
                     StreamBuilder<double>(

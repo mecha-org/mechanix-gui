@@ -404,7 +404,7 @@ MechanixFilledButtonThemeData buttonThemeData(
         color: isDisabled
             ? context.colorScheme.onSecondaryFixed
             : context.colorScheme.onSurface,
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: FontWeight.w400,
       ));
 }
@@ -423,7 +423,7 @@ TextStyle boldStyle(BuildContext context) => TextStyle(
 
 TextStyle previewTitleStyle(BuildContext context) => TextStyle(
       color: context.colorScheme.onSurface,
-      fontSize: 20,
+      fontSize: 22,
       fontWeight: FontWeight.w600,
     );
 

@@ -54,7 +54,7 @@ Widget buildGridView(
               const EdgeInsets.only(left: 20, top: 20, right: 20, bottom: 80),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 30,
+            crossAxisSpacing: 20,
             mainAxisSpacing: 20,
             childAspectRatio: 0.8, // slightly taller to fit name
           ),
@@ -144,7 +144,7 @@ Widget buildGridView(
                             title,
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 18,
                               color: context.colorScheme.onSurface,
                               fontWeight: FontWeight.w400,
                             ),
@@ -194,7 +194,7 @@ Widget buildGridViewForRecentFiles(
       padding: const EdgeInsets.only(left: 20, top: 20, right: 20, bottom: 80),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 30,
+        crossAxisSpacing: 20,
         mainAxisSpacing: 20,
         childAspectRatio: 0.8,
       ),
@@ -262,7 +262,7 @@ Widget buildGridViewForRecentFiles(
                       child: MiddleEllipsisText(
                         file.name,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w400,
                         ),

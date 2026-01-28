@@ -83,7 +83,7 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
               Text(
                 'Would you like to replace?',
                 style: TextStyle(
-                    color: context.colorScheme.onSurface, fontSize: 16),
+                    color: context.colorScheme.onSurface, fontSize: 18),
               ),
               const SizedBox(height: 16),
               Row(
