@@ -141,11 +141,6 @@ impl SettingsDrawer {
                     drop(task);
                 }
 
-                // Avoid sending duplicate values
-                if value as u32 == this.last_brightness_sent as u32 {
-                    return;
-                }
-
                 // Update UI immediately
                 set_brightness(cx, value);
 
@@ -193,6 +188,8 @@ impl SettingsDrawer {
                 if this.volume_slider_value == 0.0 {
                     this.volume_mute = true;
                     mute_volume_to_system(cx);
+                } else {
+                    this.volume_mute = false;
                 }
 
                 // Update UI immediately
@@ -1367,7 +1364,7 @@ impl SettingsDrawer {
 
         let icons = Icons::global(cx).settings_drawer.clone();
 
-        let volume_icon = if self.volume_slider_value <= min_volume_level {
+        let volume_icon = if self.volume_mute {
             icons.volume_off
         } else {
             let range = max_volume_level - min_volume_level;
@@ -1381,7 +1378,7 @@ impl SettingsDrawer {
             }
         };
 
-        let volume_icon_color = if self.volume_mute || self.volume_slider_value == 0. {
+        let volume_icon_color = if self.volume_mute {
             colors.foreground_0
         } else {
             colors.accent_200
@@ -1401,7 +1398,6 @@ impl SettingsDrawer {
                 cx.stop_propagation();
             })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(ModalKind::SoundModal, true)))
-            // .child(self.render_volume_slider(cx))
             .child(
                 div()
                     .id("id_volume")
