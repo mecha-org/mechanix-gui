@@ -20,7 +20,7 @@ target_memory_usage_in_bytes = 50_000_000
 searchable_fields = [
 #    "type",
     "name",
-#    "generic_name",
+    "generic_name",
 #    "comment",
 #    "keywords",
 #    "categories",
