@@ -253,12 +253,12 @@ pub fn status_bar_components(
                 .font_weight(FontWeight::NORMAL)
                 .line_height(px(1.2))
                 .text_color(colors.foreground_200)
-                .text_size(px(16.)),
+                .text_size(px(18.)),
         )
         .child(
             div()
                 .flex()
-                .gap_3()
+                .gap_4()
                 .child(img(wireless_icon_path).w(px(20.)).h(px(20.)))
                 .when(bluetooth_enabled, |this_div| {
                     this_div.child(img(bluetooth_icon_path).w(px(20.)).h(px(20.)))

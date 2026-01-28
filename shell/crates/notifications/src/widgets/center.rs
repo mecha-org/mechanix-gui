@@ -1079,7 +1079,7 @@ impl NotificationCenter {
                         .border_color(colors.accent_200.with_alpha(0.6))
                         .bg(colors.background_1000);
 
-                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    outer_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
                     outer_wing.corner_radii(CornerRadii {
@@ -1100,7 +1100,7 @@ impl NotificationCenter {
                                 colors.accent_200.with_alpha(0.1)
                             });
 
-                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    inner_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
                     inner_wing.upper_wing_side(WingSide::Left);
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_width(px(1.0));
@@ -1127,7 +1127,7 @@ impl NotificationCenter {
                         .border_color(colors.accent_200.with_alpha(0.6))
                         .bg(colors.background_1000);
 
-                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    outer_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
                     outer_wing.corner_radii(CornerRadii {
@@ -1148,7 +1148,7 @@ impl NotificationCenter {
                                 colors.accent_200.with_alpha(0.1)
                             });
 
-                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
+                    inner_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_width(px(1.0));
                     inner_wing.corner_radii(CornerRadii {
@@ -1223,7 +1223,7 @@ impl NotificationCenter {
                                 )
                                 .child(
                                     div()
-                                        .text_sm()
+                                        .text_base()
                                         .font_weight(FontWeight::SEMIBOLD)
                                         .text_color(colors.foreground_500)
                                         .whitespace_normal()
@@ -1237,7 +1237,7 @@ impl NotificationCenter {
                                 )
                                 .child(
                                     div()
-                                        .text_sm()
+                                        .text_base()
                                         .font_weight(FontWeight::SEMIBOLD)
                                         .text_color(colors.foreground_900)
                                         .whitespace_normal()
@@ -1248,7 +1248,8 @@ impl NotificationCenter {
                             if is_expanded {
                                 this.child(
                                     div()
-                                        .mt(px(-12.0))
+                                        .mt(px(-8.0))
+                                        .mb(px(10.))
                                         .left(px(10.0))
                                         .rounded(px(4.0))
                                         .bg(colors.accent_200.with_alpha(0.2))
@@ -1265,7 +1266,8 @@ impl NotificationCenter {
                             } else {
                                 this.child(
                                     div()
-                                        .mt(px(-12.0))
+                                        .mt(px(-8.0))
+                                        .mb(px(10.))
                                         .left(px(10.0))
                                         .rounded(px(4.0))
                                         .bg(colors.accent_200.with_alpha(0.2))
@@ -1341,7 +1343,7 @@ impl NotificationCenter {
                         })
                         .rounded(px(12.0));
 
-                    outer_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    outer_wing.upper_wing_size(Size::new(px(184.0), px(28.0)));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_radius(px(12.0));
                     outer_wing.border_width(px(1.0));
@@ -1364,7 +1366,7 @@ impl NotificationCenter {
                         .px_4()
                         .py_3p5();
 
-                    inner_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    inner_wing.upper_wing_size(Size::new(px(184.0), px(28.0)));
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_radius(px(12.0));
                     inner_wing.border_width(px(1.0));

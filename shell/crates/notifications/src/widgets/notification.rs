@@ -445,7 +445,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
             MarkupNode::Text(text) => {
                 current_line = current_line.child(
                     div()
-                        .text_sm()
+                        .text_base()
                         .text_color(colors.foreground_500)
                         .overflow_hidden()
                         .child(text.clone()),
@@ -457,7 +457,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
                 current_line = current_line.child(
                     div()
                         .id("link")
-                        .text_sm()
+                        .text_base()
                         .text_color(rgb(0x5ab0ff))
                         .underline()
                         .cursor_pointer()
@@ -591,7 +591,7 @@ impl Render for NotificationUi {
                                             .when_some(self.title.clone(), |this, title| {
                                                 this.child(
                                                     div()
-                                                        .text_sm()
+                                                        .text_base()
                                                         .font_weight(FontWeight::SEMIBOLD)
                                                         .text_color(colors.foreground_500)
                                                         .whitespace_normal()
@@ -604,7 +604,7 @@ impl Render for NotificationUi {
                                             })
                                             .child(
                                                 div()
-                                                    .text_sm()
+                                                    .text_base()
                                                     .font_weight(FontWeight::SEMIBOLD)
                                                     .text_color(colors.foreground_900)
                                                     .whitespace_normal()
@@ -616,7 +616,7 @@ impl Render for NotificationUi {
                                     .when_some(self.message.clone(), |this, message| {
                                         this.child(
                                             div()
-                                                .text_sm()
+                                                .text_base()
                                                 .mt(px(8.0))
                                                 .text_color(colors.foreground_300)
                                                 .whitespace_normal()
@@ -631,7 +631,7 @@ impl Render for NotificationUi {
                             );
 
                         // configure inner wing
-                        w1.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                        w1.upper_wing_size(Size::new(px(184.0), px(28.0)));
                         w1.include_upper_wing_in_bounds(true);
                         w1.border_radius(px(12.0));
                         w1.border_width(px(1.0));
