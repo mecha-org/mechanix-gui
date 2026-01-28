@@ -24,6 +24,7 @@
 
 [running_apps]
 "cleanup" = "/usr/share/mechanix/shell/assets/icons/running-apps/cleanup.svg"
+"running-app-bg" = "/usr/share/mechanix/shell/assets/icons/running-apps/running-app-bg.png"
 
 [lockscreen]
 "arrow" = "/usr/share/mechanix/shell/assets/icons/lockscreen/arrow.svg"

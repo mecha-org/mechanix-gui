@@ -124,6 +124,7 @@ impl RunningApps {
 
                     if progress >= 1.0 {
                         if let Some(card_index) = self.dragged_card_index {
+                            println!("card_index: {} apps.len(): {}", card_index, self.apps.len());
                             if card_index < self.apps.len() {
                                 self.apps.remove(card_index);
                             }
@@ -132,7 +133,7 @@ impl RunningApps {
                         self.animation_start_time = None;
                         self.horizontal_offset = 0.0;
                         self.dragged_card_index = None;
-
+                        println!("apps len: {}", self.apps.len());
                         let max_scroll = (self.apps.len() as f32 - 1.0) * CARD_STEP;
                         if self.scroll_offset < -max_scroll {
                             self.scroll_offset = -max_scroll.max(0.0);
@@ -166,7 +167,16 @@ impl RunningApps {
         }
     }
 
-    pub fn scroller_container(&self, cx: &mut Context<'_, Self>) -> impl IntoElement {
+    pub fn scroller_container(
+        &self,
+        window: &mut Window,
+        cx: &mut Context<'_, Self>,
+    ) -> impl IntoElement {
+        if self.drag_start.is_some() || self.is_animating() {
+            window.request_animation_frame();
+        }
+
+        println!("scroller_container()");
         div()
             .size_full()
             .bg(gpui::black())
