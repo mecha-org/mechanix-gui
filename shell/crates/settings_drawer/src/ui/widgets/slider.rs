@@ -21,6 +21,7 @@ pub struct SliderState {
     pub drag_bounds: Option<Bounds<Pixels>>,
     pub pattern: SliderPattern,
     pub id: ElementId,
+    pub is_dragging: bool,
 }
 
 pub enum SliderEvent {
@@ -37,6 +38,7 @@ impl SliderState {
             drag_bounds: None,
             pattern: SliderPattern::Dots,
             id: id.into(),
+            is_dragging: false,
         }
     }
 
@@ -254,6 +256,7 @@ impl Slider {
                         window.listener_for(
                             &self.state,
                             move |state, e: &MouseDownEvent, window, cx| {
+                                state.is_dragging = true;
                                 cx.stop_propagation();
                                 state.update_value_by_position(e.position, window, cx);
                             },
@@ -270,6 +273,7 @@ impl Slider {
                     .on_drag_move(window.listener_for(
                         &self.state,
                         move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
+                            state.is_dragging = true;
                             let DragThumb(id) = event.drag(cx);
                             if *id != entity_id {
                                 return;
@@ -281,6 +285,7 @@ impl Slider {
                     .on_drop(window.listener_for(
                         &self.state,
                         move |state, _event: &DragMoveEvent<DragThumb>, _window, cx| {
+                            state.is_dragging = false;
                             cx.stop_propagation();
 
                             state.end_drag();
@@ -401,6 +406,7 @@ impl Slider {
                         window.listener_for(
                             &self.state,
                             move |state, e: &MouseDownEvent, window, cx| {
+                                state.is_dragging = true;
                                 cx.stop_propagation();
                                 state.update_value_by_position(e.position, window, cx);
                             },
@@ -417,6 +423,7 @@ impl Slider {
                     .on_drag_move(window.listener_for(
                         &self.state,
                         move |state, event: &DragMoveEvent<DragThumb>, window, cx| {
+                            state.is_dragging = true;
                             let DragThumb(id) = event.drag(cx);
                             if *id != entity_id {
                                 return;
@@ -428,6 +435,7 @@ impl Slider {
                     .on_drop(window.listener_for(
                         &self.state,
                         move |state, _event: &DragMoveEvent<DragThumb>, _window, cx| {
+                            state.is_dragging = false;
                             state.end_drag();
                             cx.notify();
                         },

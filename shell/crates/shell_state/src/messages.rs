@@ -47,6 +47,7 @@ pub enum ShellStateMessage {
     OutputSounds {
         list: Vec<DeviceInfo>,
     },
+    UpdateVolumeMute { value: bool},
     Brightness {
         value: f32,
     },

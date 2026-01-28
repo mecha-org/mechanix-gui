@@ -8,8 +8,8 @@ use gpui::prelude::FluentBuilder;
 use icons::prelude::{Icons, SettingsDrawerIcons};
 use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
-use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings, VolumeSliderSettings};
-use shell_state::ShellState;
+use settings::prelude::{InputRegions, Settings, SettingsDrawerSettings};
+use shell_state::{DEFAULT_MIN_BRIGHTNESS, ShellState};
 use theme::prelude::{AlphaExt, Fonts};
 
 use crate::helper::get_wireless_strength_icon;
@@ -122,13 +122,11 @@ impl SettingsDrawer {
     pub fn new(
         cx: &mut Context<Self>,
         volume_slider_state: Entity<SliderState>,
-        initial_volume_value: f32,
-        initial_is_volume_mute: bool,
         brightness_slider_state: Entity<SliderState>,
-        initial_brightness_value: f32,
     ) -> Self {
         let settings = Settings::global(cx).settings_drawer.clone();
         let apps = Settings::global(cx).system_apps.clone();
+        let is_volume_mute = ShellState::global(cx).clone().volume_mute.clone();
 
         let b_subscription = cx.subscribe(
             &brightness_slider_state,
@@ -235,13 +233,13 @@ impl SettingsDrawer {
 
             cell_signal: false,
             brightness_slider_state: brightness_slider_state,
-            brightness_slider_value: initial_brightness_value,
+            brightness_slider_value: DEFAULT_MIN_BRIGHTNESS,
             auto_brightness: false,
             dark_mode: false,
 
             volume_slider_state: volume_slider_state,
-            volume_slider_value: initial_volume_value,
-            volume_mute: initial_is_volume_mute,
+            volume_slider_value: 0.0,
+            volume_mute: is_volume_mute,
             actual_volume: 0.0,
             open_modal: false,
             animation_progress: 0.0,
@@ -1356,29 +1354,22 @@ impl SettingsDrawer {
 
     fn render_sound_control_div(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let VolumeSliderSettings {
-            min_volume_level,
-            max_volume_level,
-            ..
-        } = Settings::global(cx).volume_slider.clone();
-
         let icons = Icons::global(cx).settings_drawer.clone();
+        let is_volume_mute = self.volume_mute;
 
-        let volume_icon = if self.volume_mute {
+        let volume_icon = if is_volume_mute {
             icons.volume_off
         } else {
-            let range = max_volume_level - min_volume_level;
-            let normalized = (self.volume_slider_value - min_volume_level) / range;
-            if normalized <= 0.33 {
+            if self.volume_slider_value <= 0.33 {
                 icons.volume_low
-            } else if normalized <= 0.66 {
+            } else if self.volume_slider_value <= 0.66 {
                 icons.volume_medium
             } else {
                 icons.volume_high
             }
         };
 
-        let volume_icon_color = if self.volume_mute {
+        let volume_icon_color = if is_volume_mute {
             colors.foreground_0
         } else {
             colors.accent_200
@@ -1424,8 +1415,8 @@ impl SettingsDrawer {
                                       _event: &ClickEvent,
                                       _: &mut Window,
                                       cx: &mut Context<Self>| {
-                                    this.volume_mute = !this.volume_mute;
-                                    let is_mute = this.volume_mute;
+                                    let is_mute = !this.volume_mute;
+                                    this.volume_mute = is_mute;
 
                                     if is_mute {
                                         mute_volume_to_system(cx);
