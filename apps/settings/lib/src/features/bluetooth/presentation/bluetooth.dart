@@ -13,7 +13,6 @@ import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.d
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_device_list.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
-import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
@@ -170,18 +169,19 @@ class _BluetoothState extends State<Bluetooth> {
             context.backButton,
           ],
           anchorWidget: [
-            BottomBarButton(
+            BottomBarButton.widget(
+                widget: IconButton(
               onPressed: () {
                 context.read<BluetoothBloc>().add(RefreshDeviceList());
               },
-              iconTheme: const MechanixBottomBarIconThemeData(
-                buttonSize: Size(44, 44),
-                iconBoxSize: Size(28, 28),
-                iconSize: Size(21.88, 21.45),
-                buttonMargin: EdgeInsets.only(right: 12),
+              icon: const IconWidget(
+                iconPath: Images.arrowCounterClockWise,
+                boxWidth: 48,
+                boxHeight: 48,
+                iconHeight: 21,
+                iconWidth: 21,
               ),
-              iconPath: Images.arrowCounterClockWise,
-            )
+            ).padRight(8))
           ],
         ),
       );
