@@ -4,8 +4,12 @@ use freedesktop_icons::lookup;
 use log::{debug, error, info, warn};
 use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::fs::read_dir;
-use std::{collections::HashMap, fs, path::PathBuf, time::Duration};
-use std::path::Path;
+use std::{
+    collections::HashMap,
+    fs,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 use tantivy::directory::MmapDirectory;
 use tantivy::query::{BooleanQuery, FuzzyTermQuery, Occur, Query, TermQuery};
 use tantivy::schema::{Field, FieldType, IndexRecordOption, Value, STRING};
@@ -28,7 +32,6 @@ pub mod fields {
     pub const COMMENT: &str = "comment";
     pub const GENERIC_NAME: &str = "generic_name";
     pub const CATEGORIES: &str = "categories";
-    pub const NO_DISPLAY: &str = "no_display";
     pub const KEYWORDS: &str = "keywords";
     pub const ICON_NAME: &str = "icon_name";
     pub const APP_PATH: &str = "app_path";
@@ -58,7 +61,6 @@ pub struct AppInfo {
     pub icon_name: String,
     pub icon_path: Option<String>,
     pub categories: Vec<String>,
-    pub no_display: bool,
     pub exec: String,
     pub app_path: String,
     pub score: f32,
@@ -531,12 +533,6 @@ fn set_app_field(app: &mut AppInfo, field_name: &str, joined_values: String) {
         }
         fields::ICON_NAME => app.icon_name = joined_values,
         fields::APP_PATH => app.app_path = joined_values,
-        fields::NO_DISPLAY => {
-            app.no_display = joined_values.parse::<bool>().unwrap_or_else(|err| {
-                error!("Failed to parse no_display field: {}", err);
-                false
-            })
-        }
         _ => {}
     }
 }
@@ -583,8 +579,7 @@ fn feed_doc(
         schema.get_field(fields::KEYWORDS).unwrap() => desktop_entry.keywords.join(";"),
         schema.get_field(fields::ICON_NAME).unwrap() => desktop_entry.icon.clone().unwrap_or_default(),
         schema.get_field(fields::APP_PATH).unwrap() => path.to_string_lossy().to_string(),
-        schema.get_field(fields::LAST_MODIFIED).unwrap() => last_modified,
-        schema.get_field(fields::NO_DISPLAY).unwrap() => desktop_entry.no_display,
+        schema.get_field(fields::LAST_MODIFIED).unwrap() => last_modified
     )
 }
 
@@ -601,7 +596,6 @@ fn create_schema() -> Schema {
     schema_builder.add_text_field(fields::KEYWORDS, TEXT);
     schema_builder.add_text_field(fields::ICON_NAME, STORED);
     schema_builder.add_text_field(fields::LAST_MODIFIED, STORED);
-    schema_builder.add_text_field(fields::NO_DISPLAY, STORED);
 
     schema_builder.build()
 }
