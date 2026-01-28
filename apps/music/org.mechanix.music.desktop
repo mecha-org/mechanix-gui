@@ -7,4 +7,5 @@ TryExec=mechanix_music -b /usr/share/mechanix/mechanix-music -w 540 -h 620 -k -s
 Exec=mechanix_music -b /usr/share/mechanix/mechanix-music -w 540 -h 620 -k -s 1
 Icon=mechanix_music
 Terminal=false
+NoDisplay=false
 Categories=Multimedia;
