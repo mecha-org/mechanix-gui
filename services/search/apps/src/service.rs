@@ -417,7 +417,7 @@ impl AppSearchService {
                 ));
             }
         }
-        
+
         let query = BooleanQuery::new(subqueries);
 
         let top_docs = searcher.search(&query, &TopDocs::with_limit(limit))?;
