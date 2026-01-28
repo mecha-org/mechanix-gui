@@ -27,7 +27,7 @@ pub struct Toast {
 }
 
 impl Toast {
-    pub fn new(cx: &mut Context<Self>) -> Self {
+    pub fn new(_cx: &mut Context<Self>) -> Self {
         Self {
             message: None,
             icon_path: None,
@@ -199,74 +199,50 @@ pub fn listen_for_extensions(cx: &mut App, toast_entity: Entity<Toast>) {
 
     let mut dispatcher_rx = Dispatcher::global(cx).channel().1.clone();
 
-    // Track extension state as a tuple (name, detected) for robust state management
-    let mut current_extension: Option<(String, bool)> = None;
+    // Track state to handle out-of-order messages and avoid redundant toasts
+    let mut current_name: Option<String> = None;
+    let mut current_detected: Option<bool> = None;
+    let mut last_notified_state: Option<(String, bool)> = None;
 
     cx.spawn(async move |cx| {
         while let Ok(message) = dispatcher_rx.recv().await {
             match message {
                 dispatcher::Message::SetExtensionName(name) => {
-                    // When extension name changes, check if it's a new extension
-                    let is_new_extension = current_extension
-                        .as_ref()
-                        .map(|(old_name, _)| old_name != &name)
-                        .unwrap_or(true);
-
-                    if is_new_extension {
-                        // Reset state for new extension - preserve name but clear detected state
-                        current_extension = Some((name, false));
-                    } else if let Some((_, detected)) = current_extension {
-                        // Same extension, keep the detected state
-                        current_extension = Some((name, detected));
-                    }
+                    current_name = Some(name);
                 }
                 dispatcher::Message::SetExtensionDetected(detected) => {
-                    let Some((ref name, last_detected)) = current_extension else {
-                        // No extension name set yet, ignore
-                        continue;
+                    current_detected = Some(detected);
+                }
+                _ => continue,
+            }
+
+            // Only proceed if we have both name and detection state
+            if let (Some(name), Some(detected)) = (current_name.as_ref(), current_detected) {
+                let state = (name.clone(), detected);
+
+                // Check if this is a new state we haven't notified about yet
+                if last_notified_state.as_ref() != Some(&state) {
+                    last_notified_state = Some(state.clone());
+
+                    let ext_formatted_name = capitalize_first(&name);
+                    let (toast_message, icon) = if detected {
+                        (
+                            format!("{} was attached", ext_formatted_name),
+                            icon_attached.clone(),
+                        )
+                    } else {
+                        (
+                            format!("{} was detached", ext_formatted_name),
+                            icon_detached.clone(),
+                        )
                     };
 
-                    // Skip if same state for the same extension
-                    if last_detected == detected {
-                        continue;
-                    }
-
-                    // Update state
-                    let ext_name = name.clone();
-                    current_extension = Some((ext_name.clone(), detected));
-
-                    // Clear existing toast before showing new one to prevent stale toasts
                     let _ = cx.update(|cx| {
                         let _ = toast_entity.update(cx, |toast, cx| {
-                            toast.clear(cx);
+                            toast.show(toast_message, icon, cx);
                         });
                     });
-
-                    // Small delay to ensure clear takes effect
-                    cx.background_executor()
-                        .timer(Duration::from_millis(50))
-                        .await;
-
-                    let ext_formatted_name = capitalize_first(&ext_name);
-                    if detected {
-                        let toast_message = format!("{} was attached", ext_formatted_name);
-                        let icon = icon_attached.clone();
-                        let _ = cx.update(|cx| {
-                            let _ = toast_entity.update(cx, |toast, cx| {
-                                toast.show(toast_message, icon, cx);
-                            });
-                        });
-                    } else {
-                        let toast_message = format!("{} was detached", ext_formatted_name);
-                        let icon = icon_detached.clone();
-                        let _ = cx.update(|cx| {
-                            let _ = toast_entity.update(cx, |toast, cx| {
-                                toast.show(toast_message, icon, cx);
-                            });
-                        });
-                    }
                 }
-                _ => {}
             }
         }
     })
