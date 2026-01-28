@@ -38,6 +38,7 @@ const ANIMATION_DURATION_MS: f32 = 250.0;
 const ANIMATION_FRAME_MS: u64 = 16;
 
 const DEBOUNCE_DELAY_MS: u64 = 300;
+const VOLUME_MUTE_THRESHOLD: f32 = 0.5;
 
 #[derive(PartialEq)]
 pub enum ModalAnimationState {
@@ -132,90 +133,78 @@ impl SettingsDrawer {
             &brightness_slider_state,
             |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
-                this.brightness_slider_value = value;
 
-                // Cancel previous debounce task if it exists
+                this.brightness_slider_value = value;
+                cx.notify();
+
+                if (value - this.last_brightness_sent).abs() < 0.1 {
+                    return;
+                }
+
+                set_brightness(cx, value);
+
                 if let Some(task) = this.brightness_debounce_task.take() {
                     drop(task);
                 }
 
-                // Update UI immediately
-                set_brightness(cx, value);
-
-                // Update last sent value for UI
                 this.last_brightness_sent = value;
 
-                // Debounce the system sync
+                let final_value = value;
                 let task = cx.spawn(
                     async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
-                        // Wait for debounce delay
                         cx.background_executor()
-                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS)) // DEBOUNCE_DELAY_MS
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
                             .await;
 
-                        // Sync to system after delay
                         this.update(cx, |this, cx| {
-                            sync_brightness_to_system(value, cx);
-                            this.last_brightness_sent = value;
+                            sync_brightness_to_system(final_value, cx);
                         })
                         .ok();
                     },
                 );
 
                 this.brightness_debounce_task = Some(task);
-
-                cx.notify();
             },
         );
-
         let v_subscription =
             cx.subscribe(&volume_slider_state, |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
-                this.volume_slider_value = value;
 
-                // Cancel previous debounce task if it exists
+                this.volume_slider_value = value;
+                this.volume_mute = value < VOLUME_MUTE_THRESHOLD;
+                cx.notify();
+
+                if (value - this.last_volume_sent).abs() < 0.1 {
+                    return;
+                }
+
+                if this.volume_mute {
+                    mute_volume_to_system(cx);
+                }
+
+                set_volume(cx, value);
+
                 if let Some(task) = this.volume_debounce_task.take() {
                     drop(task);
                 }
 
-                // Avoid sending duplicate values
-                if value as u32 == this.last_volume_sent as u32 {
-                    return;
-                }
-
-                if this.volume_slider_value == 0.0 {
-                    this.volume_mute = true;
-                    mute_volume_to_system(cx);
-                } else {
-                    this.volume_mute = false;
-                }
-
-                // Update UI immediately
-                set_volume(cx, value);
-
-                // Update last sent value for UI
+                let final_value = value;
                 this.last_volume_sent = value;
 
-                // Debounce the system sync
                 let task = cx.spawn(
                     async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
-                        // Wait for debounce delay
                         cx.background_executor()
-                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS)) // DEBOUNCE_DELAY_MS
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
                             .await;
 
-                        // Sync to system after delay
                         this.update(cx, |this, cx| {
-                            sync_volume_to_system(value, cx);
-                            this.last_volume_sent = value;
+                            sync_volume_to_system(final_value, cx);
                         })
                         .ok();
                     },
                 );
 
                 this.volume_debounce_task = Some(task);
-
-                cx.notify();
             });
 
         let mut _subscriptions = vec![b_subscription, v_subscription];
@@ -1355,14 +1344,19 @@ impl SettingsDrawer {
     fn render_sound_control_div(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let icons = Icons::global(cx).settings_drawer.clone();
-        let is_volume_mute = self.volume_mute;
+
+        const VOLUME_MUTE_THRESHOLD: f32 = 0.5;
+
+        // Use the slider's current value as source of truth
+        let current_volume = self.volume_slider_state.read(cx).value;
+        let is_volume_mute = current_volume < VOLUME_MUTE_THRESHOLD;
 
         let volume_icon = if is_volume_mute {
             icons.volume_off
         } else {
-            if self.volume_slider_value <= 0.33 {
+            if current_volume <= 33.0 {
                 icons.volume_low
-            } else if self.volume_slider_value <= 0.66 {
+            } else if current_volume <= 66.0 {
                 icons.volume_medium
             } else {
                 icons.volume_high
@@ -1421,28 +1415,28 @@ impl SettingsDrawer {
                                     if is_mute {
                                         mute_volume_to_system(cx);
 
-                                        // store UI value
+                                        // Store current UI value
                                         let state_value = this.volume_slider_state.read(cx).value;
-                                        this.actual_volume = state_value;
+                                        this.actual_volume = state_value.max(5.0); // Store at least 5% for unmute
 
-                                        // update UI
-                                        let new_value = 0.0;
+                                        // Update UI to 0
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
-                                            state.set_value(new_value, inner_cx);
+                                            state.set_value(0.0, inner_cx);
                                         });
+                                        this.volume_slider_value = 0.0;
                                     } else {
                                         unmute_volume_to_system(cx);
-                                        let new_value = if this.actual_volume == 0.0 {
-                                            get_volume(cx)
+
+                                        // Restore to stored value or get system volume
+                                        let new_value = if this.actual_volume < 5.0 {
+                                            get_volume(cx).max(5.0)
                                         } else {
                                             this.actual_volume
                                         };
-                                        // get last stored value
-                                        this.volume_slider_value = new_value;
 
-                                        // update UI
+                                        this.volume_slider_value = new_value;
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
-                                            state.set_value(this.volume_slider_value, inner_cx);
+                                            state.set_value(new_value, inner_cx);
                                         });
                                     }
 
