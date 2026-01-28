@@ -7,7 +7,6 @@ import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/home/common/music_icon_widget.dart';
 import 'package:mechanix_music/src/features/playlist_tab/add_to_playlist_sheet.dart';
 import 'package:widgets/mechanix.dart';
-import 'package:widgets/widgets/bottom_sheet_modals/mechanix_bottom_sheet.dart';
 
 class PlayerSideControls extends StatelessWidget {
   final bool isFavorited;
@@ -31,7 +30,7 @@ class PlayerSideControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 16),
+      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 4),
       child: Row(
         spacing: 0,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

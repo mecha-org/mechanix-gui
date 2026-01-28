@@ -30,7 +30,7 @@ class PlayerHeader extends StatelessWidget {
             songDetails.artist,
             style: TextStyle(
               color: context.colorScheme.onSecondaryFixedVariant,
-              fontSize: 16,
+              fontSize: 18,
               height: 1.25,
             ),
             textAlign: TextAlign.center,

@@ -101,6 +101,14 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
                 ),
               );
               break;
+
+            case _PlaylistMenuAction.liked:
+              context.read<SongsBloc>().add(
+                AddPlaylistToLiked(
+                  widget.playlistInfo.id,
+                  !widget.playlistInfo.isLiked,
+                ),
+              );
             case _PlaylistMenuAction.none:
               break;
           }
@@ -152,20 +160,19 @@ class _PlaylistMenuState extends State<PlaylistMenu> {
                 title: 'Add to playlist',
                 icon: MusicIcons.addSongIcon,
               ),
-              if (widget.isLiked)
-                _menuItem(
-                  value: _PlaylistMenuAction.none,
-                  title:
-                      widget.playlistInfo.isLiked
-                          ? 'Remove from Like'
-                          : 'Add to liked',
-                  color: widget.playlistInfo.isLiked ? context.primary : null,
+              _menuItem(
+                value: _PlaylistMenuAction.liked,
+                title:
+                    widget.playlistInfo.isLiked
+                        ? 'Unlike Playlist'
+                        : 'Add to liked',
+                color: widget.playlistInfo.isLiked ? context.primary : null,
 
-                  icon:
-                      widget.playlistInfo.isLiked
-                          ? MusicIcons.filledFavouriteIcon
-                          : MusicIcons.favouritesIcon,
-                ),
+                icon:
+                    widget.playlistInfo.isLiked
+                        ? MusicIcons.filledFavouriteIcon
+                        : MusicIcons.favouritesIcon,
+              ),
               if (widget.isRenamePlaylist)
                 _menuItem(
                   value: _PlaylistMenuAction.rename,
@@ -220,7 +227,7 @@ enum _PlaylistMenuAction {
   playNext,
   queue,
   // playlist,
-  // liked,
+  liked,
   rename,
   delete,
   none,

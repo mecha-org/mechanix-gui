@@ -73,6 +73,8 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
     on<AudioFileDeleted>(_onAudioDeleted);
     on<PlaylistShuffle>(shufflePlaylist);
     on<JumpToIndex>(_onJumpToIndex);
+    on<AddPlaylistToLiked>(_addPlaylistToLiked);
+
     add(LoadSongsFromHive());
     add(RecentSongs());
     add(LoadPlaylist());
@@ -1914,6 +1916,14 @@ class SongsBloc extends Bloc<SongsEvent, SongsState> {
   ) async {
     await _dirSubscription?.cancel();
     _dirSubscription = null;
+  }
+
+  Future<void> _addPlaylistToLiked(
+    AddPlaylistToLiked event,
+    Emitter<SongsState> emit,
+  ) async {
+    await songsRepository.addPlaylistToLiked(event.playlistId, event.isLiked);
+    add(LoadPlaylist());
   }
 
   // For Future Reference

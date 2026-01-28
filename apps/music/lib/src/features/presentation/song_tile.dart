@@ -57,7 +57,7 @@ class SongTile extends StatelessWidget {
                           ),
                         ),
                       },
-          contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
           minVerticalPadding: 0,
 
           leading: ArtworkIcon(artworkPath: song.artworkPath),
@@ -69,7 +69,7 @@ class SongTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                fontSize: 18,
+                fontSize: 20,
                 height: 1.25,
                 color:
                     isCurrentSong
@@ -84,7 +84,7 @@ class SongTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.w300,
-              fontSize: 16,
+              fontSize: 18,
               height: 1.25,
               color: context.onSecondary,
             ),

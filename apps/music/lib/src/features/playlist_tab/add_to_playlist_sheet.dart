@@ -61,7 +61,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return Container(
+        return SizedBox(
           height: constraints.maxHeight * 0.98,
           width: double.infinity,
           child: Column(
@@ -104,7 +104,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         child: Text(
                           "No playlists available",
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             color: context.onSecondaryFixedVariant,
                           ),
                         ),
@@ -166,7 +166,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
 
               // Bottom add/search row
               Container(
-                height: 65,
+                height: 67,
                 decoration: BoxDecoration(
                   border: Border(
                     top: BorderSide(color: context.outline, width: 1),
@@ -199,14 +199,14 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                             text: TextSpan(
                               style: DefaultTextStyle.of(
                                 context,
-                              ).style.copyWith(fontSize: 20, height: 1.3),
+                              ).style.copyWith(fontSize: 22, height: 1.3),
                               children: [
                                 const TextSpan(text: 'Add track to '),
                                 TextSpan(
                                   text:
                                       '${selectedPlaylists.length} playlist${selectedPlaylists.length == 1 ? '' : 's'}',
                                   style: const TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 22,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -216,7 +216,7 @@ class _AddToPlaylistSheetState extends State<AddToPlaylistSheet> {
                         else
                           const Text(
                             'Add track to playlist',
-                            style: TextStyle(fontSize: 20, height: 1.3),
+                            style: TextStyle(fontSize: 22, height: 1.3),
                           ),
 
                         Row(

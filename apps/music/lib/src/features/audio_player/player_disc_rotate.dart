@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_music/models/song_info.dart';
 import 'package:mechanix_music/src/bloc/songs_bloc.dart';
+import 'package:mechanix_music/src/bloc/songs_state.dart';
 import 'package:mechanix_music/src/commons/icons.dart';
 import 'package:mechanix_music/src/features/audio_player/circle.dart';
 import 'package:mechanix_music/src/features/audio_player/tone_arm.dart';
@@ -219,13 +220,13 @@ class _PlayerDiscRotateState extends State<PlayerDiscRotate>
             );
           },
         ),
-        const ToneArm(),
-
-        Positioned(
-          right: -49,
-          top: -29,
-          child: Image.asset(MusicIcons.toneCircleIcon, height: 57, width: 57),
+        BlocSelector<SongsBloc, SongsState, bool>(
+          selector: (state) => state.isPlaying,
+          builder: (context, isPlaying) {
+            return ToneArm(isPlaying: isPlaying);
+          },
         ),
+
         Positioned(
           bottom: -30,
           left: -30,

@@ -95,7 +95,7 @@ class MiniPlayer extends StatelessWidget {
                           currentSong.title,
                           style: TextStyle(
                             color: context.onSecondaryFixedVariant,
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -104,7 +104,7 @@ class MiniPlayer extends StatelessWidget {
                           currentSong.artist,
                           style: TextStyle(
                             color: context.colorScheme.onSecondary,
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w300,
                           ),
                         ),
