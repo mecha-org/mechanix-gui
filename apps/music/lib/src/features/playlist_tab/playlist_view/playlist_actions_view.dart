@@ -56,7 +56,6 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
             children: [
               MusicIconButton(
                 enabled: !widget.isEditMode && playlistSongs.isNotEmpty,
-                iconColor: isFavourite ? context.primary : null,
                 icon: MusicIcons.searchIcon,
                 onPressed:
                     playlistSongs.isNotEmpty
@@ -144,7 +143,7 @@ class _PlaylistActionsViewState extends State<PlaylistActionsView> {
                 enabled: !widget.isEditMode,
                 iconSize: Size(44, 44),
                 isDeletePlaylist: true,
-                isLiked: false,
+                isLiked: isFavourite,
                 isRenamePlaylist: true,
                 onRenameClick: (value) {
                   context.read<SongsBloc>().add(

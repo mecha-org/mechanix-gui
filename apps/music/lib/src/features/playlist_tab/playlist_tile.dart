@@ -35,9 +35,9 @@ class PlaylistTile extends StatelessWidget {
       opacity: isDisabled ? 0.5 : 1.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        color: isSelected ? context.secondaryContainer: Colors.transparent,
+        color: isSelected ? context.secondaryContainer : Colors.transparent,
         child: ListTile(
-          enabled: !isDisabled, // 👈 disables ripple & gestures
+          enabled: !isDisabled, //  disables ripple & gestures
           onTap: isDisabled ? null : onTap,
           contentPadding: const EdgeInsets.symmetric(vertical: 7.5),
           leading: _PlaylistCover(
@@ -51,7 +51,7 @@ class PlaylistTile extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.w500,
-              fontSize: 18,
+              fontSize: 20,
               height: 1.25,
               color:
                   isActive
@@ -70,7 +70,7 @@ class PlaylistTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.w400,
-                      fontSize: 14,
+                      fontSize: 16,
                       color: Colors.redAccent,
                     ),
                   )
@@ -79,7 +79,7 @@ class PlaylistTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontWeight: FontWeight.w300,
-                      fontSize: 16,
+                      fontSize: 18,
                       height: 1.25,
                       color: context.onSecondary,
                     ),

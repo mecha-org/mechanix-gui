@@ -20,6 +20,10 @@ impl UniversalSearchWidget {
             has_border,
         }
     }
+
+    pub fn search_handle(&self) -> Entity<UniversalSearch> {
+        self.search_handle.clone()
+    }
 }
 
 impl HomescreenWidget for UniversalSearchWidget {

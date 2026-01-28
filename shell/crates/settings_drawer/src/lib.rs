@@ -38,28 +38,19 @@ pub fn run_app(cx: &mut App) {
         ..
     } = Settings::global(cx).volume_slider.clone();
 
-    // slider initialization
-    let initial_volume_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
-    let initial_mute_volume_check = get_is_volume_mute(cx);
-
     let volume_slider_state = cx.new(|_| {
         SliderState::new("volume-slider-state")
             .min(min_volume_level)
             .max(max_volume_level)
-            .default_value(initial_volume_value)
             .pattern(widgets::SliderPattern::Bars)
     });
 
-    let initial_brightness_value = get_brightness(cx);
     let brightness_slider_state = cx.new(|_| {
         SliderState::new("brightness-slider-state")
             .min(min_volume_level)
             .max(max_volume_level)
-            .default_value(initial_brightness_value)
             .pattern(widgets::SliderPattern::Dots)
     });
-
-    //
 
     let window_bounds = WindowBounds::Windowed(Bounds::centered(None, size, cx));
     cx.open_window(
@@ -85,23 +76,42 @@ pub fn run_app(cx: &mut App) {
             window.set_input_regions(Some(regions));
 
             let volume_slider_state_clone = volume_slider_state.clone();
-            let initial_volume_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
-            let initial_is_volume_mute = initial_mute_volume_check.clone();
-
-            let initial_brightness_value = get_brightness(cx);
             let brightness_slider_state_clone = brightness_slider_state.clone();
 
             cx.new(|cx| {
+                cx.observe_global::<ShellState>(move |this: &mut SettingsDrawer, cx| {
+                    let ShellState {
+                        volume,
+                        volume_mute,
+                        brightness_value,
+                        ..
+                    } = ShellState::global(cx).clone();
+
+
+                    let volume_slider_value = volume as f32;
+                    this.volume_slider_value = volume_slider_value.clone();
+                    this.volume_mute = volume_mute;
+
+                    volume_slider_state_clone.update(cx, |this, cx| {
+                        if !this.is_dragging {
+                            this.set_value(volume_slider_value, cx);
+                        }
+                    });
+
+                    this.brightness_slider_value = brightness_value;
+                    brightness_slider_state_clone.update(cx, |this, cx| {
+                        if !this.is_dragging {
+                            this.set_value(brightness_value, cx);
+                        }
+                    });
+
+                    cx.notify();
+                })
+                .detach();
+
                 listen_dispatcher(cx);
 
-                SettingsDrawer::new(
-                    cx,
-                    volume_slider_state_clone,
-                    initial_volume_value,
-                    initial_is_volume_mute,
-                    brightness_slider_state_clone,
-                    initial_brightness_value,
-                )
+                SettingsDrawer::new(cx, volume_slider_state, brightness_slider_state)
             })
         },
     )
@@ -181,7 +191,8 @@ pub fn sync_brightness_to_system(value: f32, cx: &mut App) {
 /// Get current volume from ShellState, or default if not available
 pub fn get_volume(cx: &App) -> f32 {
     if cx.has_global::<ShellState>() {
-        let vol = ShellState::global(cx).volume;
+        let device_info = ShellState::global(cx).default_sound_device.clone();
+        let vol = device_info.volume as f32;
         if vol > 0.0 { vol } else { DEFAULT_VOLUME_LEVEL }
     } else {
         DEFAULT_VOLUME_LEVEL
@@ -190,7 +201,7 @@ pub fn get_volume(cx: &App) -> f32 {
 
 pub fn get_is_volume_mute(cx: &App) -> bool {
     if cx.has_global::<ShellState>() {
-        ShellState::global(cx).default_sound_device.mute
+        ShellState::global(cx).volume_mute
     } else {
         false
     }

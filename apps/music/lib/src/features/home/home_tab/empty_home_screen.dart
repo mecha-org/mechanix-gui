@@ -15,7 +15,7 @@ class EmptyHomeScreen extends StatelessWidget {
           Text(
             isLoading ? "Loading ..." : "No music tracks available",
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 20,
               height: 1.35,
               color: context.onSurfaceVariant,
             ),

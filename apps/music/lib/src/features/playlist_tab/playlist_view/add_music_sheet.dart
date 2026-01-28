@@ -83,7 +83,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         child: Text(
                           "No songs available",
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             color: context.onSecondaryFixedVariant,
                           ),
                         ),
@@ -94,7 +94,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         child: Text(
                           "No songs found",
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
                             color: context.onSecondaryFixedVariant,
                           ),
                         ),
@@ -181,7 +181,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                         text: TextSpan(
                           style: DefaultTextStyle.of(
                             context,
-                          ).style.copyWith(fontSize: 20, height: 1.3),
+                          ).style.copyWith(fontSize: 22, height: 1.3),
                           children: [
                             const TextSpan(text: 'Adding '),
                             TextSpan(
@@ -197,7 +197,7 @@ class _AddMusicSheetState extends State<AddMusicSheet> {
                     else
                       const Text(
                         'Add track to playlist',
-                        style: TextStyle(fontSize: 20, height: 1.3),
+                        style: TextStyle(fontSize: 22, height: 1.3),
                       ),
                     Row(
                       spacing: 12,

@@ -112,7 +112,7 @@ class _PlaylistHeadingState extends State<PlaylistHeading> {
               style: TextStyle(
                 color: context.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
-                fontSize: 24,
+                fontSize: 26,
                 letterSpacing: -1.1,
                 height: 1.25,
               ),

@@ -18,8 +18,8 @@ class RecentSong extends StatefulWidget {
 class _RecentSongState extends State<RecentSong> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int currentPage = 0;
-  static const double _songTileHeight = 80;
-  static const double _maxHeight = 240;
+  static const double _songTileHeight = 81;
+  static const double _maxHeight = 243;
 
   List<List<SongInfo>> _buildPages(List<SongInfo> songs) {
     const pageSize = 3;
@@ -86,7 +86,7 @@ class _RecentSongState extends State<RecentSong> {
                       'Recently Played',
                       style: TextStyle(
                         color: context.onSurfaceVariant,
-                        fontSize: 18,
+                        fontSize: 20,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                       ),
