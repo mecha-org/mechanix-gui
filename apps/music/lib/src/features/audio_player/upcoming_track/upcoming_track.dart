@@ -87,7 +87,7 @@ class UpcomingTrack extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: context.onSecondaryFixedVariant,
-                                    fontSize: 14,
+                                    fontSize: 16,
                                   ),
                                   maxLines: 1,
                                 ),
@@ -158,7 +158,7 @@ class UpcomingTrack extends StatelessWidget {
                     'Upcoming tracks',
                     style: TextStyle(
                       color: context.onSurface,
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

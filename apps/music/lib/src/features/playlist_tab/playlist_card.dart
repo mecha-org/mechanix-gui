@@ -123,7 +123,7 @@ class _CardContent extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 18,
+              fontSize: 20,
               height: 1.25,
               color: isActive ? context.primary : null,
             ),
@@ -133,7 +133,7 @@ class _CardContent extends StatelessWidget {
             '${playlistInfo.songIds.length} Tracks',
             style: TextStyle(
               fontWeight: FontWeight.w400,
-              fontSize: 14,
+              fontSize: 16,
               color: context.onSecondary,
             ),
           ),

@@ -14,7 +14,7 @@ class SongsListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SliverPrototypeExtentList(
-      prototypeItem: const SizedBox(height: 79),
+      prototypeItem: const SizedBox(height: 81),
       delegate: SliverChildBuilderDelegate(childCount: songs.length, (
         context,
         index,

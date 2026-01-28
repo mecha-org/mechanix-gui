@@ -85,7 +85,7 @@ class _FavouritesTabState extends State<FavouritesTab> {
                         child: Text(
                           "No liked songs yet",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             fontWeight: FontWeight.w600,
                             color: context.onSurfaceVariant,
                           ),
@@ -95,7 +95,7 @@ class _FavouritesTabState extends State<FavouritesTab> {
                   }
 
                   return SliverPrototypeExtentList(
-                    prototypeItem: const SizedBox(height: 79),
+                    prototypeItem: const SizedBox(height: 81),
                     delegate: SliverChildBuilderDelegate(
                       childCount: songs.length,
                       (context, index) {

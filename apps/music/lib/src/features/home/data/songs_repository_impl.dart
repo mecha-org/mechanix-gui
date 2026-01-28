@@ -1236,4 +1236,34 @@ class SongsRepositoryImpl extends SongsRepository {
       return false;
     }
   }
+
+  @override
+  Future<bool> addPlaylistToLiked(String playlistId, bool isLiked) async {
+    try {
+      final playlistBox = Hive.box<PlaylistInfo>(TableName.playlistTable);
+      final playlist = playlistBox.get(playlistId);
+      if (playlist == null) {
+        logger.w("Playlist not found: $playlistId");
+        return false;
+      }
+      final updatedPlaylist = playlist.copyWith(
+        isLiked: isLiked,
+        coverImagePath: playlist.coverImagePath,
+      );
+      for (final songId in playlist.songIds) {
+        final song = Hive.box<SongInfo>(TableName.songsInfoTable).get(songId);
+        if (song == null) continue;
+        final updatedSong = song.copyWith(isFavourite: isLiked);
+        await Hive.box<SongInfo>(
+          TableName.songsInfoTable,
+        ).put(songId, updatedSong);
+      }
+
+      await playlistBox.put(playlistId, updatedPlaylist);
+      return true;
+    } catch (e) {
+      logger.e("Error adding playlist to liked: $e");
+      return false;
+    }
+  }
 }

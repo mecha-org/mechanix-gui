@@ -288,7 +288,7 @@ class SemiCircularProgressPainter extends CustomPainter {
     // Draw time labels
     final textStyle = TextStyle(
       color: activeSliderColor,
-      fontSize: 12,
+      fontSize: 14,
       fontWeight: FontWeight.w500,
     );
 

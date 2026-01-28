@@ -117,7 +117,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                         style: TextStyle(
                           color: context.colorScheme.onSurface,
                           fontWeight: FontWeight.w600,
-                          fontSize: 24,
+                          fontSize: 26,
                           letterSpacing: -1.1,
                           height: 1.25,
                         ),
@@ -267,7 +267,7 @@ class _PlaylistViewState extends State<PlaylistView> {
                                     return Material(
                                       color: Colors.transparent,
                                       elevation: 6,
-                                      child: SizedBox(height: 79, child: child),
+                                      child: SizedBox(height: 81, child: child),
                                     );
                                   },
                                   itemCount: displaySongs.length,

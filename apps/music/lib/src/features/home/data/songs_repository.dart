@@ -41,4 +41,5 @@ abstract class SongsRepository {
 
   Future<bool> addOrUpdateSongFromPath(String path);
   Future<bool> removeSongByPath(String path);
+  Future<bool> addPlaylistToLiked(String playlistId, bool isLiked);
 }
