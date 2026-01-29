@@ -7,7 +7,8 @@ class RightIconArrowWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const IconWidget(
+    return IconWidget(
+      iconColor: context.onSurfaceVariant,
       iconPath: Images.rightIconArrow,
       boxWidth: 20,
       boxHeight: 20,

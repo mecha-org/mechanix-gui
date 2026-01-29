@@ -6,8 +6,42 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
-class SettingMenu extends StatelessWidget {
-  const SettingMenu({super.key});
+class SettingMenu extends StatefulWidget {
+  const SettingMenu({super.key, required this.openPath});
+  final String openPath;
+
+  @override
+  State<SettingMenu> createState() => _SettingMenuState();
+}
+
+class _SettingMenuState extends State<SettingMenu> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("=====>Menu openpath");
+      print(widget.openPath);
+
+      switch (widget.openPath) {
+        case AppRoutes.wireless:
+          Navigator.pushNamed(context, AppRoutes.wireless);
+          break;
+        case AppRoutes.bluetooth:
+          Navigator.pushNamed(context, AppRoutes.bluetooth);
+          break;
+        case AppRoutes.battery:
+          Navigator.pushNamed(context, AppRoutes.battery);
+          break;
+        case AppRoutes.display:
+          Navigator.pushNamed(context, AppRoutes.display);
+          break;
+        case AppRoutes.sound:
+          Navigator.pushNamed(context, AppRoutes.sound);
+          break;
+      }
+    });
+  }
 
   void onTap(BuildContext context, String route) {
     Navigator.pushNamed(context, route);
