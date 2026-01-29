@@ -301,7 +301,7 @@ impl Render for PowerOptions {
                                             )
                                             .child(
                                                 div()
-                                                    .line_height(px(19.2))
+                                                    .line_height(px(1.22))
                                                     .text_size(px(26.))
                                                     .text_color(colors.foreground_200)
                                                     .font_family(primary_font)

@@ -6,10 +6,7 @@ use theme::prelude::{AlphaExt, Theme};
 use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 use crate::{
     prelude::*,
-    ui::{
-        FINAL_MODAL_SIZE,
-        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
-    },
+    ui::{FINAL_MODAL_SIZE, modals::ROW_HEIGHT},
 };
 
 #[derive(Debug, Clone, PartialEq, Default)]
