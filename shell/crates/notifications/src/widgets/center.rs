@@ -1256,7 +1256,7 @@ impl NotificationCenter {
                                         .bg(colors.accent_200.with_alpha(0.2))
                                         .text_color(colors.accent_200)
                                         .text_size(px(14.0))
-                                        .px_2()
+                                        .px(px(6.))
                                         .h(px(24.0))
                                         .flex()
                                         .items_center()
@@ -1273,7 +1273,7 @@ impl NotificationCenter {
                                         .bg(colors.accent_200.with_alpha(0.2))
                                         .text_color(colors.accent_200)
                                         .text_size(px(16.0))
-                                        .px_2()
+                                        .px(px(6.))
                                         // .py_0p3()
                                         .font_weight(FontWeight::MEDIUM)
                                         .child(if g.count > 10 {
@@ -1343,7 +1343,7 @@ impl NotificationCenter {
                         })
                         .rounded(px(4.0));
 
-                    outer_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    outer_wing.upper_wing_size(Size::new(px(180.0), px(24.0)));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_radius(px(4.0));
                     outer_wing.border_width(px(1.0));
@@ -1357,7 +1357,7 @@ impl NotificationCenter {
                         .bg(if is_expanded {
                             colors.accent_200.with_alpha(0.0)
                         } else {
-                            colors.accent_200.with_alpha(0.1)
+                            colors.accent_200.with_alpha(0.2)
                         })
                         .border(px(2.0))
                         .rounded(px(6.0))
@@ -1366,7 +1366,7 @@ impl NotificationCenter {
                         .px_4()
                         .py_3p5();
 
-                    inner_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                    inner_wing.upper_wing_size(Size::new(px(180.0), px(24.0)));
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_radius(px(4.0));
                     inner_wing.border_width(px(1.0));
@@ -1382,8 +1382,9 @@ impl NotificationCenter {
                         .border_1()
                         .border_color(colors.accent_200.with_alpha(0.4))
                         .bg(colors.background_900)
+                        .py_6()
                         .px_4()
-                        .py_3p5()
+                        // .py_3p5()
                         .child(content)
                         .into_any()
                 };

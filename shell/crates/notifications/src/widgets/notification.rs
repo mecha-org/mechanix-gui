@@ -609,8 +609,8 @@ impl Render for NotificationUi {
                                                     .text_color(colors.foreground_900)
                                                     .whitespace_normal()
                                                     .child(format!(" · {}", time_ago))
-                                                    .text_ellipsis()
-                                                    .w(px(120.)),
+                                                    .text_ellipsis(),
+                                                    // .w(px(120.)),
                                             ),
                                     )
                                     .when_some(self.message.clone(), |this, message| {
@@ -618,9 +618,9 @@ impl Render for NotificationUi {
                                             div()
                                                 .text_lg()
                                                 .mt(px(8.0))
+                                                .line_height(px(20.))
                                                 .text_color(colors.foreground_300)
                                                 .whitespace_normal()
-                                                .line_height(px(1.25))
                                                 .max_h(px(40.0))
                                                 .overflow_hidden()
                                                 .child(message),
@@ -631,7 +631,7 @@ impl Render for NotificationUi {
                             );
 
                         // configure inner wing
-                        w1.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                        w1.upper_wing_size(Size::new(px(180.0), px(24.0)));
                         w1.include_upper_wing_in_bounds(true);
                         w1.border_radius(px(4.0));
                         w1.border_width(px(1.0));
@@ -740,7 +740,8 @@ impl Render for NotificationUi {
             );
 
         // Outer wing configuration
-        w.upper_wing_size(Size::new(px(184.0), px(28.0)));
+        // w.upper_wing_size(Size::new(px(184.0), px(28.0)));
+        w.upper_wing_size(Size::new(px(180.0), px(24.0)));
         w.include_upper_wing_in_bounds(true);
         w.border_radius(px(4.0));
         w.border_width(px(1.0));
