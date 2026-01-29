@@ -740,9 +740,9 @@ impl Render for NotificationUi {
             );
 
         // Outer wing configuration
-        w.upper_wing_size(Size::new(px(180.0), px(28.0)));
+        w.upper_wing_size(Size::new(px(184.0), px(28.0)));
         w.include_upper_wing_in_bounds(true);
-        w.border_radius(px(12.0));
+        w.border_radius(px(4.0));
         w.border_width(px(1.0));
         w.with_animation(
             ElementId::NamedInteger("notif-anim".into(), (closing as u64) + anim_epoch),
