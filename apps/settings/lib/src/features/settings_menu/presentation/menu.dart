@@ -20,8 +20,7 @@ class _SettingMenuState extends State<SettingMenu> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print("=====>Menu openpath");
-      print(widget.openPath);
+      print("Menu openpath ${widget.openPath}");
 
       switch (widget.openPath) {
         case AppRoutes.wireless:

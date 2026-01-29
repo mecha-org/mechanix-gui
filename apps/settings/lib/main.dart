@@ -85,18 +85,15 @@ void main(List<String> args) async {
   const compileTimeOpenPath =
       String.fromEnvironment('MECHANIX_SETTINGS_OPEN_PATH');
 
-  print("=====>Main fUN compileTimeOpenPath");
-  print(compileTimeOpenPath);
+  print("Main compileTimeOpenPath  $compileTimeOpenPath");
 
   final runtimeOpenPath = Platform.environment['MECHANIX_SETTINGS_OPEN_PATH'];
 
-  print("=====>Main fUN runtimeOpenPath");
-  print(runtimeOpenPath);
+  print("Main runtimeOpenPath $runtimeOpenPath");
 
   final openPath =
       compileTimeOpenPath.isNotEmpty ? compileTimeOpenPath : runtimeOpenPath;
 
-  print("=====>Main fUN openpath");
   print('Open path: $openPath');
 
   runApp(
@@ -201,8 +198,7 @@ class _MechanixSettingsAppContentState
 
   @override
   Widget build(BuildContext context) {
-    print("=====>Main openpath");
-    print(widget.openPath);
+    print("Main openpath ${widget.openPath}");
 
     return MechanixTheme(
       data: _currentThemeData,
