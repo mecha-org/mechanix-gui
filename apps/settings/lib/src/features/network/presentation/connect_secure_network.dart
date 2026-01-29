@@ -48,15 +48,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                   Row(
                     children: [
                       CustomTitle(
-                        title: "Join",
-                        textStyle: TextStyle(
-                          color: context.onInverseSurface,
-                          fontWeight: FontWeight.w400,
-                          fontSize: 20,
-                        ),
-                      ),
-                      CustomTitle(
-                        title: "'${utf8.decode(accessPoint!.ssid)}'",
+                        title: "Join ${utf8.decode(accessPoint!.ssid)}",
                         textStyle: TextStyle(
                           color: context.onSurface,
                           fontWeight: FontWeight.w600,
@@ -113,7 +105,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                                 return null;
                               },
                               theme: MechanixTextInputThemeData(
-                                widgetHeight: 56,
+                                widgetHeight: 58,
                                 borderRadius: BorderRadius.circular(8),
                                 borderSide: BorderSide(
                                   color: context.outlineVariant,
@@ -131,8 +123,8 @@ class ConnectSecureNetwork extends StatelessWidget {
                                   width: 1,
                                 ),
                                 widgetPadding: EdgeInsets.zero,
-                                widgetDecoration: const BoxDecoration(
-                                  color: Colors.transparent,
+                                widgetDecoration: BoxDecoration(
+                                  color: context.surfaceContainerHigh,
                                 ),
                               ),
                             );

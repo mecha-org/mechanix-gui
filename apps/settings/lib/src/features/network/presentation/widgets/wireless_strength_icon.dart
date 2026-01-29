@@ -49,9 +49,9 @@ IconWidget _getIconWidget({required String iconPath, required bool isActive}) {
   return IconWidget(
     iconPath: iconPath,
     isActive: isActive,
-    boxWidth: 24,
-    boxHeight: 24,
-    iconWidth: 22.5,
-    iconHeight: 18,
+    boxWidth: 28,
+    boxHeight: 28,
+    iconWidth: 24,
+    iconHeight: 24,
   );
 }
