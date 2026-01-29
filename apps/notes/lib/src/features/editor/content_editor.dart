@@ -52,7 +52,7 @@ class ContentEditor extends StatelessWidget {
                   child: Container(
                     width: 32, // increased tap area
                     height: 21, // increased tap area
-                    padding: const EdgeInsets.only(top: 8, right: 0),
+                    padding: const EdgeInsets.only(top: 14, right: 0),
                     alignment: Alignment.topLeft,
                     child: SizedBox(
                       width: 16,
@@ -96,7 +96,7 @@ class ContentEditor extends StatelessWidget {
                   child: Container(
                     width: 32, // increased tap area
                     height: 21, // increased tap area
-                    padding: const EdgeInsets.only(top: 8, right: 0),
+                    padding: const EdgeInsets.only(top: 14, right: 0),
                     alignment: Alignment.topLeft,
                     child: SizedBox(
                       width: 16,

@@ -171,7 +171,7 @@ class _EditorBottomBarState extends State<EditorBottomBar> {
           leadingWidget: [
             BottomBarButton(
               iconTheme: const MechanixBottomBarIconThemeData(
-                buttonMargin: EdgeInsets.only(left: 5),
+                buttonMargin: EdgeInsets.only(left: 8),
               ),
               iconWidget: const IconWidget(
                 iconPath: NotesIcon.backIcon,

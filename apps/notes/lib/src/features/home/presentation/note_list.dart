@@ -111,7 +111,7 @@ class _NoteListState extends State<NoteList>
               },
               child: const Text(
                 "Add a new Note",
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: 18),
               ),
             ),
           ],

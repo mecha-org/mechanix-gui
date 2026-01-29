@@ -36,7 +36,7 @@ class DeleteBottomSheet extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 24,
+                  fontSize: 26,
                   color: context.onSurface,
                 ),
               ),
@@ -45,7 +45,7 @@ class DeleteBottomSheet extends StatelessWidget {
                 message,
                 style: TextStyle(
                   color: context.onSurface,
-                  fontSize: 18,
+                  fontSize: 20,
                   height: 1.2,
                 ),
               ),
@@ -56,7 +56,7 @@ class DeleteBottomSheet extends StatelessWidget {
                     child: MechanixFilledButton(
                       theme: MechanixFilledButtonThemeData(
                         textStyle: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           height: 1.25,
                           fontWeight: FontWeight.w400,
                           color: context.onSurface,
@@ -73,7 +73,7 @@ class DeleteBottomSheet extends StatelessWidget {
                       label: "Delete",
                       theme: MechanixFilledButtonThemeData(
                         textStyle: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           height: 1.25,
                           fontWeight: FontWeight.w400,
                           color: context.onSurface,

@@ -80,7 +80,7 @@ class _SearchNotesState extends State<SearchNotes> {
                               ? "Start typing to search notes..."
                               : "No Notes Found.",
                           style: TextStyle(
-                            fontSize: 18,
+                            fontSize: 20,
                             color: context.onSurfaceVariant,
                             fontWeight: FontWeight.w400,
                           ),
@@ -158,7 +158,7 @@ class _SearchNotesState extends State<SearchNotes> {
                                             textAlign: TextAlign.end,
                                             style: TextStyle(
                                               color: context.onSecondaryFixed,
-                                              fontSize: 14,
+                                              fontSize: 16,
                                               fontWeight: FontWeight.w400,
                                             ),
                                           ),

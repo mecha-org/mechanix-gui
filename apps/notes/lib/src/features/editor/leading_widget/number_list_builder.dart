@@ -13,7 +13,7 @@ class NumberListBuilder extends StatelessWidget {
       child: Text(
         "$number.",
         style: TextStyle(
-          fontSize: 18,
+          fontSize: 20,
           fontWeight: FontWeight.w400,
           color: context.onSurface,
           height: 1.45, // Word-like line spacing
