@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -76,9 +78,23 @@ import 'package:widgets/mechanix.dart';
 
 import 'load_settings.dart';
 
-void main() async {
+void main(List<String> args) async {
   di.registerSingleton(ThemeToggle());
   WidgetsFlutterBinding.ensureInitialized();
+
+  const compileTimeOpenPath =
+      String.fromEnvironment('MECHANIX_SETTINGS_OPEN_PATH');
+
+  print("Main compileTimeOpenPath  $compileTimeOpenPath");
+
+  final runtimeOpenPath = Platform.environment['MECHANIX_SETTINGS_OPEN_PATH'];
+
+  print("Main runtimeOpenPath $runtimeOpenPath");
+
+  final openPath =
+      compileTimeOpenPath.isNotEmpty ? compileTimeOpenPath : runtimeOpenPath;
+
+  print('Open path: $openPath');
 
   runApp(
     MultiRepositoryProvider(
@@ -105,26 +121,32 @@ void main() async {
           create: (_) => AppearanceRepositoryImpl(),
         ),
       ],
-      child: MechanixSettingsApp(),
+      child: MechanixSettingsApp(openPath: openPath ?? ''),
     ),
   );
 }
 
 class MechanixSettingsApp extends StatelessWidget with WatchItMixin {
-  MechanixSettingsApp({super.key});
+  MechanixSettingsApp({super.key, required this.openPath});
+  final String openPath;
 
   @override
   Widget build(BuildContext context) {
     final themeMode = watchPropertyValue((ThemeToggle t) => t.themeMode);
 
-    return _MechanixSettingsAppContent(themeMode: themeMode);
+    return _MechanixSettingsAppContent(
+      themeMode: themeMode,
+      openPath: openPath,
+    );
   }
 }
 
 class _MechanixSettingsAppContent extends StatefulWidget {
-  const _MechanixSettingsAppContent({required this.themeMode});
+  const _MechanixSettingsAppContent(
+      {required this.themeMode, required this.openPath});
 
   final ThemeMode themeMode;
+  final String openPath;
 
   @override
   State<_MechanixSettingsAppContent> createState() =>
@@ -176,12 +198,15 @@ class _MechanixSettingsAppContentState
 
   @override
   Widget build(BuildContext context) {
+    print("Main openpath ${widget.openPath}");
+
     return MechanixTheme(
       data: _currentThemeData,
       builder: (context, mechanix, child) => MainApp(
         darkTheme: mechanix.darkTheme,
         lightTheme: mechanix.lightTheme,
         themeMode: widget.themeMode,
+        openPath: widget.openPath,
       ),
     );
   }
@@ -193,11 +218,13 @@ class MainApp extends StatelessWidget {
     required this.lightTheme,
     required this.darkTheme,
     required this.themeMode,
+    required this.openPath,
   });
 
   final ThemeData lightTheme;
   final ThemeData darkTheme;
   final ThemeMode themeMode;
+  final String openPath;
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +280,7 @@ class MainApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: const SettingMenu(),
+        home: SettingMenu(openPath: openPath),
         theme: lightTheme,
         darkTheme: _buildDarkTheme(),
         themeMode: themeMode,
