@@ -64,6 +64,7 @@ class _AddNetworkState extends State<AddNetwork> {
                         hintText: 'Name',
                         isFormField: true,
                         theme: MechanixTextInputThemeData(
+                          widgetHeight: 58,
                           borderRadius: BorderRadius.circular(8),
                           enabledBorderSide: BorderSide(
                             color: context.outline,
@@ -83,8 +84,8 @@ class _AddNetworkState extends State<AddNetwork> {
                           contentPadding: const EdgeInsets.only(
                               left: 16, top: 16, right: 16, bottom: 16),
                           widgetPadding: EdgeInsets.zero,
-                          widgetDecoration: const BoxDecoration(
-                            color: Colors.transparent,
+                          widgetDecoration: BoxDecoration(
+                            color: context.surfaceContainerHigh,
                           ),
                         ),
                         prefixIcon: IconWidget(
@@ -115,6 +116,7 @@ class _AddNetworkState extends State<AddNetwork> {
                               iconColor: context.outline,
                             ).padOnly(left: 16, top: 16, right: 8, bottom: 16),
                             theme: MechanixTextInputThemeData(
+                              widgetHeight: 58,
                               borderRadius: BorderRadius.circular(8),
                               enabledBorderSide: BorderSide(
                                 color: context.outline,
@@ -132,8 +134,8 @@ class _AddNetworkState extends State<AddNetwork> {
                                 width: 1,
                               ),
                               widgetPadding: EdgeInsets.zero,
-                              widgetDecoration: const BoxDecoration(
-                                color: Colors.transparent,
+                              widgetDecoration: BoxDecoration(
+                                color: context.surfaceContainerHigh,
                               ),
                             ),
                             onChanged: (value) {

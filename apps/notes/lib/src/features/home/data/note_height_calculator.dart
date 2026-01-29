@@ -5,7 +5,7 @@ import 'package:mechanix_notes/src/features/home/models/notes_model.dart';
 
 class NoteHeightCalculator {
   // UI Constants - Match exactly with your NotePreview widget
-  static const double baseFontSize = 16.0;
+  static const double baseFontSize = 18.0;
   static const double lineHeight = 1.4;
   static const double baseLineHeight = baseFontSize * lineHeight; // 21px
 
@@ -14,11 +14,11 @@ class NoteHeightCalculator {
   static const double maxWidth = 216.0; // Available width
 
   // Heading sizes (from NotePreview _buildHeadingSpans)
-  static const double h1FontSize = 18.0;
-  static const double h2FontSize = 16.0;
+  static const double h1FontSize = 20.0;
+  static const double h2FontSize = 18.0;
 
   // Code block styling (from NotePreview _buildCodeBlock)
-  static const double codeFontSize = 16.0;
+  static const double codeFontSize = 18.0;
   static const double codeLineHeight = 1.4;
   static const double codePadding = 30.0; // 8px top + 8px bottom
   static const double codeMarginVertical =
@@ -26,7 +26,7 @@ class NoteHeightCalculator {
   static const double codeBorderRadius = 8.0;
 
   // Checkbox size (from NotePreview checkbox rendering)
-  static const double checkboxSize = 18.0;
+  static const double checkboxSize = 20.0;
   static const double checkboxSpacing = 6.0;
 
   // Card layout constants (from _NoteGridItem)
@@ -58,7 +58,7 @@ class NoteHeightCalculator {
     // Add date height
     totalHeight += dateHeight;
 
-    return totalHeight.clamp(minHeight, maxHeight);
+    return totalHeight.clamp(minHeight, maxHeight)+6;
   }
 
   // Calculate preview height matching Text.rich rendering logic
