@@ -6,7 +6,7 @@ use mxsearch::prelude::AppInfo;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
-use theme::prelude::{AlphaExt, Theme};
+use theme::prelude::Theme;
 
 const POPUP_BASE_TOP: f32 = 10.0;
 const CARD_WIDTH: f32 = 508.0;
@@ -204,17 +204,18 @@ impl SubWindow {
                     .bottom_5()
                     .left_6()
                     .font_weight(FontWeight(400.0))
-                    .text_size(px(16.0))
+                    .text_size(px(18.0))
                     .line_height(px(1.25))
                     .text_color(colors.foreground_300)
                     .child(category)
                     .text_ellipsis()
-                    .w(px(120.0)),
+                    .w(px(140.0)),
             )
     }
     /// Render the grid of appss
     pub fn render_grid(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
+
         div()
             .grid()
             .grid_cols(APPS_PER_ROW)
@@ -234,12 +235,12 @@ impl SubWindow {
                     .child(
                         div()
                             .id(idx)
-                            .bg(colors.background_700)
                             .size(px(ICON_BOX_SIZE))
-                            .rounded(px(15.3))
+                            .rounded(px(12.))
                             .flex()
                             .items_center()
                             .justify_center()
+                            .active(|this| this.bg(colors.background_700))
                             .cursor_pointer()
                             .on_click(cx.listener(
                                 move |this: &mut SubWindow, _event, _window, cx| {
@@ -274,7 +275,7 @@ impl SubWindow {
             // .bg(colors.accent_200.with_alpha(0.1))
             .border_color(colors.background_600);
 
-        w.upper_wing_size(Size::new(px(150.0), px(15.0)));
+        w.upper_wing_size(Size::new(px(160.0), px(15.0)));
         w.border_width(px(1.0));
         w.border_radius(px(8.0));
         w.corner_radii(commons::widgets::CornerRadii {

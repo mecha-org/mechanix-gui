@@ -63,25 +63,26 @@ impl AppDrawer {
                     .child(
                         div()
                             .id("app-icon")
-                            .bg(Theme::global(cx).colors.background_700)
                             .flex()
-                            .items_center()
-                            .justify_center()
+                            .pt(px(20.))
+                            .items_start()
+                            .justify_start()
                             .rounded(px(5.6))
-                            .size(px(60.0))
+                            .size(px(72.0))
                             .child(
                                 div()
-                                    .w(px(40.0))
-                                    .h(px(40.0))
+                                    .w(px(52.0))
+                                    .h(px(52.0))
                                     .border(px(1.0))
-                                    .items_center()
-                                    .justify_center()
+                                    .items_start()
+                                    .justify_start()
                                     .child(icon),
                             ),
                     )
                     .child(
                         div()
-                            .text_size(px(20.0))
+                            .pt(px(20.))
+                            .text_size(px(22.0))
                             .text_color(colors.foreground_300)
                             .line_height(px(1.2))
                             .text_ellipsis()
@@ -133,7 +134,6 @@ impl AppDrawer {
             .id(id)
             .flex()
             .flex_row()
-            .items_start()
             .justify_start()
             .gap(px(12.0))
             .items_center()
@@ -143,8 +143,8 @@ impl AppDrawer {
             .on_click(on_click)
             .child(
                 div()
-                    .w(px(20.0))
-                    .h(px(20.0))
+                    .w(px(28.0))
+                    .h(px(28.0))
                     .items_center()
                     .justify_center()
                     .mr(px(8.0))
@@ -158,7 +158,7 @@ impl AppDrawer {
             )
             .child(
                 div()
-                    .text_size(px(16.0))
+                    .text_size(px(18.0))
                     .line_height(px(1.2))
                     .text_color(text_color)
                     .font_weight(FontWeight::NORMAL)
@@ -195,25 +195,24 @@ impl AppDrawer {
                     .child(
                         div()
                             .id("app-icon")
-                            .bg(Theme::global(cx).colors.background_800)
                             .flex()
-                            .items_center()
-                            .justify_center()
+                            .items_start()
+                            .justify_start()
                             .rounded(px(5.6))
                             .size(px(60.0))
                             .child(
                                 div()
-                                    .w(px(40.0))
-                                    .h(px(40.0))
+                                    .w(px(52.0))
+                                    .h(px(52.0))
                                     .border(px(1.0))
-                                    .items_center()
-                                    .justify_center()
+                                    .items_start()
+                                    .justify_start()
                                     .child(icon),
                             ),
                     )
                     .child(
                         div()
-                            .text_size(px(20.0))
+                            .text_size(px(22.0))
                             .text_color(colors.foreground_300)
                             .line_height(px(1.2))
                             .max_w(px(200.0))
@@ -225,14 +224,14 @@ impl AppDrawer {
                 div().flex_col().gap(px(16.0)).children([
                     // Title
                     div()
-                        .text_size(px(20.0))
+                        .text_size(px(22.0))
                         .text_color(colors.foreground_200)
                         .font_weight(FontWeight::BOLD)
                         .child(format!("Delete ‘{}’ app?", app.name)),
                     // Subtitle
                     div()
                         .mt(px(10.0))
-                        .text_size(px(16.0))
+                        .text_size(px(18.0))
                         .text_color(colors.foreground_200)
                         .child("This action will delete the app permanently"),
                     // Buttons row
@@ -250,7 +249,7 @@ impl AppDrawer {
                                 .rounded(px(8.0))
                                 .bg_color(colors.background_500)
                                 .text_color(colors.foreground_200)
-                                .text_size(px(18.0))
+                                .text_size(px(20.0))
                                 .on_click(cx.listener(|this: &mut AppDrawer, _, _, cx| {
                                     this.sheet_kind = BottomSheetKind::MainOptions;
                                     cx.notify();
@@ -260,7 +259,7 @@ impl AppDrawer {
                                 .width(px(246.0))
                                 .height(px(40.0))
                                 .rounded(px(8.0))
-                                .text_size(px(18.0))
+                                .text_size(px(20.0))
                                 .bg_color(rgb(0xffd3002a)) // Red
                                 .text_color(gpui::white())
                                 .text_color(colors.foreground_200)
@@ -297,31 +296,29 @@ impl AppDrawer {
                     .flex_row()
                     .items_center()
                     .gap(px(12.0))
-                    .items_center()
                     .pt(px(8.0))
                     .pb(px(8.0))
                     .child(
                         div()
                             .id("app-icon")
-                            .bg(Theme::global(cx).colors.background_800)
                             .flex()
-                            .items_center()
-                            .justify_center()
+                            .items_start()
+                            .justify_start()
                             .rounded(px(5.6))
                             .size(px(60.0)) // outer size
                             .child(
                                 div()
-                                    .w(px(40.0))
-                                    .h(px(40.0))
+                                    .w(px(52.0))
+                                    .h(px(52.0))
                                     .border(px(1.0))
-                                    .items_center()
-                                    .justify_center()
+                                    .items_start()
+                                    .justify_start()
                                     .child(icon),
                             ),
                     )
                     .child(
                         div()
-                            .text_size(px(20.0))
+                            .text_size(px(22.0))
                             .text_color(colors.foreground_300)
                             .font_weight(FontWeight::BOLD)
                             .text_ellipsis()
@@ -360,21 +357,24 @@ impl AppDrawer {
             .flex_row()
             .items_start()
             .justify_between()
+            .gap_4()
             .child(
                 div()
+                    .flex_shrink_0()
                     .text_size(px(18.0))
                     .text_color(text_color)
                     .child(row_label),
             )
             .child(
                 div()
-                    .flex()
-                    .justify_end()
+                    .flex_shrink()
+                    .max_w(px(200.0))
+                    .min_w_0()
                     .text_size(px(18.0))
                     .text_color(text_color)
-                    .child(value.to_string())
-                    .w(px(200.0))
-                    .text_ellipsis(),
+                    .text_ellipsis()
+                    .overflow_hidden()
+                    .child(value.to_string()),
             )
     }
 }
