@@ -29,16 +29,20 @@ class _PressableIconState extends State<PressableIcon> {
       onTapDown: disabled ? null : (_) => setState(() => pressed = true),
       onTapUp: disabled ? null : (_) => setState(() => pressed = false),
       onTapCancel: disabled ? null : () => setState(() => pressed = false),
-      onTap: disabled ? null : widget.onTap,
-      child: IconWidget(
-        iconPath: widget.iconPath,
-        iconHeight: 26,
-        iconWidth: 26,
-        iconColor: disabled
-            ? context.colorScheme.outline
-            : pressed
-                ? context.colorScheme.primaryContainer
-                : context.colorScheme.onSurface,
+      child: IconButton(
+        icon: IconWidget(
+          iconPath: widget.iconPath,
+          iconHeight: 26,
+          iconWidth: 26,
+          boxWidth: 46,
+          boxHeight: 46,
+          iconColor: disabled
+              ? context.colorScheme.outline
+              : pressed
+                  ? context.colorScheme.primaryContainer
+                  : context.colorScheme.onSurface,
+        ),
+        onPressed: disabled ? null : widget.onTap,
       ),
     );
   }
@@ -80,11 +84,12 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
                 color: context.colorScheme.secondary,
               )
             : null,
-        padding: const EdgeInsets.all(12),
         child: IconWidget(
           iconPath: widget.iconPath,
           iconHeight: 28,
           iconWidth: 28,
+          boxWidth: 48,
+          boxHeight: 48,
           iconColor: disabled
               ? context.colorScheme.outline
               : pressed

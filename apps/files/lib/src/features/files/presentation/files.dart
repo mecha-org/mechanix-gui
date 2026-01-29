@@ -652,7 +652,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       leadingWidget: [
         BottomBarButton.widget(
           widget: Padding(
-            padding: const EdgeInsets.only(left: 4),
+            padding: const EdgeInsets.only(left: 8),
             child: DecoratedPressableIcon(
               iconPath: Images.back,
               onTap: selectionMode
@@ -711,7 +711,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           floatingActionBarTheme: MechanixFloatingActionBarThemeData(
             barMainAxisAlignment: MainAxisAlignment.center,
             width: double.infinity,
-            barSpacing: 46,
+            barSpacing: 26,
             decoration: BoxDecoration(
               color: context.colorScheme.secondary,
               borderRadius: const BorderRadius.only(
@@ -744,15 +744,27 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
           extensionWidgets: [
             BottomBarButton.widget(
-              widget: PressableIcon(
-                iconPath: Images.copy,
-                onTap: hasSelection ? handleCopy : null,
+              widget: ValueListenableBuilder<bool>(
+                valueListenable: hasSelectionNotifier,
+                builder: (context, hasSelection, _) {
+                  return PressableIcon(
+                    iconPath: Images.copy,
+                    isDisabled: !hasSelection,
+                    onTap: hasSelection ? handleCopy : null,
+                  );
+                },
               ),
             ),
             BottomBarButton.widget(
-              widget: PressableIcon(
-                iconPath: Images.move,
-                onTap: hasSelection ? handleMove : null,
+              widget: ValueListenableBuilder<bool>(
+                valueListenable: hasSelectionNotifier,
+                builder: (context, hasSelection, _) {
+                  return PressableIcon(
+                    iconPath: Images.move,
+                    isDisabled: !hasSelection,
+                    onTap: hasSelection ? handleMove : null,
+                  );
+                },
               ),
             ),
             const BottomBarButton.widget(
@@ -764,9 +776,15 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               ),
             ),
             BottomBarButton.widget(
-              widget: PressableIcon(
-                iconPath: Images.delete,
-                onTap: hasSelection ? handleDelete : null,
+              widget: ValueListenableBuilder<bool>(
+                valueListenable: hasSelectionNotifier,
+                builder: (context, hasSelection, _) {
+                  return PressableIcon(
+                    iconPath: Images.delete,
+                    isDisabled: !hasSelection,
+                    onTap: hasSelection ? handleDelete : null,
+                  );
+                },
               ),
             ),
           ],
@@ -1021,7 +1039,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     });
 
     // Update notifiers
-    hasSelectionNotifier.value = selectedPaths.isNotEmpty;
+    setHasSelection(selectedPaths.isNotEmpty);
     allSelectedNotifier.value = true;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1032,6 +1050,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   bool isSelected(String path) => selectedPaths.contains(path);
 
+  void setHasSelection(bool value) {
+    if (hasSelectionNotifier.value != value) {
+      hasSelectionNotifier.value = value;
+    }
+  }
+
   void toggleSelection(String path) {
     setState(() {
       if (selectedPaths.contains(path)) {
@@ -1040,11 +1064,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         selectedPaths.add(path);
       }
 
-      // Keep notifier in sync
-      final newValue = selectedPaths.isNotEmpty;
-      if (hasSelectionNotifier.value != newValue) {
-        hasSelectionNotifier.value = newValue;
-      }
+      setHasSelection(selectedPaths.isNotEmpty);
 
       // Keep selectionMode true once initiated
       selectionMode = true;
@@ -1074,6 +1094,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         _closeFabMenuProgrammatically();
       }
     });
+
+    if (hasSelectionNotifier.value != false) {
+      hasSelectionNotifier.value = false;
+    }
   }
 
   void enableSelect() {

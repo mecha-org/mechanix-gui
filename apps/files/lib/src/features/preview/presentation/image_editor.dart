@@ -391,8 +391,9 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
   }
 
   Widget _buildEditorBar(BuildContext context) {
-    const double iconGap = 40;
-    const double sidePadding = 16;
+    const double leadingIconGap = 10;
+    const double iconGap = 16;
+    const double sidePadding = 10;
 
     return Container(
       height: 44,
@@ -415,7 +416,7 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
                     isDisabled: _undoStack.isEmpty,
                     onTap: _undoStack.isEmpty ? null : undo,
                   ),
-                  const SizedBox(width: iconGap),
+                  const SizedBox(width: leadingIconGap),
                   PressableIcon(
                     iconPath: Images.redo,
                     isDisabled: _redoStack.isEmpty,
