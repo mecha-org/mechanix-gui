@@ -115,14 +115,14 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       leadingWidget: [
         BottomBarButton.widget(
             widget: Padding(
-          padding: const EdgeInsets.only(left: 4),
+          padding: const EdgeInsets.only(left: 8),
           child: DecoratedPressableIcon(
             iconPath: Images.back,
             onTap: () => Navigator.pop(context),
           ),
         )),
       ],
-      centerWidgetSpacing: 20,
+      centerWidgetSpacing: 16,
       centerWidget: [
         BottomBarButton.widget(
           widget: DecoratedPressableIcon(
