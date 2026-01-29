@@ -997,15 +997,16 @@ impl NotificationCenter {
             .flex_row()
             .items_center()
             .justify_between()
+            .py_6()
             .px_4()
-            .pb_3()
+            .h(px(44.))
             .font_family(primary_font)
             .child(
                 div()
                     .text_color(colors.foreground_300)
-                    .text_base()
                     .font_weight(FontWeight::MEDIUM)
-                    .text_size(px(24.0))
+                    .text_size(px(26.0))
+                    .line_height(px(1.22))
                     .child("Notifications"),
             );
 
@@ -1013,7 +1014,8 @@ impl NotificationCenter {
             header = header.child(
                 div()
                     .id("clear-all")
-                    .text_size(px(16.0))
+                    .text_size(px(18.0))
+                    .line_height(px(1.27))
                     .text_color(colors.foreground_200)
                     .font_weight(FontWeight::MEDIUM)
                     .cursor_pointer()
@@ -1079,15 +1081,15 @@ impl NotificationCenter {
                         .border_color(colors.accent_200.with_alpha(0.6))
                         .bg(colors.background_1000);
 
-                    outer_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
+                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
                     outer_wing.corner_radii(CornerRadii {
-                            top_left: px(0.0),
-                            top_right: px(8.0),
-                            bottom_right: px(0.0),
-                            bottom_left: px(0.0),
-                        });
+                        top_left: px(0.0),
+                        top_right: px(8.0),
+                        bottom_right: px(0.0),
+                        bottom_left: px(0.0),
+                    });
 
                     let mut inner_wing =
                         wing()
@@ -1100,16 +1102,16 @@ impl NotificationCenter {
                                 colors.accent_200.with_alpha(0.1)
                             });
 
-                    inner_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
+                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     inner_wing.upper_wing_side(WingSide::Left);
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_width(px(1.0));
                     inner_wing.corner_radii(CornerRadii {
-                            top_left: px(0.0),
-                            top_right: px(8.0),
-                            bottom_right: px(0.0),
-                            bottom_left: px(0.0),
-                        });
+                        top_left: px(0.0),
+                        top_right: px(8.0),
+                        bottom_right: px(0.0),
+                        bottom_left: px(0.0),
+                    });
 
                     let inner = inner_wing.into_any();
                     row = row.child(outer_wing.child(inner).into_any());
@@ -1127,15 +1129,15 @@ impl NotificationCenter {
                         .border_color(colors.accent_200.with_alpha(0.6))
                         .bg(colors.background_1000);
 
-                    outer_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
+                    outer_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     outer_wing.include_upper_wing_in_bounds(true);
                     outer_wing.border_width(px(1.0));
                     outer_wing.corner_radii(CornerRadii {
-                            top_left: px(0.0),
-                            top_right: px(8.0),
-                            bottom_right: px(0.0),
-                            bottom_left: px(0.0),
-                        });
+                        top_left: px(0.0),
+                        top_right: px(8.0),
+                        bottom_right: px(0.0),
+                        bottom_left: px(0.0),
+                    });
 
                     let mut inner_wing =
                         wing()
@@ -1148,14 +1150,14 @@ impl NotificationCenter {
                                 colors.accent_200.with_alpha(0.1)
                             });
 
-                    inner_wing.upper_wing_size(Size::new(px(24.0), navbar_size.height));
+                    inner_wing.upper_wing_size(Size::new(px(20.0), navbar_size.height));
                     inner_wing.include_upper_wing_in_bounds(true);
                     inner_wing.border_width(px(1.0));
                     inner_wing.corner_radii(CornerRadii {
-                            top_left: px(0.0),
-                            top_right: px(8.0),
-                            bottom_right: px(0.0),
-                            bottom_left: px(0.0),
+                        top_left: px(0.0),
+                        top_right: px(8.0),
+                        bottom_right: px(0.0),
+                        bottom_left: px(0.0),
                     });
 
                     let inner = inner_wing.into_any();
@@ -1223,7 +1225,7 @@ impl NotificationCenter {
                                 )
                                 .child(
                                     div()
-                                        .text_base()
+                                        .text_lg()
                                         .font_weight(FontWeight::SEMIBOLD)
                                         .text_color(colors.foreground_500)
                                         .whitespace_normal()
@@ -1237,7 +1239,7 @@ impl NotificationCenter {
                                 )
                                 .child(
                                     div()
-                                        .text_base()
+                                        .text_lg()
                                         .font_weight(FontWeight::SEMIBOLD)
                                         .text_color(colors.foreground_900)
                                         .whitespace_normal()
@@ -1249,31 +1251,34 @@ impl NotificationCenter {
                                 this.child(
                                     div()
                                         .mt(px(-8.0))
-                                        .mb(px(10.))
-                                        .left(px(10.0))
+                                        .mb(px(12.))
+                                        .left(px(12.0))
                                         .rounded(px(4.0))
                                         .bg(colors.accent_200.with_alpha(0.2))
                                         .text_color(colors.accent_200)
-                                        .text_size(px(14.0))
+                                        .text_size(px(18.0))
                                         .px_2()
-                                        .h(px(24.0))
+                                        .w(px(24.))
+                                        .h(px(24.))
                                         .flex()
                                         .items_center()
                                         .justify_center()
-                                        .font_weight(FontWeight::MEDIUM)
-                                        .child("︿"),
+                                        .font_weight(FontWeight::MEDIUM) 
+                                        .child(img(icons.up_arrow.clone()).w(px(15.)).h(px(15.))),
                                 )
                             } else {
                                 this.child(
                                     div()
                                         .mt(px(-8.0))
-                                        .mb(px(10.))
-                                        .left(px(10.0))
+                                        .mb(px(12.))
+                                        .left(px(12.0))
                                         .rounded(px(4.0))
                                         .bg(colors.accent_200.with_alpha(0.2))
                                         .text_color(colors.accent_200)
-                                        .text_size(px(16.0))
+                                        .text_size(px(18.0))
                                         .px_2()
+                                        .w(px(24.))
+                                        .h(px(24.))
                                         // .py_0p3()
                                         .font_weight(FontWeight::MEDIUM)
                                         .child(if g.count > 10 {
@@ -1289,7 +1294,7 @@ impl NotificationCenter {
 
                 // Body with preview text and optional thumbnail
                 let mut body = div()
-                    .text_size(px(16.0))
+                    .text_size(px(18.0))
                     .text_color(colors.foreground_300)
                     .flex()
                     .flex_row()
@@ -1341,11 +1346,11 @@ impl NotificationCenter {
                         } else {
                             colors.background_1000
                         })
-                        .rounded(px(12.0));
+                        .rounded(px(4.0));
 
-                    outer_wing.upper_wing_size(Size::new(px(184.0), px(28.0)));
+                    outer_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
                     outer_wing.include_upper_wing_in_bounds(true);
-                    outer_wing.border_radius(px(12.0));
+                    outer_wing.border_radius(px(4.0));
                     outer_wing.border_width(px(1.0));
 
                     let mut inner_wing = wing()
@@ -1360,15 +1365,15 @@ impl NotificationCenter {
                             colors.accent_200.with_alpha(0.1)
                         })
                         .border(px(2.0))
-                        .rounded(px(12.0))
+                        .rounded(px(6.0))
                         .shadow_md()
                         .pt(px(2.0))
                         .px_4()
                         .py_3p5();
 
-                    inner_wing.upper_wing_size(Size::new(px(184.0), px(28.0)));
+                    inner_wing.upper_wing_size(Size::new(px(180.0), px(28.0)));
                     inner_wing.include_upper_wing_in_bounds(true);
-                    inner_wing.border_radius(px(12.0));
+                    inner_wing.border_radius(px(4.0));
                     inner_wing.border_width(px(1.0));
 
                     let inner = inner_wing.child(content).into_any();
@@ -1378,7 +1383,7 @@ impl NotificationCenter {
                     div()
                         .w_128()
                         .relative()
-                        .rounded(px(12.0))
+                        .rounded(px(6.0))
                         .border_1()
                         .border_color(colors.accent_200.with_alpha(0.2))
                         .bg(colors.background_900)
@@ -1826,7 +1831,7 @@ impl NotificationCenter {
 
         let bell = Icons::global(cx).notifications.bell.clone();
         let primary_font = Fonts::global(cx).primary.clone();
-       
+
         // Main container
         div()
             .relative()
@@ -1845,48 +1850,50 @@ impl NotificationCenter {
                     cx.notify();
                 }),
             )
-            .child( if !show_list {
-                 div()
-                .id("nc-center-empty-list")
-                .relative()
-                .w_full()
-                .h_full()
-                .child(
-                    div()
-                    .absolute()
-                    .id("nc-center-header")
-                    .rounded(px(14.0))
-                    .shadow_lg()
-                    .flex()
-                    .flex_col()
-                    .child(header)                                        
-                )
-                .child(
-                     div()
+            .child(if !show_list {
+                div()
                     .id("nc-center-empty-list")
-                    .text_color(colors.foreground_1000)
-                    .text_size(px(16.0))
-                    .flex()
-                    .flex_col()
-                    .items_center()
-                    .justify_center()
+                    .relative()
                     .w_full()
                     .h_full()
                     .child(
-                         svg()
-                            .external_path(SharedString::from(bell.to_string_lossy().to_string()))
-                            .text_color(colors.accent_200)
-                            .w(px(28.))
-                            .h(px(28.)),
+                        div()
+                            .absolute()
+                            .id("nc-center-header")
+                            .rounded(px(10.0))
+                            .shadow_lg()
+                            .flex()
+                            .flex_col()
+                            .child(header),
                     )
-                    .gap_2()
-                    .child("No new notifications")
-                )                
-                .into_any()
-            } else {           
+                    .child(
+                        div()
+                            .id("nc-center-empty-list")
+                            .text_color(colors.foreground_1000)
+                            .text_size(px(18.0))
+                            .flex()
+                            .flex_col()
+                            .items_center()
+                            .justify_center()
+                            .w_full()
+                            .h_full()
+                            .child(
+                                svg()
+                                    .external_path(SharedString::from(
+                                        bell.to_string_lossy().to_string(),
+                                    ))
+                                    .text_color(colors.accent_200)
+                                    .w(px(28.))
+                                    .h(px(28.)),
+                            )
+                            .gap_2()
+                            .child("No new notifications"),
+                    )
+                    .into_any()
+            } else {
                 div()
                     .id("nc-center-container")
-                    .rounded(px(14.0))
+                    .rounded(px(10.0))
                     .shadow_lg()
                     .flex()
                     .flex_col()
@@ -1904,9 +1911,12 @@ impl NotificationCenter {
                                     .id("nc-center-list")
                                     .relative()
                                     .top(self.scroll_offset)
-                                    .on_mouse_down(MouseButton::Left, cx.listener(|_, _, _, cx| {
-                                        cx.stop_propagation();
-                                    }))
+                                    .on_mouse_down(
+                                        MouseButton::Left,
+                                        cx.listener(|_, _, _, cx| {
+                                            cx.stop_propagation();
+                                        }),
+                                    )
                                     .on_drag(
                                         DragInfo::new(),
                                         move |_: &DragInfo, position, _, cx| {
@@ -1923,7 +1933,8 @@ impl NotificationCenter {
                                     )
                                     .child(list),
                             ),
-                    ).into_any()
-             })
+                    )
+                    .into_any()
+            })
     }
 }

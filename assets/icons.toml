@@ -17,6 +17,7 @@
 "navbar-gray" = "assets/icons/notifications/navbar-gray.png"
 "navbar" = "assets/icons/notifications/navbar.png"
 "bell" = "assets/icons/notifications/bell.svg"
+"up-arrow" = "assets/icons/notifications/up-arrow.png"
 
 [power_options]
 "down-arrow" = "assets/icons/power-options/down-arrow.svg"

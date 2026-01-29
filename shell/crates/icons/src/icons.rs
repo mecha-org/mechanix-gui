@@ -81,6 +81,7 @@ pub struct NotificationIcons {
     pub navbar_gray: PathBuf,
     pub navbar: PathBuf,
     pub bell: PathBuf,
+    pub up_arrow: PathBuf,
 }
 
 impl Default for NotificationIcons {
@@ -92,6 +93,7 @@ impl Default for NotificationIcons {
             navbar_gray: PathBuf::from(format!("{}notifications/navbar-gray.png", ICONS_BASE_PATH)),
             navbar: PathBuf::from(format!("{}notifications/navbar.png", ICONS_BASE_PATH)),
             bell: PathBuf::from(format!("{}notifications/bell.svg", ICONS_BASE_PATH)),
+            up_arrow: PathBuf::from(format!("{}notifications/up-arrow.png", ICONS_BASE_PATH)),
         }
     }
 }
