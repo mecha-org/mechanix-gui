@@ -19,7 +19,6 @@ import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/conflict_resolution_bottomsheet.dart';
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
-import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
@@ -28,7 +27,6 @@ import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 import 'package:widgets/widgets/floating_action_bar/mechanix_floating_action_bar_theme.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 import 'package:widgets/widgets/navigation_bar/mechanix_navigation_bar_theme.dart';
 import 'package:widgets/widgets/notification/notification_type.dart';
@@ -487,6 +485,18 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 iconColor: context.colorScheme.onSurface,
                 iconHeight: 24,
                 iconWidth: 24,
+              ),
+              isClearButtonRequired: false,
+              anchorWidget: Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: DecoratedPressableIcon(
+                  onTap: () {
+                    clearSearch();
+                  },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
+                  icon: const Icon(Icons.close),
+                ),
               ),
               hintText: "Search here",
               onChanged: (query) {
@@ -1269,9 +1279,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       anchorWidget: showCheck
                           ? Padding(
                               padding: const EdgeInsets.only(left: 5),
-                              child: IconButton(
+                              child: DecoratedPressableIcon(
                                 icon: const Icon(Icons.check),
-                                onPressed: () async {
+                                onTap: () async {
                                   final trimmed = currentName.trim();
 
                                   if (trimmed.isEmpty) return;
@@ -1303,15 +1313,21 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
                                   clearSelection();
                                 },
+                                tapBackgroundColor: context
+                                    .colorScheme.surfaceContainer
+                                    .withAlpha(100),
                               ),
                             )
                           : Padding(
                               padding: const EdgeInsets.only(left: 5),
-                              child: IconButton(
-                                icon: const Icon(Icons.close),
-                                onPressed: () {
+                              child: DecoratedPressableIcon(
+                                onTap: () {
                                   entry?.remove();
                                 },
+                                tapBackgroundColor: context
+                                    .colorScheme.surfaceContainer
+                                    .withAlpha(100),
+                                icon: const Icon(Icons.close),
                               ),
                             ),
                     ),
@@ -1621,9 +1637,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         anchorWidget: showCheck
                             ? Padding(
                                 padding: const EdgeInsets.only(left: 5),
-                                child: IconButton(
+                                child: DecoratedPressableIcon(
                                   icon: const Icon(Icons.check),
-                                  onPressed: () {
+                                  onTap: () {
                                     entry?.remove();
 
                                     final newFullPath = p.join(
@@ -1644,18 +1660,24 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
                                     completer.complete(newFullPath);
                                   },
+                                  tapBackgroundColor: context
+                                      .colorScheme.surfaceContainer
+                                      .withAlpha(100),
                                 ),
                               )
                             : Padding(
                                 padding: const EdgeInsets.only(left: 5),
-                                child: IconButton(
+                                child: DecoratedPressableIcon(
                                   icon: const Icon(Icons.close),
-                                  onPressed: () {
+                                  onTap: () {
                                     entry?.remove();
                                     controller.clearLiveRename();
                                     controller.clearNewFolder();
                                     completer.complete(null);
                                   },
+                                  tapBackgroundColor: context
+                                      .colorScheme.surfaceContainer
+                                      .withAlpha(100),
                                 ),
                               ),
                       ),

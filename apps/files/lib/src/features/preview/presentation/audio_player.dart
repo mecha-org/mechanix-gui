@@ -149,8 +149,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
             clipBehavior: Clip.none,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   children: [
                     PressableIcon(

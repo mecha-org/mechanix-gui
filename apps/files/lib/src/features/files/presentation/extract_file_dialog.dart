@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -205,6 +206,22 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                       iconHeight: 24,
                       iconWidth: 24,
                     ),
+                    isClearButtonRequired: false,
+                    anchorWidget: Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: DecoratedPressableIcon(
+                        onTap: () {
+                          setState(() {
+                            isSearching = false;
+                            searchQuery.value = "";
+                          });
+                          controller.search('');
+                        },
+                        tapBackgroundColor:
+                            context.colorScheme.surfaceContainer.withAlpha(100),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ),
                     hintText: "Search here",
                     onChanged: (query) {
                       searchQuery.value = query;
@@ -235,47 +252,51 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         widgetPadding:
                             const EdgeInsets.only(left: 8, top: 10, right: 8)),
                     leadingWidget: [
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.back,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () {
+                            (isHomePageDir ? homeNavigation() : handleBack());
+                          },
                         ),
-                        onPressed: () {
-                          (isHomePageDir ? homeNavigation() : handleBack());
-                        },
                       ),
                     ],
                     anchorWidget: [
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.search,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () {
+                            setState(() => isSearching = true);
+                          },
                         ),
-                        onPressed: () {
-                          setState(() => isSearching = true);
-                        },
                       ),
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.home,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () {
+                            setState(() => showHomeView = true);
+                          },
                         ),
-                        onPressed: () {
-                          setState(() => showHomeView = true);
-                        },
                       ),
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.createFolder,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () async {
+                            await createFolderAndRename();
+                          },
                         ),
-                        onPressed: () async {
-                          await createFolderAndRename();
-                        },
                       ),
                     ],
                   ),
@@ -410,9 +431,9 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         anchorWidget: showCheck
             ? Padding(
                 padding: const EdgeInsets.only(left: 5),
-                child: IconButton(
+                child: DecoratedPressableIcon(
                   icon: const Icon(Icons.check),
-                  onPressed: () {
+                  onTap: () {
                     final filesBloc = context.read<FilesBloc>();
                     filesBloc.add(
                       Rename(
@@ -424,16 +445,20 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                     setState(() => showRenameBar = false);
                     controller.clearNewFolder();
                   },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
                 ),
               )
             : Padding(
                 padding: const EdgeInsets.only(left: 5),
-                child: IconButton(
+                child: DecoratedPressableIcon(
                   icon: const Icon(Icons.close),
-                  onPressed: () {
+                  onTap: () {
                     setState(() => showRenameBar = false);
                     controller.clearNewFolder();
                   },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
                 ),
               ),
       ),

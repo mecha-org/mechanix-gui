@@ -755,6 +755,18 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                 iconHeight: 24,
                 iconWidth: 24,
               ),
+              isClearButtonRequired: false,
+              anchorWidget: Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: DecoratedPressableIcon(
+                  onTap: () {
+                    _clearSearch();
+                  },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
               onChanged: _onSearchChanged,
               onClear: _clearSearch,
             ),

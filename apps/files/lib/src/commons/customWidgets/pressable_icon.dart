@@ -49,15 +49,19 @@ class _PressableIconState extends State<PressableIcon> {
 }
 
 class DecoratedPressableIcon extends StatefulWidget {
-  final String iconPath;
+  final String? iconPath;
+  final Widget? icon;
   final VoidCallback? onTap;
   final bool isDisabled;
+  final Color? tapBackgroundColor;
 
   const DecoratedPressableIcon({
     super.key,
-    required this.iconPath,
+    this.iconPath,
+    this.icon,
     this.onTap,
     this.isDisabled = false,
+    this.tapBackgroundColor,
   });
 
   @override
@@ -69,7 +73,41 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
 
   @override
   Widget build(BuildContext context) {
-    final bool disabled = widget.isDisabled;
+    final disabled = widget.isDisabled;
+    final bgColor = widget.tapBackgroundColor ??
+        context.colorScheme.surfaceContainerHigh.withAlpha(100);
+
+    final Widget iconWidget = widget.icon ??
+        IconWidget(
+          iconPath: widget.iconPath!,
+          iconHeight: 28,
+          iconWidth: 28,
+          boxWidth: 48,
+          boxHeight: 48,
+          iconColor: disabled
+              ? context.colorScheme.outline
+              : pressed
+                  ? context.colorScheme.primaryContainer
+                  : context.colorScheme.onSurface,
+        );
+
+    final Widget coloredIcon = widget.icon != null
+        ? IconTheme(
+            data: IconThemeData(
+              size: 28,
+              color: disabled
+                  ? context.colorScheme.outline
+                  : pressed
+                      ? context.colorScheme.primaryContainer
+                      : context.colorScheme.onSurface,
+            ),
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: Center(child: widget.icon),
+            ),
+          )
+        : iconWidget;
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -80,22 +118,11 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
       child: Container(
         decoration: pressed
             ? BoxDecoration(
-                borderRadius: const BorderRadius.all(Radius.circular(8)),
-                color: context.colorScheme.secondary,
+                borderRadius: BorderRadius.circular(8),
+                color: bgColor,
               )
             : null,
-        child: IconWidget(
-          iconPath: widget.iconPath,
-          iconHeight: 28,
-          iconWidth: 28,
-          boxWidth: 48,
-          boxHeight: 48,
-          iconColor: disabled
-              ? context.colorScheme.outline
-              : pressed
-                  ? context.colorScheme.primaryContainer
-                  : context.colorScheme.onSurface,
-        ),
+        child: coloredIcon,
       ),
     );
   }

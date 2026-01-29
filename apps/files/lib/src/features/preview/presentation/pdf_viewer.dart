@@ -138,12 +138,15 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       },
                       anchorWidget: Padding(
                         padding: const EdgeInsets.only(left: 5.0, right: 2.0),
-                        child: IconButton(
+                        child: DecoratedPressableIcon(
                           icon: const Icon(Icons.close),
-                          onPressed: () {
+                          onTap: () {
                             password = '';
                             Navigator.of(bottomSheetContext).pop();
                           },
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
                         ),
                       ),
                     ),
@@ -508,6 +511,18 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 iconColor: context.colorScheme.onSurface,
                 iconHeight: 24,
                 iconWidth: 24,
+              ),
+              isClearButtonRequired: false,
+              anchorWidget: Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: DecoratedPressableIcon(
+                  onTap: () {
+                    _clearPdfSearch();
+                  },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
+                  icon: const Icon(Icons.close),
+                ),
               ),
               hintText: "Search in PDF",
               onChanged: _onPdfSearchChanged,
