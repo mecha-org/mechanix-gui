@@ -18,6 +18,7 @@ pub const ROW_HEIGHT: f32 = 60.0;
 pub const MODAL_HEADER_HEIGHT: f32 = 60.0;
 pub const MODAL_WING_WIDTH: f32 = 237.0;
 pub const MODAL_WING_HEIGHT: f32 = 36.0;
+pub const MECHANIX_PATH: &str = "MECHANIX_SETTINGS_OPEN_PATH";
 
 impl SettingsDrawer {
     pub fn render_header_div(
@@ -57,10 +58,7 @@ impl SettingsDrawer {
         let sender = Dispatcher::global(cx).0.clone();
         let app_info = app_info.clone().unwrap();
 
-        let exec = format!(
-            "{}={} {}",
-            "MECHNIX_SETTINGS_OPEN_PATH", settings_path, app_info.exec
-        );
+        let exec = format!("{}={} {}", MECHANIX_PATH, settings_path, app_info.exec);
 
         println!("OPEN exec : {exec:?}");
         cx.background_executor()
@@ -76,9 +74,11 @@ impl SettingsDrawer {
 
         let settings = Settings::global(cx).settings_drawer.clone();
         let closed_pos: f32 = Self::calculate_closed_position(&settings);
-        self.is_visible = false;
         self.position = 100.;
+        Self::start_close_animation(self, cx);
         self.snap_to(closed_pos, cx);
+        self.is_visible = false;
+        self.drag_offset = None;
     }
 
     pub fn render_settings_div(
@@ -123,6 +123,10 @@ impl SettingsDrawer {
             )
             .on_click(
                 cx.listener(Self::click_listener(move |this, _event, _window, cx| {
+                    println!(
+                        "Settings clicked, NOW route to --- {:?}",
+                        settings_path.clone()
+                    );
                     this.launch_app_with_path(
                         this.settings_app_info.clone(),
                         cx,
