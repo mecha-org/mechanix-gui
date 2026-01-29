@@ -79,7 +79,7 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 20,
                           color: context.onSurface,
                           fontWeight: FontWeight.w500,
                         ),
@@ -103,7 +103,7 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
                           CommonHelper.formatDateTime(widget.note.updatedAt),
                           style: TextStyle(
                             color: context.onSecondaryFixed,
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w400,
                           ),
                         ),

@@ -394,7 +394,7 @@ class LabelScrollBarState extends State<LabelScrollBar> {
                                 sections[currentSection].label,
                                 style: TextStyle(
                                   color: context.colorScheme.onTertiaryFixedVariant,
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: 0,
                                 ),

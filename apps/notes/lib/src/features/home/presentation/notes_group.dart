@@ -23,7 +23,7 @@ class GroupHeaderName extends SliverPersistentHeaderDelegate {
       child: Text(
         title,
         style: TextStyle(
-          fontSize: 18,
+          fontSize: 20,
           color: context.onSecondaryFixed,
           fontWeight: FontWeight.w500,
           height: 1.45,

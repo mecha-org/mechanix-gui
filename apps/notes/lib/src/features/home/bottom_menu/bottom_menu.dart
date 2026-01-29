@@ -63,7 +63,7 @@ class _BottomMenuState extends State<BottomMenu> {
       leadingWidget: [
         BottomBarButton(
           iconTheme: const MechanixBottomBarIconThemeData(
-            buttonMargin: EdgeInsets.only(left: 5),
+            buttonMargin: EdgeInsets.only(left: 8),
             iconSize: Size(28, 28),
             iconBoxSize: Size(44, 44),
           ),

@@ -9,7 +9,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     underline: TextStyle(decoration: TextDecoration.underline),
     paragraph: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: FontWeight.w400,
         fontFamily: "Overused Grotesk",
         color: context.onSurface,
@@ -25,7 +25,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     // Heading 1 - Word-like style
     h1: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: FontWeight.w700,
         color: context.onSurface,
         height: 1.3,
@@ -41,7 +41,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     // Heading 2 - Word-like style
     h2: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
         color: context.onSurface,
         fontFamily: "Overused Grotesk",
@@ -57,7 +57,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     // Heading 3 - Word-like style
     h3: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 18,
+        fontSize: 20,
         fontWeight: FontWeight.w600,
         fontFamily: "Overused Grotesk",
         color: context.onSurface,
@@ -73,7 +73,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     // Lists - Word-like formatting
     placeHolder: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: FontWeight.w400,
         fontFamily: "Overused Grotesk",
         color: context.primaryContainer,
@@ -88,7 +88,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     // Quote block - Word-like style
     quote: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 16,
+        fontSize: 18,
         color: context.onSurface, // Slightly dimmed for quotes
         height: 1.2,
         fontFamily: "Overused Grotesk",
@@ -105,7 +105,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
     // Code block - Word-like style
     code: DefaultTextBlockStyle(
       TextStyle(
-        fontSize: 16,
+        fontSize: 18,
         fontWeight: FontWeight.w500,
         color: context.colorScheme.onTertiaryFixedVariant,
         height: 1.35,
@@ -130,7 +130,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
       radius: Radius.circular(4), // rounded edges
       style: TextStyle(
         fontWeight: FontWeight.w400,
-        fontSize: 16,
+        fontSize: 18,
         color: context.onSurface, // light text
         height: 1.45,
         fontFamily: 'Geist Mono',
@@ -139,7 +139,7 @@ DefaultStyles quillEditorStyle(BuildContext context) {
 
     // Text alignment styles
     // align:  DefaultTextBlockStyle(
-    //   TextStyle(fontSize: 16, color: context.onSurface, height: 1.2),
+    //   TextStyle(fontSize: 18, color: context.onSurface, height: 1.2),
     //   HorizontalSpacing(12, 12),
     //   VerticalSpacing(6, 6),
     //   VerticalSpacing(0, 0),

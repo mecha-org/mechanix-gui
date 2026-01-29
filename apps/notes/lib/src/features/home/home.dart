@@ -124,7 +124,7 @@ class _HomePageState extends State<HomePage>
                             theme: MechanixNavigationBarThemeData(
                               titleStyle: TextStyle(
                                 color: context.onSurface,
-                                fontSize: 20,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w500,
                                 height: 1.3,
                                 letterSpacing: -1.1,

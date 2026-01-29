@@ -7,8 +7,8 @@ class EmptyNotes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const NotesGridLayout(
-      leftColumnHeights: [174, 92],
-      rightColumnHeights: [88, 174],
+      leftColumnHeights: [320, 176],
+      rightColumnHeights: [176, 320],
       interactiveCardIndex: 0,
     );
   }
