@@ -205,7 +205,7 @@ impl RenderOnce for IconButton {
             main.flex_col()
                 .justify_center()
                 .child(label)
-                .text_size(px(12.))
+                .text_size(px(14.))
                 .font_weight(FontWeight::NORMAL)
                 .font_family(primary_font)
                 .text_color(colors.foreground_600)

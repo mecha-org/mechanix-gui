@@ -297,12 +297,12 @@ impl Render for PowerOptions {
                                                             .to_string(),
                                                     ))
                                                     .text_color(colors.accent_200)
-                                                    .size(px(32.)),
+                                                    .size(px(34.)),
                                             )
                                             .child(
                                                 div()
-                                                    .line_height(px(1.2))
-                                                    .text_size(px(24.))
+                                                    .line_height(px(1.22))
+                                                    .text_size(px(26.))
                                                     .text_color(colors.foreground_200)
                                                     .font_family(primary_font)
                                                     .font_weight(FontWeight::NORMAL)
@@ -328,7 +328,7 @@ impl Render for PowerOptions {
                                                 icons.down_arrow.to_string_lossy().to_string(),
                                             ))
                                             .text_color(colors.accent_200)
-                                            .size(px(26.)),
+                                            .size(px(28.)),
                                     )
                                 }),
                         )

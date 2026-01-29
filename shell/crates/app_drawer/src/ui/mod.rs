@@ -586,7 +586,7 @@ impl AppDrawer {
                                 let total = apps.len();
                                 let show_popup = total > 1;
                                 let shown_apps = if show_popup {
-                                    apps.iter().take(6).cloned().collect::<Vec<_>>()
+                                    apps.iter().take(5).cloned().collect::<Vec<_>>()
                                 } else {
                                     apps.clone()
                                 };
@@ -600,27 +600,28 @@ impl AppDrawer {
                                     .h(px(GRID_ROW_HEIGHT))
                                     .cursor_pointer()
                                     .on_click(
-    cx.listener(
-        move |this: &mut AppDrawer, _event, _window, cx| {
-            if !this.has_moved && !this.is_long_press {
-                this.show_subwindow_modal = true;
-                this.subwindow_category = category_for_popup.clone();
-                this.subwindow = None;
-                this.start_modal_animation(cx);
-                cx.notify();
-            }
-            this.has_moved = false;
-            this.is_long_press = false;
-        }
-    )
-)
+                                        cx.listener(
+                                            move |this: &mut AppDrawer, _event, _window, cx| {
+                                                if !this.has_moved && !this.is_long_press {
+                                                    this.show_subwindow_modal = true;
+                                                    this.subwindow_category =
+                                                        category_for_popup.clone();
+                                                    this.subwindow = None;
+                                                    this.start_modal_animation(cx);
+                                                    cx.notify();
+                                                }
+                                                this.has_moved = false;
+                                                this.is_long_press = false;
+                                            }
+                                        )
+                                    )
                                     .child(
                                         div()
                                             .grid()
-                                            .grid_cols(6)
+                                            .grid_cols(5)
                                             .gap(px(28.0))
                                             .bg(colors.background_800)
-                                            .p(px(20.0))
+                                            .p(px(10.0))
                                             .rounded(px(8.0))
                                             .border(px(1.0))
                                             .border_color(colors.background_600)
@@ -643,12 +644,15 @@ impl AppDrawer {
 
                                                         div()
                                                             .id(id + idx)
-                                                            .bg(colors.background_700)
                                                             .flex()
                                                             .items_center()
                                                             .justify_center()
-                                                            .rounded(px(5.6))
-                                                            .size(px(56.0))
+                                                            .rounded(px(9.8))
+                                                            .size(px(72.0))
+                                                            .active(|this|
+                                                                this.bg(colors.background_700)
+                                                            )
+
                                                             .on_mouse_down(
                                                                 MouseButton::Left,
                                                                 cx.listener(
@@ -750,7 +754,7 @@ impl AppDrawer {
                                                             )
                                                             .child(
                                                                 div()
-                                                                    .size(px(41.0))
+                                                                    .size(px(54.0))
                                                                     .border(px(1.0))
                                                                     .items_center()
                                                                     .justify_center()
@@ -771,8 +775,8 @@ impl AppDrawer {
                                             .justify_start()
                                             .items_start()
                                             // .bg(colors.accent_200.with_alpha(0.1))
-                                            .border_color(colors.background_700);
-                                        w.upper_wing_size(Size::new(px(150.0), px(15.0)));
+                                            .border_color(colors.background_600);
+                                        w.upper_wing_size(Size::new(px(160.0), px(15.0)));
                                         w.border_width(px(1.0));
                                         w.border_radius(px(8.0));
                                         w.corner_radii(commons::widgets::CornerRadii {
@@ -789,12 +793,12 @@ impl AppDrawer {
                                             .bottom_5()
                                             .left_6()
                                             .font_weight(FontWeight(400.0))
-                                            .text_size(px(16.0))
+                                            .text_size(px(18.0))
                                             .line_height(px(1.25))
                                             .text_color(colors.foreground_300)
                                             .child(category.clone())
                                             .text_ellipsis()
-                                            .w(px(120.0))
+                                            .w(px(140.0))
                                     )
                             })
                     )
@@ -865,7 +869,7 @@ impl AppDrawer {
                                         div()
                                             .font_weight(FontWeight(500.0))
                                             .line_height(px(1.2))
-                                            .text_size(px(16.0))
+                                            .text_size(px(18.0))
                                             .text_color(colors.foreground_600)
                                             .child(name),
                                     ),
@@ -892,7 +896,7 @@ impl AppDrawer {
 
     fn render_subwindow_modal(
         &mut self,
-        app_drawer_size: Size<Pixels>,
+        _app_drawer_size: Size<Pixels>,
         cx: &mut Context<Self>,
     ) -> impl IntoElement {
         let colors = Theme::global(cx).colors.clone();
@@ -921,7 +925,6 @@ impl AppDrawer {
         let center_y = (screen_height - modal_height) / 2.0;
 
         // Animation: scale from 0.9 to 1.0 and fade in
-        let scale = 0.9 + (0.1 * progress);
         let opacity = progress;
 
         div()
@@ -1078,7 +1081,7 @@ impl Render for AppDrawer {
                 .when(self.show_bottom_sheet, |menu_div| {
                     let bottom_sheet_height = match self.sheet_kind {
                         BottomSheetKind::MainOptions => px(280.0),
-                        BottomSheetKind::ConfirmDelete => px(239.0),
+                        BottomSheetKind::ConfirmDelete => px(250.0),
                         BottomSheetKind::Properties => px(320.0),
                         BottomSheetKind::None => px(0.0),
                     };

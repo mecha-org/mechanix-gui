@@ -423,8 +423,8 @@ impl UniversalSearch {
                                 div()
                                     .id(("us-app-name-", index))
                                     .font_weight(FontWeight::MEDIUM)
-                                    .line_height(px(1.2))
-                                    .text_size(px(16.0))
+                                    .line_height(px(1.22))
+                                    .text_size(px(18.0))
                                     .text_color(colors.foreground_400)
                                     .child(search.name.to_string())
                                     .on_click({
@@ -567,15 +567,16 @@ impl UniversalSearch {
                                         div()
                                             .font_family(primary_font)
                                             .font_weight(FontWeight::MEDIUM)
-                                            .text_size(px(24.0))
-                                            .line_height(px(1.2))
+                                            .text_size(px(26.0))
+                                            .line_height(px(1.22))
                                             .text_color(colors.foreground_200)
                                             .child("Search")
                                     )
                                     .child(
                                         div()
                                             .id("clear-result")
-                                            .text_size(px(16.0))
+                                            .text_size(px(18.0))
+                                            .line_height(px(1.27))
                                             .text_color(
                                                 if all_results.len() == 0 {
                                                     colors.background_800
@@ -623,8 +624,8 @@ impl UniversalSearch {
                                         .child(
                                             div()
                                                 .font_weight(FontWeight::LIGHT)
-                                                .line_height(px(1.2))
-                                                .text_size(px(16.0))
+                                                .line_height(px(1.22))
+                                                .text_size(px(18.0))
                                                 .text_color(colors.foreground_900)
                                                 .child(
                                                     "Search an app, a file, a word or anything literally"
@@ -712,8 +713,8 @@ impl UniversalSearch {
                                                     .child(
                                                         div()
                                                             .font_weight(FontWeight::MEDIUM)
-                                                            .line_height(px(1.25))
-                                                            .text_size(px(18.0))
+                                                            .line_height(px(1.27))
+                                                            .text_size(px(20.0))
                                                             .text_color(colors.foreground_200)
                                                             .items_center()
                                                             .justify_center()

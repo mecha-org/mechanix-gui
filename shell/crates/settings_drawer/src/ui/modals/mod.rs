@@ -1,5 +1,8 @@
+use dispatcher::Dispatcher;
 use gpui::*;
 use icons::prelude::*;
+use mxsearch::prelude::AppInfo;
+use settings::prelude::Settings;
 use theme::prelude::{AlphaExt, Fonts, Theme};
 
 pub mod bluetooth_modal;
@@ -9,12 +12,13 @@ pub mod performance_modal;
 pub mod sound_modal;
 pub mod wireless_modal;
 
-use crate::ui::{FINAL_MODAL_SIZE, SettingsDrawer};
+use crate::ui::{FINAL_MODAL_SIZE, ModalKind, SettingsDrawer};
 
 pub const ROW_HEIGHT: f32 = 60.0;
 pub const MODAL_HEADER_HEIGHT: f32 = 60.0;
 pub const MODAL_WING_WIDTH: f32 = 237.0;
 pub const MODAL_WING_HEIGHT: f32 = 36.0;
+pub const MECHANIX_PATH: &str = "MECHANIX_SETTINGS_OPEN_PATH";
 
 impl SettingsDrawer {
     pub fn render_header_div(
@@ -31,9 +35,9 @@ impl SettingsDrawer {
             .justify_start()
             .text_color(colors.foreground_200)
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                px(18.)
+                px(20.)
             } else {
-                px(24.)
+                px(26.)
             })
             .font_weight(FontWeight::SEMIBOLD)
             .pl(px(16.))
@@ -42,7 +46,46 @@ impl SettingsDrawer {
             .into_any()
     }
 
-    pub fn render_settings_div(&self, cx: &mut gpui::Context<SettingsDrawer>) -> AnyElement {
+    pub fn launch_app_with_path(
+        &mut self,
+        app_info: Option<AppInfo>,
+        cx: &mut Context<Self>,
+        settings_path: String,
+    ) {
+        if app_info.is_none() {
+            return;
+        }
+        let sender = Dispatcher::global(cx).0.clone();
+        let app_info = app_info.clone().unwrap();
+
+        let exec = format!("{}={} {}", MECHANIX_PATH, settings_path, app_info.exec);
+
+        println!("OPEN exec : {exec:?}");
+        cx.background_executor()
+            .spawn(async move {
+                _ = sender
+                    .broadcast(dispatcher::Message::LaunchApp {
+                        app_id: app_info.possible_app_id,
+                        exec: exec,
+                    })
+                    .await;
+            })
+            .detach();
+
+        let settings = Settings::global(cx).settings_drawer.clone();
+        let closed_pos: f32 = Self::calculate_closed_position(&settings);
+        self.position = 100.;
+        Self::start_close_animation(self, cx);
+        self.snap_to(closed_pos, cx);
+        self.is_visible = false;
+        self.drag_offset = None;
+    }
+
+    pub fn render_settings_div(
+        &self,
+        cx: &mut gpui::Context<SettingsDrawer>,
+        settings_path: String,
+    ) -> AnyElement {
         let colors = Theme::global(cx).colors.clone();
         let settings = Icons::global(cx).settings_drawer.clone().settings;
 
@@ -52,22 +95,23 @@ impl SettingsDrawer {
             .flex_row()
             .items_end()
             .justify_start()
+            .items_center()
             .bg(colors.background_1000)
             .border_t_1()
             .border_color(colors.background_800)
             .h(px(ROW_HEIGHT))
             .rounded_md()
             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                px(16.)
+                px(18.)
             } else {
-                px(20.)
+                px(22.)
             })
             .p_4()
             .flex_shrink_0()
             .child(
                 svg()
                     .external_path(SharedString::from(settings.to_string_lossy().to_string()))
-                    .size(px(28.))
+                    .size(px(30.))
                     .text_color(colors.accent_300),
             )
             .child(
@@ -77,9 +121,20 @@ impl SettingsDrawer {
                     .text_color(colors.accent_300)
                     .child("Settings"),
             )
-            .on_click(cx.listener(|_, _, _, _| {
-                println!("call settings...");
-            }))
+            .on_click(
+                cx.listener(Self::click_listener(move |this, _event, _window, cx| {
+                    println!(
+                        "Settings clicked, NOW route to --- {:?}",
+                        settings_path.clone()
+                    );
+                    this.launch_app_with_path(
+                        this.settings_app_info.clone(),
+                        cx,
+                        settings_path.clone(),
+                    );
+                    cx.notify();
+                })),
+            )
             .into_any()
     }
 
