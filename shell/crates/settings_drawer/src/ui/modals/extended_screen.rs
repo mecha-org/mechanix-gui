@@ -195,7 +195,7 @@ impl SettingsDrawer {
                                 option_div
                             })),
                     )
-                    .child(self.render_settings_div(cx));
+                    .child(self.render_settings_div(cx, "/".to_string()));
                 w.upper_wing_size(Size::new(px(MODAL_WING_WIDTH), px(MODAL_WING_HEIGHT)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));

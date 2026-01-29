@@ -134,29 +134,41 @@ impl SettingsDrawer {
             |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
 
-                this.brightness_slider_value = value;
+                let effective_value = if value < DEFAULT_MIN_BRIGHTNESS {
+                    DEFAULT_MIN_BRIGHTNESS
+                } else {
+                    value
+                };
+
+                this.brightness_slider_value = effective_value;
+
+                if value < DEFAULT_MIN_BRIGHTNESS {
+                    this.brightness_slider_state.update(cx, |state, inner_cx| {
+                        state.set_value(DEFAULT_MIN_BRIGHTNESS, inner_cx);
+                    });
+                }
                 cx.notify();
 
-                if (value - this.last_brightness_sent).abs() < 0.1 {
+                if (effective_value - this.last_brightness_sent).abs() < 0.1 {
                     return;
                 }
 
-                set_brightness(cx, value);
+                set_brightness(cx, effective_value);
 
                 if let Some(task) = this.brightness_debounce_task.take() {
                     drop(task);
                 }
 
-                this.last_brightness_sent = value;
+                this.last_brightness_sent = effective_value;
 
-                let final_value = value;
+                let final_value = effective_value;
                 let task = cx.spawn(
                     async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
                         cx.background_executor()
                             .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
                             .await;
 
-                        this.update(cx, |this, cx| {
+                        this.update(cx, |_, cx| {
                             sync_brightness_to_system(final_value, cx);
                         })
                         .ok();
@@ -166,6 +178,7 @@ impl SettingsDrawer {
                 this.brightness_debounce_task = Some(task);
             },
         );
+
         let v_subscription =
             cx.subscribe(&volume_slider_state, |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
@@ -197,7 +210,7 @@ impl SettingsDrawer {
                             .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
                             .await;
 
-                        this.update(cx, |this, cx| {
+                        this.update(cx, |_, cx| {
                             sync_volume_to_system(final_value, cx);
                         })
                         .ok();
@@ -389,7 +402,7 @@ impl Render for SettingsDrawer {
             }))
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(move |this, _, window, cx| {
+                cx.listener(move |this, _, _, cx| {
                     if this.drag_offset.is_some() {
                         this.drag_offset = None;
 
@@ -610,6 +623,7 @@ impl SettingsDrawer {
 
         let settings = Settings::global(cx).settings_drawer.clone();
         let closed_pos: f32 = Self::calculate_closed_position(&settings);
+        self.is_visible = false;
         self.position = 100.;
         self.snap_to(closed_pos, cx);
     }
@@ -869,7 +883,7 @@ impl SettingsDrawer {
                     .h(px(24.)),
             )
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     println!("power clicked");
                     let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
 
@@ -1129,7 +1143,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
                     cx.background_executor()
@@ -1188,7 +1202,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
                     cx.background_executor()
@@ -1207,7 +1221,7 @@ impl SettingsDrawer {
 
     fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let battery_percent = ShellState::global(cx).battery_percent.clone();
+        // let battery_percent = ShellState::global(cx).battery_percent.clone();
         let SettingsDrawerIcons {
             power_mode_high,
             power_mode_balanced,
@@ -1236,7 +1250,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     // TODO: set power saving mode on click
                     cx.notify();
                 })),
@@ -1280,7 +1294,7 @@ impl SettingsDrawer {
             .bg(colors.background_900)
             .rounded(px(8.))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     cx.stop_propagation();
                 })),
             )
