@@ -347,7 +347,12 @@ class MainApp extends StatelessWidget {
           AppRoutes.wallpaperPreview: (context) => const WallpaperPreview(),
 
           // Display Routes
-          AppRoutes.display: (context) => const DisplayPage(),
+          AppRoutes.display: (context) => BlocProvider(
+                create: (context) => DisplayBloc(
+                  displayRepository: context.read<DisplayRepository>(),
+                )..add(GetDefaultSettingsEvent()),
+                child: const DisplayPage(),
+              ),
           AppRoutes.displayScreenOffTime: (context) =>
               const ScreenOffTimeSettings(),
           AppRoutes.lockScreenTimeout: (context) => const LockScreenTimeout(),

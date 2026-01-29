@@ -13,8 +13,8 @@ class DBusDisplayService {
   static const String _objectPath = '/org/mechanix/services/Display';
   // static const String _interfaceName = 'org.mechanix.MxConf';
   // static const String _propertyName = 'brightness';
-  // static const brightnessKey =
-  //     "org.mechanix.settings.brightness.value"; // org.mechanix.desktop.settings.display.brightness
+  static const brightnessKey =
+      "org.mechanix.settings.brightness.value"; // org.mechanix.desktop.settings.display.brightness
 
   static const displayTimeoutKey =
       "org.mechanix.desktop.settings.display.timeout.value"; // org.mechanix.desktop.settings.display.timeout
@@ -44,75 +44,65 @@ class DBusDisplayService {
       final brightness = await object.callMethod(
         _busName,
         'GetBrightness',
-        // 'GetSetting',
         [],
       );
 
-      final displayTimeout = await object.callMethod(
-        _busName,
-        'GetSetting',
-        [DBusString(displayTimeoutKey)],
-      );
+      final byteValue = brightness.values[0] as DBusByte;
+      brightnessValue = byteValue.value;
 
-      final autoBrightness = await object.callMethod(
-        _busName,
-        'GetSetting',
-        [DBusString(autoBrightnessKey)],
-      );
+      // TODO: Re-visit this code later
 
-      final lockScreenTimeout = await object.callMethod(
-        _busName,
-        'GetSetting',
-        [DBusString(lockScreenTimeoutKey)],
-      );
+      // final displayTimeout = await object.callMethod(
+      //   _busName,
+      //   'GetSetting',
+      //   [DBusString(displayTimeoutKey)],
+      // );
 
-      // if (brightness.returnValues.isNotEmpty) {
-      //   final dict = brightness.returnValues.first;
+      // final autoBrightness = await object.callMethod(
+      //   _busName,
+      //   'GetSetting',
+      //   [DBusString(autoBrightnessKey)],
+      // );
+
+      // final lockScreenTimeout = await object.callMethod(
+      //   _busName,
+      //   'GetSetting',
+      //   [DBusString(lockScreenTimeoutKey)],
+      // );
+
+      // if (displayTimeout.returnValues.isNotEmpty) {
+      //   final dict = displayTimeout.returnValues.first;
       //   if (dict is DBusDict) {
-      //     final value = dict.children[DBusString(brightnessKey)];
+      //     final value = dict.children[DBusString(displayTimeoutKey)];
       //     if (value is DBusString) {
-      //       logger.i('default brightness value ${value.value}');
-      //       log('get brightnessValue - ${value.value}');
-      //       debugPrint('get brightnessValue - ${value.value}');
-      //       brightnessValue = int.tryParse(value.value);
-      //       // return int.tryParse(value.value);
+      //       logger.i('default display timeout value ${value.value}');
+      //       displayTimeoutValue = int.tryParse(value.value);
       //     }
       //   }
       // }
 
-      if (displayTimeout.returnValues.isNotEmpty) {
-        final dict = displayTimeout.returnValues.first;
-        if (dict is DBusDict) {
-          final value = dict.children[DBusString(displayTimeoutKey)];
-          if (value is DBusString) {
-            logger.i('default display timeout value ${value.value}');
-            displayTimeoutValue = int.tryParse(value.value);
-          }
-        }
-      }
+      // if (autoBrightness.returnValues.isNotEmpty) {
+      //   final dict = autoBrightness.returnValues.first;
+      //   if (dict is DBusDict) {
+      //     final value = dict.children[DBusString(autoBrightnessKey)];
+      //     if (value is DBusString) {
+      //       logger.i('default autoBrightness value ${value.value}');
+      //       autoBrightnessValue = bool.parse(value.value);
+      //     }
+      //   }
+      // }
 
-      if (autoBrightness.returnValues.isNotEmpty) {
-        final dict = autoBrightness.returnValues.first;
-        if (dict is DBusDict) {
-          final value = dict.children[DBusString(autoBrightnessKey)];
-          if (value is DBusString) {
-            logger.i('default autoBrightness value ${value.value}');
-            autoBrightnessValue = bool.parse(value.value);
-          }
-        }
-      }
-
-      if (lockScreenTimeout.returnValues.isNotEmpty) {
-        final dict = lockScreenTimeout.returnValues.first;
-        if (dict is DBusDict) {
-          final value = dict.children[DBusString(lockScreenTimeoutKey)];
-          if (value is DBusString) {
-            logger.i('default lockScreenTimeout value ${value.value}');
-            lockScreenTimeoutValue = int.tryParse(value.value);
-            // return int.tryParse(value.value);
-          }
-        }
-      }
+      // if (lockScreenTimeout.returnValues.isNotEmpty) {
+      //   final dict = lockScreenTimeout.returnValues.first;
+      //   if (dict is DBusDict) {
+      //     final value = dict.children[DBusString(lockScreenTimeoutKey)];
+      //     if (value is DBusString) {
+      //       logger.i('default lockScreenTimeout value ${value.value}');
+      //       lockScreenTimeoutValue = int.tryParse(value.value);
+      //       // return int.tryParse(value.value);
+      //     }
+      //   }
+      // }
 
       final DBusDefaultSettings defaultSetting = DBusDefaultSettings(
         brightness: brightnessValue ?? 40,
@@ -122,7 +112,7 @@ class DBusDisplayService {
       );
       return defaultSetting;
     } catch (e) {
-      logger.e('Error calling get_settings: $e');
+      print('Error calling get_settings: $e');
       return DBusDefaultSettings(
         brightness: 40,
         autoBrightness: true,
