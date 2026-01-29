@@ -38,6 +38,7 @@ const ANIMATION_DURATION_MS: f32 = 250.0;
 const ANIMATION_FRAME_MS: u64 = 16;
 
 const DEBOUNCE_DELAY_MS: u64 = 300;
+const VOLUME_MUTE_THRESHOLD: f32 = 0.5;
 
 #[derive(PartialEq)]
 pub enum ModalAnimationState {
@@ -132,90 +133,91 @@ impl SettingsDrawer {
             &brightness_slider_state,
             |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
-                this.brightness_slider_value = value;
 
-                // Cancel previous debounce task if it exists
+                let effective_value = if value < DEFAULT_MIN_BRIGHTNESS {
+                    DEFAULT_MIN_BRIGHTNESS
+                } else {
+                    value
+                };
+
+                this.brightness_slider_value = effective_value;
+
+                if value < DEFAULT_MIN_BRIGHTNESS {
+                    this.brightness_slider_state.update(cx, |state, inner_cx| {
+                        state.set_value(DEFAULT_MIN_BRIGHTNESS, inner_cx);
+                    });
+                }
+                cx.notify();
+
+                if (effective_value - this.last_brightness_sent).abs() < 0.1 {
+                    return;
+                }
+
+                set_brightness(cx, effective_value);
+
                 if let Some(task) = this.brightness_debounce_task.take() {
                     drop(task);
                 }
 
-                // Update UI immediately
-                set_brightness(cx, value);
+                this.last_brightness_sent = effective_value;
 
-                // Update last sent value for UI
-                this.last_brightness_sent = value;
-
-                // Debounce the system sync
+                let final_value = effective_value;
                 let task = cx.spawn(
                     async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
-                        // Wait for debounce delay
                         cx.background_executor()
-                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS)) // DEBOUNCE_DELAY_MS
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
                             .await;
 
-                        // Sync to system after delay
-                        this.update(cx, |this, cx| {
-                            sync_brightness_to_system(value, cx);
-                            this.last_brightness_sent = value;
+                        this.update(cx, |_, cx| {
+                            sync_brightness_to_system(final_value, cx);
                         })
                         .ok();
                     },
                 );
 
                 this.brightness_debounce_task = Some(task);
-
-                cx.notify();
             },
         );
 
         let v_subscription =
             cx.subscribe(&volume_slider_state, |this, _, event: &SliderEvent, cx| {
                 let SliderEvent::Change(value) = *event;
-                this.volume_slider_value = value;
 
-                // Cancel previous debounce task if it exists
+                this.volume_slider_value = value;
+                this.volume_mute = value < VOLUME_MUTE_THRESHOLD;
+                cx.notify();
+
+                if (value - this.last_volume_sent).abs() < 0.1 {
+                    return;
+                }
+
+                if this.volume_mute {
+                    mute_volume_to_system(cx);
+                }
+
+                set_volume(cx, value);
+
                 if let Some(task) = this.volume_debounce_task.take() {
                     drop(task);
                 }
 
-                // Avoid sending duplicate values
-                if value as u32 == this.last_volume_sent as u32 {
-                    return;
-                }
-
-                if this.volume_slider_value == 0.0 {
-                    this.volume_mute = true;
-                    mute_volume_to_system(cx);
-                } else {
-                    this.volume_mute = false;
-                }
-
-                // Update UI immediately
-                set_volume(cx, value);
-
-                // Update last sent value for UI
+                let final_value = value;
                 this.last_volume_sent = value;
 
-                // Debounce the system sync
                 let task = cx.spawn(
                     async move |this: WeakEntity<SettingsDrawer>, cx: &mut AsyncApp| {
-                        // Wait for debounce delay
                         cx.background_executor()
-                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS)) // DEBOUNCE_DELAY_MS
+                            .timer(Duration::from_millis(DEBOUNCE_DELAY_MS))
                             .await;
 
-                        // Sync to system after delay
-                        this.update(cx, |this, cx| {
-                            sync_volume_to_system(value, cx);
-                            this.last_volume_sent = value;
+                        this.update(cx, |_, cx| {
+                            sync_volume_to_system(final_value, cx);
                         })
                         .ok();
                     },
                 );
 
                 this.volume_debounce_task = Some(task);
-
-                cx.notify();
             });
 
         let mut _subscriptions = vec![b_subscription, v_subscription];
@@ -400,7 +402,7 @@ impl Render for SettingsDrawer {
             }))
             .on_mouse_up(
                 MouseButton::Left,
-                cx.listener(move |this, _, window, cx| {
+                cx.listener(move |this, _, _, cx| {
                     if this.drag_offset.is_some() {
                         this.drag_offset = None;
 
@@ -621,6 +623,7 @@ impl SettingsDrawer {
 
         let settings = Settings::global(cx).settings_drawer.clone();
         let closed_pos: f32 = Self::calculate_closed_position(&settings);
+        self.is_visible = false;
         self.position = 100.;
         self.snap_to(closed_pos, cx);
     }
@@ -880,7 +883,7 @@ impl SettingsDrawer {
                     .h(px(24.)),
             )
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     println!("power clicked");
                     let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
 
@@ -912,7 +915,7 @@ impl SettingsDrawer {
 
         IconButton::new("id_rotation")
             .size((px(ICON_W), px(ROW_12_ICON_H)))
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 rotation_icon.to_string_lossy().to_string(),
             )))
             .icon_color(colors.foreground_600)
@@ -934,7 +937,7 @@ impl SettingsDrawer {
         IconButton::new("id_airplane")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(airplane.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -968,7 +971,7 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_screen_mirroring")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 screen_mirroring_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -994,7 +997,7 @@ impl SettingsDrawer {
         IconButton::new("id_terminal")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(terminal.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1013,7 +1016,7 @@ impl SettingsDrawer {
         let colors = cx.theme().colors.clone();
         let microphone_off = Icons::global(cx).settings_drawer.microphone_off.clone();
         IconButton::new("id_microphone")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 microphone_off.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1036,7 +1039,7 @@ impl SettingsDrawer {
             .clone();
 
         IconButton::new("id_screen_recording")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 screen_recording_off.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1058,7 +1061,7 @@ impl SettingsDrawer {
         IconButton::new("id_settings")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(settings.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1079,7 +1082,7 @@ impl SettingsDrawer {
         IconButton::new("id_camera")
             .icon(
                 svg()
-                    .size(px(36.))
+                    .size(px(38.))
                     .external_path(SharedString::from(camera_off.to_string_lossy().to_string())),
             )
             .size((px(ICON_W), px(ROW_12_ICON_H)))
@@ -1132,7 +1135,7 @@ impl SettingsDrawer {
                     .external_path(SharedString::from(
                         wireless_icon.to_string_lossy().to_string(),
                     ))
-                    .size(px(36.)),
+                    .size(px(38.)),
             )
             .size((px(ICON_W), px(ICON_H)))
             .active(wireless_details.enabled)
@@ -1140,7 +1143,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
                     cx.background_executor()
@@ -1190,7 +1193,7 @@ impl SettingsDrawer {
         };
 
         IconButton::new("id_bluetooth")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 bluetooth_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
@@ -1199,7 +1202,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     let shell_state = ShellState::global(cx).clone();
                     let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
                     cx.background_executor()
@@ -1218,7 +1221,7 @@ impl SettingsDrawer {
 
     fn render_battery_performance(&self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
-        let battery_percent = ShellState::global(cx).battery_percent.clone();
+        // let battery_percent = ShellState::global(cx).battery_percent.clone();
         let SettingsDrawerIcons {
             power_mode_high,
             power_mode_balanced,
@@ -1237,7 +1240,7 @@ impl SettingsDrawer {
             PowerMode::Low => colors.accent_200,
         };
         IconButton::new("id_power_mode")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 power_mode_icon.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
@@ -1247,7 +1250,7 @@ impl SettingsDrawer {
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     // TODO: set power saving mode on click
                     cx.notify();
                 })),
@@ -1262,7 +1265,7 @@ impl SettingsDrawer {
         let colors = cx.theme().colors.clone();
         let cell_signal_none = Icons::global(cx).settings_drawer.cell_signal_none.clone();
         IconButton::new("id_cell_signal")
-            .icon(svg().size(px(36.)).external_path(SharedString::from(
+            .icon(svg().size(px(38.)).external_path(SharedString::from(
                 cell_signal_none.to_string_lossy().to_string(),
             )))
             .size((px(ICON_W), px(ICON_H)))
@@ -1291,7 +1294,7 @@ impl SettingsDrawer {
             .bg(colors.background_900)
             .rounded(px(8.))
             .on_click(
-                cx.listener(Self::click_listener(|this, _event, _window, cx| {
+                cx.listener(Self::click_listener(|_, _event, _window, cx| {
                     cx.stop_propagation();
                 })),
             )
@@ -1355,14 +1358,19 @@ impl SettingsDrawer {
     fn render_sound_control_div(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors.clone();
         let icons = Icons::global(cx).settings_drawer.clone();
-        let is_volume_mute = self.volume_mute;
+
+        const VOLUME_MUTE_THRESHOLD: f32 = 0.5;
+
+        // Use the slider's current value as source of truth
+        let current_volume = self.volume_slider_state.read(cx).value;
+        let is_volume_mute = current_volume < VOLUME_MUTE_THRESHOLD;
 
         let volume_icon = if is_volume_mute {
             icons.volume_off
         } else {
-            if self.volume_slider_value <= 0.33 {
+            if current_volume <= 33.0 {
                 icons.volume_low
-            } else if self.volume_slider_value <= 0.66 {
+            } else if current_volume <= 66.0 {
                 icons.volume_medium
             } else {
                 icons.volume_high
@@ -1408,7 +1416,7 @@ impl SettingsDrawer {
                                         volume_icon.to_string_lossy().to_string(),
                                     ))
                                     .text_color(volume_icon_color)
-                                    .size(px(32.)),
+                                    .size(px(36.)),
                             )
                             .on_click(cx.listener(
                                 move |this: &mut SettingsDrawer,
@@ -1421,28 +1429,28 @@ impl SettingsDrawer {
                                     if is_mute {
                                         mute_volume_to_system(cx);
 
-                                        // store UI value
+                                        // Store current UI value
                                         let state_value = this.volume_slider_state.read(cx).value;
-                                        this.actual_volume = state_value;
+                                        this.actual_volume = state_value.max(5.0); // Store at least 5% for unmute
 
-                                        // update UI
-                                        let new_value = 0.0;
+                                        // Update UI to 0
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
-                                            state.set_value(new_value, inner_cx);
+                                            state.set_value(0.0, inner_cx);
                                         });
+                                        this.volume_slider_value = 0.0;
                                     } else {
                                         unmute_volume_to_system(cx);
-                                        let new_value = if this.actual_volume == 0.0 {
-                                            get_volume(cx)
+
+                                        // Restore to stored value or get system volume
+                                        let new_value = if this.actual_volume < 5.0 {
+                                            get_volume(cx).max(5.0)
                                         } else {
                                             this.actual_volume
                                         };
-                                        // get last stored value
-                                        this.volume_slider_value = new_value;
 
-                                        // update UI
+                                        this.volume_slider_value = new_value;
                                         this.volume_slider_state.update(cx, |state, inner_cx| {
-                                            state.set_value(this.volume_slider_value, inner_cx);
+                                            state.set_value(new_value, inner_cx);
                                         });
                                     }
 

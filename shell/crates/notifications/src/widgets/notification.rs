@@ -445,7 +445,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
             MarkupNode::Text(text) => {
                 current_line = current_line.child(
                     div()
-                        .text_sm()
+                        .text_lg()
                         .text_color(colors.foreground_500)
                         .overflow_hidden()
                         .child(text.clone()),
@@ -457,7 +457,7 @@ pub fn render_markup(nodes: &[MarkupNode], cx: &App) -> Div {
                 current_line = current_line.child(
                     div()
                         .id("link")
-                        .text_sm()
+                        .text_lg()
                         .text_color(rgb(0x5ab0ff))
                         .underline()
                         .cursor_pointer()
@@ -545,7 +545,7 @@ impl Render for NotificationUi {
             .border_1()
             .border_color(colors.accent_200.with_alpha(0.6))
             .bg(colors.background_1000)
-            .rounded(px(12.0))
+            .rounded(px(4.0))
             .shadow_md()
             .child(
                 div()
@@ -591,7 +591,7 @@ impl Render for NotificationUi {
                                             .when_some(self.title.clone(), |this, title| {
                                                 this.child(
                                                     div()
-                                                        .text_sm()
+                                                        .text_lg()
                                                         .font_weight(FontWeight::SEMIBOLD)
                                                         .text_color(colors.foreground_500)
                                                         .whitespace_normal()
@@ -604,23 +604,23 @@ impl Render for NotificationUi {
                                             })
                                             .child(
                                                 div()
-                                                    .text_sm()
+                                                    .text_lg()
                                                     .font_weight(FontWeight::SEMIBOLD)
                                                     .text_color(colors.foreground_900)
                                                     .whitespace_normal()
                                                     .child(format!(" · {}", time_ago))
-                                                    .text_ellipsis()
-                                                    .w(px(120.)),
+                                                    .text_ellipsis(),
+                                                    // .w(px(120.)),
                                             ),
                                     )
                                     .when_some(self.message.clone(), |this, message| {
                                         this.child(
                                             div()
-                                                .text_sm()
+                                                .text_lg()
                                                 .mt(px(8.0))
+                                                .line_height(px(20.))
                                                 .text_color(colors.foreground_300)
                                                 .whitespace_normal()
-                                                .line_height(px(20.0))
                                                 .max_h(px(40.0))
                                                 .overflow_hidden()
                                                 .child(message),
@@ -631,9 +631,9 @@ impl Render for NotificationUi {
                             );
 
                         // configure inner wing
-                        w1.upper_wing_size(Size::new(px(180.0), px(28.0)));
+                        w1.upper_wing_size(Size::new(px(180.0), px(24.0)));
                         w1.include_upper_wing_in_bounds(true);
-                        w1.border_radius(px(12.0));
+                        w1.border_radius(px(4.0));
                         w1.border_width(px(1.0));
 
                         w1
@@ -740,9 +740,10 @@ impl Render for NotificationUi {
             );
 
         // Outer wing configuration
-        w.upper_wing_size(Size::new(px(180.0), px(28.0)));
+        // w.upper_wing_size(Size::new(px(184.0), px(28.0)));
+        w.upper_wing_size(Size::new(px(180.0), px(24.0)));
         w.include_upper_wing_in_bounds(true);
-        w.border_radius(px(12.0));
+        w.border_radius(px(4.0));
         w.border_width(px(1.0));
         w.with_animation(
             ElementId::NamedInteger("notif-anim".into(), (closing as u64) + anim_epoch),

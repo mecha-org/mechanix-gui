@@ -7,6 +7,8 @@ const DOT_GAP: f32 = 6.0;
 const BAR_SEGMENT_WIDTH: f32 = 2.2;
 const BAR_GAP_WIDTH: f32 = 5.0;
 
+const VOLUME_SNAP_TO_ZERO: f32 = 2.0; // Snap to 0 when dragging below 2%
+
 #[derive(Clone, Copy, PartialEq)]
 pub enum SliderPattern {
     Dots,
@@ -79,23 +81,29 @@ impl SliderState {
     }
 
     fn value_to_pixels(&self, track_width: f32) -> f32 {
-        if track_width <= 0.0 {
-            0.0
-        } else {
-            // value is 0-100, convert to pixels
-            (self.value / 100.0) * track_width
+        if track_width == 0.0 {
+            return 0.0;
         }
+
+        let normalized = (self.value - self.min) / (self.max - self.min);
+        let pixels = normalized * track_width;
+        pixels
     }
 
-    /// Converts a pixel position to a percentage value (0-100)
     fn pixels_to_value(&self, pixels: f32, track_width: f32) -> f32 {
         if track_width <= 0.0 {
             self.min
         } else {
-            (pixels / track_width) * 100.0
+            let value = (pixels / track_width) * 100.0;
+
+            // Snap to 0 if within 2% of the left edge for easier muting
+            if value < VOLUME_SNAP_TO_ZERO {
+                0.0
+            } else {
+                value
+            }
         }
     }
-
     /// Updates the slider value based on mouse position
     fn update_value_by_position(
         &mut self,
@@ -292,6 +300,19 @@ impl Slider {
                             cx.notify();
                         },
                     ))
+                    .on_mouse_up(
+                        MouseButton::Left,
+                        window.listener_for(
+                            &self.state,
+                            move |state, _e: &MouseUpEvent, _window, cx| {
+                                if state.is_dragging {
+                                    state.is_dragging = false;
+                                    state.end_drag();
+                                    cx.notify();
+                                }
+                            },
+                        ),
+                    )
                     .child({
                         let state = self.state.clone();
                         canvas(
@@ -436,10 +457,24 @@ impl Slider {
                         &self.state,
                         move |state, _event: &DragMoveEvent<DragThumb>, _window, cx| {
                             state.is_dragging = false;
+                            cx.stop_propagation();
                             state.end_drag();
                             cx.notify();
                         },
                     ))
+                    .on_mouse_up(
+                        MouseButton::Left,
+                        window.listener_for(
+                            &self.state,
+                            move |state, _e: &MouseUpEvent, _window, cx| {
+                                if state.is_dragging {
+                                    state.is_dragging = false;
+                                    state.end_drag();
+                                    cx.notify();
+                                }
+                            },
+                        ),
+                    )
                     .child({
                         let state = self.state.clone();
                         canvas(

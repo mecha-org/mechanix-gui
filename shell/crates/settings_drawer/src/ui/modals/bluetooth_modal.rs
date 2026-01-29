@@ -1,3 +1,4 @@
+use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 use crate::{
     helper::get_bluetooth_icon,
     prelude::*,
@@ -12,7 +13,6 @@ use gpui::*;
 use icons::prelude::Icons;
 use shell_state::{BtMessage, ShellState};
 use theme::prelude::{AlphaExt, Theme};
-use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 
 pub trait ScrollBehavior {
     fn scroll_offset(&self) -> Pixels;
@@ -147,9 +147,9 @@ impl SettingsDrawer {
                             .relative()
                             .overflow_hidden()
                             .text_size(if self.modal_size != FINAL_MODAL_SIZE {
-                                px(16.)
-                            } else {
                                 px(18.)
+                            } else {
+                                px(20.)
                             })
                             .font_weight(FontWeight::NORMAL)
                             .on_mouse_down(
@@ -201,7 +201,7 @@ impl SettingsDrawer {
                                                 .external_path(SharedString::from(
                                                     connected.to_string_lossy().to_string(),
                                                 ))
-                                                .size(px(24.))
+                                                .size(px(26.))
                                                 .text_color(text_color),
                                         );
 
@@ -229,7 +229,7 @@ impl SettingsDrawer {
                                                                                 .to_string(),
                                                                         ),
                                                                     )
-                                                                    .size(px(28.))
+                                                                    .size(px(30.))
                                                                     .text_color(icon_color),
                                                             ),
                                                         )
@@ -267,7 +267,7 @@ impl SettingsDrawer {
                                                                                 .to_string(),
                                                                         ),
                                                                     )
-                                                                    .size(px(28.))
+                                                                    .size(px(30.))
                                                                     .text_color(icon_color),
                                                             ),
                                                         )
@@ -318,7 +318,7 @@ impl SettingsDrawer {
                                     })),
                             ),
                     )
-                    .child(self.render_settings_div(cx));
+                    .child(self.render_settings_div(cx, "/bluetooth".to_string()));
                 w.upper_wing_size(Size::new(px(MODAL_WING_WIDTH), px(MODAL_WING_HEIGHT)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));
