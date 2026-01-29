@@ -45,99 +45,102 @@ class NoteCardState extends State<NoteCard> with AutomaticKeepAliveClientMixin {
     super.build(context);
 
     return RepaintBoundary(
-      child: InkWell(
+      child: Material(
+        color: context.secondary,
         borderRadius: BorderRadius.circular(12),
-        onTap: _handleTap,
-        onLongPress: _handleLongPress,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            color: context.secondary,
-            borderRadius: BorderRadius.circular(12),
-            border:
-                widget.isSelected
-                    ? Border.all(
-                      color: context.primaryContainer.withValues(alpha: 0.8),
-                      width: 1,
-                    )
-                    : null,
-          ),
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                spacing: 16,
-                children: [
-                  if (widget.note.title.isNotEmpty)
-                    SizedBox(
-                      height: 26,
-                      child: Text(
-                        widget.note.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: context.onSurface,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  if (widget.note.preview.isNotEmpty) ...[
-                    Flexible(
-                      child: NotePreview(
-                        key: ValueKey(widget.note.id),
-                        lines: widget.note.preview,
-                        maxLines: 2,
-                      ),
-                    ),
-                  ],
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: _handleTap,
+          onLongPress: _handleLongPress,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border:
+                  widget.isSelected
+                      ? Border.all(
+                        color: context.primaryContainer.withValues(alpha: 0.8),
+                        width: 1,
+                      )
+                      : null,
+            ),
+            child: Stack(
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  spacing: 16,
+                  children: [
+                    if (widget.note.title.isNotEmpty)
                       SizedBox(
-                        height: 18,
+                        height: 26,
                         child: Text(
-                          CommonHelper.formatDateTime(widget.note.updatedAt),
+                          widget.note.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: context.onSecondaryFixed,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 20,
+                            color: context.onSurface,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ).padAll(16),
-              if (widget.isSelectionMode)
-                Positioned(
-                  bottom: 8,
-                  right: 8,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(
-                      begin: 0.0,
-                      end: widget.isSelected ? 1.0 : 0.0,
-                    ),
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOutBack,
-                    builder: (context, value, child) {
-                      return Transform.scale(
-                        scale: 0.8 + (value * 0.2),
-                        child: MechanixCircleCheckbox(
-                          value: widget.isSelected,
-                          onChanged: (a) {},
-                          activeColor: context.primaryContainer,
-                          width: 24,
-                          height: 24,
+                    if (widget.note.preview.isNotEmpty) ...[
+                      Flexible(
+                        child: NotePreview(
+                          key: ValueKey(widget.note.id),
+                          lines: widget.note.preview,
+                          maxLines: 2,
                         ),
-                      );
-                    },
+                      ),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        SizedBox(
+                          height: 18,
+                          child: Text(
+                            CommonHelper.formatDateTime(widget.note.updatedAt),
+                            style: TextStyle(
+                              color: context.onSecondaryFixed,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ).padAll(16),
+                if (widget.isSelectionMode)
+                  Positioned(
+                    bottom: 8,
+                    right: 8,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(
+                        begin: 0.0,
+                        end: widget.isSelected ? 1.0 : 0.0,
+                      ),
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutBack,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: 0.8 + (value * 0.2),
+                          child: MechanixCircleCheckbox(
+                            value: widget.isSelected,
+                            onChanged: (a) {},
+                            activeColor: context.primaryContainer,
+                            width: 24,
+                            height: 24,
+                          ),
+                        );
+                      },
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
