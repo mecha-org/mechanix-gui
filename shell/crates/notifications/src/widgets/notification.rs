@@ -536,12 +536,13 @@ impl Render for NotificationUi {
             .unwrap_or(0);
 
         let time_ago: SharedString = time_ago(current_timestamp, received_at).into();
-        
+
         let mut w = wing()
-            .w_128()
-            .group("")
-            .absolute()
-            .relative()
+            .w(px(520.))
+            .mx_auto()
+            .left(px(6.))
+            // .absolute()
+            // .relative()
             .border_1()
             .border_color(colors.accent_200.with_alpha(0.6))
             .bg(colors.background_1000)
@@ -550,9 +551,12 @@ impl Render for NotificationUi {
             .child(
                 div()
                     .id("inner-wing")
+                    .flex()
+                    .justify_center()
+                    .items_center()
                     .child({
                         let mut w1 = wing()
-                            .w_128()
+                            .w(px(520.))
                             .flex()
                             .flex_row()
                             .bg(colors.accent_200.with_alpha(0.2))
@@ -560,7 +564,7 @@ impl Render for NotificationUi {
                             .min_w(px(0.0))
                             .overflow_hidden()
                             .pt(px(4.0))
-                            .px_4()
+                            .px_2()
                             .pb(px(10.0))
                             .font_family(primary_font)
                             .child(
@@ -569,7 +573,7 @@ impl Render for NotificationUi {
                                     .flex_col()
                                     .flex_1()
                                     .min_w(px(0.0))
-                                    .overflow_hidden()                                    
+                                    .overflow_hidden()
                                     .child(
                                         div()
                                             .flex()
@@ -579,20 +583,25 @@ impl Render for NotificationUi {
                                                 this.child(
                                                     div()
                                                         .w(px(20.0))
-                                                        .h(px(20.0))                                                        
+                                                        .h(px(20.0))
                                                         .mr(px(4.0))
                                                         .rounded(px(4.0))
                                                         .flex()
                                                         .items_center()
                                                         .justify_center()
-                                                        .child(img(path).size_full().rounded(px(4.0)).text_color(colors.foreground_700)),
+                                                        .child(
+                                                            img(path)
+                                                                .size_full()
+                                                                .rounded(px(4.0))
+                                                                .text_color(colors.foreground_700),
+                                                        ),
                                                 )
                                             })
                                             .when_some(self.title.clone(), |this, title| {
                                                 this.child(
                                                     div()
                                                         .text_lg()
-                                                        .font_weight(FontWeight::SEMIBOLD)
+                                                        .font_weight(FontWeight::MEDIUM)
                                                         .text_color(colors.foreground_500)
                                                         .whitespace_normal()
                                                         .child(format!(" {}", title))
@@ -605,12 +614,12 @@ impl Render for NotificationUi {
                                             .child(
                                                 div()
                                                     .text_lg()
-                                                    .font_weight(FontWeight::SEMIBOLD)
+                                                    .font_weight(FontWeight::NORMAL)
                                                     .text_color(colors.foreground_900)
                                                     .whitespace_normal()
                                                     .child(format!(" · {}", time_ago))
                                                     .text_ellipsis(),
-                                                    // .w(px(120.)),
+                                                // .w(px(120.)),
                                             ),
                                     )
                                     .when_some(self.message.clone(), |this, message| {
@@ -625,9 +634,8 @@ impl Render for NotificationUi {
                                                 .overflow_hidden()
                                                 .child(message),
                                         )
-                                    })
-                                    //.when_some(content, |this, content| this.child(content))
-                                    //.when_some(action, |this, action| this.child(action)),
+                                    }), //.when_some(content, |this, content| this.child(content))
+                                        //.when_some(action, |this, action| this.child(action)),
                             );
 
                         // configure inner wing

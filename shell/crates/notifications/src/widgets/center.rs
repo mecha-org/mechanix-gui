@@ -868,6 +868,9 @@ impl Render for NotificationCenter {
                         ),
                 )
             })
+            .when(self.is_visible, |content_div| {
+                content_div.size_full().bg(colors.background_1000)
+            })
             .child(
                 div()
                     .w_full()
@@ -877,7 +880,7 @@ impl Render for NotificationCenter {
                     .child(div().id("left-wing").child({
                         let mut w = wing()
                             .w(notifications_center_size.width)
-                            .h(notifications_center_size.height + navbar_size.height)
+                            .h(notifications_center_size.height + px(2.))
                             .border_color(colors.background_700)
                             .flex()
                             .flex_col()
@@ -886,7 +889,7 @@ impl Render for NotificationCenter {
                             .bg(bg_color)
                             .child(self.render_content(window, cx));
 
-                        w.upper_wing_size(size(navbar_size.width, navbar_size.height * 1.6));
+                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
                         w.upper_wing_side(WingSide::Left);
                         w.border_width(px(1.0));
                         w.corner_radii(CornerRadii {
@@ -997,7 +1000,7 @@ impl NotificationCenter {
             .flex_row()
             .items_center()
             .justify_between()
-            .py_6()
+            .py_8()
             .px_4()
             .h(px(44.))
             .font_family(primary_font)
@@ -1176,7 +1179,7 @@ impl NotificationCenter {
                                    item_idx: usize,
                                    group_id: u64,
                                    item_id: u64| {
-                let mut content = div().flex().flex_col().gap_2();
+                let mut content = div().flex().flex_col();
                 let default_icon: SharedString =
                     icons.application.to_string_lossy().to_string().into();
 
@@ -1188,19 +1191,18 @@ impl NotificationCenter {
                         .flex_row()
                         .items_center()
                         .justify_between()
-                        .pt(px(-14.0))
+                        .px_2()
                         .child(
                             div()
                                 .flex()
                                 .flex_row()
                                 .items_center()
-                                .gap_2()
                                 .child(
                                     div()
-                                        .w(px(24.0))
-                                        .h(px(24.0))
-                                        .rounded(px(6.0))
-                                        .bg(colors.accent_200)
+                                        .w(px(20.0))
+                                        .h(px(20.0))
+                                        .mr(px(4.0))
+                                        .rounded(px(4.0))
                                         .flex()
                                         .items_center()
                                         .justify_center()
@@ -1216,8 +1218,7 @@ impl NotificationCenter {
                                                 this.child(
                                                     svg()
                                                         .external_path(default_icon)
-                                                        .w(px(16.))
-                                                        .h(px(16.))
+                                                        .size_full()
                                                         .text_color(colors.foreground_0),
                                                 )
                                             },
@@ -1226,15 +1227,15 @@ impl NotificationCenter {
                                 .child(
                                     div()
                                         .text_lg()
-                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .font_weight(FontWeight::MEDIUM)
                                         .text_color(colors.foreground_500)
                                         .whitespace_normal()
-                                        .child(format!("{}", g.app_summary,))
+                                        .child(format!(" {}", g.app_summary))
                                         .text_ellipsis()
-                                        .w(if item_icon_path.is_none() {
+                                        .w(if !item_icon_path.is_none() {
                                             px(100.)
                                         } else {
-                                            px(80.)
+                                            px(120.)
                                         }),
                                 )
                                 .child(
@@ -1245,45 +1246,8 @@ impl NotificationCenter {
                                         .whitespace_normal()
                                         .child(format!(" {}", g.time_ago.clone())),
                                 ),
-                        )
-                        .when(g.count > 0, |this| {
-                            if is_expanded {
-                                this.child(
-                                    div()
-                                        .mt(px(-12.0))
-                                        .left(px(10.0))
-                                        .rounded(px(4.0))
-                                        .bg(colors.accent_200.with_alpha(0.2))
-                                        .text_color(colors.accent_200)
-                                        .text_size(px(14.0))
-                                        .px(px(6.))
-                                        .h(px(24.0))
-                                        .flex()
-                                        .items_center()
-                                        .justify_center()
-                                        .font_weight(FontWeight::MEDIUM)
-                                        .child(img(icons.up_arrow.clone()).w(px(15.)).h(px(15.))),
-                                )
-                            } else {
-                                this.child(
-                                    div()
-                                        .mt(px(-12.0))
-                                        .left(px(10.0))
-                                        .rounded(px(4.0))
-                                        .bg(colors.accent_200.with_alpha(0.2))
-                                        .text_color(colors.accent_200)
-                                        .text_size(px(16.0))
-                                        .px(px(6.))
-                                        // .py_0p3()
-                                        .font_weight(FontWeight::MEDIUM)
-                                        .child(if g.count > 10 {
-                                            SharedString::from("10+")
-                                        } else {
-                                            g.count.to_string().into()
-                                        }),
-                                )
-                            }
-                        });
+                        );
+
                     content = content.child(top);
                 }
 
@@ -1293,14 +1257,15 @@ impl NotificationCenter {
                     .text_color(colors.foreground_300)
                     .flex()
                     .flex_row()
-                    .items_start()
-                    .gap_3();
+                    .items_start();
 
                 body = body.child(
                     div()
                         .flex_1()
                         .min_w(px(0.0))
                         .whitespace_normal()
+                        .px_3()
+                        .py_4()
                         .child(item_preview),
                 );
 
@@ -1361,10 +1326,7 @@ impl NotificationCenter {
                         })
                         .border(px(2.0))
                         .rounded(px(6.0))
-                        .shadow_md()
-                        .pt(px(2.0))
-                        .px_4()
-                        .py_3p5();
+                        .shadow_md();
 
                     inner_wing.upper_wing_size(Size::new(px(180.0), px(24.0)));
                     inner_wing.include_upper_wing_in_bounds(true);
@@ -1373,7 +1335,42 @@ impl NotificationCenter {
 
                     let inner = inner_wing.child(content).into_any();
 
-                    outer_wing.child(inner).into_any()
+                    // to show count along with main wing content
+                    div()
+                        .relative()
+                        .child(outer_wing.child(inner))
+                        .when(g.count > 0, |this| {
+                            this.child(
+                                div()
+                                    .absolute()
+                                    .top(px(0.0))
+                                    .right(px(2.0))
+                                    .rounded(px(4.0))
+                                    .bg(colors.accent_200.with_alpha(0.2))
+                                    .text_color(colors.accent_200)
+                                    .text_size(px(18.0))
+                                    .px(px(6.))
+                                    .py(px(2.))
+                                    .h(px(20.0))
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .font_weight(FontWeight::MEDIUM)
+                                    .when(is_expanded, |this| {
+                                        this.child(
+                                            img(icons.up_arrow.clone()).w(px(15.)).h(px(15.)),
+                                        )
+                                    })
+                                    .when(!is_expanded, |this| {
+                                        this.min_w(px(28.0)).child(if g.count > 10 {
+                                            SharedString::from("10+")
+                                        } else {
+                                            g.count.to_string().into()
+                                        })
+                                    }),
+                            )
+                        })
+                        .into_any()
                 } else {
                     div()
                         .w_128()
@@ -1382,9 +1379,6 @@ impl NotificationCenter {
                         .border_1()
                         .border_color(colors.accent_200.with_alpha(0.4))
                         .bg(colors.background_900)
-                        .py_6()
-                        .px_4()
-                        // .py_3p5()
                         .child(content)
                         .into_any()
                 };
@@ -1831,8 +1825,6 @@ impl NotificationCenter {
         // Main container
         div()
             .relative()
-            // .w(notifications_center_size.width)
-            // .h(notifications_center_size.height)
             .w(notifications_center_size.width - px(1.5))
             .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)

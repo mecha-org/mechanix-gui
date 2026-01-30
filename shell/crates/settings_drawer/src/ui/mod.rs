@@ -879,28 +879,26 @@ impl SettingsDrawer {
                 svg()
                     .external_path(SharedString::from(power_off.to_string_lossy().to_string()))
                     .text_color(colors.foreground_100)
-                    .w(px(24.))
-                    .h(px(24.)),
+                    .w(px(32.))
+                    .h(px(32.)),
             )
-            .on_click(
-                cx.listener(Self::click_listener(|_, _event, _window, cx| {
-                    println!("power clicked");
-                    let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                println!("power clicked");
+                let dispatcher_tx = Dispatcher::global(cx).channel().0.clone();
 
-                    println!("checking dispatcher {} ", dispatcher_tx.is_empty());
+                println!("checking dispatcher {} ", dispatcher_tx.is_empty());
 
-                    // here send message to show power options
-                    cx.background_executor()
-                        .spawn(async move {
-                            let _ = dispatcher_tx
-                                .broadcast(Message::ShowPowerOptions(true))
-                                .await;
-                        })
-                        .detach();
+                // here send message to show power options
+                cx.background_executor()
+                    .spawn(async move {
+                        let _ = dispatcher_tx
+                            .broadcast(Message::ShowPowerOptions(true))
+                            .await;
+                    })
+                    .detach();
 
-                    cx.notify();
-                })),
-            )
+                cx.notify();
+            })))
     }
 
     fn render_rotation(&self, cx: &mut Context<Self>) -> impl IntoElement {
@@ -1142,19 +1140,17 @@ impl SettingsDrawer {
             .label(network_label)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(
-                cx.listener(Self::click_listener(|_, _event, _window, cx| {
-                    let shell_state = ShellState::global(cx).clone();
-                    let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
-                    cx.background_executor()
-                        .spawn(async move {
-                            shell_state.toggle_wireless(!is_enabled_now).await;
-                        })
-                        .detach();
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                let shell_state = ShellState::global(cx).clone();
+                let is_enabled_now = ShellState::global(cx).wireless_details.enabled;
+                cx.background_executor()
+                    .spawn(async move {
+                        shell_state.toggle_wireless(!is_enabled_now).await;
+                    })
+                    .detach();
 
-                    cx.notify();
-                })),
-            )
+                cx.notify();
+            })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::WirelessModal,
                 wireless_details.enabled,
@@ -1201,18 +1197,16 @@ impl SettingsDrawer {
             .active(bluetooth_details.enabled)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(
-                cx.listener(Self::click_listener(|_, _event, _window, cx| {
-                    let shell_state = ShellState::global(cx).clone();
-                    let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
-                    cx.background_executor()
-                        .spawn(async move {
-                            shell_state.toggle_bluetooth(!is_enabled_now).await;
-                        })
-                        .detach();
-                    cx.notify();
-                })),
-            )
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                let shell_state = ShellState::global(cx).clone();
+                let is_enabled_now = ShellState::global(cx).bluetooth_details.enabled;
+                cx.background_executor()
+                    .spawn(async move {
+                        shell_state.toggle_bluetooth(!is_enabled_now).await;
+                    })
+                    .detach();
+                cx.notify();
+            })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::BluetoothModal,
                 bluetooth_details.enabled,
@@ -1249,12 +1243,10 @@ impl SettingsDrawer {
             .icon_color(power_mode_icon_color)
             .active_icon_color(colors.accent_200)
             .active_bg_color(colors.accent_200.with_alpha(0.1))
-            .on_click(
-                cx.listener(Self::click_listener(|_, _event, _window, cx| {
-                    // TODO: set power saving mode on click
-                    cx.notify();
-                })),
-            )
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                // TODO: set power saving mode on click
+                cx.notify();
+            })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::PerformanceModal,
                 true,
@@ -1293,11 +1285,9 @@ impl SettingsDrawer {
             .col_span(2)
             .bg(colors.background_900)
             .rounded(px(8.))
-            .on_click(
-                cx.listener(Self::click_listener(|_, _event, _window, cx| {
-                    cx.stop_propagation();
-                })),
-            )
+            .on_click(cx.listener(Self::click_listener(|_, _event, _window, cx| {
+                cx.stop_propagation();
+            })))
             .on_long_press(cx.listener(Self::open_modal_on_long_press(
                 ModalKind::DisplayModal,
                 true,
