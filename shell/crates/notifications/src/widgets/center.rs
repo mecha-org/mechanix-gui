@@ -868,6 +868,9 @@ impl Render for NotificationCenter {
                         ),
                 )
             })
+            .when(self.is_visible, |content_div| {
+                content_div.size_full().bg(colors.background_1000)
+            })
             .child(
                 div()
                     .w_full()
@@ -877,7 +880,7 @@ impl Render for NotificationCenter {
                     .child(div().id("left-wing").child({
                         let mut w = wing()
                             .w(notifications_center_size.width)
-                            .h(notifications_center_size.height + navbar_size.height)
+                            .h(notifications_center_size.height + px(2.))
                             .border_color(colors.background_700)
                             .flex()
                             .flex_col()
@@ -886,7 +889,7 @@ impl Render for NotificationCenter {
                             .bg(bg_color)
                             .child(self.render_content(window, cx));
 
-                        w.upper_wing_size(size(navbar_size.width, navbar_size.height * 1.6));
+                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
                         w.upper_wing_side(WingSide::Left);
                         w.border_width(px(1.0));
                         w.corner_radii(CornerRadii {
@@ -1831,8 +1834,6 @@ impl NotificationCenter {
         // Main container
         div()
             .relative()
-            // .w(notifications_center_size.width)
-            // .h(notifications_center_size.height)
             .w(notifications_center_size.width - px(1.5))
             .h(notifications_center_size.height - navbar_size.height - px(1.5))
             .bg(colors.background_1000)
