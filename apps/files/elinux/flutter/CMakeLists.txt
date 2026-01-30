@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(EPHEMERAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ephemeral")
-set(PDFIUM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libpdfium")
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
+  set(PDFIUM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libpdfium/linux-x64)
+else()
+  set(PDFIUM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/libpdfium/linux-arm64)
+endif()
 
 # Configuration provided via flutter tool.
 include(${EPHEMERAL_DIR}/generated_config.cmake)

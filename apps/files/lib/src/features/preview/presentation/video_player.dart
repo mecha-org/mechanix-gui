@@ -97,9 +97,10 @@ class _VideoPlayerState extends State<VideoPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      body: _playerReady
-          ? Center(child: _buildVideo())
-          : const Center(child: CircularProgressIndicator()),
+      body:
+          _playerReady
+              ? Center(child: _buildVideo())
+              : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar:
           _playerReady ? _buildBottomBar(context) : const SizedBox(),
     );
@@ -147,10 +148,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
       valueListenable: controller.paginatedEntities,
       builder: (_, __, ___) {
         final title = controller.getDisplayName(File(widget.filePath));
-        return MiddleEllipsisText(
-          title,
-          style: previewTitleStyle(context),
-        );
+        return MiddleEllipsisText(title, style: previewTitleStyle(context));
       },
     );
   }
@@ -162,7 +160,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
       decoration: BoxDecoration(
         color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -193,18 +193,22 @@ class _VideoPlayerState extends State<VideoPlayer> {
                         data: SliderTheme.of(context).copyWith(
                           trackHeight: 6,
                           thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 8),
-                          overlayShape:
-                              const RoundSliderOverlayShape(overlayRadius: 0),
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 0,
+                          ),
                         ),
                         child: Slider(
                           min: 0,
-                          max: _duration.inMilliseconds
-                              .toDouble()
-                              .clamp(1, double.infinity),
-                          value: _position.inMilliseconds
-                              .toDouble()
-                              .clamp(0, _duration.inMilliseconds.toDouble()),
+                          max: _duration.inMilliseconds.toDouble().clamp(
+                            1,
+                            double.infinity,
+                          ),
+                          value: _position.inMilliseconds.toDouble().clamp(
+                            0,
+                            _duration.inMilliseconds.toDouble(),
+                          ),
                           activeColor: context.colorScheme.primaryContainer,
                           inactiveColor: context.colorScheme.surfaceContainer,
                           thumbColor: context.colorScheme.onSurface,
@@ -239,7 +243,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                           },
                         );
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -247,9 +251,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 top: -36,
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: _buildTimeBubble(),
-                ),
+                child: Center(child: _buildTimeBubble()),
               ),
             ],
           ),
@@ -257,19 +259,21 @@ class _VideoPlayerState extends State<VideoPlayer> {
           // Bottom menu bar same as audio
           MechanixBottomBar(
             theme: MechanixBottomBarThemeData(
-                decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: null,
-            )),
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondaryContainer,
+                borderRadius: null,
+              ),
+            ),
             leadingWidget: [
               BottomBarButton.widget(
-                  widget: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: DecoratedPressableIcon(
-                  iconPath: Images.back,
-                  onTap: () => Navigator.pop(context),
+                widget: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: DecoratedPressableIcon(
+                    iconPath: Images.back,
+                    onTap: () => Navigator.pop(context),
+                  ),
                 ),
-              )),
+              ),
             ],
             centerWidgetSpacing: 30,
             centerWidget: [
@@ -316,14 +320,16 @@ class _VideoPlayerState extends State<VideoPlayer> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconHeight: 28,
-          iconWidth: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryContainer
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconHeight: 28,
+        iconWidth: 28,
+        iconColor:
+            isMenuOpen
+                ? context.colorScheme.primaryContainer
+                : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -390,7 +396,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
       child: Text(
         "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
         style: TextStyle(
-            color: context.colorScheme.onSecondaryFixedVariant, fontSize: 16),
+          color: context.colorScheme.onSecondaryFixedVariant,
+          fontSize: 16,
+        ),
       ),
     );
   }

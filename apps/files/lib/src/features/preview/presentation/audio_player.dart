@@ -22,11 +22,12 @@ class AudioPlayerOverlay extends StatefulWidget {
   String filePath;
   FileExplorerPageState? state;
 
-  AudioPlayerOverlay(
-      {super.key,
-      required this.filePath,
-      required this.rootContext,
-      this.state});
+  AudioPlayerOverlay({
+    super.key,
+    required this.filePath,
+    required this.rootContext,
+    this.state,
+  });
 
   @override
   State<AudioPlayerOverlay> createState() => _AudioPlayerOverlayState();
@@ -89,16 +90,21 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
     final controller = explorerState?.controller;
 
-    final title = controller != null
-        ? controller.getDisplayName(File(widget.filePath))
-        : p.basename(widget.filePath);
+    final title =
+        controller != null
+            ? controller.getDisplayName(File(widget.filePath))
+            : p.basename(widget.filePath);
 
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Padding(
-          padding:
-              const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
+          padding: const EdgeInsets.only(
+            top: 6,
+            left: 16,
+            right: 16,
+            bottom: 12,
+          ),
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
@@ -123,13 +129,15 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           ),
         ),
       ),
-      bottomNavigationBar: _playerReady
-          ? _buildBottomBar(context)
-          : Padding(
-              padding: const EdgeInsets.all(20),
-              child: CircularProgressIndicator(
-                  color: context.colorScheme.primaryContainer),
-            ),
+      bottomNavigationBar:
+          _playerReady
+              ? _buildBottomBar(context)
+              : Padding(
+                padding: const EdgeInsets.all(20),
+                child: CircularProgressIndicator(
+                  color: context.colorScheme.primaryContainer,
+                ),
+              ),
     );
   }
 
@@ -140,7 +148,9 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
       decoration: BoxDecoration(
         color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -163,32 +173,35 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                        child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 8,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 6,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 0,
+                          ),
                         ),
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 0,
+                        child: Slider(
+                          min: 0,
+                          max: _duration.inMilliseconds.toDouble().clamp(
+                            1,
+                            double.infinity,
+                          ),
+                          value: _position.inMilliseconds.toDouble().clamp(
+                            0,
+                            _duration.inMilliseconds.toDouble(),
+                          ),
+                          activeColor: context.colorScheme.primaryContainer,
+                          inactiveColor: context.colorScheme.surfaceContainer,
+                          thumbColor: context.colorScheme.onSurface,
+                          onChanged: (v) {
+                            player.seek(Duration(milliseconds: v.toInt()));
+                          },
                         ),
                       ),
-                      child: Slider(
-                        min: 0,
-                        max: _duration.inMilliseconds
-                            .toDouble()
-                            .clamp(1, double.infinity),
-                        value: _position.inMilliseconds
-                            .toDouble()
-                            .clamp(0, _duration.inMilliseconds.toDouble()),
-                        activeColor: context.colorScheme.primaryContainer,
-                        inactiveColor: context.colorScheme.surfaceContainer,
-                        thumbColor: context.colorScheme.onSurface,
-                        onChanged: (v) {
-                          player.seek(Duration(milliseconds: v.toInt()));
-                        },
-                      ),
-                    )),
+                    ),
                     const SizedBox(width: 14),
                     StreamBuilder<double>(
                       stream: player.stream.volume,
@@ -213,7 +226,7 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                           },
                         );
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -221,27 +234,27 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                 top: -36, // float upward
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: _buildTimeBubble(),
-                ),
+                child: Center(child: _buildTimeBubble()),
               ),
             ],
           ),
           MechanixBottomBar(
             theme: MechanixBottomBarThemeData(
-                decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: null,
-            )),
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondaryContainer,
+                borderRadius: null,
+              ),
+            ),
             leadingWidget: [
               BottomBarButton.widget(
-                  widget: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: DecoratedPressableIcon(
-                  iconPath: Images.back,
-                  onTap: () => Navigator.pop(context),
+                widget: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: DecoratedPressableIcon(
+                    iconPath: Images.back,
+                    onTap: () => Navigator.pop(context),
+                  ),
                 ),
-              )),
+              ),
             ],
             centerWidgetSpacing: 30,
             centerWidget: [
@@ -288,14 +301,16 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconWidth: 28,
-          iconHeight: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryContainer
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconWidth: 28,
+        iconHeight: 28,
+        iconColor:
+            isMenuOpen
+                ? context.colorScheme.primaryContainer
+                : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },

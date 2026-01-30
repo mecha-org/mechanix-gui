@@ -25,11 +25,12 @@ class ImageViewerPage extends StatefulWidget {
   String filePath;
   FileExplorerPageState? state;
 
-  ImageViewerPage(
-      {super.key,
-      required this.rootContext,
-      required this.filePath,
-      this.state});
+  ImageViewerPage({
+    super.key,
+    required this.rootContext,
+    required this.filePath,
+    this.state,
+  });
 
   @override
   State<ImageViewerPage> createState() => _ImageViewerPageState();
@@ -50,8 +51,12 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Padding(
-          padding:
-              const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
+          padding: const EdgeInsets.only(
+            top: 6,
+            left: 16,
+            right: 16,
+            bottom: 12,
+          ),
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
@@ -61,21 +66,20 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           ),
         ),
       ),
-      body: isSvg
-          ? _SvgViewer(imagePath: widget.filePath)
-          : (_isEditing
-              ? ImageEditorPage(
-                  state: widget.state,
-                  imagePath: widget.filePath,
-                  onClose: () {
-                    setState(() {
-                      _isEditing = false;
-                    });
-                  },
-                )
-              : _RasterViewer(
-                  imagePath: widget.filePath,
-                )),
+      body:
+          isSvg
+              ? _SvgViewer(imagePath: widget.filePath)
+              : (_isEditing
+                  ? ImageEditorPage(
+                    state: widget.state,
+                    imagePath: widget.filePath,
+                    onClose: () {
+                      setState(() {
+                        _isEditing = false;
+                      });
+                    },
+                  )
+                  : _RasterViewer(imagePath: widget.filePath)),
       bottomNavigationBar: _buildBottomBar(context),
     );
   }
@@ -92,10 +96,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       valueListenable: controller.paginatedEntities,
       builder: (_, __, ___) {
         final title = controller.getDisplayName(File(widget.filePath));
-        return MiddleEllipsisText(
-          title,
-          style: previewTitleStyle(context),
-        );
+        return MiddleEllipsisText(title, style: previewTitleStyle(context));
       },
     );
   }
@@ -105,22 +106,27 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
 
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
-          decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: _isEditing
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondaryContainer,
+          borderRadius:
+              _isEditing
                   ? null
                   : const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8)))),
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+        ),
+      ),
       leadingWidget: [
         BottomBarButton.widget(
-            widget: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: DecoratedPressableIcon(
-            iconPath: Images.back,
-            onTap: () => Navigator.pop(context),
+          widget: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: DecoratedPressableIcon(
+              iconPath: Images.back,
+              onTap: () => Navigator.pop(context),
+            ),
           ),
-        )),
+        ),
       ],
       centerWidgetSpacing: 16,
       centerWidget: [
@@ -139,21 +145,23 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           isSelected: _isEditing,
           iconWidget: IconWidget(
             iconPath: Images.crop,
-            iconColor: isSvg
-                ? context.colorScheme.outline
-                : _isEditing
+            iconColor:
+                isSvg
+                    ? context.colorScheme.outline
+                    : _isEditing
                     ? context.colorScheme.primaryContainer
                     : context.colorScheme.onSurface,
             iconHeight: 28.0,
             iconWidth: 28.0,
           ),
-          onPressed: isSvg
-              ? null
-              : () {
-                  setState(() {
-                    _isEditing = !_isEditing;
-                  });
-                },
+          onPressed:
+              isSvg
+                  ? null
+                  : () {
+                    setState(() {
+                      _isEditing = !_isEditing;
+                    });
+                  },
         ),
         BottomBarButton.widget(
           widget: DecoratedPressableIcon(
@@ -173,11 +181,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           ),
         ),
       ],
-      anchorWidget: [
-        BottomBarButton.widget(
-          widget: buildActionsMenu(context),
-        ),
-      ],
+      anchorWidget: [BottomBarButton.widget(widget: buildActionsMenu(context))],
     );
   }
 
@@ -188,14 +192,16 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconHeight: 28,
-          iconWidth: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryFixed
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconHeight: 28,
+        iconWidth: 28,
+        iconColor:
+            isMenuOpen
+                ? context.colorScheme.primaryFixed
+                : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -281,8 +287,9 @@ class _SvgViewer extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: PhotoView.customChild(
-          backgroundDecoration:
-              BoxDecoration(color: context.colorScheme.surface),
+          backgroundDecoration: BoxDecoration(
+            color: context.colorScheme.surface,
+          ),
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.covered * 2,
           child: SvgPicture.file(
