@@ -6,23 +6,23 @@ use shell_state::ShellState;
 use theme::prelude::{AlphaExt, ThemeColors};
 use upower::interfaces::device::BatteryState;
 
-pub const STATUS_ICON_GAP: f32 = 15.0;
+pub const STATUS_ICON_GAP: f32 = 20.0;
 pub const STATUS_ICON_PADDING_RIGHT: f32 = 20.0;
 pub const STATUS_ICON_PADDING_BOTTOM: f32 = 28.0;
 
 // Individual icon sizes - customize each independently
-pub const WIFI_ICON_SIZE: f32 = 25.0;
-pub const BLUETOOTH_ICON_SIZE: f32 = 25.0;
-pub const BATTERY_ICON_SIZE: f32 = 30.0;
+pub const WIFI_ICON_SIZE: f32 = 28.0;
+pub const BLUETOOTH_ICON_SIZE: f32 = 28.0;
+pub const BATTERY_ICON_SIZE: f32 = 28.0;
 
 // Bell icon configuration (left wedge)
-pub const BELL_ICON_SIZE: f32 = 22.0;
+pub const BELL_ICON_SIZE: f32 = 28.0;
 pub const BELL_CIRCLE_SIZE: f32 = 40.0;
 pub const BELL_PADDING_LEFT: f32 = 12.0;
 pub const BELL_PADDING_BOTTOM: f32 = 56.0;
 
 // Lock icon configuration (center, above panel)
-pub const LOCK_ICON_SIZE: f32 = 24.0;
+pub const LOCK_ICON_SIZE: f32 = 28.0;
 pub const LOCK_CIRCLE_SIZE: f32 = 40.0;
 
 // Left wedge dimensions: 540 x 106 (from wedge_left.svg )
@@ -38,7 +38,7 @@ pub const LEFT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
 pub const RIGHT_WEDGE_BORDER_THICKNESS: f32 = 2.0;
 
 // Gap between bell and lock icons in left wedge
-pub const LEFT_WEDGE_ICON_GAP: f32 = 12.0;
+pub const LEFT_WEDGE_ICON_GAP: f32 = 20.0;
 
 fn render_wifi_icon(icon: PathBuf, color: Rgba) -> impl IntoElement {
     svg()
