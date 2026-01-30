@@ -538,10 +538,11 @@ impl Render for NotificationUi {
         let time_ago: SharedString = time_ago(current_timestamp, received_at).into();
 
         let mut w = wing()
-            .w_128()
-            .group("")
-            .absolute()
-            .relative()
+            .w(px(520.))
+            .mx_auto()
+            .left(px(6.))
+            // .absolute()
+            // .relative()
             .border_1()
             .border_color(colors.accent_200.with_alpha(0.6))
             .bg(colors.background_1000)
@@ -550,9 +551,12 @@ impl Render for NotificationUi {
             .child(
                 div()
                     .id("inner-wing")
+                    .flex()
+                    .justify_center()
+                    .items_center()
                     .child({
                         let mut w1 = wing()
-                            .w_128()
+                            .w(px(520.))
                             .flex()
                             .flex_row()
                             .bg(colors.accent_200.with_alpha(0.2))
