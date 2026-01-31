@@ -113,7 +113,10 @@ layer = "overlay"
 anchor = ["bottom", "left", "right"]
 namespace = "mechanix.keyboard"
 exclusive_zone = 0.0
-size = { width = 540.0, height = 274.0 }
+size = { width = 540.0, height = 620.0 }
+
+[keyboard.input_regions]
+maximized = { origin = { x = 0, y = 346.0 }, size = { width = 540.0, height = 274.0 } }
 
 [system_apps]
 files = "Mechanix Files"

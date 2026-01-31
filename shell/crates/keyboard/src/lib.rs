@@ -45,6 +45,10 @@ pub fn run_app(cx: &mut App) {
         namespace,
         exclusive_zone,
     } = settings.layer_shell.clone();
+    let InputRegions {
+        minimized,
+        maximized,
+    } = settings.input_regions.clone();
     let window_bounds = WindowBounds::Windowed(Bounds::centered(
         None,
         Size {
@@ -80,8 +84,8 @@ pub fn run_app(cx: &mut App) {
                 let mut regions = Vec::new();
 
                 regions.push(Bounds {
-                    origin: point(px(0.), px(0.)),
-                    size,
+                    origin: minimized.origin,
+                    size: minimized.size,
                 });
                 window.set_input_regions(Some(regions));
 
