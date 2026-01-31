@@ -1,6 +1,6 @@
 use gpui::{input_method::KeyState, prelude::FluentBuilder, *};
 use icons::prelude::Icons;
-use settings::prelude::Settings;
+use settings::prelude::{InputRegions, Settings};
 use theme::ActiveTheme;
 
 use crate::{
@@ -22,8 +22,8 @@ pub struct OnScreenKeyboard {
 
 impl OnScreenKeyboard {
     pub fn new(parsed_layout: ParsedLayout, trie: Trie, cx: &mut Context<Self>) -> Self {
-        let _poll_task = cx.spawn(
-            async move |this: WeakEntity<Self>, cx: &mut AsyncApp| loop {
+        let _poll_task = cx.spawn(async move |this: WeakEntity<Self>, cx: &mut AsyncApp| {
+            loop {
                 let executor = cx.background_executor().clone();
                 cx.background_spawn(async move {
                     executor.timer(std::time::Duration::from_millis(100)).await;
@@ -33,8 +33,8 @@ impl OnScreenKeyboard {
                 let _ = this.update(cx, |_this, cx| {
                     cx.notify();
                 });
-            },
-        );
+            }
+        });
 
         Self {
             current_view: "base".to_string(),
@@ -124,12 +124,28 @@ impl Render for OnScreenKeyboard {
         // Show keyboard when input method is active (text field has focus)
         let is_active = window.is_input_method_active();
         let settings = Settings::global(cx).keyboard.clone().layer_shell.size;
+        let InputRegions {
+            minimized,
+            maximized,
+        } = Settings::global(cx).keyboard.clone().input_regions;
 
         if is_active != self.was_active {
+            println!("is_active: {}", is_active);
             self.was_active = is_active;
             if is_active {
                 window.resize(size(settings.width, settings.height));
+                let mut regions = Vec::new();
+                regions.push(Bounds {
+                    origin: minimized.origin,
+                    size: minimized.size,
+                });
+                window.set_input_regions(Some(regions));
             } else {
+                let mut regions = Vec::new();
+                regions.push(Bounds {
+                    origin: maximized.origin,
+                    size: maximized.size,
+                });
                 window.resize(size(px(1.), px(1.)));
             }
 
@@ -162,227 +178,249 @@ impl Render for OnScreenKeyboard {
         let suggestions = self.suggestions.clone();
         let icons = Icons::global(cx).keyboard.clone();
 
-        div()
-            .size_full()
-            .flex()
-            .flex_col()
-            .child(
-                div()
-                    .w_full()
-                    .h(px(48.))
-                    .pl(px(12.))
-                    .pr(px(12.))
-                    .pt(px(8.))
-                    .pb(px(5.))
-                    .bg(colors.background_900)
-                    .flex()
-                    .flex_row()
-                    .items_center()
-                    .justify_between()
-                    .children(suggestions.iter().enumerate().map(|(i, s)| {
-                        div()
-                            .id(("suggestion", i))
-                            .size_full()
-                            .flex()
-                            .flex_row()
-                            .items_center()
-                            .justify_center()
-                            .text_color(colors.foreground_800)
-                            .text_size(px(18.))
-                            .font_weight(FontWeight(400.))
-                            .when(i != &suggestions.iter().len() - 1, |this| {
-                                this.border_r_1().border_color(colors.background_600)
-                            })
-                            .child(s.clone())
-                            .on_click({
-                                let s = s.clone();
-                                cx.listener(move |this, _event, window, cx| {
-                                    this.handle_suggestion_press(&s, window, cx);
+        div().size_full().child(
+            div()
+                .w_full()
+                .flex()
+                .flex_col()
+                .absolute()
+                .left(px(0.))
+                .top(maximized.origin.y)
+                .child(
+                    div()
+                        .w_full()
+                        .h(px(48.))
+                        .pl(px(12.))
+                        .pr(px(12.))
+                        .pt(px(8.))
+                        .pb(px(5.))
+                        .bg(colors.background_900)
+                        .flex()
+                        .flex_row()
+                        .items_center()
+                        .justify_between()
+                        .children(suggestions.iter().enumerate().map(|(i, s)| {
+                            div()
+                                .id(("suggestion", i))
+                                .size_full()
+                                .flex()
+                                .flex_row()
+                                .items_center()
+                                .justify_center()
+                                .text_color(colors.foreground_800)
+                                .text_size(px(18.))
+                                .font_weight(FontWeight(400.))
+                                .when(i != &suggestions.iter().len() - 1, |this| {
+                                    this.border_r_1().border_color(colors.background_600)
                                 })
-                            })
-                    })),
-            )
-            .child(
-                div()
-                    .id("click-area")
-                    .w_full()
-                    .h(settings.height - px(48.))
-                    .pt(px(6.))
-                    .bg(colors.background_900)
-                    .relative()
-                    .flex()
-                    .flex_col()
-                    .on_mouse_down(
-                        MouseButton::Left,
-                        cx.listener(|this, event: &MouseDownEvent, window, cx| {
-                            cx.stop_propagation();
+                                .child(s.clone())
+                                .on_click({
+                                    let s = s.clone();
+                                    cx.listener(move |this, _event, window, cx| {
+                                        this.handle_suggestion_press(&s, window, cx);
+                                    })
+                                })
+                        })),
+                )
+                .child(
+                    div()
+                        .id("click-area")
+                        .w_full()
+                        .h(settings.height - px(48.))
+                        .pt(px(6.))
+                        .bg(colors.background_900)
+                        .relative()
+                        .flex()
+                        .flex_col()
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(|this, event: &MouseDownEvent, window, cx| {
+                                cx.stop_propagation();
 
-                            let button = this.current_layout.find_button_at_position(
-                                &this.current_view,
-                                event.position.x.to_f64(),
-                                event.position.y.to_f64() - 48.,
-                            );
-                            if let Some(button) = button {
-                                match &button.action {
-                                    ActionParsed::SetView(view) => this.current_view = view.clone(),
-                                    ActionParsed::LockView {
-                                        lock,
-                                        unlock,
-                                        latches,
-                                        looks_locked_from,
-                                    } => {
-                                        if this.current_view == lock.clone() {
-                                            this.current_view = unlock.clone();
-                                        } else if this.current_view == unlock.clone() {
-                                            this.current_view = lock.clone();
+                                let button = this.current_layout.find_button_at_position(
+                                    &this.current_view,
+                                    event.position.x.to_f64(),
+                                    event.position.y.to_f64() - 48.,
+                                );
+                                if let Some(button) = button {
+                                    match &button.action {
+                                        ActionParsed::SetView(view) => {
+                                            this.current_view = view.clone()
                                         }
-                                    }
-                                    ActionParsed::ApplyModifier(modifier_parsed) => todo!(),
-                                    ActionParsed::Submit { text, keysym } => {
-                                        if let Some(txt) = text {
-
-                                            // let keysym = xkbcommon::xkb::keysym_from_name(
-                                            //     txt,
-                                            //     KEYSYM_NO_FLAGS,
-                                            // )
-                                            // .raw()
-                                            //     as i32;
-                                            // virtual_keyboard_state.notify_keyboard_keysym(
-                                            //     keysym,
-                                            //     KeyState::Pressed.into(),
-                                            // );
-                                            // virtual_keyboard_state.notify_keyboard_keysym(
-                                            //     keysym,
-                                            //     KeyState::Released.into(),
-                                            // );
-                                        };
-                                        if let Some(txt) = keysym {
-
-                                            // let keysym = xkbcommon::xkb::keysym_from_name(
-                                            //     txt,
-                                            //     KEYSYM_NO_FLAGS,
-                                            // )
-                                            // .raw()
-                                            //     as i32;
-                                            // virtual_keyboard_state.notify_keyboard_keysym(
-                                            //     keysym,
-                                            //     KeyState::Pressed.into(),
-                                            // );
-                                            // virtual_keyboard_state.notify_keyboard_keysym(
-                                            //     keysym,
-                                            //     KeyState::Released.into(),
-                                            // );
-                                        };
-                                    }
-                                    ActionParsed::Erase => {}
-                                    ActionParsed::ShowPreferences => {}
-                                    ActionParsed::Minimize => {}
-                                    ActionParsed::Maximize => {}
-                                }
-                            }
-                            this.key_pressed = button.cloned();
-                            cx.notify();
-                        }),
-                    )
-                    .on_mouse_up(
-                        MouseButton::Left,
-                        cx.listener(|this, _event, window, cx| {
-                            this.handle_key_press(this.key_pressed.clone(), window, cx);
-                            this.key_pressed = None;
-                            cx.notify();
-                        }),
-                    )
-                    .children(rows.into_iter().enumerate().map(|(i, (r_pos, row))| {
-                        div()
-                            .absolute()
-                            .left(px(r_pos.x as f32))
-                            .top(px(r_pos.y as f32))
-                            .w(px(row.get_size().width as f32))
-                            .h(px(row.get_size().height as f32))
-                            .children(row.buttons.into_iter().enumerate().map(
-                                |(j, (b_pos, button))| {
-                                    let text = match button.label.clone() {
-                                        Label::Text(t) => Some(t),
-                                        _ => None,
-                                    };
-
-                                    let icon = match button.label {
-                                        Label::Icon(i) => match i.as_str() {
-                                            "key-enter" => None,
-                                            "keyboard-mode-symbolic" => None,
-                                            "edit-clear-symbolic" => Some(icons.backspace.clone()),
-                                            "key-shift" => Some(icons.shift.clone()),
-                                            _ => None,
-                                        },
-                                        _ => None,
-                                    };
-
-                                    div()
-                                        .absolute()
-                                        .left(px(b_pos as f32))
-                                        .top(px(0.0))
-                                        .w(px(button.size.0 as f32))
-                                        .h(px(button.size.1 as f32))
-                                        .bg(colors.background_600)
-                                        .border(px(1.))
-                                        .border_color(colors.background_600)
-                                        .rounded(px(4.))
-                                        .when_some(self.key_pressed.clone(), |this, key_button| {
-                                            let is_text_key = match key_button.action {
-                                                ActionParsed::Submit { text, keysym } => {
-                                                    text.is_some()
-                                                }
-                                                _ => false,
-                                            };
-                                            if key_button.name == button.name {
-                                                return this.bg(colors.background_300).when(
-                                                    is_text_key,
-                                                    |this| {
-                                                        this.child(
-                                                            div()
-                                                                .flex()
-                                                                .items_center()
-                                                                .justify_center()
-                                                                .absolute()
-                                                                .top(px(-button.size.1 as f32 - 1.))
-                                                                .left(px(0 as f32))
-                                                                .w(px(button.size.0 as f32))
-                                                                .h(px(button.size.1 as f32))
-                                                                .bg(colors.background_200)
-                                                                .rounded(px(4.))
-                                                                .text_size(px(22.))
-                                                                .line_height(px(24.))
-                                                                .font_weight(FontWeight(500.))
-                                                                .text_color(colors.foreground_0)
-                                                                .when_some(
-                                                                    text.clone(),
-                                                                    |this, text| this.child(text),
-                                                                ),
-                                                        )
-                                                    },
-                                                );
+                                        ActionParsed::LockView {
+                                            lock,
+                                            unlock,
+                                            latches,
+                                            looks_locked_from,
+                                        } => {
+                                            if this.current_view == lock.clone() {
+                                                this.current_view = unlock.clone();
+                                            } else if this.current_view == unlock.clone() {
+                                                this.current_view = lock.clone();
                                             }
-                                            this
-                                        })
-                                        .items_center()
-                                        .justify_center()
-                                        .flex()
-                                        .text_center()
-                                        .text_size(
-                                            if matches!(button.action, ActionParsed::SetView(..)) {
-                                                px(18.)
-                                            } else {
-                                                px(22.)
+                                        }
+                                        ActionParsed::ApplyModifier(modifier_parsed) => todo!(),
+                                        ActionParsed::Submit { text, keysym } => {
+                                            if let Some(txt) = text {
+
+                                                // let keysym = xkbcommon::xkb::keysym_from_name(
+                                                //     txt,
+                                                //     KEYSYM_NO_FLAGS,
+                                                // )
+                                                // .raw()
+                                                //     as i32;
+                                                // virtual_keyboard_state.notify_keyboard_keysym(
+                                                //     keysym,
+                                                //     KeyState::Pressed.into(),
+                                                // );
+                                                // virtual_keyboard_state.notify_keyboard_keysym(
+                                                //     keysym,
+                                                //     KeyState::Released.into(),
+                                                // );
+                                            };
+                                            if let Some(txt) = keysym {
+
+                                                // let keysym = xkbcommon::xkb::keysym_from_name(
+                                                //     txt,
+                                                //     KEYSYM_NO_FLAGS,
+                                                // )
+                                                // .raw()
+                                                //     as i32;
+                                                // virtual_keyboard_state.notify_keyboard_keysym(
+                                                //     keysym,
+                                                //     KeyState::Pressed.into(),
+                                                // );
+                                                // virtual_keyboard_state.notify_keyboard_keysym(
+                                                //     keysym,
+                                                //     KeyState::Released.into(),
+                                                // );
+                                            };
+                                        }
+                                        ActionParsed::Erase => {}
+                                        ActionParsed::ShowPreferences => {}
+                                        ActionParsed::Minimize => {}
+                                        ActionParsed::Maximize => {}
+                                    }
+                                }
+                                this.key_pressed = button.cloned();
+                                cx.notify();
+                            }),
+                        )
+                        .on_mouse_up(
+                            MouseButton::Left,
+                            cx.listener(|this, _event, window, cx| {
+                                this.handle_key_press(this.key_pressed.clone(), window, cx);
+                                this.key_pressed = None;
+                                cx.notify();
+                            }),
+                        )
+                        .children(rows.into_iter().enumerate().map(|(i, (r_pos, row))| {
+                            div()
+                                .absolute()
+                                .left(px(r_pos.x as f32))
+                                .top(px(r_pos.y as f32))
+                                .w(px(row.get_size().width as f32))
+                                .h(px(row.get_size().height as f32))
+                                .children(row.buttons.into_iter().enumerate().map(
+                                    |(j, (b_pos, button))| {
+                                        let text = match button.label.clone() {
+                                            Label::Text(t) => Some(t),
+                                            _ => None,
+                                        };
+
+                                        let icon = match button.label {
+                                            Label::Icon(i) => match i.as_str() {
+                                                "key-enter" => None,
+                                                "keyboard-mode-symbolic" => None,
+                                                "edit-clear-symbolic" => {
+                                                    Some(icons.backspace.clone())
+                                                }
+                                                "key-shift" => Some(icons.shift.clone()),
+                                                _ => None,
                                             },
-                                        )
-                                        .line_height(px(24.))
-                                        .font_weight(FontWeight(500.))
-                                        .text_color(colors.foreground_100)
-                                        .when_some(text, |this, text| this.child(text))
-                                        .when_some(icon, |this, path| this.child(img(path)))
-                                },
-                            ))
-                    })),
-            )
+                                            _ => None,
+                                        };
+
+                                        div()
+                                            .absolute()
+                                            .left(px(b_pos as f32))
+                                            .top(px(0.0))
+                                            .w(px(button.size.0 as f32))
+                                            .h(px(button.size.1 as f32))
+                                            .bg(colors.background_600)
+                                            .border(px(1.))
+                                            .border_color(colors.background_600)
+                                            .rounded(px(4.))
+                                            .when_some(
+                                                self.key_pressed.clone(),
+                                                |this, key_button| {
+                                                    let is_text_key = match key_button.action {
+                                                        ActionParsed::Submit { text, keysym } => {
+                                                            text.is_some()
+                                                        }
+                                                        _ => false,
+                                                    };
+                                                    if key_button.name == button.name {
+                                                        return this
+                                                            .bg(colors.background_300)
+                                                            .when(is_text_key, |this| {
+                                                                this.child(
+                                                                    div()
+                                                                        .flex()
+                                                                        .items_center()
+                                                                        .justify_center()
+                                                                        .absolute()
+                                                                        .top(px(-button.size.1
+                                                                            as f32
+                                                                            - 1.))
+                                                                        .left(px(0 as f32))
+                                                                        .w(px(button.size.0 as f32))
+                                                                        .h(px(button.size.1 as f32))
+                                                                        .bg(colors.background_200)
+                                                                        .rounded(px(4.))
+                                                                        .text_size(px(22.))
+                                                                        .line_height(px(24.))
+                                                                        .font_weight(FontWeight(
+                                                                            500.,
+                                                                        ))
+                                                                        .text_color(
+                                                                            colors.foreground_0,
+                                                                        )
+                                                                        .when_some(
+                                                                            text.clone(),
+                                                                            |this, text| {
+                                                                                this.child(text)
+                                                                            },
+                                                                        ),
+                                                                )
+                                                            });
+                                                    }
+                                                    this
+                                                },
+                                            )
+                                            .items_center()
+                                            .justify_center()
+                                            .flex()
+                                            .text_center()
+                                            .text_size(
+                                                if matches!(
+                                                    button.action,
+                                                    ActionParsed::SetView(..)
+                                                ) {
+                                                    px(18.)
+                                                } else {
+                                                    px(22.)
+                                                },
+                                            )
+                                            .line_height(px(24.))
+                                            .font_weight(FontWeight(500.))
+                                            .text_color(colors.foreground_100)
+                                            .when_some(text, |this, text| this.child(text))
+                                            .when_some(icon, |this, path| this.child(img(path)))
+                                    },
+                                ))
+                        })),
+                ),
+        )
     }
 }

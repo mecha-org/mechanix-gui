@@ -307,6 +307,8 @@ pub struct KeyboardSettings {
     pub layer_shell: LayerShellSettings,
     #[serde(default)]
     pub default_layout: String,
+    #[serde(default)]
+    pub input_regions: InputRegions,
 }
 
 impl Default for KeyboardSettings {
@@ -320,6 +322,16 @@ impl Default for KeyboardSettings {
                 size: Size::new(px(540.0), px(274.0)),
             },
             default_layout: format!("{}us.yaml", LAYOUTS_BASE_PATH),
+            input_regions: InputRegions {
+                minimized: Region {
+                    origin: point(px(0.0), px(0.0)),
+                    size: Size::new(px(0.0), px(0.0)),
+                },
+                maximized: Region {
+                    origin: point(px(0.0), px(346.0)),
+                    size: Size::new(px(540.0), px(274.0)),
+                },
+            },
         }
     }
 }
