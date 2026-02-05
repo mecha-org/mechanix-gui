@@ -178,7 +178,6 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   context, _scrollController, controller),
         ),
 
-        const SizedBox(height: 18),
         Divider(
           height: 1,
           color: context.colorScheme.surfaceContainer,

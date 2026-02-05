@@ -30,7 +30,7 @@ Widget buildListView(
         // Show message if folder is empty
         return Center(
           child: Text(
-            isSearching ? "No results found" : "Folder is empty",
+            isSearching ? "No results found" : "No items yet",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: context.colorScheme.onSecondaryFixed,
                 ),
@@ -288,7 +288,7 @@ Widget buildListViewMoveAndExtract(
         // Show message if folder is empty
         return Center(
           child: Text(
-            isSearching ? "No results found" : "Folder is empty",
+            isSearching ? "No results found" : "No items yet",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: context.colorScheme.onSecondaryFixed,
                 ),
