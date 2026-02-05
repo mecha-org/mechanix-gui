@@ -1,5 +1,6 @@
 use commons::widgets::wing;
 use dispatcher::Dispatcher;
+use gpui::prelude::FluentBuilder;
 use gpui::*;
 use icons::prelude::Icons;
 use mxsearch::prelude::AppInfo;
@@ -28,6 +29,7 @@ pub struct SubWindow {
     pub is_dragging: bool,
     pub has_moved: bool,
     pub is_vertical_scroll: bool,
+    pub active_app: Option<usize>,
 }
 
 impl SubWindow {
@@ -42,6 +44,7 @@ impl SubWindow {
             is_dragging: false,
             has_moved: false,
             is_vertical_scroll: false,
+            active_app: None,
         }
     }
 
@@ -96,8 +99,10 @@ impl SubWindow {
         // Don't call cx.stop_propagation() - let horizontal swipes pass through to homescreen
     }
 
-    pub fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, _cx: &mut Context<Self>) {
+    pub fn on_mouse_up(&mut self, _event: &MouseUpEvent, _: &mut Window, cx: &mut Context<Self>) {
         self.is_dragging = false;
+        self.active_app = None;
+        cx.notify();
     }
 
     pub fn on_app_click(&self, possible_app_id: String, exec: String, cx: &mut Context<Self>) {
@@ -201,11 +206,11 @@ impl SubWindow {
             .child(
                 div()
                     .absolute()
-                    .bottom_5()
+                    .bottom(px(6.0))
                     .left_6()
                     .font_weight(FontWeight(400.0))
                     .text_size(px(18.0))
-                    .line_height(px(1.25))
+                    .line_height(px(22.5))
                     .text_color(colors.foreground_300)
                     .child(category)
                     .text_ellipsis()
@@ -226,6 +231,7 @@ impl SubWindow {
                 let id = hash_id(&app_id);
                 let exec = app.exec.clone();
                 let icon = Self::resolved_icon(&app.icon_path, cx);
+                let is_active = self.active_app == Some(idx);
 
                 div()
                     .id(id + idx)
@@ -236,27 +242,51 @@ impl SubWindow {
                         div()
                             .id(idx)
                             .size(px(ICON_BOX_SIZE))
-                            .rounded(px(12.))
+                            .rounded(px(12.0))
                             .flex()
                             .items_center()
                             .justify_center()
-                            .active(|this| this.bg(colors.background_700))
+                            .relative()
                             .cursor_pointer()
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
+                                    this.active_app = Some(idx);
+                                    cx.notify();
+                                }),
+                            )
                             .on_click(cx.listener(
                                 move |this: &mut SubWindow, _event, _window, cx| {
                                     if !this.has_moved {
                                         this.on_app_click(app_id.clone(), exec.clone(), cx);
                                     }
                                     this.has_moved = false;
+                                    this.active_app = None;
+                                    cx.notify();
                                 },
                             ))
                             .child(
                                 div()
-                                    .size(px(ICON_SIZE))
+                                    .size_full()
                                     .flex()
                                     .items_center()
                                     .justify_center()
                                     .child(icon),
+                            )
+                            .child(
+                                div()
+                                    .id(id + idx + 10)
+                                    .absolute()
+                                    .top_0()
+                                    .left_0()
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .size_full()
+                                    .rounded(px(9.8))
+                                    .bg(colors.foreground_1000)
+                                    .opacity(if is_active { 0.4 } else { 0.0 })
+                                    .when(!is_active, |this| this.active(|t| t.opacity(1.0))),
                             ),
                     )
             }))
@@ -275,7 +305,7 @@ impl SubWindow {
             // .bg(colors.accent_200.with_alpha(0.1))
             .border_color(colors.background_600);
 
-        w.upper_wing_size(Size::new(px(160.0), px(15.0)));
+        w.upper_wing_size(Size::new(px(160.0), px(17.0)));
         w.border_width(px(1.0));
         w.border_radius(px(8.0));
         w.corner_radii(commons::widgets::CornerRadii {
