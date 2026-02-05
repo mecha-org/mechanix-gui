@@ -801,7 +801,7 @@ impl Render for NotificationCenter {
 
         let threshold_px = 40.;
 
-        let bg_color = if (self.is_dragging || self.drag_offset.is_some()) || self.is_visible {
+        let bg_color = if self.drag_offset.is_some() || self.is_visible {
             colors.background_1000
         } else {
             colors.background_800
@@ -868,38 +868,42 @@ impl Render for NotificationCenter {
                         ),
                 )
             })
-            .when(self.is_visible, |content_div| {
-                content_div.size_full().bg(colors.background_1000)
-            })
             .child(
                 div()
                     .w_full()
                     .h_full()
                     .absolute()
                     .top(px(self.position))
-                    .child(div().id("left-wing").child({
-                        let mut w = wing()
-                            .w(notifications_center_size.width)
-                            .h(notifications_center_size.height + px(2.))
-                            .border_color(colors.background_700)
-                            .flex()
-                            .flex_col()
-                            .justify_end()
-                            .items_end()
-                            .bg(bg_color)
-                            .child(self.render_content(window, cx));
+                    .child(
+                        div()
+                            .id("left-wing")
+                            .when(self.is_visible, |content_div| {
+                                content_div.size_full().bg(colors.background_1000)
+                            })
+                            .child({
+                                let mut w = wing()
+                                    .w(notifications_center_size.width)
+                                    .h(notifications_center_size.height + px(2.))
+                                    .border_color(colors.background_700)
+                                    .flex()
+                                    .flex_col()
+                                    .justify_end()
+                                    .items_end()
+                                    .bg(bg_color)
+                                    .child(self.render_content(window, cx));
 
-                        w.upper_wing_size(size(navbar_size.width, navbar_size.height));
-                        w.upper_wing_side(WingSide::Left);
-                        w.border_width(px(1.0));
-                        w.corner_radii(CornerRadii {
-                            top_left: px(8.0),
-                            top_right: px(8.0),
-                            bottom_right: px(0.0),
-                            bottom_left: px(0.0),
-                        });
-                        w
-                    })),
+                                w.upper_wing_size(size(navbar_size.width, navbar_size.height));
+                                w.upper_wing_side(WingSide::Left);
+                                w.border_width(px(1.0));
+                                w.corner_radii(CornerRadii {
+                                    top_left: px(8.0),
+                                    top_right: px(8.0),
+                                    bottom_right: px(0.0),
+                                    bottom_left: px(0.0),
+                                });
+                                w
+                            }),
+                    ),
             )
     }
 }
