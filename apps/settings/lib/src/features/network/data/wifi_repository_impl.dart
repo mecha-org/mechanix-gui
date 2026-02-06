@@ -154,17 +154,18 @@ class WifiRepositoryImpl implements WifiRepository {
               ip4Config: ip4Config,
               ip6Config: ip6Config,
             );
+          } else {
+            // active + saved
+            var accessPoint = AccessPoints(
+              nmAccessPoint: nmAccessPoint,
+              isActive: isActive,
+              isSaved: isSaved,
+              isSecure: isSecure,
+              ip4Config: ip4Config,
+              ip6Config: ip6Config,
+            );
+            accessPoints.add(accessPoint);
           }
-          // active + saved
-          var accessPoint = AccessPoints(
-            nmAccessPoint: nmAccessPoint,
-            isActive: isActive,
-            isSaved: isSaved,
-            isSecure: isSecure,
-            ip4Config: ip4Config,
-            ip6Config: ip6Config,
-          );
-          accessPoints.add(accessPoint);
         }
       }
       return (active: connectedAccessPoint, available: accessPoints);

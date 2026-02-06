@@ -170,7 +170,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
             state.availableOtherNetworks,
             state,
           ),
-        );
+        ).padBottom(36);
       },
     );
   }

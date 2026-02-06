@@ -37,6 +37,15 @@ class _WirelessSettingsState extends State<WirelessSettings> {
   Widget build(BuildContext context) {
     return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
         builder: (context, state) {
+      // final networks = [
+      //   ...state.availableSavedNetworks,
+      //   ...state.availableOtherNetworks
+      // ];
+
+      // final isActive = networks.firstWhereOrNull((network) => listEquals(
+      //     network.nmAccessPoint.ssid,
+      //     state.connectedNetwork?.nmAccessPoint.ssid));
+
       return Scaffold(
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -71,7 +80,9 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                             .add(ToggleWifi(val)),
                       ),
                     ),
-                    if (state.wifiOn && state.connectedNetwork != null)
+                    if (state.wifiOn &&
+                        state.connectedNetwork != null &&
+                        state.connectedNetwork!.isActive)
                       SimpleListItems(
                         // onTap: () =>
                         //     onInfoTap(state.connectedNetwork!, context),
@@ -110,7 +121,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 ),
                 if (state.wifiOn &&
                     !state.availableSavedNetworksLoading &&
-                    state.availableOtherNetworks.isEmpty)
+                    state.availableSavedNetworks.isEmpty)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
                     title: 'My Networks',
@@ -119,7 +130,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                         title: '',
                         backgroundColor: Colors.transparent,
                         defaultTrailingIcon: false,
-                        leading: const CustomLoader(),
+                        leading: const CustomLoader().padRight(8),
                       ),
                     ],
                   ),
@@ -136,13 +147,13 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                         title: '',
                         backgroundColor: Colors.transparent,
                         defaultTrailingIcon: false,
-                        leading: const CustomLoader(),
+                        leading: const CustomLoader().padRight(8),
                       ),
                     ],
                   ),
                 if (state.wifiOn && state.availableOtherNetworks.isNotEmpty)
                   const AvailableNetworks(),
-                const WirelessAdvanceSettings().padTop(36)
+                const WirelessAdvanceSettings()
               ],
             ),
           ).padTop(8),

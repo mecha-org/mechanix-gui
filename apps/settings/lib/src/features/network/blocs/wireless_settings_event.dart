@@ -144,3 +144,21 @@ class ActivationProcessEvent extends WirelessSettingsEvent {
   @override
   List<Object> get props => [activationProcessState];
 }
+
+class UpdateSavedNetworkList extends WirelessSettingsEvent {
+  final List<AccessPoints> accessPoint;
+
+  UpdateSavedNetworkList(this.accessPoint);
+
+  @override
+  List<Object> get props => [accessPoint];
+}
+
+class UpdateUnknownNetworkList extends WirelessSettingsEvent {
+  final List<AccessPoints> accessPoint;
+
+  UpdateUnknownNetworkList(this.accessPoint);
+
+  @override
+  List<Object> get props => [accessPoint];
+}
