@@ -943,8 +943,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         ),
         MechanixMenuItemsType(
           title: controller.showHiddenFiles
-              ? "Hide Hidden Files"
-              : "Show Hidden Files",
+              ? "Hide hidden files"
+              : "Show hidden files",
           leading: Image.asset(
             controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
             color: context.colorScheme.onSurface,
@@ -1016,7 +1016,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           },
         ),
         MechanixMenuItemsType(
-          title: "New Folder",
+          title: "New folder",
           leading: Image.asset(
             Images.createFolder,
             color: context.colorScheme.onSurface,
@@ -1042,8 +1042,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         ),
         MechanixMenuItemsType(
           title: controller.showHiddenFiles
-              ? "Hide Hidden Files"
-              : "Show Hidden Files",
+              ? "Hide hidden files"
+              : "Show hidden files",
           leading: Image.asset(
             controller.showHiddenFiles ? Images.eye : Images.eyeSlash,
             color: context.colorScheme.onSurface,
