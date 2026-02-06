@@ -48,8 +48,8 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
                 builder: (context, constraints) {
                   const suffixText = ' already exists';
 
-                  final suffixStyle = regularStyle(context);
-                  final nameStyle = boldStyle(context);
+                  final suffixStyle = confirmationDialogRegularStyle(context);
+                  final nameStyle = confirmationDialogBoldStyle(context);
 
                   final suffixWidth = textWidth(suffixText, suffixStyle);
 
@@ -83,7 +83,9 @@ class ConflictResolutionBottomSheet extends StatelessWidget {
               Text(
                 'Would you like to replace?',
                 style: TextStyle(
-                    color: context.colorScheme.onSurface, fontSize: 18),
+                    color: context.colorScheme.onSurface,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w400),
               ),
               const SizedBox(height: 16),
               Row(

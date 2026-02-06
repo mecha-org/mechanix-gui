@@ -492,38 +492,38 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 ),
                 sectionListItems: [
                   SectionListItems.leadingIcon(
-                      title: "Home directory",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(homeDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.home,
-                      iconSize: const Size(26, 26)),
+                    title: "Home directory",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(homeDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.home,
+                  ),
                   // Downloads
                   SectionListItems.leadingIcon(
-                      title: "Downloads",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(downloadsDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.downloads,
-                      iconSize: const Size(26, 26)),
+                    title: "Downloads",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(downloadsDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.downloads,
+                  ),
 
                   // Documents
                   SectionListItems.leadingIcon(
-                      title: "Documents",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(documentsDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.homeDocuments,
-                      iconSize: const Size(26, 26)),
+                    title: "Documents",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(documentsDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.homeDocuments,
+                  ),
                 ]),
 
             // Root dir
@@ -547,7 +547,6 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                     },
                     iconColor: context.colorScheme.primaryContainer,
                     iconPath: Images.hardDrive,
-                    iconSize: const Size(26, 26),
                   ),
                 ]),
           ],

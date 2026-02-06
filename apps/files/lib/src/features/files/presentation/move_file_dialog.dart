@@ -520,38 +520,38 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 ),
                 sectionListItems: [
                   SectionListItems.leadingIcon(
-                      title: "Home directory",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(homeDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.home,
-                      iconSize: const Size(26, 26)),
+                    title: "Home directory",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(homeDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.home,
+                  ),
                   // Downloads
                   SectionListItems.leadingIcon(
-                      title: "Downloads",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(downloadsDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.downloads,
-                      iconSize: const Size(26, 26)),
+                    title: "Downloads",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(downloadsDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.downloads,
+                  ),
 
                   // Documents
                   SectionListItems.leadingIcon(
-                      title: "Documents",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(documentsDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.homeDocuments,
-                      iconSize: const Size(26, 26)),
+                    title: "Documents",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(documentsDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.homeDocuments,
+                  ),
                 ]),
 
             // Root dir
@@ -567,15 +567,15 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 ),
                 sectionListItems: [
                   SectionListItems.leadingIcon(
-                      title: "Root (/)",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory("/"));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.hardDrive,
-                      iconSize: const Size(26, 26)),
+                    title: "Root (/)",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory("/"));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.hardDrive,
+                  ),
                 ]),
           ],
         ),
@@ -663,8 +663,9 @@ Future<void> handleConflictsSequentially(
                 children: [
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final fileStyle = boldStyle(context);
-                      final suffixStyle = regularStyle(context);
+                      final fileStyle = confirmationDialogBoldStyle(context);
+                      final suffixStyle =
+                          confirmationDialogRegularStyle(context);
                       const suffix = ' already exists';
 
                       // Measure suffix width
@@ -702,7 +703,9 @@ Future<void> handleConflictsSequentially(
                   Text(
                     'Would you like to replace?',
                     style: TextStyle(
-                        color: context.colorScheme.onSurface, fontSize: 18),
+                        color: context.colorScheme.onSurface,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 16),
                   Row(

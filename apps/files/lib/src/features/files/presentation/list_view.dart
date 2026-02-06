@@ -95,15 +95,15 @@ Widget buildListView(
                             ),
                           ),
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 36,
+                          height: 36,
                           padding: const EdgeInsets.all(6),
                           child: Center(
                             child: Image.asset(
                               entity.iconPath,
                               fit: BoxFit.contain,
-                              width: 30,
-                              height: 30,
+                              width: 24,
+                              height: 24,
                               color: context.colorScheme.primaryContainer,
                             ),
                           ),
@@ -221,15 +221,15 @@ Widget buildListViewForRecentFiles(
                     ),
                   ),
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 36,
+                  height: 36,
                   padding: const EdgeInsets.all(6),
                   child: Center(
                     child: Image.asset(
                       file.iconPath,
                       fit: BoxFit.contain,
-                      width: 30,
-                      height: 30,
+                      width: 24,
+                      height: 24,
                       color: context.colorScheme.primaryContainer,
                     ),
                   ),
@@ -286,7 +286,9 @@ Widget buildListViewMoveAndExtract(
     builder: (context, entities, _) {
       if (entities.isEmpty) {
         // Show message if folder is empty
-        return Center(
+        return Padding(
+          padding: const EdgeInsets.only(
+              bottom: 8, top: 8, left: 16, right: 16), // space above Move bar
           child: Text(
             isSearching ? "No results found" : "No items yet",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -358,15 +360,15 @@ Widget buildListViewMoveAndExtract(
                               ),
                             ),
                           Container(
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             padding: const EdgeInsets.all(6),
                             child: Center(
                               child: Image.asset(
                                 entity.iconPath,
                                 fit: BoxFit.contain,
-                                width: 30,
-                                height: 30,
+                                width: 24,
+                                height: 24,
                                 color: context.colorScheme.primaryContainer,
                               ),
                             ),
