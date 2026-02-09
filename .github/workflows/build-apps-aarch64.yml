@@ -101,26 +101,22 @@ jobs:
           tar -xzf pdfium.tgz -C pdfium --strip-components=1
 
           echo "=== Extracted ==="
-          tree pdfium || ls -R pdfium
+          ls -la pdfium
 
-          # Install headers
-          sudo cp -r pdfium/include /usr/local/
+          # install library
+          sudo cp pdfium/libpdfium.so /usr/local/lib/
 
-          # Install library (handle both layouts)
-          if [ -f pdfium/lib/libpdfium.so ]; then
-            sudo cp pdfium/lib/libpdfium.so /usr/local/lib/
-          elif [ -f pdfium/libpdfium.so ]; then
-            sudo cp pdfium/libpdfium.so /usr/local/lib/
-          else
-            echo "libpdfium.so not found!"
-            exit 1
-          fi
+          # install headers
+          sudo mkdir -p /usr/local/include/pdfium
+          sudo cp pdfium/*.h /usr/local/include/pdfium/
+          sudo cp -r pdfium/cpp /usr/local/include/pdfium/
 
           sudo ldconfig
 
-          echo "=== Verify ==="
+          # verify
           ldconfig -p | grep pdfium || true
           ls -l /usr/local/lib/libpdfium.so
+
       # Install NuShell
       - name: Install Nushell
         run: |
