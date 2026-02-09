@@ -44,6 +44,7 @@ find_library(
   PATHS
     /usr/local/lib
     /usr/lib
+    /usr/lib64
     /usr/lib/aarch64-linux-gnu
     /usr/lib/x86_64-linux-gnu
 )
