@@ -79,7 +79,7 @@ class FileDetailsDialog extends StatelessWidget {
                                 style: TextStyle(
                                   color: context
                                       .colorScheme.onSecondaryFixedVariant,
-                                  fontSize: 22,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -96,7 +96,7 @@ class FileDetailsDialog extends StatelessWidget {
                                         style: TextStyle(
                                           color: context
                                               .colorScheme.onSecondaryContainer,
-                                          fontSize: 22,
+                                          fontSize: 20,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
@@ -143,13 +143,13 @@ Widget buildDetailRow(
         Text(title,
             style: TextStyle(
               color: context.colorScheme.onSurface,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
             )),
         Text(value,
             style: TextStyle(
               color: context.colorScheme.onSurface,
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w400,
             )),
       ],

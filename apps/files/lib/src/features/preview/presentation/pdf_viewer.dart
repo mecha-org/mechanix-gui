@@ -24,11 +24,12 @@ class PdfViewerPage extends StatefulWidget {
   String filePath;
   FileExplorerPageState? state;
 
-  PdfViewerPage(
-      {super.key,
-      required this.rootContext,
-      required this.filePath,
-      this.state});
+  PdfViewerPage({
+    super.key,
+    required this.rootContext,
+    required this.filePath,
+    this.state,
+  });
 
   @override
   State<PdfViewerPage> createState() => _PdfViewerPageState();
@@ -66,14 +67,14 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       });
     });
 
-    _controller.addListener(_onPageChanged);
+    // _controller.addListener(_onPageChanged);
   }
 
   @override
   void dispose() {
     _hideBubbleTimer?.cancel();
     _pageBubbleOverlay?.remove();
-    _controller.removeListener(_onPageChanged);
+    // _controller.removeListener(_onPageChanged);
 
     _searcher.dispose();
     super.dispose();
@@ -123,8 +124,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 child: Container(
                   height: 90,
                   decoration: const BoxDecoration(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(12)),
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
                   ),
                   child: Center(
                     child: MechanixTextInput.password(
@@ -138,12 +140,15 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       },
                       anchorWidget: Padding(
                         padding: const EdgeInsets.only(left: 5.0, right: 2.0),
-                        child: IconButton(
+                        child: DecoratedPressableIcon(
                           icon: const Icon(Icons.close),
-                          onPressed: () {
+                          onTap: () {
                             password = '';
                             Navigator.of(bottomSheetContext).pop();
                           },
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
                         ),
                       ),
                     ),
@@ -169,40 +174,56 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: _buildNormalAppBar(),
-        body: Stack(
-          children: [
-            // Display the PDF viewer
-            PdfViewer.file(
-              widget.filePath,
-              controller: _controller,
-              passwordProvider: _passwordProvider,
-              firstAttemptByEmptyPassword: true,
-              params: PdfViewerParams(
-                // backgroundColor: context.colorScheme.surface,
-                enableTextSelection: true,
-                maxScale: 4.0,
-                minScale: 1.0,
-                errorBannerBuilder: (context, error, stack, document) {
-                  return const SizedBox.shrink();
-                },
-                pageOverlaysBuilder: (context, pageRect, page) {
-                  return [
-                    CustomPaint(
+      appBar: _buildNormalAppBar(),
+      body: Stack(
+        children: [
+          // Display the PDF viewer
+          PdfViewer.file(
+            widget.filePath,
+            controller: _controller,
+            passwordProvider: _passwordProvider,
+            firstAttemptByEmptyPassword: true,
+            params: PdfViewerParams(
+              backgroundColor: context.colorScheme.surface,
+              onViewerReady: (document, controller) {
+                setState(() {
+                  _currentPage = controller.pageNumber ?? 1;
+                  _pageCount = controller.pageCount ?? 0;
+                });
+              },
+              onPageChanged: (page) {
+                if (page == null) return;
+                setState(() {
+                  _currentPage = page;
+                });
+                _showPageBubble();
+              },
+              enableTextSelection: true,
+              maxScale: 4.0,
+              minScale: 1.0,
+              // errorBannerBuilder: (context, error, stack, document) {
+              //   return const SizedBox.shrink();
+              // },
+              pageOverlaysBuilder: (context, pageRect, page) {
+                return [
+                  IgnorePointer(
+                    child: CustomPaint(
                       size: pageRect.size,
                       painter: _PdfSearchHighlightPainter(
                         searcher: _searcher,
                         page: page,
                       ),
                     ),
-                  ];
-                },
-              ),
-              initialPageNumber: 1,
+                  ),
+                ];
+              },
             ),
-          ],
-        ),
-        bottomNavigationBar: _buildBottomBar(context));
+            initialPageNumber: 1,
+          ),
+        ],
+      ),
+      bottomNavigationBar: _buildBottomBar(context),
+    );
   }
 
   void _onPageChanged() {
@@ -227,7 +248,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
     _pageBubbleOverlay = OverlayEntry(
       builder: (_) => Positioned(
-        bottom: 80, // above bottom bar
+        bottom: 95, // above bottom bar
         left: 0,
         right: 0,
         child: IgnorePointer(
@@ -344,10 +365,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       valueListenable: controller.paginatedEntities,
       builder: (_, __, ___) {
         final title = controller.getDisplayName(File(widget.filePath));
-        return MiddleEllipsisText(
-          title,
-          style: previewTitleStyle(context),
-        );
+        return MiddleEllipsisText(title, style: previewTitleStyle(context));
       },
     );
   }
@@ -357,19 +375,24 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
-          decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(8), topRight: Radius.circular(8)))),
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondaryContainer,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(8),
+            topRight: Radius.circular(8),
+          ),
+        ),
+      ),
       leadingWidget: [
         BottomBarButton.widget(
-            widget: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: DecoratedPressableIcon(
-            iconPath: Images.back,
-            onTap: () => Navigator.pop(context),
+          widget: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: DecoratedPressableIcon(
+              iconPath: Images.back,
+              onTap: () => Navigator.pop(context),
+            ),
           ),
-        )),
+        ),
       ],
       centerWidgetSpacing: 30,
       centerWidget: [
@@ -408,9 +431,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           ),
         ),
       ],
-      anchorWidget: [
-        BottomBarButton.widget(widget: buildActionsMenu(context)),
-      ],
+      anchorWidget: [BottomBarButton.widget(widget: buildActionsMenu(context))],
     );
   }
 
@@ -421,14 +442,15 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconWidth: 28,
-          iconHeight: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryFixed
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconWidth: 28,
+        iconHeight: 28,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -509,6 +531,18 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 iconHeight: 24,
                 iconWidth: 24,
               ),
+              isClearButtonRequired: false,
+              anchorWidget: Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: DecoratedPressableIcon(
+                  onTap: () {
+                    _clearPdfSearch();
+                  },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
+                  icon: const Icon(Icons.close),
+                ),
+              ),
               hintText: "Search in PDF",
               onChanged: _onPdfSearchChanged,
               onClear: _clearPdfSearch,
@@ -558,10 +592,7 @@ class _PdfSearchHighlightPainter extends CustomPainter {
   final PdfTextSearcher searcher;
   final PdfPage page;
 
-  _PdfSearchHighlightPainter({
-    required this.searcher,
-    required this.page,
-  });
+  _PdfSearchHighlightPainter({required this.searcher, required this.page});
 
   @override
   void paint(Canvas canvas, Size size) {
