@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(EPHEMERAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ephemeral")
-set(PDFIUM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libpdfium")
+find_library(PDFIUM_DIR pdfium)
+
+if(PDFIUM_DIR)
+    message(STATUS "Found pdfium: ${PDFIUM_DIR}")
+else()
+    message(STATUS "pdfium not found")
+endif()
 
 # Configuration provided via flutter tool.
 include(${EPHEMERAL_DIR}/generated_config.cmake)
@@ -21,7 +27,6 @@ endfunction()
 # === Flutter Library ===
 # System-level dependencies.
 set(FLUTTER_LIBRARY "${EPHEMERAL_DIR}/libflutter_engine.so")
-set(PDFIUM_LIBRARY "${PDFIUM_DIR}/libpdfium.so")
 
 if(FLUTTER_TARGET_BACKEND_TYPE MATCHES "gbm")
   set(FLUTTER_EMBEDDER_LIBRARY "${EPHEMERAL_DIR}/libflutter_elinux_gbm.so")
