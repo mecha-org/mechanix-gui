@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Camera
+GenericName=Mechanix Camera
+Comment=Camera app
+Type=Application
+TryExec=mechanix_camera -b /usr/share/mechanix/mechanix-camera -w 540 -h 620 -k -s 1
+Exec=mechanix_camera -b /usr/share/mechanix/mechanix-camera -w 540 -h 620 -k -s 1
+Icon=mechanix_camera
+Terminal=false
+NoDisplay=false
+Categories=Multimedia;
