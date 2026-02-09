@@ -201,9 +201,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
               enableTextSelection: true,
               maxScale: 4.0,
               minScale: 1.0,
-              errorBannerBuilder: (context, error, stack, document) {
-                return const SizedBox.shrink();
-              },
+              // errorBannerBuilder: (context, error, stack, document) {
+              //   return const SizedBox.shrink();
+              // },
               pageOverlaysBuilder: (context, pageRect, page) {
                 return [
                   IgnorePointer(
