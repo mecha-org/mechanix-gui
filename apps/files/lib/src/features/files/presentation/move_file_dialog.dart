@@ -343,7 +343,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final prefix = 'Moving ';
+                    final prefix = 'Moving';
                     final prefixStyle = regularStyle(context);
                     final labelStyle = boldStyle(context);
 
