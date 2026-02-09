@@ -38,9 +38,22 @@ set(FLUTTER_ICU_DATA_FILE "${EPHEMERAL_DIR}/icudtl.dat" PARENT_SCOPE)
 set(PROJECT_BUILD_DIR "${PROJECT_DIR}/build/elinux/" PARENT_SCOPE)
 set(AOT_LIBRARY "${EPHEMERAL_DIR}/libapp.so" PARENT_SCOPE)
 
-find_library(PDFIUM_DIR pdfium) 
-if (PDFIUM_DIR)
-  set(PDFIUM_LIBRARY "${PDFIUM_DIR}" PARENT_SCOPE)  
+find_library(
+  PDFIUM_LIBRARY
+  NAMES pdfium libpdfium.so
+  PATHS
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /usr/lib/aarch64-linux-gnu
+    /usr/lib/x86_64-linux-gnu
+)
+
+if(PDFIUM_LIBRARY AND EXISTS "${PDFIUM_LIBRARY}")
+  message(STATUS "Found PDFium: ${PDFIUM_LIBRARY}")
+  set(PDFIUM_LIBRARY "${PDFIUM_LIBRARY}" PARENT_SCOPE)
+else()
+  message(WARNING "PDFium not found")
 endif()
 
 list(APPEND FLUTTER_LIBRARY_HEADERS
