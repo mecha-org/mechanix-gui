@@ -66,9 +66,9 @@ impl HomescreenWidget for PinnedApps {
             .child(
                 div()
                     .absolute()
-                    .top(px(8.))
-                    .left(px(12.))
-                    .text_size(px(20.))
+                    .top(px(8.0))
+                    .left(px(12.0))
+                    .text_size(px(20.0))
                     .font_family(primary)
                     .text_color(text_color)
                     .child("Apps"),
@@ -76,40 +76,56 @@ impl HomescreenWidget for PinnedApps {
             .child(
                 div()
                     .absolute()
-                    .top(px(48.))
-                    .left(px(24.))
-                    .w(px(460.))
-                    .h(px(172.))
+                    .top(px(48.0))
+                    .left(px(24.0))
+                    .w(px(460.0))
+                    .h(px(172.0))
                     .grid()
-                    .grid_cols(5)
+                    .grid_cols(4)
                     .grid_rows(2)
-                    .gap(px(20.))
+                    .gap(px(36.0))
                     .children(pinned_apps.iter().enumerate().map(|(idx, app)| {
                         let app_id = app.possible_app_id.clone();
                         let exec = app.exec.clone();
+
                         div()
                             .id(idx)
                             .bg(icon_bg_color)
-                            .size(px(76.))
+                            .size(px(88.0))
                             .rounded(px(7.6))
                             .flex()
                             .items_center()
                             .justify_center()
+                            .relative()
                             .cursor_pointer()
-                            .active(|this| this.bg(colors.background_700))
                             .on_click(move |_, _, cx| {
                                 Self::on_app_click(app_id.clone(), exec.clone(), cx);
                             })
                             .when_some(app.icon_path.clone(), |this, icon| {
                                 this.child(
                                     div()
-                                        .size(px(49.5))
+                                        .size_full()
                                         .flex()
                                         .items_center()
                                         .justify_center()
                                         .child(img(PathBuf::from(icon)).size_full()),
                                 )
                             })
+                            .child(
+                                div()
+                                    .id(idx + 1000)
+                                    .absolute()
+                                    .top_0()
+                                    .left_0()
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .size_full()
+                                    .rounded(px(7.6))
+                                    .bg(colors.foreground_1000)
+                                    .opacity(0.0)
+                                    .active(|this| this.opacity(0.4)),
+                            )
                     })),
             )
             .into_any_element()
