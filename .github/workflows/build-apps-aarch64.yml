@@ -89,6 +89,25 @@ jobs:
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
             libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev
+
+      - name: Install PDFium (ARM64)
+        run: |
+          set -eux
+
+          PDFIUM_URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-arm64.tgz"
+
+          curl -L "$PDFIUM_URL" -o pdfium.tgz
+          tar -xzf pdfium.tgz
+
+          # install library
+          sudo cp pdfium/lib/libpdfium.so /usr/local/lib/
+          sudo cp -r pdfium/include /usr/local/
+
+          # refresh linker cache
+          sudo ldconfig
+
+          # verify
+          ls -l /usr/local/lib/libpdfium.so
       # Install NuShell
       - name: Install Nushell
         run: |
