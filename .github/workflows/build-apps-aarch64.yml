@@ -94,19 +94,32 @@ jobs:
         run: |
           set -eux
 
-          PDFIUM_URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-arm64.tgz"
+          URL="https://github.com/bblanchon/pdfium-binaries/releases/latest/download/pdfium-linux-arm64.tgz"
 
-          curl -L "$PDFIUM_URL" -o pdfium.tgz
-          tar -xzf pdfium.tgz
+          curl -L "$URL" -o pdfium.tgz
+          mkdir pdfium
+          tar -xzf pdfium.tgz -C pdfium --strip-components=1
 
-          # install library
-          sudo cp pdfium/lib/libpdfium.so /usr/local/lib/
+          echo "=== Extracted ==="
+          tree pdfium || ls -R pdfium
+
+          # Install headers
           sudo cp -r pdfium/include /usr/local/
 
-          # refresh linker cache
+          # Install library (handle both layouts)
+          if [ -f pdfium/lib/libpdfium.so ]; then
+            sudo cp pdfium/lib/libpdfium.so /usr/local/lib/
+          elif [ -f pdfium/libpdfium.so ]; then
+            sudo cp pdfium/libpdfium.so /usr/local/lib/
+          else
+            echo "libpdfium.so not found!"
+            exit 1
+          fi
+
           sudo ldconfig
 
-          # verify
+          echo "=== Verify ==="
+          ldconfig -p | grep pdfium || true
           ls -l /usr/local/lib/libpdfium.so
       # Install NuShell
       - name: Install Nushell
