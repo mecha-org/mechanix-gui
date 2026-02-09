@@ -320,7 +320,7 @@ Widget buildListViewMoveAndExtract(
           itemCount: entities.length,
           itemBuilder: (context, index) {
             final entity = entities[index];
-            final title = FileManager.basename(entity);
+            final title = controller.getDisplayName(entity);
             final modified = entity.statSync().modified;
             final isSelected = selectedPaths.contains(entity.path);
             final isNew = entity.path == controller.newFolderPath;

@@ -413,6 +413,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
     final bool isEmpty = renameText.trim().isEmpty;
     final bool isSame = renameText.trim() == originalFolderName.trim();
     final bool showCheck = !isEmpty && !isSame; // valid new name
+    final oldPath = p.join(controller.getCurrentPath, originalFolderName);
 
     return Expanded(
       child: MechanixTextInput.textInput(
@@ -426,7 +427,13 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
         cursorColor: context.colorScheme.primaryContainer,
         autofocus: true,
         initialValue: renameText,
-        onChanged: (v) => setState(() => renameText = v),
+        onChanged: (v) {
+          setState(() {
+            renameText = v;
+          });
+
+          controller.setLiveRename(oldPath, v);
+        },
         anchorWidget: showCheck
             ? Padding(
                 padding: const EdgeInsets.only(left: 5),

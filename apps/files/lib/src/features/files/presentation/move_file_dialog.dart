@@ -441,6 +441,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final bool isEmpty = renameText.trim().isEmpty;
     final bool isSame = renameText.trim() == originalFolderName.trim();
     final bool showCheck = !isEmpty && !isSame; // valid new name
+    final oldPath = p.join(controller.getCurrentPath, originalFolderName);
 
     return Expanded(
       child: MechanixTextInput.textInput(
@@ -454,7 +455,13 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         autofocus: true,
         cursorColor: context.colorScheme.primaryContainer,
         initialValue: renameText,
-        onChanged: (v) => setState(() => renameText = v),
+        onChanged: (v) {
+          setState(() {
+            renameText = v;
+          });
+
+          controller.setLiveRename(oldPath, v);
+        },
         anchorWidget: showCheck
             ? Padding(
                 padding: const EdgeInsets.only(left: 5),
