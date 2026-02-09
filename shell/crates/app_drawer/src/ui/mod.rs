@@ -881,18 +881,7 @@ impl AppDrawer {
             .id("search-results-list")
             .size_full()
             .overflow_hidden()
-            .child(if searched_apps.is_empty() {
-                div()
-                    .w_full()
-                    .h(px(200.0))
-                    .flex()
-                    .items_start()
-                    .p(px(10.))
-                    .justify_start()
-                    .text_color(colors.foreground_400)
-                    .text_size(px(16.0))
-                    .child("No results found")
-            } else {
+            .child(
                 div()
                     .flex()
                     .flex_col()
@@ -959,8 +948,8 @@ impl AppDrawer {
                                     this.has_moved = false;
                                 },
                             ))
-                    }))
-            })
+                    })),
+            )
     }
 
     pub fn resolved_icon(app_icon: &Option<String>, cx: &mut gpui::App) -> Img {
