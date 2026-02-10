@@ -40,7 +40,7 @@ class FileDetailsDialog extends StatelessWidget {
 
           final items = [
             buildDetailRow(context, "Type", details.type.toString()),
-            buildDetailRow(context, "Size", formatBytes(details.size)),
+            buildDetailRow(context, "Size", formatBytesDecimal(details.size)),
             buildDetailRow(
                 context, "Modified", formatDateTime(details.modified)),
             buildDetailRow(
