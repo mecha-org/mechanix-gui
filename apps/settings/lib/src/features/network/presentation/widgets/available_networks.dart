@@ -1,10 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
@@ -16,7 +14,6 @@ import 'package:mechanix_settings/src/features/network/presentation/add_network.
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_strength_icon.dart';
-import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
@@ -29,26 +26,11 @@ class AvailableNetworks extends StatefulWidget {
 }
 
 class _AvailableNetworksState extends State<AvailableNetworks> {
-  bool _isNetworkLoading(AccessPoints ap, WirelessSettingsState state) {
-    if (listEquals(ap.nmAccessPoint.ssid, state.activationProcessState?.ssid)) {
-      if (state.activationProcessState?.deviceState ==
-          NetworkManagerActiveConnectionState.activating) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   List<SectionListItems> _buildWifiListItems(
     BuildContext context,
     List<AccessPoints> accessPoints,
-    WirelessSettingsState state,
   ) {
     final wifi = accessPoints.map((ap) {
-      final isLoading = _isNetworkLoading(ap, state);
-      if (listEquals(
-          ap.nmAccessPoint.ssid, state.activationProcessState?.ssid)) {}
-
       final ssid = utf8.decode(ap.nmAccessPoint.ssid);
 
       return SectionListItems(
@@ -63,7 +45,6 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isLoading) const CustomLoader(),
             IconButton(
               onPressed: () => _onInfoTap(ap, context),
               icon: SizedBox(
@@ -100,7 +81,6 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
             ),
           );
         },
-        // leading: const IconWidget(iconPath: Images.wirelessAdd),
         iconPath: Images.wirelessAdd,
         isActive: true,
       ),
@@ -168,9 +148,8 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
           sectionListItems: _buildWifiListItems(
             context,
             state.availableOtherNetworks,
-            state,
           ),
-        ).padBottom(36);
+        );
       },
     );
   }

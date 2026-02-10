@@ -62,14 +62,6 @@ class SelectNetworkPoint extends WirelessSettingsEvent {
 
 class ConnectedNetwork extends WirelessSettingsEvent {}
 
-class UpdateAvailableNetworksEvent extends WirelessSettingsEvent {
-  final List<AccessPoints> accessPoints;
-  UpdateAvailableNetworksEvent(this.accessPoints);
-
-  @override
-  List<Object> get props => [accessPoints];
-}
-
 class GetSavedNetworksEvent extends WirelessSettingsEvent {}
 
 class UpdateConnectedNetworkEvent extends WirelessSettingsEvent {
@@ -134,15 +126,6 @@ class DeActivatedNetworkEvent extends WirelessSettingsEvent {
 
   @override
   List<Object> get props => [activatingNetwork];
-}
-
-class ActivationProcessEvent extends WirelessSettingsEvent {
-  final ActivationProcessState activationProcessState;
-
-  ActivationProcessEvent(this.activationProcessState);
-
-  @override
-  List<Object> get props => [activationProcessState];
 }
 
 class UpdateSavedNetworkList extends WirelessSettingsEvent {

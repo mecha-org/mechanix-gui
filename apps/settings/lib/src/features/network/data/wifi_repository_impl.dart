@@ -145,7 +145,6 @@ class WifiRepositoryImpl implements WifiRepository {
               nmAccessPoint.rsnFlags.isNotEmpty;
 
           if (isActive) {
-            // connected
             connectedAccessPoint = AccessPoints(
               isActive: isActive,
               isSaved: isSaved,
@@ -155,7 +154,6 @@ class WifiRepositoryImpl implements WifiRepository {
               ip6Config: ip6Config,
             );
           } else {
-            // active + saved
             var accessPoint = AccessPoints(
               nmAccessPoint: nmAccessPoint,
               isActive: isActive,

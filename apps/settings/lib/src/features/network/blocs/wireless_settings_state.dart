@@ -29,7 +29,6 @@ class WirelessSettingsState extends Equatable {
   final ActivatingNetwork? activatedNetwork;
   final ActivatingNetwork? deActivatedNetwork;
   final WiredDevice? wiredDevice;
-  final ActivationProcessState? activationProcessState;
 
   const WirelessSettingsState({
     required this.wifiOn,
@@ -49,7 +48,6 @@ class WirelessSettingsState extends Equatable {
     this.activatingNetwork,
     this.activatedNetwork,
     this.deActivatedNetwork,
-    this.activationProcessState,
     this.selectedAPWirelessProtocol = WirelessProtocol.none,
   });
 
@@ -72,7 +70,6 @@ class WirelessSettingsState extends Equatable {
     ActivatingNetwork? activatedNetwork,
     ActivatingNetwork? deActivatedNetwork,
     WirelessProtocol? selectedAPWirelessProtocol,
-    ActivationProcessState? activationProcessState,
   }) {
     return WirelessSettingsState(
       wifiOn: wifiOn ?? this.wifiOn,
@@ -99,8 +96,6 @@ class WirelessSettingsState extends Equatable {
       deActivatedNetwork: deActivatedNetwork ?? this.deActivatedNetwork,
       selectedAPWirelessProtocol:
           selectedAPWirelessProtocol ?? this.selectedAPWirelessProtocol,
-      activationProcessState:
-          activationProcessState ?? this.activationProcessState,
     );
   }
 
@@ -123,7 +118,6 @@ class WirelessSettingsState extends Equatable {
         activatedNetwork,
         deActivatedNetwork,
         selectedAPWirelessProtocol,
-        activationProcessState,
       ];
 }
 
