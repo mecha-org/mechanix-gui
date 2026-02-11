@@ -692,9 +692,13 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         BottomBarButton.widget(
           widget: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: DecoratedPressableIcon(
-              iconPath: Images.back,
-              onTap: selectionMode
+            child: IconButton(
+              icon: const IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.back,
+              ),
+              onPressed: selectionMode
                   ? clearSelection
                   : () {
                       if (isHomePageDir) {
@@ -710,26 +714,32 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       centerWidgetSpacing: 28,
       centerWidget: [
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
+            widget: IconButton(
+          onPressed: selectionMode
+              ? null
+              : () {
+                  setState(() => isSearching = true);
+                  showSearchBottomSheet(context, searchQuery);
+                },
+          icon: const IconWidget(
+            iconHeight: 28,
+            iconWidth: 28,
             iconPath: Images.search,
-            isDisabled: selectionMode,
-            onTap: selectionMode
-                ? null
-                : () {
-                    setState(() => isSearching = true);
-                    showSearchBottomSheet(context, searchQuery);
-                  },
           ),
-        ),
+        )),
         BottomBarButton.widget(
           widget: ValueListenableBuilder<bool>(
             valueListenable: viewModeNotifier,
             builder: (context, isList, _) {
-              return DecoratedPressableIcon(
-                iconPath: isList ? Images.list : Images.grid,
-                onTap: () {
+              return IconButton(
+                onPressed: () {
                   viewModeNotifier.value = !isList;
                 },
+                icon: IconWidget(
+                  iconHeight: 28,
+                  iconWidth: 28,
+                  iconPath: isList ? Images.list : Images.grid,
+                ),
               );
             },
           ),
@@ -787,10 +797,15 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               widget: ValueListenableBuilder<bool>(
                 valueListenable: hasSelectionNotifier,
                 builder: (context, hasSelection, _) {
-                  return PressableIcon(
-                    iconPath: Images.copy,
-                    isDisabled: !hasSelection,
-                    onTap: hasSelection ? handleCopy : null,
+                  return IconButton(
+                    onPressed: hasSelection ? handleCopy : null,
+                    icon: IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.copy,
+                      iconColor:
+                          !hasSelection ? context.colorScheme.outline : null,
+                    ),
                   );
                 },
               ),
@@ -799,30 +814,43 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               widget: ValueListenableBuilder<bool>(
                 valueListenable: hasSelectionNotifier,
                 builder: (context, hasSelection, _) {
-                  return PressableIcon(
-                    iconPath: Images.move,
-                    isDisabled: !hasSelection,
-                    onTap: hasSelection ? handleMove : null,
+                  return IconButton(
+                    onPressed: hasSelection ? handleMove : null,
+                    icon: IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.move,
+                      iconColor:
+                          !hasSelection ? context.colorScheme.outline : null,
+                    ),
                   );
                 },
               ),
             ),
-            const BottomBarButton.widget(
-              isDisabled: true,
-              widget: PressableIcon(
-                iconPath: Images.share,
-                onTap: null,
-                isDisabled: true,
+            BottomBarButton.widget(
+              widget: IconButton(
+                onPressed: null,
+                icon: IconWidget(
+                  iconHeight: 26,
+                  iconWidth: 26,
+                  iconPath: Images.share,
+                  iconColor: context.colorScheme.outline,
+                ),
               ),
             ),
             BottomBarButton.widget(
               widget: ValueListenableBuilder<bool>(
                 valueListenable: hasSelectionNotifier,
                 builder: (context, hasSelection, _) {
-                  return PressableIcon(
-                    iconPath: Images.delete,
-                    isDisabled: !hasSelection,
-                    onTap: hasSelection ? handleDelete : null,
+                  return IconButton(
+                    onPressed: hasSelection ? handleDelete : null,
+                    icon: IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.delete,
+                      iconColor:
+                          !hasSelection ? context.colorScheme.outline : null,
+                    ),
                   );
                 },
               ),
