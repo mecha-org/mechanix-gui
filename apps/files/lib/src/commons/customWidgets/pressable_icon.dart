@@ -1,53 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:widgets/mechanix.dart';
 
-class PressableIcon extends StatefulWidget {
-  final VoidCallback? onTap;
-  final String iconPath;
-  final bool isDisabled;
-
-  const PressableIcon({
-    super.key,
-    required this.iconPath,
-    this.onTap,
-    this.isDisabled = false,
-  });
-
-  @override
-  State<PressableIcon> createState() => _PressableIconState();
-}
-
-class _PressableIconState extends State<PressableIcon> {
-  bool pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final bool disabled = widget.isDisabled;
-
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: disabled ? null : (_) => setState(() => pressed = true),
-      onTapUp: disabled ? null : (_) => setState(() => pressed = false),
-      onTapCancel: disabled ? null : () => setState(() => pressed = false),
-      child: IconButton(
-        icon: IconWidget(
-          iconPath: widget.iconPath,
-          iconHeight: 26,
-          iconWidth: 26,
-          boxWidth: 46,
-          boxHeight: 46,
-          iconColor: disabled
-              ? context.colorScheme.outline
-              : pressed
-                  ? context.colorScheme.primaryContainer
-                  : context.colorScheme.onSurface,
-        ),
-        onPressed: disabled ? null : widget.onTap,
-      ),
-    );
-  }
-}
-
 class DecoratedPressableIcon extends StatefulWidget {
   final String? iconPath;
   final Widget? icon;

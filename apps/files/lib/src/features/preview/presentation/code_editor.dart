@@ -313,35 +313,34 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                 backgroundColor: Colors.transparent,
                 elevation: 0,
                 title: _buildTitle(controller),
-                actions:
-                    !hasMatches
-                        ? null
-                        : [
-                          Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Center(
-                              child: Text(
-                                '${index + 1} of ${_matchIndexes.length}',
-                                style: TextStyle(
-                                  color: context.colorScheme.onSurfaceVariant,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                actions: !hasMatches
+                    ? null
+                    : [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Center(
+                            child: Text(
+                              '${index + 1} of ${_matchIndexes.length}',
+                              style: TextStyle(
+                                color: context.colorScheme.onSurfaceVariant,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
-                          searchNavButton(
-                            icon: Icons.keyboard_arrow_up,
-                            onTap: canNavPrev ? _prevMatch : null,
-                            context: context,
-                          ),
-                          searchNavButton(
-                            icon: Icons.keyboard_arrow_down,
-                            onTap: canNavNext ? _nextMatch : null,
-                            context: context,
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                        ),
+                        searchNavButton(
+                          icon: Icons.keyboard_arrow_up,
+                          onTap: canNavPrev ? _prevMatch : null,
+                          context: context,
+                        ),
+                        searchNavButton(
+                          icon: Icons.keyboard_arrow_down,
+                          onTap: canNavNext ? _nextMatch : null,
+                          context: context,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
               ),
             ),
 
@@ -431,59 +430,15 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         BottomBarButton.widget(
           widget: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: DecoratedPressableIcon(
-              iconPath: Images.back,
-              onTap:
-                  !_isFileChanged
-                      ? () => Navigator.pop(context)
-                      : () async {
-                        final confirmed = await _confirmSave(context);
-
-                        if (!confirmed) {
-                          _discardChanges();
-                          return;
-                        }
-
-                        await _save();
-                      },
-            ),
-          ),
-        ),
-      ],
-      centerWidgetSpacing: 30,
-      centerWidget: [
-        BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.undo,
-            isDisabled: _undoStack.length <= 1,
-            onTap: _undoStack.length <= 1 ? null : _undo,
-          ),
-        ),
-        BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.redo,
-            isDisabled: _redoStack.isEmpty,
-            onTap: _redoStack.isEmpty ? null : _redo,
-          ),
-        ),
-      ],
-      anchorWidgetSpacing: 8,
-      anchorWidget: [
-        BottomBarButton.widget(
-          widget: MechanixFilledButton(
-            theme: buttonThemeData(
-              context,
-              type:
-                  _isFileChanged
-                      ? MechanixButtonType.action
-                      : MechanixButtonType.disable,
-              size: const Size(94, 40),
-            ),
-            label: "Save",
-            onPressed:
-                !_isFileChanged
-                    ? null
-                    : () async {
+            child: IconButton(
+              icon: const IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.back,
+              ),
+              onPressed: !_isFileChanged
+                  ? () => Navigator.pop(context)
+                  : () async {
                       final confirmed = await _confirmSave(context);
 
                       if (!confirmed) {
@@ -493,6 +448,61 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
                       await _save();
                     },
+            ),
+          ),
+        ),
+      ],
+      centerWidgetSpacing: 30,
+      centerWidget: [
+        BottomBarButton.widget(
+          widget: IconButton(
+            icon: IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.undo,
+              iconColor:
+                  _undoStack.length <= 1 ? context.colorScheme.outline : null,
+            ),
+            onPressed: _undoStack.length > 1 ? _undo : null,
+          ),
+        ),
+        BottomBarButton.widget(
+          widget: IconButton(
+            icon: IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.redo,
+              iconColor:
+                  _redoStack.isEmpty ? context.colorScheme.outline : null,
+            ),
+            onPressed: _redoStack.isNotEmpty ? _redo : null,
+          ),
+        ),
+      ],
+      anchorWidgetSpacing: 8,
+      anchorWidget: [
+        BottomBarButton.widget(
+          widget: MechanixFilledButton(
+            theme: buttonThemeData(
+              context,
+              type: _isFileChanged
+                  ? MechanixButtonType.action
+                  : MechanixButtonType.disable,
+              size: const Size(94, 40),
+            ),
+            label: "Save",
+            onPressed: !_isFileChanged
+                ? null
+                : () async {
+                    final confirmed = await _confirmSave(context);
+
+                    if (!confirmed) {
+                      _discardChanges();
+                      return;
+                    }
+
+                    await _save();
+                  },
           ),
         ),
         BottomBarButton.widget(widget: buildActionsMenu(context)),
@@ -512,10 +522,9 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
         iconPath: Images.dots,
         iconHeight: 28,
         iconWidth: 28,
-        iconColor:
-            isMenuOpen
-                ? context.colorScheme.primaryContainer
-                : context.colorScheme.onSurface,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryContainer
+            : context.colorScheme.onSurface,
       ),
       openMenu: () {
         setState(() => isMenuOpen = true);
@@ -714,8 +723,7 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     if (_matchIndexes.isEmpty) return;
 
     setState(() {
-      _currentMatchIndex =
-          (_currentMatchIndex - 1 + _matchIndexes.length) %
+      _currentMatchIndex = (_currentMatchIndex - 1 + _matchIndexes.length) %
           _matchIndexes.length;
     });
 
@@ -729,43 +737,42 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
     _searchOverlayEntry?.remove();
 
     _searchOverlayEntry = OverlayEntry(
-      builder:
-          (_) => Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Material(
-              color: Colors.transparent,
-              child: SizedBox(
-                height: 90,
-                child: MechanixTextInput.search(
-                  autofocus: false,
-                  hintText: "Search in file",
-                  cursorColor: context.colorScheme.primaryContainer,
-                  prefixIcon: IconWidget(
-                    iconPath: Images.search,
-                    iconColor: context.colorScheme.onSurface,
-                    iconHeight: 24,
-                    iconWidth: 24,
-                  ),
-                  isClearButtonRequired: false,
-                  anchorWidget: Padding(
-                    padding: const EdgeInsets.only(left: 5),
-                    child: DecoratedPressableIcon(
-                      onTap: () {
-                        _clearSearch();
-                      },
-                      tapBackgroundColor: context.colorScheme.surfaceContainer
-                          .withAlpha(100),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ),
-                  onChanged: _onSearchChanged,
-                  onClear: _clearSearch,
+      builder: (_) => Positioned(
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: SizedBox(
+            height: 90,
+            child: MechanixTextInput.search(
+              autofocus: false,
+              hintText: "Search in file",
+              cursorColor: context.colorScheme.primaryContainer,
+              prefixIcon: IconWidget(
+                iconPath: Images.search,
+                iconColor: context.colorScheme.onSurface,
+                iconHeight: 24,
+                iconWidth: 24,
+              ),
+              isClearButtonRequired: false,
+              anchorWidget: Padding(
+                padding: const EdgeInsets.only(left: 5),
+                child: DecoratedPressableIcon(
+                  onTap: () {
+                    _clearSearch();
+                  },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
+                  icon: const Icon(Icons.close),
                 ),
               ),
+              onChanged: _onSearchChanged,
+              onClear: _clearSearch,
             ),
           ),
+        ),
+      ),
     );
 
     overlay.insert(_searchOverlayEntry!);

@@ -66,20 +66,19 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           ),
         ),
       ),
-      body:
-          isSvg
-              ? _SvgViewer(imagePath: widget.filePath)
-              : (_isEditing
-                  ? ImageEditorPage(
-                    state: widget.state,
-                    imagePath: widget.filePath,
-                    onClose: () {
-                      setState(() {
-                        _isEditing = false;
-                      });
-                    },
-                  )
-                  : _RasterViewer(imagePath: widget.filePath)),
+      body: isSvg
+          ? _SvgViewer(imagePath: widget.filePath)
+          : (_isEditing
+              ? ImageEditorPage(
+                  state: widget.state,
+                  imagePath: widget.filePath,
+                  onClose: () {
+                    setState(() {
+                      _isEditing = false;
+                    });
+                  },
+                )
+              : _RasterViewer(imagePath: widget.filePath)),
       bottomNavigationBar: _buildBottomBar(context),
     );
   }
@@ -108,22 +107,25 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
           color: context.colorScheme.secondaryContainer,
-          borderRadius:
-              _isEditing
-                  ? null
-                  : const BorderRadius.only(
-                    topLeft: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
+          borderRadius: _isEditing
+              ? null
+              : const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                ),
         ),
       ),
       leadingWidget: [
         BottomBarButton.widget(
           widget: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: DecoratedPressableIcon(
-              iconPath: Images.back,
-              onTap: () => Navigator.pop(context),
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.back,
+              ),
             ),
           ),
         ),
@@ -131,12 +133,16 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       centerWidgetSpacing: 16,
       centerWidget: [
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.copy,
-            onTap: () {
+          widget: IconButton(
+            onPressed: () {
               state?.selectedPaths = {widget.filePath};
               state?.handleCopy();
             },
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.copy,
+            ),
           ),
         ),
         BottomBarButton(
@@ -145,40 +151,45 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
           isSelected: _isEditing,
           iconWidget: IconWidget(
             iconPath: Images.crop,
-            iconColor:
-                isSvg
-                    ? context.colorScheme.outline
-                    : _isEditing
+            iconColor: isSvg
+                ? context.colorScheme.outline
+                : _isEditing
                     ? context.colorScheme.primaryContainer
                     : context.colorScheme.onSurface,
             iconHeight: 28.0,
             iconWidth: 28.0,
           ),
-          onPressed:
-              isSvg
-                  ? null
-                  : () {
-                    setState(() {
-                      _isEditing = !_isEditing;
-                    });
-                  },
+          onPressed: isSvg
+              ? null
+              : () {
+                  setState(() {
+                    _isEditing = !_isEditing;
+                  });
+                },
         ),
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.move,
-            onTap: () {
+          widget: IconButton(
+            onPressed: () {
               Navigator.pop(context);
               state?.selectedPaths = {widget.filePath};
               state?.handleMove();
             },
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.move,
+            ),
           ),
         ),
-        const BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.share,
-            isDisabled: true, // TODO: add share functionality
-            onTap: null,
-          ),
+        BottomBarButton.widget(
+          widget: IconButton(
+              icon: IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.share,
+                iconColor: context.colorScheme.outline,
+              ),
+              onPressed: null),
         ),
       ],
       anchorWidget: [BottomBarButton.widget(widget: buildActionsMenu(context))],
@@ -197,10 +208,9 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
         iconPath: Images.dots,
         iconHeight: 28,
         iconWidth: 28,
-        iconColor:
-            isMenuOpen
-                ? context.colorScheme.primaryFixed
-                : context.colorScheme.onSurface,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
       ),
       openMenu: () {
         setState(() => isMenuOpen = true);
