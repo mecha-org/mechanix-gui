@@ -24,7 +24,9 @@ import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class NetworkDetails extends StatefulWidget {
-  const NetworkDetails({super.key});
+  const NetworkDetails({super.key, this.scrollToTop});
+
+  final Function? scrollToTop;
 
   @override
   State<NetworkDetails> createState() => _NetworkDetailsState();
@@ -62,6 +64,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                 child: ConnectSecureNetwork(
                   accessPoint: selectedAccessPoint?.nmAccessPoint,
                   isFromDetailsRoute: true,
+                  scrollToTop: () {},
                 ),
               ),
             );
@@ -105,13 +108,13 @@ class _NetworkDetailsState extends State<NetworkDetails> {
 
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
-                    title: 'About The Network',
+                    title: 'About the network',
                     theme: MechanixSectionListThemeData(
                         widgetPadding: Spacing.only(top: 8, bottom: 40)),
                     sectionListItems: [
                       SectionListItems(
                         defaultTrailingIcon: false,
-                        title: 'Private Wifi Address',
+                        title: 'Private Wi-Fi address',
                         trailing: Row(
                           children: [
                             const CustomTrailingText(title: 'Fixed')
@@ -122,7 +125,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                       ),
                       SectionListItems(
                         defaultTrailingIcon: false,
-                        title: 'Private Wifi Address',
+                        title: 'Private Wi-Fi address',
                         trailing: CustomTrailingText(
                           title: state.selectedNMAccessPoint?.hwAddress ?? '',
                         ),
@@ -314,17 +317,12 @@ class _NetworkDetailsState extends State<NetworkDetails> {
                                   state.selectedNMAccessPoint?.ssid ?? [])));
                           Navigator.pop(context);
                         },
-                        icon: IconWidget(
-                          iconPath: Images.addRoundedSquare,
+                        icon: const IconWidget(
+                          iconPath: Images.forgetWifi,
                           iconHeight: 15,
                           iconWidth: 15,
                           boxWidth: 20,
                           boxHeight: 20,
-                          iconColor: Theme.of(context)
-                              .textButtonTheme
-                              .style
-                              ?.iconColor
-                              ?.resolve({}),
                         ),
                         label: const Text("Forget Network"),
                       ),

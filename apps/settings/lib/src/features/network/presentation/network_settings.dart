@@ -63,12 +63,12 @@ class _NetworkSettingsState extends State<NetworkSettings> {
                 dropdownHeight: 128,
               ),
               animationDuration: const Duration(milliseconds: 400),
-              offset: const Offset(-45, 25),
+              offset: const Offset(-45, 50),
               topTabWidth: 1,
               dropdownPosition: DropdownPosition.centerRight,
               items: [
                 MechanixMenuItemsType(
-                  title: "About",
+                  title: "Abouts",
                   leading: const IconWidget(
                     iconPath: Images.settings,
                     boxWidth: 20,
@@ -133,7 +133,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CustomTitle(title: "Network Settings"),
+                  const CustomTitle(title: "Manage wireless"),
                   MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
                     listItems: getWireless(context, state),

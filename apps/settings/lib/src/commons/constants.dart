@@ -73,6 +73,7 @@ class Images {
   static const String wifiMediumOpen = 'assets/images/wifi_medium_open.png';
   static const String wifiLowOpen = 'assets/images/wifi_low_open.png';
   static const String wifiNotFound = 'assets/images/wifi_not_found.png';
+  static const String forgetWifi = 'assets/images/forget_wifi.png';
   static const String arrowCounterClockWise =
       'assets/images/arrow_counter_clock_wise.png';
   static const String connectIcon = 'assets/images/connect_icon.png';

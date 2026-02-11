@@ -47,7 +47,7 @@ class _WirelessProtocolsListState extends State<WirelessProtocolsList> {
               ),
               MechanixSimpleList(listItems: [
                 SimpleListItems(
-                    title: 'Private Wireless Address',
+                    title: 'Private wireless address',
                     trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',

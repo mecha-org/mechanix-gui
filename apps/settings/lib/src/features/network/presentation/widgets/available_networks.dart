@@ -19,7 +19,9 @@ import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class AvailableNetworks extends StatefulWidget {
-  const AvailableNetworks({super.key});
+  const AvailableNetworks({super.key, required this.scrollToTop});
+
+  final Function scrollToTop;
 
   @override
   State<AvailableNetworks> createState() => _AvailableNetworksState();
@@ -105,7 +107,8 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
             BlocProvider.value(value: connectNetworkBloc),
             BlocProvider.value(value: wirelessSettingsBloc),
           ],
-          child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
+          child: ConnectSecureNetwork(
+              accessPoint: item.nmAccessPoint, scrollToTop: widget.scrollToTop),
         ),
       );
     }
@@ -129,7 +132,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
             BlocProvider.value(value: connectNetworkBloc),
             BlocProvider.value(value: wirelessSettingsBloc),
           ],
-          child: const NetworkDetails(),
+          child: NetworkDetails(scrollToTop: widget.scrollToTop),
         ),
       ),
     );
@@ -141,7 +144,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
       builder: (context, state) {
         return MechanixSectionList(
           physics: const BouncingScrollPhysics(),
-          title: 'Available Networks',
+          title: 'Available networks',
           theme: const MechanixSectionListThemeData(
             widgetPadding: EdgeInsets.zero,
           ),

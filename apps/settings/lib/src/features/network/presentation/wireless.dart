@@ -35,10 +35,52 @@ class WirelessSettings extends StatefulWidget {
 }
 
 class _WirelessSettingsState extends State<WirelessSettings> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void scrollToTop() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  void onInfoTap(AccessPoints item, BuildContext context) {
+    final connectNetworkBloc = context.read<ConnectNetworkBloc>();
+    final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
+
+    wirelessSettingsBloc.add(SelectNetwork(item));
+    wirelessSettingsBloc.add(SelectNetworkPoint(item.nmAccessPoint));
+    final flag = getWirelessProtocol(item.nmAccessPoint.rsnFlags);
+    wirelessSettingsBloc.add(SelectedWirelessProtocol(flag));
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: connectNetworkBloc),
+            BlocProvider.value(value: wirelessSettingsBloc),
+          ],
+          child: NetworkDetails(scrollToTop: scrollToTop),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SingleChildScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         child: ContainerWidget(
           child: Column(
@@ -177,7 +219,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 builder: (context, data) {
                   if (data.loading) {
                     return MechanixSectionList(
-                      title: 'My Networks',
+                      title: 'My networks',
                       sectionListItems: [
                         SectionListItems(
                           title: '',
@@ -190,7 +232,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   }
 
                   if (data.list.isNotEmpty) {
-                    return const SavedNetworks();
+                    return SavedNetworks(scrollToTop: scrollToTop);
                   }
 
                   return const SizedBox();
@@ -205,7 +247,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 builder: (context, data) {
                   if (data.loading) {
                     return MechanixSectionList(
-                      title: 'Available Networks',
+                      title: 'Available networks',
                       sectionListItems: [
                         SectionListItems(
                           title: '',
@@ -218,7 +260,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   }
 
                   if (data.list.isNotEmpty) {
-                    return const AvailableNetworks();
+                    return AvailableNetworks(scrollToTop: scrollToTop);
                   }
 
                   return const SizedBox();
@@ -250,27 +292,4 @@ class _WirelessSettingsState extends State<WirelessSettings> {
       ),
     );
   }
-}
-
-void onInfoTap(AccessPoints item, BuildContext context) {
-  final connectNetworkBloc = context.read<ConnectNetworkBloc>();
-  final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
-
-  wirelessSettingsBloc.add(SelectNetwork(item));
-  wirelessSettingsBloc.add(SelectNetworkPoint(item.nmAccessPoint));
-  final flag = getWirelessProtocol(item.nmAccessPoint.rsnFlags);
-  wirelessSettingsBloc.add(SelectedWirelessProtocol(flag));
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => MultiBlocProvider(
-        providers: [
-          BlocProvider.value(value: connectNetworkBloc),
-          BlocProvider.value(value: wirelessSettingsBloc),
-        ],
-        child: const NetworkDetails(),
-      ),
-    ),
-  );
 }

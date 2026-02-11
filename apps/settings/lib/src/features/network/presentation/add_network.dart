@@ -50,7 +50,7 @@ class _AddNetworkState extends State<AddNetwork> {
                   child: Column(
                     children: [
                       CustomTitle(
-                        title: "Add Wireless Network",
+                        title: "Add wireless network",
                         textStyle: TextStyle(
                           color: context.onSurface,
                           fontWeight: FontWeight.w400,

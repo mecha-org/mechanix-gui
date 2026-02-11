@@ -500,6 +500,7 @@ class WirelessSettingsBloc
       }
 
       add(GetSavedNetworksEvent());
+      add(LoadNetworks());
     } catch (e) {
       logger.e('Error in forgetting network: $e');
       emit(state.copyWith(error: e.toString()));
@@ -697,6 +698,8 @@ class WirelessSettingsBloc
         availableSavedNetworksLoading: true,
         error: null,
       ));
+
+      await Future.delayed(const Duration(milliseconds: 500));
 
       final savedNetworks = await wifiRepository.getSavedNetworks();
 

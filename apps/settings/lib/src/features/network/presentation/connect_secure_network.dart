@@ -23,10 +23,12 @@ class ConnectSecureNetwork extends StatelessWidget {
     this.accessPoint,
     super.key,
     this.isFromDetailsRoute = false,
+    this.scrollToTop,
   });
 
   final NetworkManagerAccessPoint? accessPoint;
   final bool isFromDetailsRoute;
+  final Function? scrollToTop;
 
   @override
   Widget build(BuildContext context) {
@@ -67,6 +69,7 @@ class ConnectSecureNetwork extends StatelessWidget {
                           builder: (context, wifiState) {
                             return MechanixTextInput.password(
                               isFormField: true,
+                              autofocus: true,
                               prefixIcon: const IconWidget(
                                 iconPath: Images.lockIcon,
                                 iconWidth: 19,
@@ -97,6 +100,9 @@ class ConnectSecureNetwork extends StatelessWidget {
                                     Navigator.pop(context);
                                   }
                                 }
+                                if (scrollToTop != null) {
+                                  scrollToTop!();
+                                }
                               },
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
@@ -107,13 +113,13 @@ class ConnectSecureNetwork extends StatelessWidget {
                               theme: MechanixTextInputThemeData(
                                 widgetHeight: 58,
                                 borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(
-                                  color: context.outlineVariant,
+                                enabledBorderSide: BorderSide(
+                                  color: context.outline,
                                   style: BorderStyle.solid,
                                   width: 1,
                                 ),
-                                enabledBorderSide: BorderSide(
-                                  color: context.outlineVariant,
+                                borderSide: BorderSide(
+                                  color: context.outline,
                                   style: BorderStyle.solid,
                                   width: 1,
                                 ),

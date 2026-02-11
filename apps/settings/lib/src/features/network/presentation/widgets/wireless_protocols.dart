@@ -1,7 +1,6 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkState.dart';
@@ -59,11 +58,6 @@ class _WirelessProtocolsState extends State<WirelessProtocols> {
                         CustomTrailingText(
                           title: label ?? '',
                         ).padRight(8),
-                        const IconWidget(
-                          iconWidth: 9,
-                          iconHeight: 18,
-                          iconPath: Images.rightIconArrow,
-                        )
                       ],
                     ))
               ],
