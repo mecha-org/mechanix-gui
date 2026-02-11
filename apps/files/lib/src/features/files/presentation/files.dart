@@ -715,16 +715,17 @@ class FileExplorerPageState extends State<FileExplorerPage> {
       centerWidget: [
         BottomBarButton.widget(
             widget: IconButton(
-          onPressed: selectionMode
-              ? null
-              : () {
+          onPressed: !selectionMode
+              ? () {
                   setState(() => isSearching = true);
                   showSearchBottomSheet(context, searchQuery);
-                },
-          icon: const IconWidget(
+                }
+              : null,
+          icon: IconWidget(
             iconHeight: 28,
             iconWidth: 28,
             iconPath: Images.search,
+            iconColor: selectionMode ? context.colorScheme.outline : null,
           ),
         )),
         BottomBarButton.widget(
