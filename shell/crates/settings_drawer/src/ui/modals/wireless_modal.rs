@@ -14,6 +14,7 @@ use crate::{
         modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
     },
 };
+const WIRELESS_SETTINGS_PATH: &str = "/wireless";
 
 pub trait ScrollBehavior {
     fn scroll_offset(&self) -> Pixels;
@@ -143,7 +144,7 @@ impl SettingsDrawer {
                     .child(self.render_header_div(cx, "Wireless"))
                     .child(
                         div()
-                            .id("scrollable")
+                            .id("scrollable-wireless")
                             .flex_1()
                             .relative()
                             .overflow_hidden()
@@ -263,11 +264,17 @@ impl SettingsDrawer {
 
                                             if !is_active && !is_known {
                                                 network_div = network_div.on_click(cx.listener(
-                                                    move |_, _, _, _| {
+                                                    move |this, _, _,  cx: &mut Context<Self>| {
                                                         println!(
                                                             "TODO: open settings for new network {:?} - {:?}",
                                                             ssid, is_known
                                                         );
+                                                        this.launch_app_with_path(
+                                                            this.settings_app_info.clone(),
+                                                            cx,
+                                                            WIRELESS_SETTINGS_PATH.to_string(),
+                                                        );
+                                                        cx.notify();
                                                     },
                                                 ));
                                             } else if !is_active && is_known {
@@ -300,7 +307,7 @@ impl SettingsDrawer {
                                     )),
                             ),
                     )
-                    .child(self.render_settings_div(cx, "/wireless".to_string()));
+                    .child(self.render_settings_div(cx, WIRELESS_SETTINGS_PATH.to_string()));
                 w.upper_wing_size(Size::new(px(MODAL_WING_WIDTH), px(MODAL_WING_HEIGHT)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));
