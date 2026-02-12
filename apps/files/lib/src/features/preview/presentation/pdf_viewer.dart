@@ -314,9 +314,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           title: _buildTitle(controller),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          actions: !hasMatches
-              ? null
-              : [
+          actions: hasMatches
+              ? [
                   // Match counter
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -347,7 +346,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   ),
 
                   const SizedBox(width: 8),
-                ],
+                ]
+              : null,
         ),
       ),
     );

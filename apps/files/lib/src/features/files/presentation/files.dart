@@ -432,7 +432,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
           ],
         ),
         bottomNavigationBar:
-            isSearching ? null : _buildBottomActionMenuBar(context),
+            !isSearching ? _buildBottomActionMenuBar(context) : null,
       ),
     );
   }
@@ -680,12 +680,12 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         height: isTextInputOpened ? 65 : 90,
         decoration: BoxDecoration(
           color: context.colorScheme.secondaryContainer,
-          borderRadius: selectionMode
-              ? null
-              : const BorderRadius.only(
+          borderRadius: !selectionMode
+              ? const BorderRadius.only(
                   topLeft: Radius.circular(8),
                   topRight: Radius.circular(8),
-                ),
+                )
+              : null,
         ),
       ),
       leadingWidget: [

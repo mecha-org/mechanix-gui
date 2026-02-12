@@ -107,12 +107,12 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       theme: MechanixBottomBarThemeData(
         decoration: BoxDecoration(
           color: context.colorScheme.secondaryContainer,
-          borderRadius: _isEditing
-              ? null
-              : const BorderRadius.only(
+          borderRadius: !_isEditing
+              ? const BorderRadius.only(
                   topLeft: Radius.circular(8),
                   topRight: Radius.circular(8),
-                ),
+                )
+              : null,
         ),
       ),
       leadingWidget: [
@@ -159,13 +159,13 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
             iconHeight: 28.0,
             iconWidth: 28.0,
           ),
-          onPressed: isSvg
-              ? null
-              : () {
+          onPressed: !isSvg
+              ? () {
                   setState(() {
                     _isEditing = !_isEditing;
                   });
-                },
+                }
+              : null,
         ),
         BottomBarButton.widget(
           widget: IconButton(

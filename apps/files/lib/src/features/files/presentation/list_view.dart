@@ -329,10 +329,12 @@ Widget buildListViewMoveAndExtract(
             final isDisabled = !isDirectory; // disable if file
 
             return GestureDetector(
-              onSecondaryTap:
-                  isDisabled ? null : () => state?.toggleSelection(entity.path),
-              onLongPress:
-                  isDisabled ? null : () => state?.toggleSelection(entity.path),
+              onSecondaryTap: !isDisabled
+                  ? () => state?.toggleSelection(entity.path)
+                  : null,
+              onLongPress: !isDisabled
+                  ? () => state?.toggleSelection(entity.path)
+                  : null,
               child: Opacity(
                 opacity: isDisabled ? 0.4 : 1, // grey out
                 child: IgnorePointer(

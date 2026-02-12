@@ -308,40 +308,39 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
             Padding(
               padding: const EdgeInsets.only(top: 6, left: 16, right: 16),
               child: AppBar(
-                automaticallyImplyLeading: false,
-                scrolledUnderElevation: 0,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                title: _buildTitle(controller),
-                actions: !hasMatches
-                    ? null
-                    : [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Center(
-                            child: Text(
-                              '${index + 1} of ${_matchIndexes.length}',
-                              style: TextStyle(
-                                color: context.colorScheme.onSurfaceVariant,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w500,
+                  automaticallyImplyLeading: false,
+                  scrolledUnderElevation: 0,
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: _buildTitle(controller),
+                  actions: hasMatches
+                      ? [
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Center(
+                              child: Text(
+                                '${index + 1} of ${_matchIndexes.length}',
+                                style: TextStyle(
+                                  color: context.colorScheme.onSurfaceVariant,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        searchNavButton(
-                          icon: Icons.keyboard_arrow_up,
-                          onTap: canNavPrev ? _prevMatch : null,
-                          context: context,
-                        ),
-                        searchNavButton(
-                          icon: Icons.keyboard_arrow_down,
-                          onTap: canNavNext ? _nextMatch : null,
-                          context: context,
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-              ),
+                          searchNavButton(
+                            icon: Icons.keyboard_arrow_up,
+                            onTap: canNavPrev ? _prevMatch : null,
+                            context: context,
+                          ),
+                          searchNavButton(
+                            icon: Icons.keyboard_arrow_down,
+                            onTap: canNavNext ? _nextMatch : null,
+                            context: context,
+                          ),
+                          const SizedBox(width: 8),
+                        ]
+                      : null),
             ),
 
             /// Divider between AppBar & body
@@ -491,9 +490,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
               size: const Size(94, 40),
             ),
             label: "Save",
-            onPressed: !_isFileChanged
-                ? null
-                : () async {
+            onPressed: _isFileChanged
+                ? () async {
                     final confirmed = await _confirmSave(context);
 
                     if (!confirmed) {
@@ -502,7 +500,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
                     }
 
                     await _save();
-                  },
+                  }
+                : null,
           ),
         ),
         BottomBarButton.widget(widget: buildActionsMenu(context)),

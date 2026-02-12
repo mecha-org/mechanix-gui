@@ -64,10 +64,10 @@ class _DecoratedPressableIconState extends State<DecoratedPressableIcon> {
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: disabled ? null : (_) => setState(() => pressed = true),
-      onTapUp: disabled ? null : (_) => setState(() => pressed = false),
-      onTapCancel: disabled ? null : () => setState(() => pressed = false),
-      onTap: disabled ? null : widget.onTap,
+      onTapDown: !disabled ? (_) => setState(() => pressed = true) : null,
+      onTapUp: !disabled ? (_) => setState(() => pressed = false) : null,
+      onTapCancel: !disabled ? () => setState(() => pressed = false) : null,
+      onTap: !disabled ? widget.onTap : null,
       child: Container(
         decoration: pressed
             ? BoxDecoration(
