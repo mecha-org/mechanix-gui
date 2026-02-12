@@ -4,7 +4,7 @@ use icons::prelude::SettingsDrawerIcons;
 use theme::prelude::{AlphaExt, Theme};
 
 use crate::ui::FINAL_MODAL_SIZE;
-use crate::ui::modals::{MODAL_HEADER_HEIGHT, MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
+use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};
 use crate::{
     prelude::*,
     ui::widgets::{Switch, SwitchSize},

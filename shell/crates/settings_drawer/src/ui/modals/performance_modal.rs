@@ -8,7 +8,7 @@ use crate::{
     prelude::*,
     ui::{
         FINAL_MODAL_SIZE,
-        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
+        modals::ROW_HEIGHT,
     },
 };
 
