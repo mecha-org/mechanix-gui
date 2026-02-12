@@ -396,12 +396,12 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         : MechanixButtonType.action,
                     size: const Size(94, 40)),
                 label: "Move",
-                onPressed: showHomeView
-                    ? null
-                    : () {
+                onPressed: !showHomeView
+                    ? () {
                         handlePaste(context, widget.filesBloc.state);
                         Navigator.pop(context, true);
-                      },
+                      }
+                    : null,
               )
             ],
           ),

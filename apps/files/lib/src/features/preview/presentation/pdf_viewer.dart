@@ -314,9 +314,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           title: _buildTitle(controller),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          actions: !hasMatches
-              ? null
-              : [
+          actions: hasMatches
+              ? [
                   // Match counter
                   Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -347,7 +346,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                   ),
 
                   const SizedBox(width: 8),
-                ],
+                ]
+              : null,
         ),
       ),
     );
@@ -387,48 +387,66 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         BottomBarButton.widget(
           widget: Padding(
             padding: const EdgeInsets.only(left: 8),
-            child: DecoratedPressableIcon(
-              iconPath: Images.back,
-              onTap: () => Navigator.pop(context),
-            ),
+            child: IconButton(
+                icon: const IconWidget(
+                  iconHeight: 28,
+                  iconWidth: 28,
+                  iconPath: Images.back,
+                ),
+                onPressed: () => Navigator.pop(context)),
           ),
         ),
       ],
       centerWidgetSpacing: 30,
       centerWidget: [
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.search,
-            onTap: () {
+          widget: IconButton(
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.search,
+            ),
+            onPressed: () {
               showPdfSearchBottomSheet(context);
             },
           ),
         ),
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.copy,
-            onTap: () {
+          widget: IconButton(
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.copy,
+            ),
+            onPressed: () {
               state?.selectedPaths = {widget.filePath};
               state?.handleCopy();
             },
           ),
         ),
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.move,
-            onTap: () {
+          widget: IconButton(
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.move,
+            ),
+            onPressed: () {
               Navigator.pop(context);
               state?.selectedPaths = {widget.filePath};
               state?.handleMove();
             },
           ),
         ),
-        const BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.share,
-            isDisabled: true, // TODO: add share functionality
-            onTap: null,
-          ),
+        BottomBarButton.widget(
+          widget: IconButton(
+              icon: IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.share,
+                iconColor: context.colorScheme.outline,
+              ),
+              onPressed: null),
         ),
       ],
       anchorWidget: [BottomBarButton.widget(widget: buildActionsMenu(context))],

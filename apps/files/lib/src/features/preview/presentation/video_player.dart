@@ -97,10 +97,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      body:
-          _playerReady
-              ? Center(child: _buildVideo())
-              : const Center(child: CircularProgressIndicator()),
+      body: _playerReady
+          ? Center(child: _buildVideo())
+          : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar:
           _playerReady ? _buildBottomBar(context) : const SizedBox(),
     );
@@ -175,14 +174,18 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 child: Row(
                   children: [
                     // Play / Pause
-                    PressableIcon(
-                      iconPath: _isPlaying ? Images.pause : Images.play,
-                      onTap: () {
+                    IconButton(
+                      onPressed: () {
                         setState(() {
                           _isPlaying ? player.pause() : player.play();
                           _isPlaying = !_isPlaying;
                         });
                       },
+                      icon: IconWidget(
+                        iconHeight: 26,
+                        iconWidth: 26,
+                        iconPath: _isPlaying ? Images.pause : Images.play,
+                      ),
                     ),
 
                     const SizedBox(width: 14),
@@ -202,13 +205,13 @@ class _VideoPlayerState extends State<VideoPlayer> {
                         child: Slider(
                           min: 0,
                           max: _duration.inMilliseconds.toDouble().clamp(
-                            1,
-                            double.infinity,
-                          ),
+                                1,
+                                double.infinity,
+                              ),
                           value: _position.inMilliseconds.toDouble().clamp(
-                            0,
-                            _duration.inMilliseconds.toDouble(),
-                          ),
+                                0,
+                                _duration.inMilliseconds.toDouble(),
+                              ),
                           activeColor: context.colorScheme.primaryContainer,
                           inactiveColor: context.colorScheme.surfaceContainer,
                           thumbColor: context.colorScheme.onSurface,
@@ -230,9 +233,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
                         if (!muted) _lastVolume = volume;
 
-                        return PressableIcon(
-                          iconPath: muted ? Images.mute : Images.volume,
-                          onTap: () {
+                        return IconButton(
+                          onPressed: () {
                             setState(() {
                               if (muted) {
                                 player.setVolume(_lastVolume); // restore
@@ -241,6 +243,11 @@ class _VideoPlayerState extends State<VideoPlayer> {
                               }
                             });
                           },
+                          icon: IconWidget(
+                            iconHeight: 26,
+                            iconWidth: 26,
+                            iconPath: muted ? Images.mute : Images.volume,
+                          ),
                         );
                       },
                     ),
@@ -268,40 +275,54 @@ class _VideoPlayerState extends State<VideoPlayer> {
               BottomBarButton.widget(
                 widget: Padding(
                   padding: const EdgeInsets.only(left: 8),
-                  child: DecoratedPressableIcon(
-                    iconPath: Images.back,
-                    onTap: () => Navigator.pop(context),
-                  ),
+                  child: IconButton(
+                      icon: const IconWidget(
+                        iconHeight: 28,
+                        iconWidth: 28,
+                        iconPath: Images.back,
+                      ),
+                      onPressed: () => Navigator.pop(context)),
                 ),
               ),
             ],
             centerWidgetSpacing: 30,
             centerWidget: [
               BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.copy,
-                  onTap: () {
+                widget: IconButton(
+                  icon: const IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.copy,
+                  ),
+                  onPressed: () {
                     state?.selectedPaths = {widget.filePath};
                     state?.handleCopy();
                   },
                 ),
               ),
               BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.move,
-                  onTap: () {
+                widget: IconButton(
+                  icon: const IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.move,
+                  ),
+                  onPressed: () {
                     Navigator.pop(context);
                     state?.selectedPaths = {widget.filePath};
                     state?.handleMove();
                   },
                 ),
               ),
-              const BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.share,
-                  isDisabled: true, // TODO: add share functionality
-                  onTap: null,
-                ),
+              BottomBarButton.widget(
+                widget: IconButton(
+                    icon: IconWidget(
+                      iconHeight: 28,
+                      iconWidth: 28,
+                      iconPath: Images.share,
+                      iconColor: context.colorScheme.outline,
+                    ),
+                    onPressed: null),
               ),
             ],
             anchorWidget: [
@@ -325,10 +346,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
         iconPath: Images.dots,
         iconHeight: 28,
         iconWidth: 28,
-        iconColor:
-            isMenuOpen
-                ? context.colorScheme.primaryContainer
-                : context.colorScheme.onSurface,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryContainer
+            : context.colorScheme.onSurface,
       ),
       openMenu: () {
         setState(() => isMenuOpen = true);

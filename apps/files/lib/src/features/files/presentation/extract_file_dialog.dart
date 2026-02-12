@@ -368,12 +368,12 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         : MechanixButtonType.action,
                     size: const Size(94, 40)),
                 label: "Extract",
-                onPressed: showHomeView
-                    ? null
-                    : () {
+                onPressed: !showHomeView
+                    ? () {
                         handleExtract(context, widget.filesBloc.state);
                         Navigator.pop(context, true);
-                      },
+                      }
+                    : null,
               )
             ],
           ),
