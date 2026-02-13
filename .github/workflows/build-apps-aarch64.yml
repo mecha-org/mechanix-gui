@@ -50,6 +50,8 @@ jobs:
               - 'apps/files/**'
             music:
               - 'apps/music/**'
+            camera:
+              - 'apps/camera/**'  
   build:
     name: ${{ matrix.name }}
     needs: detect-changes
