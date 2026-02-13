@@ -137,10 +137,10 @@ class UpdateSavedNetworkList extends WirelessSettingsEvent {
   List<Object> get props => [accessPoint];
 }
 
-class UpdateUnknownNetworkList extends WirelessSettingsEvent {
+class UpdateAvailableNetworkList extends WirelessSettingsEvent {
   final List<AccessPoints> accessPoint;
 
-  UpdateUnknownNetworkList(this.accessPoint);
+  UpdateAvailableNetworkList(this.accessPoint);
 
   @override
   List<Object> get props => [accessPoint];

@@ -127,6 +127,9 @@ class _SavedNetworksState extends State<SavedNetworks> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<WirelessSettingsBloc, WirelessSettingsState>(
+      listenWhen: (previous, current) =>
+          previous.deviceState != current.deviceState &&
+          current.deviceState == NetworkManagerDeviceState.failed,
       listener: (context, state) {
         if (state.deviceState == NetworkManagerDeviceState.failed) {
           _showSecureNetworkDialog(context, state.selectedAccessPoint);
