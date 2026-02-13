@@ -132,7 +132,8 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                     ),
                   );
 
-                  if (data.activatingNetwork != null &&
+                  if (data.wifiOn &&
+                      data.activatingNetwork != null &&
                       data.activatingNetwork!.ssid.isNotEmpty &&
                       !data.activatingNetwork!.isActivate) {
                     final network = data.activatingNetwork?.accessPoint;
@@ -211,56 +212,48 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                 },
               ),
               BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
-                  ({bool loading, List<AccessPoints> list})>(
+                  ({bool wifiOn, bool loading, List<AccessPoints> list})>(
                 selector: (state) => (
-                  loading: state.availableSavedNetworksLoading,
+                  wifiOn: state.wifiOn,
+                  loading: state.availableOtherNetworksLoading,
                   list: state.availableSavedNetworks,
                 ),
                 builder: (context, data) {
-                  if (data.loading) {
-                    return MechanixSectionList(
-                      title: 'My networks',
-                      sectionListItems: [
-                        SectionListItems(
-                          title: '',
-                          backgroundColor: Colors.transparent,
-                          defaultTrailingIcon: false,
-                          leading: const CustomLoader(),
-                        ),
-                      ],
-                    );
-                  }
-
-                  if (data.list.isNotEmpty) {
-                    return SavedNetworks(scrollToTop: scrollToTop);
+                  if (data.wifiOn && !data.loading) {
+                    if (data.list.isNotEmpty) {
+                      return SavedNetworks(scrollToTop: scrollToTop);
+                    }
                   }
 
                   return const SizedBox();
                 },
               ),
               BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
-                  ({bool loading, List<AccessPoints> list})>(
+                  ({bool wifiOn, bool loading, List<AccessPoints> list})>(
                 selector: (state) => (
+                  wifiOn: state.wifiOn,
                   loading: state.availableOtherNetworksLoading,
                   list: state.availableOtherNetworks,
                 ),
                 builder: (context, data) {
-                  if (data.loading) {
-                    return MechanixSectionList(
-                      title: 'Available networks',
-                      sectionListItems: [
-                        SectionListItems(
-                          title: '',
-                          backgroundColor: Colors.transparent,
-                          defaultTrailingIcon: false,
-                          leading: const CustomLoader(),
-                        ),
-                      ],
-                    );
-                  }
+                  if (data.wifiOn) {
+                    if (data.loading) {
+                      return MechanixSectionList(
+                        title: 'Available networks',
+                        sectionListItems: [
+                          SectionListItems(
+                            title: '',
+                            backgroundColor: Colors.transparent,
+                            defaultTrailingIcon: false,
+                            leading: const CustomLoader(),
+                          ),
+                        ],
+                      );
+                    }
 
-                  if (data.list.isNotEmpty) {
-                    return AvailableNetworks(scrollToTop: scrollToTop);
+                    if (data.list.isNotEmpty) {
+                      return AvailableNetworks(scrollToTop: scrollToTop);
+                    }
                   }
 
                   return const SizedBox();
