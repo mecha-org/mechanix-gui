@@ -1,7 +1,4 @@
-use std::{
-    hash::{DefaultHasher, Hash, Hasher},
-    path::PathBuf,
-};
+use std::path::PathBuf;
 
 use crate::{widgets::HomescreenWidget, PinnedAppsState};
 use dispatcher::Dispatcher;
@@ -89,10 +86,9 @@ impl HomescreenWidget for PinnedApps {
                     .children(pinned_apps.iter().enumerate().map(|(idx, app)| {
                         let app_id = app.possible_app_id.clone();
                         let exec = app.exec.clone();
-                        let id = hash_id(&app_id);
 
                         div()
-                            .id(id + idx)
+                            .id(("pinned-app", idx))
                             .size(px(88.0))
                             .rounded(px(7.6))
                             .flex()
@@ -111,7 +107,7 @@ impl HomescreenWidget for PinnedApps {
                             })
                             .child(
                                 div()
-                                    .id(id + idx + 10)
+                                    .id(("pinned-app", idx))
                                     .size_full()
                                     .absolute()
                                     .top_0()
@@ -149,10 +145,4 @@ impl HomescreenWidget for PinnedApps {
     fn border_color(&self) -> Hsla {
         self.border_color
     }
-}
-
-fn hash_id(s: &str) -> usize {
-    let mut h = DefaultHasher::new();
-    s.hash(&mut h);
-    h.finish() as usize
 }
