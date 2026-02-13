@@ -43,4 +43,6 @@ class AppConfig {
     final parsed = int.tryParse(value ?? '');
     return (parsed == null || parsed == 0) ? 50 : parsed;
   }
+
+  String get pdfiumModulePath => '/usr/lib64/libpdfium.so';
 }

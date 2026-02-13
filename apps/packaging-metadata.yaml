@@ -32,3 +32,11 @@ applications:
     dependencies:
       - libflutter-elinux-wayland-dev
       - libflutter-engine-dev
+  - name: camera
+    folder: camera
+    binary: mechanix_camera
+    description: "A camera application for Mechanix OS."
+    maintainer: "Dhanish Patel <dhanishp@mechasystems.com>"
+    dependencies:
+      - libflutter-elinux-wayland-dev
+      - libflutter-engine-dev
