@@ -9,8 +9,6 @@ use mxsearch::prelude::AppInfo;
 use mxsearch::service::MxSearchService;
 use settings::prelude::Settings;
 use std::collections::HashMap;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 use theme::prelude::{AlphaExt, Fonts, Theme};
@@ -645,7 +643,6 @@ impl AppDrawer {
                                                     .map(|(idx, app)| {
                                                         let app_id = app.possible_app_id.clone();
                                                         let exec = app.exec.clone();
-                                                        let id = hash_id(&app_id);
                                                         let icon = Self::resolved_icon(
                                                             &app.icon_path,
                                                             cx
@@ -660,7 +657,7 @@ impl AppDrawer {
                                                         let exec_for_up = exec.clone();
 
                                                         div()
-                                                            .id(id + idx)
+                                                            .id(idx)
                                                             .flex()
                                                             .items_center()
                                                             .justify_center()
@@ -688,7 +685,7 @@ impl AppDrawer {
                                                             )
                                                             .child(
                                                                 div()
-                                                                    .id(id + idx + 10)
+                                                                    .id(idx)
                                                                     .absolute()
                                                                     .top_0()
                                                                     .left_0()
@@ -893,15 +890,14 @@ impl AppDrawer {
                     .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
                     .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
                     .on_mouse_move(cx.listener(Self::on_mouse_move))
-                    .children(searched_apps.iter().map(|app| {
+                    .children(searched_apps.into_iter().enumerate().map(|(idx, app)| {
                         let exec = app.exec.clone();
                         let app_id = app.possible_app_id.clone();
                         let name = app.name.clone();
-                        let id = hash_id(&app_id);
                         let icon = Self::resolved_icon(&app.icon_path, cx);
 
                         div()
-                            .id(id)
+                            .id(idx)
                             .h(px(APP_ROW_HEIGHT))
                             .w_full()
                             .flex()
@@ -1218,10 +1214,4 @@ impl Render for AppDrawer {
                 ),
         )
     }
-}
-
-fn hash_id(s: &str) -> usize {
-    let mut h = DefaultHasher::new();
-    s.hash(&mut h);
-    h.finish() as usize
 }

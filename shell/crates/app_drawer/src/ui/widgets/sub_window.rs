@@ -4,8 +4,6 @@ use gpui::prelude::FluentBuilder;
 use gpui::*;
 use icons::prelude::Icons;
 use mxsearch::prelude::AppInfo;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 use theme::prelude::Theme;
 
@@ -228,67 +226,61 @@ impl SubWindow {
             .top(self.scroll_offset)
             .children(self.apps.iter().enumerate().map(|(idx, app)| {
                 let app_id = app.possible_app_id.clone();
-                let id = hash_id(&app_id);
                 let exec = app.exec.clone();
                 let icon = Self::resolved_icon(&app.icon_path, cx);
                 let is_active = self.active_app == Some(idx);
 
-                div()
-                    .id(id + idx)
-                    .flex()
-                    .items_center()
-                    .justify_center()
-                    .child(
-                        div()
-                            .id(idx)
-                            .size(px(ICON_BOX_SIZE))
-                            .rounded(px(12.0))
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .relative()
-                            .cursor_pointer()
-                            .on_mouse_down(
-                                MouseButton::Left,
-                                cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
-                                    this.active_app = Some(idx);
-                                    cx.notify();
-                                }),
-                            )
-                            .on_click(cx.listener(
-                                move |this: &mut SubWindow, _event, _window, cx| {
-                                    if !this.has_moved {
-                                        this.on_app_click(app_id.clone(), exec.clone(), cx);
-                                    }
-                                    this.has_moved = false;
-                                    this.active_app = None;
-                                    cx.notify();
-                                },
-                            ))
-                            .child(
-                                div()
-                                    .size_full()
-                                    .flex()
-                                    .items_center()
-                                    .justify_center()
-                                    .child(icon),
-                            )
-                            .child(
-                                div()
-                                    .id(id + idx + 10)
-                                    .absolute()
-                                    .top_0()
-                                    .left_0()
-                                    .flex()
-                                    .items_center()
-                                    .justify_center()
-                                    .size_full()
-                                    .rounded(px(9.8))
-                                    .bg(colors.foreground_1000)
-                                    .opacity(if is_active { 0.4 } else { 0.0 })
-                                    .when(!is_active, |this| this.active(|t| t.opacity(1.0))),
-                            ),
-                    )
+                div().id(idx).flex().items_center().justify_center().child(
+                    div()
+                        .id(idx)
+                        .size(px(ICON_BOX_SIZE))
+                        .rounded(px(12.0))
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .relative()
+                        .cursor_pointer()
+                        .on_mouse_down(
+                            MouseButton::Left,
+                            cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
+                                this.active_app = Some(idx);
+                                cx.notify();
+                            }),
+                        )
+                        .on_click(
+                            cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
+                                if !this.has_moved {
+                                    this.on_app_click(app_id.clone(), exec.clone(), cx);
+                                }
+                                this.has_moved = false;
+                                this.active_app = None;
+                                cx.notify();
+                            }),
+                        )
+                        .child(
+                            div()
+                                .size_full()
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .child(icon),
+                        )
+                        .child(
+                            div()
+                                .id(idx + 10)
+                                .absolute()
+                                .top_0()
+                                .left_0()
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .size_full()
+                                .rounded(px(9.8))
+                                .bg(colors.foreground_1000)
+                                .opacity(if is_active { 0.4 } else { 0.0 })
+                                .when(!is_active, |this| this.active(|t| t.opacity(1.0))),
+                        ),
+                )
             }))
     }
 
@@ -322,10 +314,4 @@ impl Render for SubWindow {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         self.render_modal(cx)
     }
-}
-
-fn hash_id(s: &str) -> usize {
-    let mut h = DefaultHasher::new();
-    s.hash(&mut h);
-    h.finish() as usize
 }
