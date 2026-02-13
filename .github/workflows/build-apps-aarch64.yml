@@ -93,7 +93,7 @@ jobs:
           sudo apt update
           sudo apt install -y git tar unzip curl clang cmake pkg-config \
             libwayland-dev libwayland-cursor0 libwayland-egl1 \
-            libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev 
+            libwayland-egl-backend-dev libegl1-mesa-dev libgles2-mesa-dev libxkbcommon-dev \
             libgstreamer1.0-dev \
             libgstreamer-plugins-base1.0-dev 
 
