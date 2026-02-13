@@ -68,7 +68,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
               dropdownPosition: DropdownPosition.centerRight,
               items: [
                 MechanixMenuItemsType(
-                  title: "Abouts",
+                  title: "About",
                   leading: const IconWidget(
                     iconPath: Images.settings,
                     boxWidth: 20,
