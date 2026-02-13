@@ -230,57 +230,62 @@ impl SubWindow {
                 let icon = Self::resolved_icon(&app.icon_path, cx);
                 let is_active = self.active_app == Some(idx);
 
-                div().id(idx).flex().items_center().justify_center().child(
-                    div()
-                        .id(idx)
-                        .size(px(ICON_BOX_SIZE))
-                        .rounded(px(12.0))
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .relative()
-                        .cursor_pointer()
-                        .on_mouse_down(
-                            MouseButton::Left,
-                            cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
-                                this.active_app = Some(idx);
-                                cx.notify();
-                            }),
-                        )
-                        .on_click(
-                            cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
-                                if !this.has_moved {
-                                    this.on_app_click(app_id.clone(), exec.clone(), cx);
-                                }
-                                this.has_moved = false;
-                                this.active_app = None;
-                                cx.notify();
-                            }),
-                        )
-                        .child(
-                            div()
-                                .size_full()
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .child(icon),
-                        )
-                        .child(
-                            div()
-                                .id(idx + 10)
-                                .absolute()
-                                .top_0()
-                                .left_0()
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .size_full()
-                                .rounded(px(9.8))
-                                .bg(colors.foreground_1000)
-                                .opacity(if is_active { 0.4 } else { 0.0 })
-                                .when(!is_active, |this| this.active(|t| t.opacity(1.0))),
-                        ),
-                )
+                div()
+                    .id(("subwindow-app", idx))
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .child(
+                        div()
+                            .id(("subwindow-app-icon", idx))
+                            .size(px(ICON_BOX_SIZE))
+                            .rounded(px(12.0))
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .relative()
+                            .cursor_pointer()
+                            .on_mouse_down(
+                                MouseButton::Left,
+                                cx.listener(move |this: &mut SubWindow, _event, _window, cx| {
+                                    this.active_app = Some(idx);
+                                    cx.notify();
+                                }),
+                            )
+                            .on_click(cx.listener(
+                                move |this: &mut SubWindow, _event, _window, cx| {
+                                    if !this.has_moved {
+                                        this.on_app_click(app_id.clone(), exec.clone(), cx);
+                                    }
+                                    this.has_moved = false;
+                                    this.active_app = None;
+                                    cx.notify();
+                                },
+                            ))
+                            .child(
+                                div()
+                                    .size_full()
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .child(icon),
+                            )
+                            .child(
+                                div()
+                                    .id(("active-app", idx))
+                                    .absolute()
+                                    .top_0()
+                                    .left_0()
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .size_full()
+                                    .rounded(px(9.8))
+                                    .bg(colors.foreground_1000)
+                                    .opacity(if is_active { 0.4 } else { 0.0 })
+                                    .when(!is_active, |this| this.active(|t| t.opacity(1.0))),
+                            ),
+                    )
             }))
     }
 

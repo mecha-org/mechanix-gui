@@ -657,7 +657,7 @@ impl AppDrawer {
                                                         let exec_for_up = exec.clone();
 
                                                         div()
-                                                            .id(idx)
+                                                            .id(("category-div", idx))
                                                             .flex()
                                                             .items_center()
                                                             .justify_center()
@@ -685,7 +685,7 @@ impl AppDrawer {
                                                             )
                                                             .child(
                                                                 div()
-                                                                    .id(idx)
+                                                                    .id(("category-item", idx))
                                                                     .absolute()
                                                                     .top_0()
                                                                     .left_0()
@@ -897,7 +897,7 @@ impl AppDrawer {
                         let icon = Self::resolved_icon(&app.icon_path, cx);
 
                         div()
-                            .id(idx)
+                            .id(("searched-app", idx))
                             .h(px(APP_ROW_HEIGHT))
                             .w_full()
                             .flex()
