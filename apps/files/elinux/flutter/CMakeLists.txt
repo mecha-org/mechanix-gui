@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
 set(EPHEMERAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/ephemeral")
-set(PDFIUM_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libpdfium")
 
 # Configuration provided via flutter tool.
 include(${EPHEMERAL_DIR}/generated_config.cmake)
@@ -21,7 +20,6 @@ endfunction()
 # === Flutter Library ===
 # System-level dependencies.
 set(FLUTTER_LIBRARY "${EPHEMERAL_DIR}/libflutter_engine.so")
-set(PDFIUM_LIBRARY "${PDFIUM_DIR}/libpdfium.so")
 
 if(FLUTTER_TARGET_BACKEND_TYPE MATCHES "gbm")
   set(FLUTTER_EMBEDDER_LIBRARY "${EPHEMERAL_DIR}/libflutter_elinux_gbm.so")
@@ -39,7 +37,24 @@ set(FLUTTER_EMBEDDER_LIBRARY ${FLUTTER_EMBEDDER_LIBRARY} PARENT_SCOPE)
 set(FLUTTER_ICU_DATA_FILE "${EPHEMERAL_DIR}/icudtl.dat" PARENT_SCOPE)
 set(PROJECT_BUILD_DIR "${PROJECT_DIR}/build/elinux/" PARENT_SCOPE)
 set(AOT_LIBRARY "${EPHEMERAL_DIR}/libapp.so" PARENT_SCOPE)
-set(PDFIUM_LIBRARY "${PDFIUM_LIBRARY}" PARENT_SCOPE)
+
+find_library(
+  PDFIUM_LIBRARY
+  NAMES pdfium libpdfium.so
+  PATHS
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /usr/lib/aarch64-linux-gnu
+    /usr/lib/x86_64-linux-gnu
+)
+
+if(PDFIUM_LIBRARY AND EXISTS "${PDFIUM_LIBRARY}")
+  message(STATUS "Found PDFium: ${PDFIUM_LIBRARY}")
+  set(PDFIUM_LIBRARY "${PDFIUM_LIBRARY}" PARENT_SCOPE)
+else()
+  message(WARNING "PDFium not found")
+endif()
 
 list(APPEND FLUTTER_LIBRARY_HEADERS
   "flutter_export.h"

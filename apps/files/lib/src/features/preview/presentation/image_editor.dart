@@ -411,16 +411,28 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  PressableIcon(
-                    iconPath: Images.undo,
-                    isDisabled: _undoStack.isEmpty,
-                    onTap: _undoStack.isEmpty ? null : undo,
+                  IconButton(
+                    onPressed: _undoStack.isNotEmpty ? undo : null,
+                    icon: IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.undo,
+                      iconColor: _undoStack.isEmpty
+                          ? context.colorScheme.outline
+                          : null,
+                    ),
                   ),
                   const SizedBox(width: leadingIconGap),
-                  PressableIcon(
-                    iconPath: Images.redo,
-                    isDisabled: _redoStack.isEmpty,
-                    onTap: _redoStack.isEmpty ? null : redo,
+                  IconButton(
+                    onPressed: _redoStack.isNotEmpty ? redo : null,
+                    icon: IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.redo,
+                      iconColor: _redoStack.isEmpty
+                          ? context.colorScheme.outline
+                          : null,
+                    ),
                   ),
                 ],
               ),
@@ -433,24 +445,40 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  PressableIcon(
-                    iconPath: Images.rotateRight,
-                    onTap: rotateRight,
+                  IconButton(
+                    onPressed: rotateRight,
+                    icon: const IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.rotateRight,
+                    ),
                   ),
                   const SizedBox(width: iconGap),
-                  PressableIcon(
-                    iconPath: Images.mirrorVertical,
-                    onTap: mirrorVertical,
+                  IconButton(
+                    onPressed: mirrorVertical,
+                    icon: const IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.mirrorVertical,
+                    ),
                   ),
                   const SizedBox(width: iconGap),
-                  PressableIcon(
-                    iconPath: Images.mirrorHorizontal,
-                    onTap: mirrorHorizontal,
+                  IconButton(
+                    onPressed: mirrorHorizontal,
+                    icon: const IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.mirrorHorizontal,
+                    ),
                   ),
                   const SizedBox(width: iconGap),
-                  PressableIcon(
-                    iconPath: Images.crop,
-                    onTap: onCropPressed,
+                  IconButton(
+                    onPressed: onCropPressed,
+                    icon: const IconWidget(
+                      iconHeight: 26,
+                      iconWidth: 26,
+                      iconPath: Images.crop,
+                    ),
                   ),
                 ],
               ),
@@ -460,9 +488,13 @@ class _ImageEditorPageState extends State<ImageEditorPage> {
             alignment: Alignment.centerRight,
             child: Padding(
               padding: const EdgeInsets.only(right: sidePadding),
-              child: PressableIcon(
-                iconPath: Images.check,
-                onTap: saveImage,
+              child: IconButton(
+                onPressed: saveImage,
+                icon: const IconWidget(
+                  iconHeight: 26,
+                  iconWidth: 26,
+                  iconPath: Images.check,
+                ),
               ),
             ),
           ),

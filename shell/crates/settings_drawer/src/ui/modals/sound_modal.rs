@@ -10,7 +10,7 @@ use crate::{
     prelude::*,
     ui::{
         FINAL_MODAL_SIZE,
-        modals::{MODAL_HEADER_HEIGHT, ROW_HEIGHT},
+        modals::ROW_HEIGHT,
     },
 };
 use crate::ui::modals::{MODAL_WING_HEIGHT, MODAL_WING_WIDTH};

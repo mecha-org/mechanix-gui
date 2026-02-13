@@ -13,6 +13,7 @@ use gpui::*;
 use icons::prelude::Icons;
 use shell_state::{BtMessage, ShellState};
 use theme::prelude::{AlphaExt, Theme};
+const BLUETOOTH_SETTINGS_PATH: &str = "/bluetooth";
 
 pub trait ScrollBehavior {
     fn scroll_offset(&self) -> Pixels;
@@ -142,7 +143,7 @@ impl SettingsDrawer {
                     .child(self.render_header_div(cx, "Bluetooth"))
                     .child(
                         div()
-                            .id("scrollable")
+                            .id("scrollable-bluetooth")
                             .flex_1()
                             .relative()
                             .overflow_hidden()
@@ -283,10 +284,16 @@ impl SettingsDrawer {
                                         if !is_connected && !is_paired {
                                             bluetooth_div =
                                                 bluetooth_div
-                                                    .on_click(cx.listener(move |_, _, _, _| {
+                                                    .on_click(cx.listener(move |this, _, _,  cx: &mut Context<Self>| {
                                                     println!(
                                                         "TODO: open portal/settings with params:"
                                                     );
+                                                     this.launch_app_with_path(
+                                                            this.settings_app_info.clone(),
+                                                            cx,
+                                                            BLUETOOTH_SETTINGS_PATH.to_string(),
+                                                        );
+                                                        cx.notify();
                                                 }));
                                         } else if !is_connected && is_paired {
                                             let address = bt.address.clone();
@@ -318,7 +325,7 @@ impl SettingsDrawer {
                                     })),
                             ),
                     )
-                    .child(self.render_settings_div(cx, "/bluetooth".to_string()));
+                    .child(self.render_settings_div(cx, BLUETOOTH_SETTINGS_PATH.to_string()));
                 w.upper_wing_size(Size::new(px(MODAL_WING_WIDTH), px(MODAL_WING_HEIGHT)));
                 w.border_width(px(1.0));
                 w.border_radius(px(8.0));

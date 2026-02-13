@@ -452,9 +452,14 @@ impl AppDrawer {
     }
 
     fn render_search_bar(&self, cx: &mut Context<Self>) -> impl IntoElement {
-        let text_input = self.text_input.clone();
-        let colors = Theme::global(cx).colors.clone();
         let icons = Icons::global(cx).app_drawer.clone();
+        let colors = Theme::global(cx).colors.clone();
+        let text_input = self.text_input.clone();
+
+        text_input.update(cx, |input, _| {
+            input.placeholder_color = Some(colors.accent_300.with_alpha(0.4));
+            input.placeholder = "Search".into();
+        });
 
         div()
             .id("main-search")
@@ -510,7 +515,7 @@ impl AppDrawer {
                                     .w_full()
                                     .text_size(px(16.0))
                                     .text_color(colors.foreground_200)
-                                    .child(text_input.clone()),
+                                    .child(text_input),
                             ),
                     ),
             )

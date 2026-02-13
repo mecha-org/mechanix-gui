@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io' as io;
-import 'dart:math' as Math;
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:archive/archive.dart';
@@ -48,15 +48,21 @@ String formatModifiedTime(DateTime modified) {
 
 String formatDateTime(DateTime dateTime) {
   final formatter = DateFormat('dd-MM-yyyy, hh:mm a');
-  return formatter.format(dateTime).toLowerCase();
+  return formatter.format(dateTime).toUpperCase();
 }
 
-String formatBytes(int bytes, [int decimals = 2]) {
-  if (bytes <= 0) return "0 B";
-  const suffixes = ["B", "KB", "MB", "GB", "TB"];
-  final i = (bytes == 0) ? 0 : (Math.log(bytes) / Math.log(1024)).floor();
-  final size = bytes / Math.pow(1024, i);
-  return "${size.toStringAsFixed(decimals)} ${suffixes[i]}";
+String formatBytesDecimal(int bytes, {int decimals = 1}) {
+  if (bytes <= 0) return '0 B';
+
+  const base = 1000;
+  const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+  final exponent =
+      (math.log(bytes) / math.log(base)).floor().clamp(0, suffixes.length - 1);
+
+  final size = bytes / math.pow(base, exponent);
+
+  return '${size.toStringAsFixed(decimals)} ${suffixes[exponent]}';
 }
 
 void _navigateToDirectory(
@@ -411,13 +417,25 @@ MechanixFilledButtonThemeData buttonThemeData(
 
 TextStyle regularStyle(BuildContext context) => TextStyle(
       color: context.colorScheme.onSurface,
-      fontSize: 20,
+      fontSize: 22,
       fontWeight: FontWeight.w400,
     );
 
 TextStyle boldStyle(BuildContext context) => TextStyle(
       color: context.colorScheme.onSurface,
-      fontSize: 20,
+      fontSize: 22,
+      fontWeight: FontWeight.w600,
+    );
+
+TextStyle confirmationDialogRegularStyle(BuildContext context) => TextStyle(
+      color: context.colorScheme.onSurface,
+      fontSize: 24,
+      fontWeight: FontWeight.w400,
+    );
+
+TextStyle confirmationDialogBoldStyle(BuildContext context) => TextStyle(
+      color: context.colorScheme.onSurface,
+      fontSize: 24,
       fontWeight: FontWeight.w600,
     );
 

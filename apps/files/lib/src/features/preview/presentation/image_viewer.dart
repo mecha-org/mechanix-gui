@@ -25,11 +25,12 @@ class ImageViewerPage extends StatefulWidget {
   String filePath;
   FileExplorerPageState? state;
 
-  ImageViewerPage(
-      {super.key,
-      required this.rootContext,
-      required this.filePath,
-      this.state});
+  ImageViewerPage({
+    super.key,
+    required this.rootContext,
+    required this.filePath,
+    this.state,
+  });
 
   @override
   State<ImageViewerPage> createState() => _ImageViewerPageState();
@@ -50,8 +51,12 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Padding(
-          padding:
-              const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
+          padding: const EdgeInsets.only(
+            top: 6,
+            left: 16,
+            right: 16,
+            bottom: 12,
+          ),
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
@@ -73,9 +78,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
                     });
                   },
                 )
-              : _RasterViewer(
-                  imagePath: widget.filePath,
-                )),
+              : _RasterViewer(imagePath: widget.filePath)),
       bottomNavigationBar: _buildBottomBar(context),
     );
   }
@@ -92,10 +95,7 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
       valueListenable: controller.paginatedEntities,
       builder: (_, __, ___) {
         final title = controller.getDisplayName(File(widget.filePath));
-        return MiddleEllipsisText(
-          title,
-          style: previewTitleStyle(context),
-        );
+        return MiddleEllipsisText(title, style: previewTitleStyle(context));
       },
     );
   }
@@ -105,32 +105,44 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
 
     return MechanixBottomBar(
       theme: MechanixBottomBarThemeData(
-          decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: _isEditing
-                  ? null
-                  : const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8)))),
+        decoration: BoxDecoration(
+          color: context.colorScheme.secondaryContainer,
+          borderRadius: !_isEditing
+              ? const BorderRadius.only(
+                  topLeft: Radius.circular(8),
+                  topRight: Radius.circular(8),
+                )
+              : null,
+        ),
+      ),
       leadingWidget: [
         BottomBarButton.widget(
-            widget: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: DecoratedPressableIcon(
-            iconPath: Images.back,
-            onTap: () => Navigator.pop(context),
+          widget: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.back,
+              ),
+            ),
           ),
-        )),
+        ),
       ],
       centerWidgetSpacing: 16,
       centerWidget: [
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.copy,
-            onTap: () {
+          widget: IconButton(
+            onPressed: () {
               state?.selectedPaths = {widget.filePath};
               state?.handleCopy();
             },
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.copy,
+            ),
           ),
         ),
         BottomBarButton(
@@ -147,37 +159,40 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
             iconHeight: 28.0,
             iconWidth: 28.0,
           ),
-          onPressed: isSvg
-              ? null
-              : () {
+          onPressed: !isSvg
+              ? () {
                   setState(() {
                     _isEditing = !_isEditing;
                   });
-                },
+                }
+              : null,
         ),
         BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.move,
-            onTap: () {
+          widget: IconButton(
+            onPressed: () {
               Navigator.pop(context);
               state?.selectedPaths = {widget.filePath};
               state?.handleMove();
             },
+            icon: const IconWidget(
+              iconHeight: 28,
+              iconWidth: 28,
+              iconPath: Images.move,
+            ),
           ),
         ),
-        const BottomBarButton.widget(
-          widget: DecoratedPressableIcon(
-            iconPath: Images.share,
-            isDisabled: true, // TODO: add share functionality
-            onTap: null,
-          ),
-        ),
-      ],
-      anchorWidget: [
         BottomBarButton.widget(
-          widget: buildActionsMenu(context),
+          widget: IconButton(
+              icon: IconWidget(
+                iconHeight: 28,
+                iconWidth: 28,
+                iconPath: Images.share,
+                iconColor: context.colorScheme.outline,
+              ),
+              onPressed: null),
         ),
       ],
+      anchorWidget: [BottomBarButton.widget(widget: buildActionsMenu(context))],
     );
   }
 
@@ -188,14 +203,15 @@ class _ImageViewerPageState extends State<ImageViewerPage> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconHeight: 28,
-          iconWidth: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryFixed
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconHeight: 28,
+        iconWidth: 28,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryFixed
+            : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -281,8 +297,9 @@ class _SvgViewer extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: PhotoView.customChild(
-          backgroundDecoration:
-              BoxDecoration(color: context.colorScheme.surface),
+          backgroundDecoration: BoxDecoration(
+            color: context.colorScheme.surface,
+          ),
           minScale: PhotoViewComputedScale.contained,
           maxScale: PhotoViewComputedScale.covered * 2,
           child: SvgPicture.file(

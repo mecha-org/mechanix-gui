@@ -7,6 +7,7 @@ import 'package:logger/logger.dart';
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
+import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -199,7 +200,6 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   context, _scrollController, controller),
         ),
 
-        const SizedBox(height: 18),
         Divider(
           height: 1,
           color: context.colorScheme.surfaceContainer,
@@ -219,13 +219,29 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         borderRadius: BorderRadius.circular(0),
                       ),
                     ),
-                    focusNode: _focusNode,
+                    //focusNode: _focusNode,
                     cursorColor: context.colorScheme.primaryFixed,
                     prefixIcon: IconWidget(
                       iconPath: Images.search,
                       iconColor: context.colorScheme.onSurface,
                       iconHeight: 24,
                       iconWidth: 24,
+                    ),
+                    isClearButtonRequired: false,
+                    anchorWidget: Padding(
+                      padding: const EdgeInsets.only(left: 5),
+                      child: DecoratedPressableIcon(
+                        onTap: () {
+                          setState(() {
+                            isSearching = false;
+                            searchQuery.value = "";
+                          });
+                          controller.search('');
+                        },
+                        tapBackgroundColor:
+                            context.colorScheme.surfaceContainer.withAlpha(100),
+                        icon: const Icon(Icons.close),
+                      ),
                     ),
                     hintText: "Search here",
                     onChanged: (query) {
@@ -257,47 +273,51 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         widgetPadding:
                             const EdgeInsets.only(left: 8, top: 10, right: 8)),
                     leadingWidget: [
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.back,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () {
+                            (isHomePageDir ? homeNavigation() : handleBack());
+                          },
                         ),
-                        onPressed: () {
-                          (isHomePageDir ? homeNavigation() : handleBack());
-                        },
                       ),
                     ],
                     anchorWidget: [
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.search,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () {
+                            setState(() => isSearching = true);
+                          },
                         ),
-                        onPressed: () {
-                          setState(() => isSearching = true);
-                        },
                       ),
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.home,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () {
+                            setState(() => showHomeView = true);
+                          },
                         ),
-                        onPressed: () {
-                          setState(() => showHomeView = true);
-                        },
                       ),
-                      BottomBarButton(
-                        iconWidget: const IconWidget(
+                      BottomBarButton.widget(
+                        widget: DecoratedPressableIcon(
                           iconPath: Images.createFolder,
-                          iconHeight: 28,
-                          iconWidth: 28,
+                          tapBackgroundColor: context
+                              .colorScheme.surfaceContainer
+                              .withAlpha(100),
+                          onTap: () async {
+                            await createFolderAndRename();
+                          },
                         ),
-                        onPressed: () async {
-                          await createFolderAndRename();
-                        },
                       ),
                     ],
                   ),
@@ -323,7 +343,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final prefix = 'Moving ';
+                    final prefix = 'Moving';
                     final prefixStyle = regularStyle(context);
                     final labelStyle = boldStyle(context);
 
@@ -376,12 +396,12 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         : MechanixButtonType.action,
                     size: const Size(94, 40)),
                 label: "Move",
-                onPressed: showHomeView
-                    ? null
-                    : () {
+                onPressed: !showHomeView
+                    ? () {
                         handlePaste(context, widget.filesBloc.state);
                         Navigator.pop(context, true);
-                      },
+                      }
+                    : null,
               )
             ],
           ),
@@ -421,6 +441,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final bool isEmpty = renameText.trim().isEmpty;
     final bool isSame = renameText.trim() == originalFolderName.trim();
     final bool showCheck = !isEmpty && !isSame; // valid new name
+    final oldPath = p.join(controller.getCurrentPath, originalFolderName);
 
     return Expanded(
       child: MechanixTextInput.textInput(
@@ -434,13 +455,19 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         autofocus: true,
         cursorColor: context.colorScheme.primaryContainer,
         initialValue: renameText,
-        onChanged: (v) => setState(() => renameText = v),
+        onChanged: (v) {
+          setState(() {
+            renameText = v;
+          });
+
+          controller.setLiveRename(oldPath, v);
+        },
         anchorWidget: showCheck
             ? Padding(
                 padding: const EdgeInsets.only(left: 5),
-                child: IconButton(
+                child: DecoratedPressableIcon(
                   icon: const Icon(Icons.check),
-                  onPressed: () {
+                  onTap: () {
                     final filesBloc = context.read<FilesBloc>();
                     filesBloc.add(
                       Rename(
@@ -452,16 +479,20 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                     setState(() => showRenameBar = false);
                     controller.clearNewFolder();
                   },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
                 ),
               )
             : Padding(
                 padding: const EdgeInsets.only(left: 5),
-                child: IconButton(
+                child: DecoratedPressableIcon(
                   icon: const Icon(Icons.close),
-                  onPressed: () {
+                  onTap: () {
                     setState(() => showRenameBar = false);
                     controller.clearNewFolder();
                   },
+                  tapBackgroundColor:
+                      context.colorScheme.surfaceContainer.withAlpha(100),
                 ),
               ),
       ),
@@ -496,38 +527,38 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 ),
                 sectionListItems: [
                   SectionListItems.leadingIcon(
-                      title: "Home directory",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(homeDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.home,
-                      iconSize: const Size(26, 26)),
+                    title: "Home directory",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(homeDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.home,
+                  ),
                   // Downloads
                   SectionListItems.leadingIcon(
-                      title: "Downloads",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(downloadsDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.downloads,
-                      iconSize: const Size(26, 26)),
+                    title: "Downloads",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(downloadsDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.downloads,
+                  ),
 
                   // Documents
                   SectionListItems.leadingIcon(
-                      title: "Documents",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory(documentsDir));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.homeDocuments,
-                      iconSize: const Size(26, 26)),
+                    title: "Documents",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory(documentsDir));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.homeDocuments,
+                  ),
                 ]),
 
             // Root dir
@@ -543,15 +574,15 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                 ),
                 sectionListItems: [
                   SectionListItems.leadingIcon(
-                      title: "Root (/)",
-                      titleTextStyle: listItemTitleTextStyle(context),
-                      onTap: () {
-                        setState(() => showHomeView = false);
-                        controller.openDirectory(Directory("/"));
-                      },
-                      iconColor: context.colorScheme.primaryContainer,
-                      iconPath: Images.hardDrive,
-                      iconSize: const Size(26, 26)),
+                    title: "Root (/)",
+                    titleTextStyle: listItemTitleTextStyle(context),
+                    onTap: () {
+                      setState(() => showHomeView = false);
+                      controller.openDirectory(Directory("/"));
+                    },
+                    iconColor: context.colorScheme.primaryContainer,
+                    iconPath: Images.hardDrive,
+                  ),
                 ]),
           ],
         ),
@@ -639,8 +670,9 @@ Future<void> handleConflictsSequentially(
                 children: [
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final fileStyle = boldStyle(context);
-                      final suffixStyle = regularStyle(context);
+                      final fileStyle = confirmationDialogBoldStyle(context);
+                      final suffixStyle =
+                          confirmationDialogRegularStyle(context);
                       const suffix = ' already exists';
 
                       // Measure suffix width
@@ -678,7 +710,9 @@ Future<void> handleConflictsSequentially(
                   Text(
                     'Would you like to replace?',
                     style: TextStyle(
-                        color: context.colorScheme.onSurface, fontSize: 18),
+                        color: context.colorScheme.onSurface,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w400),
                   ),
                   const SizedBox(height: 16),
                   Row(

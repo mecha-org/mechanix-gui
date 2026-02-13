@@ -147,10 +147,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
       valueListenable: controller.paginatedEntities,
       builder: (_, __, ___) {
         final title = controller.getDisplayName(File(widget.filePath));
-        return MiddleEllipsisText(
-          title,
-          style: previewTitleStyle(context),
-        );
+        return MiddleEllipsisText(title, style: previewTitleStyle(context));
       },
     );
   }
@@ -162,7 +159,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
       decoration: BoxDecoration(
         color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -171,19 +170,22 @@ class _VideoPlayerState extends State<VideoPlayer> {
             clipBehavior: Clip.none,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   children: [
                     // Play / Pause
-                    PressableIcon(
-                      iconPath: _isPlaying ? Images.pause : Images.play,
-                      onTap: () {
+                    IconButton(
+                      onPressed: () {
                         setState(() {
                           _isPlaying ? player.pause() : player.play();
                           _isPlaying = !_isPlaying;
                         });
                       },
+                      icon: IconWidget(
+                        iconHeight: 26,
+                        iconWidth: 26,
+                        iconPath: _isPlaying ? Images.pause : Images.play,
+                      ),
                     ),
 
                     const SizedBox(width: 14),
@@ -194,18 +196,22 @@ class _VideoPlayerState extends State<VideoPlayer> {
                         data: SliderTheme.of(context).copyWith(
                           trackHeight: 6,
                           thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 8),
-                          overlayShape:
-                              const RoundSliderOverlayShape(overlayRadius: 0),
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 0,
+                          ),
                         ),
                         child: Slider(
                           min: 0,
-                          max: _duration.inMilliseconds
-                              .toDouble()
-                              .clamp(1, double.infinity),
-                          value: _position.inMilliseconds
-                              .toDouble()
-                              .clamp(0, _duration.inMilliseconds.toDouble()),
+                          max: _duration.inMilliseconds.toDouble().clamp(
+                                1,
+                                double.infinity,
+                              ),
+                          value: _position.inMilliseconds.toDouble().clamp(
+                                0,
+                                _duration.inMilliseconds.toDouble(),
+                              ),
                           activeColor: context.colorScheme.primaryContainer,
                           inactiveColor: context.colorScheme.surfaceContainer,
                           thumbColor: context.colorScheme.onSurface,
@@ -227,9 +233,8 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
                         if (!muted) _lastVolume = volume;
 
-                        return PressableIcon(
-                          iconPath: muted ? Images.mute : Images.volume,
-                          onTap: () {
+                        return IconButton(
+                          onPressed: () {
                             setState(() {
                               if (muted) {
                                 player.setVolume(_lastVolume); // restore
@@ -238,9 +243,14 @@ class _VideoPlayerState extends State<VideoPlayer> {
                               }
                             });
                           },
+                          icon: IconWidget(
+                            iconHeight: 26,
+                            iconWidth: 26,
+                            iconPath: muted ? Images.mute : Images.volume,
+                          ),
                         );
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -248,9 +258,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 top: -36,
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: _buildTimeBubble(),
-                ),
+                child: Center(child: _buildTimeBubble()),
               ),
             ],
           ),
@@ -258,47 +266,63 @@ class _VideoPlayerState extends State<VideoPlayer> {
           // Bottom menu bar same as audio
           MechanixBottomBar(
             theme: MechanixBottomBarThemeData(
-                decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: null,
-            )),
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondaryContainer,
+                borderRadius: null,
+              ),
+            ),
             leadingWidget: [
               BottomBarButton.widget(
-                  widget: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: DecoratedPressableIcon(
-                  iconPath: Images.back,
-                  onTap: () => Navigator.pop(context),
+                widget: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: IconButton(
+                      icon: const IconWidget(
+                        iconHeight: 28,
+                        iconWidth: 28,
+                        iconPath: Images.back,
+                      ),
+                      onPressed: () => Navigator.pop(context)),
                 ),
-              )),
+              ),
             ],
             centerWidgetSpacing: 30,
             centerWidget: [
               BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.copy,
-                  onTap: () {
+                widget: IconButton(
+                  icon: const IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.copy,
+                  ),
+                  onPressed: () {
                     state?.selectedPaths = {widget.filePath};
                     state?.handleCopy();
                   },
                 ),
               ),
               BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.move,
-                  onTap: () {
+                widget: IconButton(
+                  icon: const IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.move,
+                  ),
+                  onPressed: () {
                     Navigator.pop(context);
                     state?.selectedPaths = {widget.filePath};
                     state?.handleMove();
                   },
                 ),
               ),
-              const BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.share,
-                  isDisabled: true, // TODO: add share functionality
-                  onTap: null,
-                ),
+              BottomBarButton.widget(
+                widget: IconButton(
+                    icon: IconWidget(
+                      iconHeight: 28,
+                      iconWidth: 28,
+                      iconPath: Images.share,
+                      iconColor: context.colorScheme.outline,
+                    ),
+                    onPressed: null),
               ),
             ],
             anchorWidget: [
@@ -317,14 +341,15 @@ class _VideoPlayerState extends State<VideoPlayer> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconHeight: 28,
-          iconWidth: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryContainer
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconHeight: 28,
+        iconWidth: 28,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryContainer
+            : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
@@ -391,7 +416,9 @@ class _VideoPlayerState extends State<VideoPlayer> {
       child: Text(
         "${_formatHMS(_position)} / ${_formatHMS(_duration)}",
         style: TextStyle(
-            color: context.colorScheme.onSecondaryFixedVariant, fontSize: 16),
+          color: context.colorScheme.onSecondaryFixedVariant,
+          fontSize: 16,
+        ),
       ),
     );
   }

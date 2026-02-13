@@ -22,11 +22,12 @@ class AudioPlayerOverlay extends StatefulWidget {
   String filePath;
   FileExplorerPageState? state;
 
-  AudioPlayerOverlay(
-      {super.key,
-      required this.filePath,
-      required this.rootContext,
-      this.state});
+  AudioPlayerOverlay({
+    super.key,
+    required this.filePath,
+    required this.rootContext,
+    this.state,
+  });
 
   @override
   State<AudioPlayerOverlay> createState() => _AudioPlayerOverlayState();
@@ -97,8 +98,12 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Padding(
-          padding:
-              const EdgeInsets.only(top: 6, left: 16, right: 16, bottom: 12),
+          padding: const EdgeInsets.only(
+            top: 6,
+            left: 16,
+            right: 16,
+            bottom: 12,
+          ),
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
@@ -128,7 +133,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           : Padding(
               padding: const EdgeInsets.all(20),
               child: CircularProgressIndicator(
-                  color: context.colorScheme.primaryContainer),
+                color: context.colorScheme.primaryContainer,
+              ),
             ),
     );
   }
@@ -140,7 +146,9 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
       decoration: BoxDecoration(
         color: context.colorScheme.secondary,
         borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+          topLeft: Radius.circular(8),
+          topRight: Radius.circular(8),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -149,47 +157,53 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
             clipBehavior: Clip.none,
             children: [
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   children: [
-                    PressableIcon(
-                      iconPath: _isPlaying ? Images.pause : Images.play,
-                      onTap: () {
+                    IconButton(
+                      onPressed: () {
                         setState(() {
                           _isPlaying ? player.pause() : player.play();
                           _isPlaying = !_isPlaying;
                         });
                       },
+                      icon: IconWidget(
+                        iconHeight: 26,
+                        iconWidth: 26,
+                        iconPath: _isPlaying ? Images.pause : Images.play,
+                      ),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
-                        child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 8,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 6,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius: 0,
+                          ),
                         ),
-                        overlayShape: const RoundSliderOverlayShape(
-                          overlayRadius: 0,
+                        child: Slider(
+                          min: 0,
+                          max: _duration.inMilliseconds.toDouble().clamp(
+                                1,
+                                double.infinity,
+                              ),
+                          value: _position.inMilliseconds.toDouble().clamp(
+                                0,
+                                _duration.inMilliseconds.toDouble(),
+                              ),
+                          activeColor: context.colorScheme.primaryContainer,
+                          inactiveColor: context.colorScheme.surfaceContainer,
+                          thumbColor: context.colorScheme.onSurface,
+                          onChanged: (v) {
+                            player.seek(Duration(milliseconds: v.toInt()));
+                          },
                         ),
                       ),
-                      child: Slider(
-                        min: 0,
-                        max: _duration.inMilliseconds
-                            .toDouble()
-                            .clamp(1, double.infinity),
-                        value: _position.inMilliseconds
-                            .toDouble()
-                            .clamp(0, _duration.inMilliseconds.toDouble()),
-                        activeColor: context.colorScheme.primaryContainer,
-                        inactiveColor: context.colorScheme.surfaceContainer,
-                        thumbColor: context.colorScheme.onSurface,
-                        onChanged: (v) {
-                          player.seek(Duration(milliseconds: v.toInt()));
-                        },
-                      ),
-                    )),
+                    ),
                     const SizedBox(width: 14),
                     StreamBuilder<double>(
                       stream: player.stream.volume,
@@ -201,9 +215,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                           _lastVolume = volume; // store last non-zero volume
                         }
 
-                        return PressableIcon(
-                          iconPath: isMuted ? Images.mute : Images.volume,
-                          onTap: () {
+                        return IconButton(
+                          onPressed: () {
                             setState(() {
                               if (isMuted) {
                                 player.setVolume(_lastVolume); // restore
@@ -212,9 +225,14 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                               }
                             });
                           },
+                          icon: IconWidget(
+                            iconHeight: 26,
+                            iconWidth: 26,
+                            iconPath: isMuted ? Images.mute : Images.volume,
+                          ),
                         );
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -222,55 +240,69 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
                 top: -36, // float upward
                 left: 0,
                 right: 0,
-                child: Center(
-                  child: _buildTimeBubble(),
-                ),
+                child: Center(child: _buildTimeBubble()),
               ),
             ],
           ),
           MechanixBottomBar(
             theme: MechanixBottomBarThemeData(
-                decoration: BoxDecoration(
-              color: context.colorScheme.secondaryContainer,
-              borderRadius: null,
-            )),
+              decoration: BoxDecoration(
+                color: context.colorScheme.secondaryContainer,
+                borderRadius: null,
+              ),
+            ),
             leadingWidget: [
               BottomBarButton.widget(
-                  widget: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: DecoratedPressableIcon(
-                  iconPath: Images.back,
-                  onTap: () => Navigator.pop(context),
+                widget: Padding(
+                  padding: const EdgeInsets.only(left: 8),
+                  child: IconButton(
+                      icon: const IconWidget(
+                        iconHeight: 28,
+                        iconWidth: 28,
+                        iconPath: Images.back,
+                      ),
+                      onPressed: () => Navigator.pop(context)),
                 ),
-              )),
+              ),
             ],
             centerWidgetSpacing: 30,
             centerWidget: [
               BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.copy,
-                  onTap: () {
+                widget: IconButton(
+                  icon: const IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.copy,
+                  ),
+                  onPressed: () {
                     state?.selectedPaths = {widget.filePath};
                     state?.handleCopy();
                   },
                 ),
               ),
               BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.move,
-                  onTap: () {
+                widget: IconButton(
+                  icon: const IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.move,
+                  ),
+                  onPressed: () {
                     Navigator.pop(context);
                     state?.selectedPaths = {widget.filePath};
                     state?.handleMove();
                   },
                 ),
               ),
-              const BottomBarButton.widget(
-                widget: DecoratedPressableIcon(
-                  iconPath: Images.share,
-                  isDisabled: true, // TODO: add share functionality
-                  onTap: null,
-                ),
+              BottomBarButton.widget(
+                widget: IconButton(
+                    icon: IconWidget(
+                      iconHeight: 28,
+                      iconWidth: 28,
+                      iconPath: Images.share,
+                      iconColor: context.colorScheme.outline,
+                    ),
+                    onPressed: null),
               ),
             ],
             anchorWidget: [
@@ -289,14 +321,15 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
     return MechanixMenu(
       offset: offset,
       dropdownPosition: DropdownPosition.topRight,
-      animationDuration: const Duration(milliseconds: 300),
+      animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
-          iconPath: Images.dots,
-          iconWidth: 28,
-          iconHeight: 28,
-          iconColor: isMenuOpen
-              ? context.colorScheme.primaryContainer
-              : context.colorScheme.onSurface),
+        iconPath: Images.dots,
+        iconWidth: 28,
+        iconHeight: 28,
+        iconColor: isMenuOpen
+            ? context.colorScheme.primaryContainer
+            : context.colorScheme.onSurface,
+      ),
       openMenu: () {
         setState(() => isMenuOpen = true);
       },
