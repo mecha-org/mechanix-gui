@@ -43,8 +43,9 @@ class _WirelessProtocolsListState extends State<WirelessProtocolsList> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomTitle(
-                title:
-                    "Join ${widget.accessPoint != null ? '\'${utf8.decode(widget.accessPoint!.ssid)}\'' : ''}",
+                title: widget.accessPoint != null
+                    ? 'Join ${utf8.decode(widget.accessPoint!.ssid)}'
+                    : 'Security',
               ),
               MechanixSimpleList(listItems: [
                 SimpleListItems(
