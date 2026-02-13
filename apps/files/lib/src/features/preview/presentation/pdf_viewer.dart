@@ -3,6 +3,7 @@ import 'dart:io' show FileSystemEntity, File;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
@@ -58,6 +59,9 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   void initState() {
     super.initState();
 
+    // Set the path to the PDFium native library
+    Pdfrx.pdfiumModulePath = AppConfig().pdfiumModulePath;
+
     // Initialize text searcher and listen for changes in search results
     _searcher = PdfTextSearcher(_controller);
     _searcher.addListener(() {
@@ -66,15 +70,12 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         matches = _searcher.matches;
       });
     });
-
-    // _controller.addListener(_onPageChanged);
   }
 
   @override
   void dispose() {
     _hideBubbleTimer?.cancel();
     _pageBubbleOverlay?.remove();
-    // _controller.removeListener(_onPageChanged);
 
     _searcher.dispose();
     super.dispose();
@@ -224,20 +225,6 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       ),
       bottomNavigationBar: _buildBottomBar(context),
     );
-  }
-
-  void _onPageChanged() {
-    final page = _controller.pageNumber;
-    final count = _controller.pageCount ?? 0;
-
-    if (page == null || page == _currentPage) return;
-
-    setState(() {
-      _currentPage = page;
-      _pageCount = count;
-    });
-
-    _showPageBubble();
   }
 
   void _showPageBubble() {
