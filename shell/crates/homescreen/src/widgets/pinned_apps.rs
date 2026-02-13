@@ -1,4 +1,7 @@
-use std::{path::PathBuf, pin};
+use std::{
+    hash::{DefaultHasher, Hash, Hasher},
+    path::PathBuf,
+};
 
 use crate::{widgets::HomescreenWidget, PinnedAppsState};
 use dispatcher::Dispatcher;
@@ -56,7 +59,6 @@ impl HomescreenWidget for PinnedApps {
         let colors = cx.theme().colors.clone();
         let text_color = colors.accent_200.clone();
         let pinned_apps = PinnedAppsState::global(cx).apps.clone();
-        let icon_bg_color = colors.background_600.clone();
 
         div()
             .size_full()
@@ -87,10 +89,10 @@ impl HomescreenWidget for PinnedApps {
                     .children(pinned_apps.iter().enumerate().map(|(idx, app)| {
                         let app_id = app.possible_app_id.clone();
                         let exec = app.exec.clone();
+                        let id = hash_id(&app_id);
 
                         div()
-                            .id(idx)
-                            .bg(icon_bg_color)
+                            .id(id + idx)
                             .size(px(88.0))
                             .rounded(px(7.6))
                             .flex()
@@ -98,33 +100,30 @@ impl HomescreenWidget for PinnedApps {
                             .justify_center()
                             .relative()
                             .cursor_pointer()
-                            .on_click(move |_, _, cx| {
-                                Self::on_app_click(app_id.clone(), exec.clone(), cx);
-                            })
                             .when_some(app.icon_path.clone(), |this, icon| {
                                 this.child(
-                                    div()
+                                    img(PathBuf::from(icon))
                                         .size_full()
-                                        .flex()
-                                        .items_center()
-                                        .justify_center()
-                                        .child(img(PathBuf::from(icon)).size_full()),
+                                        .absolute()
+                                        .top_0()
+                                        .left_0(),
                                 )
                             })
                             .child(
                                 div()
-                                    .id(idx + 1000)
+                                    .id(id + idx + 10)
+                                    .size_full()
                                     .absolute()
                                     .top_0()
                                     .left_0()
                                     .flex()
                                     .items_center()
                                     .justify_center()
-                                    .size_full()
                                     .rounded(px(7.6))
-                                    .bg(colors.foreground_1000)
-                                    .opacity(0.0)
-                                    .active(|this| this.opacity(0.4)),
+                                    .on_click(move |_, _, cx| {
+                                        Self::on_app_click(app_id.clone(), exec.clone(), cx);
+                                    })
+                                    .active(|this| this.bg(colors.foreground_1000).opacity(0.4)),
                             )
                     })),
             )
@@ -150,4 +149,10 @@ impl HomescreenWidget for PinnedApps {
     fn border_color(&self) -> Hsla {
         self.border_color
     }
+}
+
+fn hash_id(s: &str) -> usize {
+    let mut h = DefaultHasher::new();
+    s.hash(&mut h);
+    h.finish() as usize
 }
