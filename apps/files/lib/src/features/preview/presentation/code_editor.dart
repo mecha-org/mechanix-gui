@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai.dart';
@@ -17,7 +18,6 @@ import 'package:highlight/languages/sql.dart';
 import 'package:highlight/languages/xml.dart';
 import 'package:highlight/languages/yaml.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
@@ -399,7 +399,8 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
 
   Widget _buildTitle(FileManagerController? controller) {
     if (controller == null) {
-      return MiddleEllipsisText(
+      return EllipsizedText(
+        type: EllipsisType.middle,
         p.basename(widget.filePath),
         style: previewTitleStyle(context),
       );
@@ -409,7 +410,11 @@ class _CodeEditorPageState extends State<CodeEditorPage> {
       valueListenable: controller.paginatedEntities,
       builder: (_, __, ___) {
         final title = controller.getDisplayName(File(widget.filePath));
-        return MiddleEllipsisText(title, style: previewTitleStyle(context));
+        return EllipsizedText(
+          type: EllipsisType.middle,
+          title,
+          style: previewTitleStyle(context),
+        );
       },
     );
   }
