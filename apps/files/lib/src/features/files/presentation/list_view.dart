@@ -1,6 +1,7 @@
 import 'dart:io' as io;
 import 'dart:ui';
 
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
@@ -110,8 +111,9 @@ Widget buildListView(
                         ),
                       ],
                     ),
-                    title: MiddleEllipsisText(
+                    title: EllipsizedText(
                       title,
+                      type: EllipsisType.middle,
                       style: TextStyle(
                         fontSize: 20,
                         color: context.colorScheme.onSurface,
@@ -236,8 +238,9 @@ Widget buildListViewForRecentFiles(
                 ),
               ],
             ),
-            title: MiddleEllipsisText(
+            title: EllipsizedText(
               file.name,
+              type: EllipsisType.middle,
               style: TextStyle(
                 fontSize: 20,
                 color: context.colorScheme.onSurface,
@@ -377,8 +380,9 @@ Widget buildListViewMoveAndExtract(
                           ),
                         ],
                       ),
-                      title: MiddleEllipsisText(
+                      title: EllipsizedText(
                         title,
+                        type: EllipsisType.middle,
                         style: TextStyle(
                           fontSize: 20,
                           color: context.colorScheme.onSurface,
