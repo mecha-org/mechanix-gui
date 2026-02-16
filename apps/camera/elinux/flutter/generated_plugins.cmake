@@ -3,8 +3,8 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  camera_elinux
   video_player_elinux
+  camera_elinux
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
