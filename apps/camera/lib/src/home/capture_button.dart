@@ -5,11 +5,24 @@ class CaptureButton extends StatefulWidget {
   final ValueNotifier<double> zoomLevel;
   final ValueNotifier<bool> isRecording;
   final ValueNotifier<double> captureButtonOffset;
+  final VoidCallback onCapture;
+  final VoidCallback onStartRecording;
+  final VoidCallback onStopRecording;
+  final Function(double) onZoomChange;
+  final double minZoom;
+  final double maxZoom;
+
   const CaptureButton({
     super.key,
     required this.zoomLevel,
     required this.isRecording,
     required this.captureButtonOffset,
+    required this.onCapture,
+    required this.onStartRecording,
+    required this.onStopRecording,
+    required this.onZoomChange,
+    required this.minZoom,
+    required this.maxZoom,
   });
 
   @override
@@ -17,15 +30,36 @@ class CaptureButton extends StatefulWidget {
 }
 
 class _CaptureButtonState extends State<CaptureButton> {
-  static const double maxDragDistance = 20.0;
-  static const double minZoom = 1.0;
-  static const double maxZoom = 2.0;
+  static const double maxDragDistance = 40.0;
 
   void updateZoomFromOffset(double offset) {
     final normalizedOffset = (offset / maxDragDistance).clamp(-1.0, 1.0);
-    final zoomRange = maxZoom - minZoom;
-    widget.zoomLevel.value =
-        minZoom + (zoomRange * ((normalizedOffset + 1) / 2));
+    final zoomRange = widget.maxZoom - widget.minZoom;
+    final newZoom = widget.minZoom + (zoomRange * ((normalizedOffset + 1) / 2));
+    widget.onZoomChange(newZoom);
+  }
+
+  void _handleTap() {
+    if (!widget.isRecording.value) {
+      widget.onCapture();
+    } else {
+      widget.onStopRecording();
+      widget.isRecording.value = false;
+    }
+  }
+
+  void _handleLongPressStart() {
+    if (!widget.isRecording.value) {
+      widget.isRecording.value = true;
+      widget.onStartRecording();
+    }
+  }
+
+  void _handleLongPressEnd() {
+    if (widget.isRecording.value) {
+      widget.onStopRecording();
+      widget.isRecording.value = false;
+    }
   }
 
   @override
@@ -37,19 +71,18 @@ class _CaptureButtonState extends State<CaptureButton> {
       child: Column(
         children: [
           GestureDetector(
-            onTap: () {
-              widget.isRecording.value = !widget.isRecording.value;
-            },
+            onTap: _handleTap,
+            onLongPress: _handleLongPressStart,
+            onLongPressEnd: (details) => _handleLongPressEnd(),
             onVerticalDragUpdate: (details) {
-              widget
-                  .captureButtonOffset
-                  .value = (widget.captureButtonOffset.value - details.delta.dy)
-                  .clamp(-maxDragDistance, maxDragDistance);
+              widget.captureButtonOffset.value =
+                  (widget.captureButtonOffset.value - details.delta.dy)
+                      .clamp(-maxDragDistance, maxDragDistance);
               updateZoomFromOffset(widget.captureButtonOffset.value);
             },
             onVerticalDragEnd: (details) {
               widget.captureButtonOffset.value = 0.0;
-              widget.zoomLevel.value = 1.0;
+              // widget.onZoomChange(widget.minZoom);
             },
             child: ValueListenableBuilder<double>(
               valueListenable: widget.captureButtonOffset,
@@ -80,10 +113,9 @@ class _CaptureButtonState extends State<CaptureButton> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                color:
-                                    isRecording
-                                        ? Colors.red
-                                        : context.onSurface,
+                                color: isRecording
+                                    ? Colors.red
+                                    : context.onSurface,
                                 shape: BoxShape.circle,
                               ),
                             );
