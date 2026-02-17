@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:file/local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -10,7 +11,6 @@ import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
-import 'package:shared_preferences/shared_preferences.dart';
 
 class FilesBloc extends Bloc<FilesEvent, FilesState> {
   final FileRepository fileRepository;
@@ -69,12 +69,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   ) async {
     emit(state.copyWith(loading: true));
 
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('app_settings');
 
     final savedSort =
-        prefs.getString('sort_mode') ?? keyFromSort(SortBy.modTime);
-    final savedAscending = prefs.getBool('sort_ascending') ?? false;
-    final savedHidden = prefs.getBool('show_hidden_files') ?? false;
+        box.get('sort_mode', defaultValue: keyFromSort(SortBy.modTime));
+
+    final savedAscending = box.get('sort_ascending', defaultValue: false);
+
+    final savedHidden = box.get('show_hidden_files', defaultValue: false);
 
     emit(state.copyWith(
       loading: false,
@@ -342,10 +344,10 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
     logger.d("Sort by : ${event.sortBy}, asc: ${event.isAscending}");
 
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('app_settings');
 
-    await prefs.setString('sort_mode', event.sortBy);
-    await prefs.setBool('sort_ascending', event.isAscending);
+    await box.put('sort_mode', event.sortBy);
+    await box.put('sort_ascending', event.isAscending);
 
     emit(
       state.copyWith(
@@ -377,12 +379,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   }
 
   Future<void> _onToggleHiddenFiles(
-      ToggleHiddenFiles event, Emitter<FilesState> emit) async {
+    ToggleHiddenFiles event,
+    Emitter<FilesState> emit,
+  ) async {
     final newShowHidden = !state.showHiddenFiles;
     emit(state.copyWith(showHiddenFiles: newShowHidden, loading: true));
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('show_hidden_files', newShowHidden);
+    final box = Hive.box('app_settings');
+    await box.put('show_hidden_files', newShowHidden);
 
     emit(state.copyWith(loading: false));
   }

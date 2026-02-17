@@ -39,7 +39,6 @@ dependencies:
   logger: ^2.6.0
   flutter_bloc: ^9.1.1
   equatable: ^2.0.7
-  shared_preferences: ^2.2.2
   flutter_code_editor: ^0.3.3
   highlight: ^0.7.0
   flutter_highlight: ^0.7.0

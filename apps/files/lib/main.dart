@@ -68,6 +68,9 @@ Future<void> initializeHive() async {
 
   // Open the recent files box
   await Hive.openBox<List>('recent_files');
+
+  // // Open the app settings box
+  await Hive.openBox('app_settings');
 }
 
 class MechanixFilesApp extends WatchingWidget {
