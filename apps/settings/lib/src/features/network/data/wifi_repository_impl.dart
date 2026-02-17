@@ -247,13 +247,12 @@ class WifiRepositoryImpl implements WifiRepository {
     if (wifiDevice == null ||
         wifiDevice.state == NetworkManagerDeviceState.unavailable) {
       print('connectToNetwork::No WiFi device found');
-      throw Exception('No WiFi device available');
     }
 
     try {
       // Check if connection already exists to avoid duplicates, if exist remove it
       final existingConnection = await _findAndRemoveExistingConnection(
-          accessPoint: accessPoint, ssid: null);
+          accessPoint: accessPoint, ssid: utf8.decode(accessPoint.ssid));
 
       if (existingConnection != null) {
         print('Found existing connection, activating it');

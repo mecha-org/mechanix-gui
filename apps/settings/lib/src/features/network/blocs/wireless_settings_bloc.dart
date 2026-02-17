@@ -231,45 +231,15 @@ class WirelessSettingsBloc
           if (wifiDevice.state != state.deviceState) {
             add(UpdateNMDeviceState(wifiDevice.state));
           }
-          // when network connection failed
+
           if (wifiDevice.state == NetworkManagerDeviceState.failed) {
-            add(
-              ActivatingNetworkEvent(
-                const ActivatingNetwork(
-                  deviceState: NetworkManagerActiveConnectionState.deactivated,
-                  isActivate: false,
-                  accessPoint: null,
-                  ssid: [],
-                ),
-              ),
-            );
-
-            final failedNetwork = [
-              ...state.availableOtherNetworks,
-              ...state.availableOtherNetworks
-            ].firstWhereOrNull((sn) =>
-                utf8.decode(sn.nmAccessPoint.ssid) ==
-                wifiDevice.activeConnection?.id);
-
-            // when network failed remove from saved network
-            if (failedNetwork != null) {
-              await wifiRepository.deleteSavedNetwork(
-                failedNetwork.nmAccessPoint,
-              );
-            }
-            final savedNetworks = await wifiRepository.getSavedNetworks();
-
-            final availAccessPoints =
-                await wifiRepository.availableAccessPoints(savedNetworks);
-
-            final savedAccessPoints = availAccessPoints.available
-                .where((ap) => ap.isSaved && !ap.isActive)
-                .toList();
-
-            add(UpdateSavedNetworkList(savedAccessPoints));
+            add(ActivatingNetworkEvent(const ActivatingNetwork(
+              ssid: [],
+              isActivate: false,
+              accessPoint: null,
+              deviceState: NetworkManagerActiveConnectionState.unknown,
+            )));
           }
-
-          // get currently activate connection list
           final connections = await wifiRepository.activatingConnection();
           final savedNetworks = await wifiRepository.getSavedNetworks();
 
@@ -486,15 +456,20 @@ class WirelessSettingsBloc
   Future<void> onForgetNetwork(
       ForgetNetwork event, Emitter<WirelessSettingsState> emit) async {
     try {
-      await wifiRepository.forgetNetwork(event.ssid);
-
-      final updatedNetworks = state.availableSavedNetworks
+      final updatedSavedNetworks = state.availableSavedNetworks
           .where((sn) => utf8.decode(sn.nmAccessPoint.ssid) != event.ssid)
           .toList();
 
-      if (updatedNetworks.length != state.availableSavedNetworks.length) {
-        emit(state.copyWith(availableSavedNetworks: updatedNetworks));
+      final updatedAllNetworks =
+          state.allSavedNetworks.where((sn) => sn.ssid != event.ssid).toList();
+
+      if (updatedSavedNetworks.length != state.availableSavedNetworks.length) {
+        emit(state.copyWith(
+          availableSavedNetworks: updatedSavedNetworks,
+          allSavedNetworks: updatedAllNetworks,
+        ));
       }
+      await wifiRepository.forgetNetwork(event.ssid);
 
       add(GetSavedNetworksEvent());
       add(LoadNetworks());
