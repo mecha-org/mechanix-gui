@@ -5,23 +5,27 @@ class RecentFilesManager {
   static const String _boxName = 'recent_files';
   static const String _key = 'items';
 
-  Box<List> get _box => Hive.box<List>(_boxName);
-
-  Future<void> ensureHiveConnected() async {
+  Future<Box<List>> _getBox() async {
     if (!Hive.isBoxOpen(_boxName)) {
       await Hive.openBox<List>(_boxName);
     }
+    return Hive.box<List>(_boxName);
   }
 
   Future<List<String>> getRecentFiles() async {
-    await ensureHiveConnected();
-    return (_box.get(_key) ?? []).cast<String>();
+    final box = await _getBox();
+    return (box.get(_key) ?? []).cast<String>();
+  }
+
+  Future<void> setRecentFiles(List<String> paths) async {
+    final box = await _getBox();
+    await box.put(_key, paths);
   }
 
   Future<void> addRecentFile(String filePath) async {
-    await ensureHiveConnected();
+    final box = await _getBox();
 
-    final List<String> recentFiles = (_box.get(_key) ?? []).cast<String>();
+    final List<String> recentFiles = (box.get(_key) ?? []).cast<String>();
 
     recentFiles.remove(filePath);
     recentFiles.insert(0, filePath);
@@ -31,16 +35,11 @@ class RecentFilesManager {
       recentFiles.removeRange(limit, recentFiles.length);
     }
 
-    await _box.put(_key, recentFiles);
-  }
-
-  Future<void> setRecentFiles(List<String> paths) async {
-    await ensureHiveConnected();
-    await _box.put(_key, paths);
+    await box.put(_key, recentFiles);
   }
 
   Future<void> clear() async {
-    await ensureHiveConnected();
-    await _box.delete(_key);
+    final box = await _getBox();
+    await box.delete(_key);
   }
 }

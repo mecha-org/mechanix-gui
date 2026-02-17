@@ -65,6 +65,9 @@ Future<void> initializeHive() async {
     await appDir.create(recursive: true);
   }
   Hive.init(appDir.path);
+
+  // Open the recent files box
+  await Hive.openBox<List>('recent_files');
 }
 
 class MechanixFilesApp extends WatchingWidget {
