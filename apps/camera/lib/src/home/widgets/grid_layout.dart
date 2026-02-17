@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
-import 'package:mechanix_camera/src/bloc/camera_state.dart';
+import 'package:mechanix_camera/src/home/widgets/camera_frame_scope.dart';
 import 'package:widgets/extensions/color.dart';
 
 class GridLayout extends StatelessWidget {
@@ -10,33 +9,31 @@ class GridLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<CameraBloc, CameraState, CameraGrid>(
-      selector: (state) => state.grid,
-      builder: (context, grid) {
-        // Don't show grid if divisions is 0 or grid is disabled
-        if (grid.divisions == 0) {
-          return const SizedBox.shrink();
-        }
+    final grid = context.select((CameraBloc b) => b.state.grid);
+    if (grid.divisions == 0) return const SizedBox.shrink();
 
-        return CustomPaint(
-          painter: GridPainter(
-            divisions: grid.divisions,
-            gridColor: context.onSurface,
-          ),
-          child: Container(),
-        );
-      },
+    final frameRect = CameraFrameScope.of(context);
+
+    return CustomPaint(
+      painter: GridPainter(
+        divisions: grid.divisions,
+        gridColor: context.onSurface,
+        frameRect: frameRect,
+      ),
+      child: const SizedBox.expand(),
     );
   }
 }
 
 class GridPainter extends CustomPainter {
   final int divisions;
+  final Rect frameRect;
   final Color gridColor;
   final double strokeWidth;
 
   GridPainter({
     required this.divisions,
+    required this.frameRect,
     required this.gridColor,
     this.strokeWidth = 0.5,
   });
@@ -49,26 +46,35 @@ class GridPainter extends CustomPainter {
           ..strokeWidth = strokeWidth
           ..style = PaintingStyle.stroke;
 
-    // Calculate spacing between grid lines
-    final horizontalSpacing = size.width / divisions;
-    final verticalSpacing = size.height / divisions;
+    // Calculate spacing between grid lines within the frame
+    final horizontalSpacing = frameRect.width / divisions;
+    final verticalSpacing = frameRect.height / divisions;
 
     // Draw vertical lines
     for (int i = 1; i < divisions; i++) {
-      final x = horizontalSpacing * i;
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+      final x = frameRect.left + (horizontalSpacing * i);
+      canvas.drawLine(
+        Offset(x, frameRect.top),
+        Offset(x, frameRect.bottom),
+        paint,
+      );
     }
 
     // Draw horizontal lines
     for (int i = 1; i < divisions; i++) {
-      final y = verticalSpacing * i;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+      final y = frameRect.top + (verticalSpacing * i);
+      canvas.drawLine(
+        Offset(frameRect.left, y),
+        Offset(frameRect.right, y),
+        paint,
+      );
     }
   }
 
   @override
   bool shouldRepaint(GridPainter oldDelegate) {
     return oldDelegate.divisions != divisions ||
+        oldDelegate.frameRect != frameRect ||
         oldDelegate.gridColor != gridColor ||
         oldDelegate.strokeWidth != strokeWidth;
   }
