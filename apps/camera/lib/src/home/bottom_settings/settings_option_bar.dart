@@ -14,6 +14,7 @@ class SettingsOptionsBar extends StatelessWidget {
       padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: context.secondary,
+        border: Border.all(color: context.surfaceContainerHigh, width: 1),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(8),
           topRight: Radius.circular(8),
@@ -22,6 +23,7 @@ class SettingsOptionsBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.center,
         spacing: 24,
         children: children,
       ),

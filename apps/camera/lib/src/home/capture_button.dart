@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
+import 'package:mechanix_camera/src/bloc/camera_state.dart';
 import 'package:widgets/extensions/color.dart';
 
 class CaptureButton extends StatefulWidget {
@@ -30,7 +34,7 @@ class CaptureButton extends StatefulWidget {
 }
 
 class _CaptureButtonState extends State<CaptureButton> {
-  static const double maxDragDistance = 40.0;
+  static const double maxDragDistance = 30.0;
 
   void updateZoomFromOffset(double offset) {
     final normalizedOffset = (offset / maxDragDistance).clamp(-1.0, 1.0);
@@ -39,26 +43,19 @@ class _CaptureButtonState extends State<CaptureButton> {
     widget.onZoomChange(newZoom);
   }
 
-  void _handleTap() {
-    if (!widget.isRecording.value) {
-      widget.onCapture();
+  void _handleTap(bool isVideoMode) {
+    if (isVideoMode) {
+      // Video mode: toggle recording
+      if (!widget.isRecording.value) {
+        widget.isRecording.value = true;
+        widget.onStartRecording();
+      } else {
+        widget.onStopRecording();
+        widget.isRecording.value = false;
+      }
     } else {
-      widget.onStopRecording();
-      widget.isRecording.value = false;
-    }
-  }
-
-  void _handleLongPressStart() {
-    if (!widget.isRecording.value) {
-      widget.isRecording.value = true;
-      widget.onStartRecording();
-    }
-  }
-
-  void _handleLongPressEnd() {
-    if (widget.isRecording.value) {
-      widget.onStopRecording();
-      widget.isRecording.value = false;
+      // Photo mode: capture photo
+      widget.onCapture();
     }
   }
 
@@ -70,63 +67,87 @@ class _CaptureButtonState extends State<CaptureButton> {
       right: 0,
       child: Column(
         children: [
-          GestureDetector(
-            onTap: _handleTap,
-            onLongPress: _handleLongPressStart,
-            onLongPressEnd: (details) => _handleLongPressEnd(),
-            onVerticalDragUpdate: (details) {
-              widget.captureButtonOffset.value =
-                  (widget.captureButtonOffset.value - details.delta.dy)
-                      .clamp(-maxDragDistance, maxDragDistance);
-              updateZoomFromOffset(widget.captureButtonOffset.value);
-            },
-            onVerticalDragEnd: (details) {
-              widget.captureButtonOffset.value = 0.0;
-              // widget.onZoomChange(widget.minZoom);
-            },
-            child: ValueListenableBuilder<double>(
-              valueListenable: widget.captureButtonOffset,
-              builder: (context, offset, child) {
-                return Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: context.onSecondaryFixed,
-                      width: 1.5,
-                    ),
-                  ),
-                  clipBehavior: Clip.none,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      Positioned(
-                        top: 6 - offset,
-                        left: 6,
-                        right: 6,
-                        bottom: 6 + offset,
-                        child: ValueListenableBuilder<bool>(
-                          valueListenable: widget.isRecording,
-                          builder: (context, isRecording, child) {
-                            return Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: isRecording
-                                    ? Colors.red
-                                    : context.onSurface,
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          },
+          BlocSelector<CameraBloc, CameraState, bool>(
+            selector: (state) => state.captureMode == CaptureMode.video,
+            builder:
+                (context, isVideoMode) => GestureDetector(
+                  onTap: () => _handleTap(isVideoMode),
+                  onVerticalDragUpdate: (details) {
+                    widget.captureButtonOffset.value =
+                        (widget.captureButtonOffset.value - details.delta.dy)
+                            .clamp(-maxDragDistance, maxDragDistance);
+                    updateZoomFromOffset(widget.captureButtonOffset.value);
+                  },
+                  onVerticalDragEnd: (details) {
+                    widget.captureButtonOffset.value = 0.0;
+                    // widget.onZoomChange(widget.minZoom);
+                  },
+                  child: ValueListenableBuilder<double>(
+                    valueListenable: widget.captureButtonOffset,
+                    builder: (context, offset, child) {
+                      return Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: context.onSecondaryFixed,
+                            width: 1.5,
+                          ),
                         ),
-                      ),
-                    ],
+                        clipBehavior: Clip.none,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            Positioned(
+                              top: 6 - offset,
+                              left: 6,
+                              right: 6,
+                              bottom: 6 + offset,
+                              child: ValueListenableBuilder<bool>(
+                                valueListenable: widget.isRecording,
+                                builder: (context, isRecording, child) {
+                                  return Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          isVideoMode && !isRecording
+                                              ? Color(0xFFD30000)
+                                              : context.onSurface,
+                                      border: Border.all(
+                                        color: context.onSurface,
+                                        width: 2.87,
+                                      ),
+                                    ),
+                                    child:
+                                        isRecording
+                                            ? Center(
+                                              child: Container(
+                                                width: 20,
+                                                height: 20,
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      context.onSurfaceVariant,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        3.3,
+                                                      ),
+                                                ),
+                                              ),
+                                            )
+                                            : null,
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+                ),
           ),
           const SizedBox(height: 30),
         ],

@@ -17,10 +17,13 @@ class SettingsButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      child: Text(
-        text,
-        style: settingsTextStyle(context, isActive: isActive),
-      ).padSymmetric(horizontal: 10, vertical: 4),
+      child: Container(
+        alignment: Alignment.center,
+        child: Text(
+          text,
+          style: settingsTextStyle(context, isActive: isActive),
+        ).padOnly(left: 10, right: 10, bottom: 4),
+      ),
     );
   }
 }

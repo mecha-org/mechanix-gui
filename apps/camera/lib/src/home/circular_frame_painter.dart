@@ -36,13 +36,6 @@ class CircularFramePainter extends CustomPainter {
       false,
       indicatorPaint,
     );
-
-    final dotPaint =
-        Paint()
-          ..color = colorScheme.onSurface
-          ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(center, 2.0, dotPaint);
   }
 
   @override

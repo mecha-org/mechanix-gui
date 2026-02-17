@@ -62,8 +62,8 @@ packages:
     description:
       path: "packages/camera"
       ref: main
-      resolved-ref: b791e8728d7ae9ba5c1ff562c1e0b408b2e8fc1b
-      url: "https://github.com/sony/flutter-elinux-plugins.git"
+      resolved-ref: ecffa51133382ca3c20f22f105abdd6231031087
+      url: "https://github.com/sandptel/flutter-elinux-plugins.git"
     source: git
     version: "0.3.2"
   camera_platform_interface:
@@ -398,6 +398,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.4"
+  tuple:
+    dependency: "direct main"
+    description:
+      name: tuple
+      sha256: a97ce2013f240b2f3807bcbaf218765b6f301c3eff91092bcfa23a039e7dd151
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
   vector_math:
     dependency: transitive
     description:
@@ -435,8 +443,8 @@ packages:
     description:
       path: "packages/video_player"
       ref: main
-      resolved-ref: b791e8728d7ae9ba5c1ff562c1e0b408b2e8fc1b
-      url: "https://github.com/sony/flutter-elinux-plugins.git"
+      resolved-ref: ecffa51133382ca3c20f22f105abdd6231031087
+      url: "https://github.com/sandptel/flutter-elinux-plugins.git"
     source: git
     version: "0.9.9"
   video_player_platform_interface:

@@ -4,7 +4,7 @@ import 'package:mechanix_camera/models/camera_models.dart';
 class CameraState extends Equatable {
   final CaptureMode captureMode;
   final bool isSettingsOpen;
-  final CameraSettingType? cameraSettingType;
+  final CameraSettingType cameraSettingType;
   final CameraAspectRatio aspectRatio;
   final CameraResolution resolution;
   final CameraGrid grid;
