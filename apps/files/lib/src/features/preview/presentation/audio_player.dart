@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
-import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
-import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/services/media_kit_manager.dart';
@@ -107,7 +106,10 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
           child: AppBar(
             automaticallyImplyLeading: false,
             scrolledUnderElevation: 0,
-            title: MiddleEllipsisText(title, style: previewTitleStyle(context)),
+            title: EllipsizedText(
+                type: EllipsisType.middle,
+                title,
+                style: previewTitleStyle(context)),
             backgroundColor: Colors.transparent,
             elevation: 0,
           ),
