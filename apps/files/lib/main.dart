@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart' show Hive;
 import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/load_settings.dart';
@@ -11,7 +12,6 @@ import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository_impl.dart';
 import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
-import 'package:mechanix_files/src/features/files/presentation/files.dart';
 import 'package:mechanix_files/src/features/files/presentation/files_home.dart';
 import 'package:watch_it/watch_it.dart';
 import 'package:widgets/mechanix.dart';
@@ -24,6 +24,8 @@ Future<void> main(List<String> args) async {
   AppConfig().loadFromMap(configResult);
 
   final openPath = _parseOpenPath();
+
+  await initializeHive();
 
   runApp(
     MultiBlocProvider(
@@ -47,6 +49,22 @@ String _parseOpenPath() {
   return compileTimeOpenPath.isNotEmpty
       ? compileTimeOpenPath
       : (runtimeOpenPath ?? '');
+}
+
+Future<void> initializeHive() async {
+  final home = Platform.environment['HOME'];
+  final xdgConfig = Platform.environment['XDG_CONFIG_HOME'];
+
+  if (home == null && xdgConfig == null) {
+    throw Exception('Cannot determine home directory');
+  }
+
+  final baseDir = xdgConfig ?? '$home/.config';
+  final appDir = Directory('$baseDir/mechanix_files');
+  if (!await appDir.exists()) {
+    await appDir.create(recursive: true);
+  }
+  Hive.init(appDir.path);
 }
 
 class MechanixFilesApp extends WatchingWidget {

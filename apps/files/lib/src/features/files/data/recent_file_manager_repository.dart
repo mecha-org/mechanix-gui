@@ -1,36 +1,46 @@
+import 'package:hive/hive.dart';
 import 'package:mechanix_files/app_config.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class RecentFilesManager {
-  static const String _recentFilesKey = 'recentFiles';
+  static const String _boxName = 'recent_files';
+  static const String _key = 'items';
+
+  Box<List> get _box => Hive.box<List>(_boxName);
+
+  Future<void> ensureHiveConnected() async {
+    if (!Hive.isBoxOpen(_boxName)) {
+      await Hive.openBox<List>(_boxName);
+    }
+  }
 
   Future<List<String>> getRecentFiles() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_recentFilesKey) ?? [];
+    await ensureHiveConnected();
+    return (_box.get(_key) ?? []).cast<String>();
   }
 
   Future<void> addRecentFile(String filePath) async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> recentFiles = prefs.getStringList(_recentFilesKey) ?? [];
+    await ensureHiveConnected();
+
+    final List<String> recentFiles = (_box.get(_key) ?? []).cast<String>();
 
     recentFiles.remove(filePath);
     recentFiles.insert(0, filePath);
 
     final limit = AppConfig().recentFilesCount;
     if (recentFiles.length > limit) {
-      recentFiles = recentFiles.sublist(0, limit);
+      recentFiles.removeRange(limit, recentFiles.length);
     }
 
-    await prefs.setStringList(_recentFilesKey, recentFiles);
-  }
-
-  Future<void> clear() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_recentFilesKey);
+    await _box.put(_key, recentFiles);
   }
 
   Future<void> setRecentFiles(List<String> paths) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_recentFilesKey, paths);
+    await ensureHiveConnected();
+    await _box.put(_key, paths);
+  }
+
+  Future<void> clear() async {
+    await ensureHiveConnected();
+    await _box.delete(_key);
   }
 }
