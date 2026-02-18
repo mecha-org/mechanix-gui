@@ -13,7 +13,6 @@ import 'package:mechanix_settings/src/features/network/presentation/saved_networ
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class NetworkSettings extends StatefulWidget {
@@ -57,13 +56,10 @@ class _NetworkSettingsState extends State<NetworkSettings> {
             ),
             title: item.ssid ?? '',
             trailing: MechanixMenu(
-              theme: MechanixMenuThemeData(
-                decoration: BoxDecoration(color: context.surfaceContainerHigh),
-                dropdownWidth: 135,
-                dropdownHeight: 128,
-              ),
+              dropdownSize: const Size(135, 128),
+              wingSize: 50,
               animationDuration: const Duration(milliseconds: 400),
-              offset: const Offset(-45, 25),
+              offset: const Offset(-45, 50),
               topTabWidth: 1,
               dropdownPosition: DropdownPosition.centerRight,
               items: [
@@ -73,8 +69,8 @@ class _NetworkSettingsState extends State<NetworkSettings> {
                     iconPath: Images.settings,
                     boxWidth: 20,
                     boxHeight: 20,
-                    iconWidth: 16,
-                    iconHeight: 16,
+                    iconWidth: 20,
+                    iconHeight: 20,
                   ),
                   onTap: () {
                     final connectNetworkBloc =
@@ -133,7 +129,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CustomTitle(title: "Network Settings"),
+                  const CustomTitle(title: "Manage wireless"),
                   MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
                     listItems: getWireless(context, state),

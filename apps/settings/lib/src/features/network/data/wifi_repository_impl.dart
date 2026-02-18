@@ -145,7 +145,6 @@ class WifiRepositoryImpl implements WifiRepository {
               nmAccessPoint.rsnFlags.isNotEmpty;
 
           if (isActive) {
-            // connected
             connectedAccessPoint = AccessPoints(
               isActive: isActive,
               isSaved: isSaved,
@@ -154,17 +153,17 @@ class WifiRepositoryImpl implements WifiRepository {
               ip4Config: ip4Config,
               ip6Config: ip6Config,
             );
+          } else {
+            var accessPoint = AccessPoints(
+              nmAccessPoint: nmAccessPoint,
+              isActive: isActive,
+              isSaved: isSaved,
+              isSecure: isSecure,
+              ip4Config: ip4Config,
+              ip6Config: ip6Config,
+            );
+            accessPoints.add(accessPoint);
           }
-          // active + saved
-          var accessPoint = AccessPoints(
-            nmAccessPoint: nmAccessPoint,
-            isActive: isActive,
-            isSaved: isSaved,
-            isSecure: isSecure,
-            ip4Config: ip4Config,
-            ip6Config: ip6Config,
-          );
-          accessPoints.add(accessPoint);
         }
       }
       return (active: connectedAccessPoint, available: accessPoints);
@@ -248,13 +247,12 @@ class WifiRepositoryImpl implements WifiRepository {
     if (wifiDevice == null ||
         wifiDevice.state == NetworkManagerDeviceState.unavailable) {
       print('connectToNetwork::No WiFi device found');
-      throw Exception('No WiFi device available');
     }
 
     try {
       // Check if connection already exists to avoid duplicates, if exist remove it
       final existingConnection = await _findAndRemoveExistingConnection(
-          accessPoint: accessPoint, ssid: null);
+          accessPoint: accessPoint, ssid: utf8.decode(accessPoint.ssid));
 
       if (existingConnection != null) {
         print('Found existing connection, activating it');

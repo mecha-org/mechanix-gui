@@ -57,9 +57,9 @@ class BatteryScreenState extends State<Battery> {
           ].join(' ');
 
           if (state.batteryStatus == UPowerDeviceState.charging) {
-            timeText = "$timeText to Full Charge";
+            timeText = "$timeText to full charge";
           } else {
-            timeText = "$timeText Left";
+            timeText = "$timeText left";
           }
         }
 

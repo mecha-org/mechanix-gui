@@ -35,8 +35,6 @@ class _ManageDeviceState extends State<ManageDevice> {
         trailing: MechanixMenu(
             theme: MechanixMenuThemeData(
               decoration: BoxDecoration(color: context.surfaceContainerHigh),
-              dropdownWidth: 135,
-              dropdownHeight: 128,
             ),
             animationDuration: const Duration(milliseconds: 400),
             offset: const Offset(-45, 45),

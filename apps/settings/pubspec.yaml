@@ -48,7 +48,7 @@ dependencies:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: 2ff2167006cf10f74146a696de0bd34415abbdce
+      ref: ca0466376fe0fff50199f72467cfa9a328142a96
 
   watch_it: ^1.7.0
   timezone: ^0.10.1
