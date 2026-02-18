@@ -9,8 +9,12 @@ class FileItem {
   final List<FileItem>? children;
   final DateTime? modified;
 
-  FileItem(
-      {required this.name, required this.type, this.children, this.modified});
+  FileItem({
+    required this.name,
+    required this.type,
+    this.children,
+    this.modified,
+  });
 
   @override
   String toString() {
@@ -51,7 +55,7 @@ const textFileTypes = [
   '.rb',
   '.xml',
   '.rs',
-  '.txt'
+  '.txt',
 ];
 
 const audioFileTypes = [
@@ -61,16 +65,10 @@ const audioFileTypes = [
   '.m4a',
   '.aac',
   '.ogg',
-  '.opus'
+  '.opus',
 ];
 
-const videoFileTypes = [
-  '.mp4',
-  '.mkv',
-  '.avi',
-  '.mov',
-  '.wmv',
-];
+const videoFileTypes = ['.mp4', '.mkv', '.avi', '.mov', '.wmv'];
 
 const imageFileTypes = [
   '.png',
@@ -79,7 +77,7 @@ const imageFileTypes = [
   '.webp',
   '.svg',
   '.gif',
-  '.bmp'
+  '.bmp',
 ];
 
 const int page = 1;
