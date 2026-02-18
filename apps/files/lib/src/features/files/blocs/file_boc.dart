@@ -2,31 +2,34 @@ import 'dart:async';
 
 import 'package:file/local.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:hive/hive.dart';
 import 'package:logger/web.dart';
-import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
+import 'package:mechanix_files/src/features/files/data/app_settings_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
-import 'package:mechanix_files/src/features/files/data/recent_file_manager_repository.dart';
-import 'package:mechanix_files/src/features/files/models/types.dart';
+import 'package:mechanix_files/src/features/files/data/recent_files_repository.dart';
 import 'package:path/path.dart' as p;
 
 class FilesBloc extends Bloc<FilesEvent, FilesState> {
   final FileRepository fileRepository;
   final logger = Logger();
-  final RecentFilesManager recentFilesManager;
+  final RecentFilesRepository recentFilesRepository;
+  final AppSettingsRepository appSettingsRepository;
 
   FilesBloc({
     required this.fileRepository,
-    required this.recentFilesManager,
-  }) : super(const FilesState(
-            fileSystemList: [],
-            loading: false,
-            error: null,
-            currentSortBy: '',
-            isAscending: false,
-            conflictDestinationPath: '')) {
+    required this.recentFilesRepository,
+    required this.appSettingsRepository,
+  }) : super(
+         const FilesState(
+           fileSystemList: [],
+           loading: false,
+           error: null,
+           currentSortBy: '',
+           isAscending: false,
+           conflictDestinationPath: '',
+         ),
+       ) {
     on<InitializeFiles>(_onInitializeFiles);
     on<CreateFolder>(_onCreateFolder);
     on<DeleteEntities>(_onDeleteEntities);
@@ -36,13 +39,15 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     on<StartCopyMode>(_onStartCopyMode);
     on<CancelCopyMode>(_onCancelCopyMode);
     on<ContinueCopyWithConflictResolution>(
-        _onContinueCopyWithConflictResolution);
+      _onContinueCopyWithConflictResolution,
+    );
 
     on<Move>(_onMove);
     on<StartMoveMode>(_onStartMoveMode);
     on<CancelMoveMode>(_onCancelMoveMode);
     on<ContinueMoveWithConflictResolution>(
-        _onContinueMoveWithConflictResolution);
+      _onContinueMoveWithConflictResolution,
+    );
 
     on<SortFiles>(_onSortFiles);
     on<FetchFileDetails>(_onFetchFileDetails);
@@ -69,25 +74,22 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   ) async {
     emit(state.copyWith(loading: true));
 
-    final box = Hive.box('app_settings');
+    final settings = await appSettingsRepository.getSettings();
 
-    final savedSort =
-        box.get('sort_mode', defaultValue: keyFromSort(SortBy.modTime));
-
-    final savedAscending = box.get('sort_ascending', defaultValue: false);
-
-    final savedHidden = box.get('show_hidden_files', defaultValue: false);
-
-    emit(state.copyWith(
-      loading: false,
-      currentSortBy: savedSort,
-      isAscending: savedAscending,
-      showHiddenFiles: savedHidden,
-    ));
+    emit(
+      state.copyWith(
+        loading: false,
+        currentSortBy: settings.sortMode,
+        isAscending: settings.ascending,
+        showHiddenFiles: settings.showHiddenFiles,
+      ),
+    );
   }
 
   Future<void> _onCreateFolder(
-      CreateFolder event, Emitter<FilesState> emit) async {
+    CreateFolder event,
+    Emitter<FilesState> emit,
+  ) async {
     try {
       emit(state.copyWith(loading: true));
 
@@ -170,11 +172,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
       // Then: handle conflicts
       if (conflicts.isNotEmpty) {
-        emit(state.copyWith(
+        emit(
+          state.copyWith(
             loading: false,
             conflictingPaths: conflicts,
             conflictDestinationPath: event.destinationPath,
-            isCopyMode: true));
+            isCopyMode: true,
+          ),
+        );
       } else {
         // No conflicts, all done
         await event.controller!.reload();
@@ -202,29 +207,27 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       logger.i("Remaining conflicts: $remainingConflicts");
       if (remainingConflicts.isNotEmpty) {
         // Emit next conflict to show dialog again
-        emit(state.copyWith(
-          conflictingPaths: remainingConflicts,
-          loading: false,
-        ));
+        emit(
+          state.copyWith(conflictingPaths: remainingConflicts, loading: false),
+        );
       } else {
         logger.i("In elseRemaining conflicts: $remainingConflicts");
 
         // All conflicts resolved
         await event.controller!.reload();
 
-        emit(state.copyWith(
-          conflictingPaths: [],
-          conflictDestinationPath: '',
-          isCopyMode: false,
-          loading: false,
-        ));
+        emit(
+          state.copyWith(
+            conflictingPaths: [],
+            conflictDestinationPath: '',
+            isCopyMode: false,
+            loading: false,
+          ),
+        );
         logger.i("Emitting final state: ${state.toString()}");
       }
     } catch (e) {
-      emit(state.copyWith(
-        error: 'Failed to copy: $e',
-        loading: false,
-      ));
+      emit(state.copyWith(error: 'Failed to copy: $e', loading: false));
     }
   }
 
@@ -258,12 +261,14 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       }
 
       if (conflicts.isNotEmpty) {
-        emit(state.copyWith(
-          loading: false,
-          conflictingPaths: conflicts,
-          conflictDestinationPath: event.destinationPath,
-          isMoveMode: true,
-        ));
+        emit(
+          state.copyWith(
+            loading: false,
+            conflictingPaths: conflicts,
+            conflictDestinationPath: event.destinationPath,
+            isMoveMode: true,
+          ),
+        );
       } else {
         event.completer?.complete();
         emit(state.copyWith(loading: false));
@@ -289,65 +294,58 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
       final remainingConflicts = [...event.sourcePaths]..removeAt(0);
 
       if (remainingConflicts.isNotEmpty) {
-        emit(state.copyWith(
-          conflictingPaths: remainingConflicts,
-          loading: false,
-        ));
+        emit(
+          state.copyWith(conflictingPaths: remainingConflicts, loading: false),
+        );
       } else {
-        emit(state.copyWith(
-          conflictingPaths: [],
-          conflictDestinationPath: '',
-          isMoveMode: false,
-          loading: false,
-        ));
+        emit(
+          state.copyWith(
+            conflictingPaths: [],
+            conflictDestinationPath: '',
+            isMoveMode: false,
+            loading: false,
+          ),
+        );
       }
     } catch (e) {
-      emit(state.copyWith(
-        error: 'Failed to move: $e',
-        loading: false,
-      ));
+      emit(state.copyWith(error: 'Failed to move: $e', loading: false));
     }
   }
 
   void _onStartCopyMode(StartCopyMode event, Emitter<FilesState> emit) {
-    emit(state.copyWith(
-      isCopyMode: true,
-      copiedPaths: event.copiedPaths,
-      isMoveMode: false,
-      movedPaths: [],
-    ));
+    emit(
+      state.copyWith(
+        isCopyMode: true,
+        copiedPaths: event.copiedPaths,
+        isMoveMode: false,
+        movedPaths: [],
+      ),
+    );
   }
 
   void _onCancelCopyMode(CancelCopyMode event, Emitter<FilesState> emit) {
-    emit(state.copyWith(
-      isCopyMode: false,
-      copiedPaths: [],
-    ));
+    emit(state.copyWith(isCopyMode: false, copiedPaths: []));
   }
 
   void _onStartMoveMode(StartMoveMode event, Emitter<FilesState> emit) {
-    emit(state.copyWith(
-      isMoveMode: true,
-      movedPaths: event.movedPaths,
-      isCopyMode: false,
-      copiedPaths: [],
-    ));
+    emit(
+      state.copyWith(
+        isMoveMode: true,
+        movedPaths: event.movedPaths,
+        isCopyMode: false,
+        copiedPaths: [],
+      ),
+    );
   }
 
   void _onCancelMoveMode(CancelMoveMode event, Emitter<FilesState> emit) {
-    emit(state.copyWith(
-      isMoveMode: false,
-      movedPaths: [],
-    ));
+    emit(state.copyWith(isMoveMode: false, movedPaths: []));
   }
 
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
     logger.d("Sort by : ${event.sortBy}, asc: ${event.isAscending}");
 
-    final box = Hive.box('app_settings');
-
-    await box.put('sort_mode', event.sortBy);
-    await box.put('sort_ascending', event.isAscending);
+    await appSettingsRepository.updateSort(event.sortBy, event.isAscending);
 
     emit(
       state.copyWith(
@@ -366,15 +364,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     try {
       final stat = await fileRepository.getFileDetails(event.path);
       logger.i('File stat : $stat');
-      emit(state.copyWith(
-        fileDetails: stat,
-        loading: false,
-      ));
+      emit(state.copyWith(fileDetails: stat, loading: false));
     } catch (e) {
-      emit(state.copyWith(
-        error: e.toString(),
-        loading: false,
-      ));
+      emit(state.copyWith(error: e.toString(), loading: false));
     }
   }
 
@@ -384,20 +376,22 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   ) async {
     final newShowHidden = !state.showHiddenFiles;
     emit(state.copyWith(showHiddenFiles: newShowHidden, loading: true));
-
-    final box = Hive.box('app_settings');
-    await box.put('show_hidden_files', newShowHidden);
+    await appSettingsRepository.updateShowHidden(newShowHidden);
 
     emit(state.copyWith(loading: false));
   }
 
   Future<void> _onCompressEntities(
-      CompressEntitiesEvent event, Emitter<FilesState> emit) async {
-    emit(state.copyWith(
-      compressionStatus: FileCompressionStatus.inProgress,
-      compressionError: null,
-      compressedZipPath: null,
-    ));
+    CompressEntitiesEvent event,
+    Emitter<FilesState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        compressionStatus: FileCompressionStatus.inProgress,
+        compressionError: null,
+        compressedZipPath: null,
+      ),
+    );
 
     try {
       await fileRepository.compressEntities(
@@ -405,16 +399,20 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
         event.destinationZipPath,
       );
 
-      emit(state.copyWith(
-        compressionStatus: FileCompressionStatus.success,
-        compressedZipPath: event.destinationZipPath,
-      ));
+      emit(
+        state.copyWith(
+          compressionStatus: FileCompressionStatus.success,
+          compressedZipPath: event.destinationZipPath,
+        ),
+      );
       await event.controller?.reload();
     } catch (e) {
-      emit(state.copyWith(
-        compressionStatus: FileCompressionStatus.failure,
-        compressionError: e.toString(),
-      ));
+      emit(
+        state.copyWith(
+          compressionStatus: FileCompressionStatus.failure,
+          compressionError: e.toString(),
+        ),
+      );
     }
   }
 
@@ -431,28 +429,34 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     ExtractZipBatchCompleted event,
     Emitter<FilesState> emit,
   ) {
-    emit(state.copyWith(
-      extractStatus: FileExtractStatus.completed,
-      extractSuccessCount: event.successCount,
-      extractFailureCount: event.failureCount,
-    ));
+    emit(
+      state.copyWith(
+        extractStatus: FileExtractStatus.completed,
+        extractSuccessCount: event.successCount,
+        extractFailureCount: event.failureCount,
+      ),
+    );
   }
 
   void _onStartExtractMode(StartExtractMode event, Emitter<FilesState> emit) {
-    emit(state.copyWith(
-      isExtractMode: true,
-      zipFilePaths: event.zipFilePaths,
-      extractStatus: FileExtractStatus.inProgress,
-      extractError: null,
-    ));
+    emit(
+      state.copyWith(
+        isExtractMode: true,
+        zipFilePaths: event.zipFilePaths,
+        extractStatus: FileExtractStatus.inProgress,
+        extractError: null,
+      ),
+    );
   }
 
   void _onCancelExtractMode(CancelExtractMode event, Emitter<FilesState> emit) {
-    emit(state.copyWith(
-      isExtractMode: false,
-      zipFilePaths: [],
-      extractStatus: FileExtractStatus.none,
-    ));
+    emit(
+      state.copyWith(
+        isExtractMode: false,
+        zipFilePaths: [],
+        extractStatus: FileExtractStatus.none,
+      ),
+    );
   }
 
   Future<void> _onLoadRecentFiles(
@@ -461,31 +465,15 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
   ) async {
     try {
       final fileSystem = const LocalFileSystem();
-      final recentPaths = await recentFilesManager.getRecentFiles();
-      final cleaned = <String>[];
+      final recentFiles = await recentFilesRepository.getRecentFiles();
 
-      final visibleFiles = recentPaths
-          .where((path) {
-            final isVisible =
-                state.showHiddenFiles || !p.basename(path).startsWith('.');
-            if (!isVisible) return false;
+      final visibleFiles =
+          recentFiles
+              .where((recent) => fileSystem.file(recent.path).existsSync())
+              .map((recent) => fileSystem.file(recent.path))
+              .toList();
 
-            final file = fileSystem.file(path);
-            if (file.existsSync()) {
-              cleaned.add(path);
-              return true;
-            }
-            return false;
-          })
-          .map((path) => fileSystem.file(path))
-          .toList();
-
-      await recentFilesManager.setRecentFiles(cleaned);
-
-      emit(state.copyWith(
-        loading: false,
-        fileSystemList: visibleFiles,
-      ));
+      emit(state.copyWith(loading: false, fileSystemList: visibleFiles));
     } catch (e) {
       emit(state.copyWith(loading: false));
     }
@@ -495,7 +483,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     AddToRecentFiles event,
     Emitter<FilesState> emit,
   ) async {
-    await recentFilesManager.addRecentFile(event.path);
+    await recentFilesRepository.addRecentFile(event.path);
   }
 
   Future<void> _onSearchFilesInDirectory(
@@ -506,15 +494,9 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
     try {
       final results = await fileRepository.searchFiles(event.path, event.query);
-      emit(state.copyWith(
-        fileSystemList: results,
-        loading: false,
-      ));
+      emit(state.copyWith(fileSystemList: results, loading: false));
     } catch (e) {
-      emit(state.copyWith(
-        error: 'Search failed: $e',
-        loading: false,
-      ));
+      emit(state.copyWith(error: 'Search failed: $e', loading: false));
     }
   }
 }

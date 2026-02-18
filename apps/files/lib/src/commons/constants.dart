@@ -65,3 +65,8 @@ class Images {
   static const String lock = 'assets/images/lock.png';
   static const String edit = 'assets/images/edit.png';
 }
+
+class TableName {
+  static const String appSettingsTable = "appSettingsTable";
+  static const String recentFilesTable = "recentFilesTable";
+}
