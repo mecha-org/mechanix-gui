@@ -102,9 +102,6 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
       logger.i(
           "Default Output Device: ${defaultSinkObject.volume} ---> ${defaultSinkObject.description}");
 
-      add(GetInputDeviceList());
-      add(GetOutputDeviceList());
-
       emit(state.copyWith(
         defaultInputDevice: defaultSourceObject,
         defaultOutputDevice: defaultSinkObject,
@@ -221,6 +218,8 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
   Future<void> _onGetInputDeviceList(
       GetInputDeviceList event, Emitter<SoundState> emit) async {
     try {
+      emit(state.copyWith(inputDeviceLoading: true));
+
       final sources = await soundRepository.getSourceList();
 
       // For Refresh Device List only add new devices
@@ -242,25 +241,30 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     } catch (e) {
       print("Error fetching source list: $e");
       emit(state.copyWith(error: e.toString()));
+    } finally {
+      emit(state.copyWith(inputDeviceLoading: false));
     }
   }
 
   Future<void> _refreshInputDevicesList(
       RefreshInputDevicesList event, Emitter<SoundState> emit) async {
     try {
+      emit(state.copyWith(inputDeviceLoading: true));
       print('Refreshing input device list');
-
-      emit(state.copyWith(inputDevices: []));
+      await Future.delayed(const Duration(milliseconds: 500));
 
       add(GetInputDeviceList());
     } catch (error) {
       print('Error refreshing Output Devices $error');
+    } finally {
+      emit(state.copyWith(inputDeviceLoading: false));
     }
   }
 
   Future<void> _onGetOutputDeviceList(
       GetOutputDeviceList event, Emitter<SoundState> emit) async {
     try {
+      emit(state.copyWith(outputDeviceLoading: true));
       final sinks = await soundRepository.getSinkList();
 
       // For Refresh Device List only add new devices
@@ -281,19 +285,24 @@ class SoundBloc extends Bloc<SoundEvent, SoundState> {
     } catch (e) {
       logger.i("Error fetching sink list: $e");
       emit(state.copyWith(error: e.toString()));
+    } finally {
+      emit(state.copyWith(outputDeviceLoading: false));
     }
   }
 
   Future<void> _refreshOutputDevicesList(
       RefreshOutputDevicesList event, Emitter<SoundState> emit) async {
     try {
+      emit(state.copyWith(outputDeviceLoading: true));
       print('Refreshing output device list');
 
-      emit(state.copyWith(outputDevices: []));
+      await Future.delayed(const Duration(milliseconds: 500));
 
       add(GetOutputDeviceList());
     } catch (error) {
       print('Error refreshing Output Devices $error');
+    } finally {
+      emit(state.copyWith(outputDeviceLoading: false));
     }
   }
 

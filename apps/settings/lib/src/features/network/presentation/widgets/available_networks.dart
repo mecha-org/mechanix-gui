@@ -1,10 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
@@ -16,39 +14,25 @@ import 'package:mechanix_settings/src/features/network/presentation/add_network.
 import 'package:mechanix_settings/src/features/network/presentation/connect_secure_network.dart';
 import 'package:mechanix_settings/src/features/network/presentation/network_details.dart';
 import 'package:mechanix_settings/src/features/network/presentation/widgets/wireless_strength_icon.dart';
-import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class AvailableNetworks extends StatefulWidget {
-  const AvailableNetworks({super.key});
+  const AvailableNetworks({super.key, required this.scrollToTop});
+
+  final Function scrollToTop;
 
   @override
   State<AvailableNetworks> createState() => _AvailableNetworksState();
 }
 
 class _AvailableNetworksState extends State<AvailableNetworks> {
-  bool _isNetworkLoading(AccessPoints ap, WirelessSettingsState state) {
-    if (listEquals(ap.nmAccessPoint.ssid, state.activationProcessState?.ssid)) {
-      if (state.activationProcessState?.deviceState ==
-          NetworkManagerActiveConnectionState.activating) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   List<SectionListItems> _buildWifiListItems(
     BuildContext context,
     List<AccessPoints> accessPoints,
-    WirelessSettingsState state,
   ) {
     final wifi = accessPoints.map((ap) {
-      final isLoading = _isNetworkLoading(ap, state);
-      if (listEquals(
-          ap.nmAccessPoint.ssid, state.activationProcessState?.ssid)) {}
-
       final ssid = utf8.decode(ap.nmAccessPoint.ssid);
 
       return SectionListItems(
@@ -63,7 +47,6 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isLoading) const CustomLoader(),
             IconButton(
               onPressed: () => _onInfoTap(ap, context),
               icon: SizedBox(
@@ -91,6 +74,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
 
           MechanixBottomSheet.show(
             context,
+            withCloseButton: true,
             child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: connectNetworkBloc),
@@ -100,7 +84,6 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
             ),
           );
         },
-        // leading: const IconWidget(iconPath: Images.wirelessAdd),
         iconPath: Images.wirelessAdd,
         isActive: true,
       ),
@@ -120,12 +103,14 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
 
       MechanixBottomSheet.show(
         context,
+        withCloseButton: true,
         child: MultiBlocProvider(
           providers: [
             BlocProvider.value(value: connectNetworkBloc),
             BlocProvider.value(value: wirelessSettingsBloc),
           ],
-          child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
+          child: ConnectSecureNetwork(
+              accessPoint: item.nmAccessPoint, scrollToTop: widget.scrollToTop),
         ),
       );
     }
@@ -149,7 +134,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
             BlocProvider.value(value: connectNetworkBloc),
             BlocProvider.value(value: wirelessSettingsBloc),
           ],
-          child: const NetworkDetails(),
+          child: NetworkDetails(scrollToTop: widget.scrollToTop),
         ),
       ),
     );
@@ -157,20 +142,21 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
-      builder: (context, state) {
+    return BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
+        List<AccessPoints>>(
+      selector: (state) => state.availableOtherNetworks,
+      builder: (context, list) {
         return MechanixSectionList(
           physics: const BouncingScrollPhysics(),
-          title: 'Available Networks',
+          title: 'Available networks',
           theme: const MechanixSectionListThemeData(
             widgetPadding: EdgeInsets.zero,
           ),
           sectionListItems: _buildWifiListItems(
             context,
-            state.availableOtherNetworks,
-            state,
+            list,
           ),
-        );
+        ).padTop(36);
       },
     );
   }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
+import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_bloc.dart';
 import 'package:mechanix_settings/src/features/sound/blocs/sound_event.dart';
@@ -11,6 +12,7 @@ import 'package:pulseaudio/pulseaudio.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
+import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/select/select_type.dart';
 
 class OutputDevices extends StatefulWidget {
@@ -32,18 +34,54 @@ class _OutputDevicesState extends State<OutputDevices> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<SoundBloc, SoundState>(
-      builder: (context, state) {
+    return BlocSelector<
+        SoundBloc,
+        SoundState,
+        ({
+          bool loading,
+          List<PulseAudioSink> devices,
+          PulseAudioSink? defaultDevice,
+        })>(
+      selector: (state) {
+        return (
+          loading: state.outputDeviceLoading,
+          devices: state.outputDevices,
+          defaultDevice: state.defaultOutputDevice,
+        );
+      },
+      builder: (context, data) {
         return Scaffold(
           body: SingleChildScrollView(
             child: ContainerWidget(
               child: Column(
                 children: [
                   const CustomTitle(title: 'Output Devices'),
-                  MechanixSelect(
-                    options: getDevices(state.outputDevices),
-                    onChanged: onChanged,
-                    value: state.defaultOutputDevice?.name,
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: SizeTransition(
+                          sizeFactor: animation,
+                          axisAlignment: -1,
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: data.loading
+                        ? MechanixSimpleList(listItems: [
+                            SimpleListItems(
+                              title: '',
+                              leading: const CustomLoader(),
+                            ),
+                          ])
+                        : MechanixSelect(
+                            options: getDevices(data.devices),
+                            onChanged: onChanged,
+                            value: data.defaultDevice?.name,
+                          ),
                   ),
                 ],
               ),

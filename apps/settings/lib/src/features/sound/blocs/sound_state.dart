@@ -29,6 +29,10 @@ class SoundState extends Equatable {
 
   final double outputSoundLevel;
 
+  final bool inputDeviceLoading;
+
+  final bool outputDeviceLoading;
+
   const SoundState({
     this.loading = false,
     this.inputDevices = const [],
@@ -42,6 +46,8 @@ class SoundState extends Equatable {
     this.notificationSound = 'space',
     this.inputSoundLevel = 0.4,
     this.outputSoundLevel = 0.4,
+    this.inputDeviceLoading = false,
+    this.outputDeviceLoading = false,
   });
 
   SoundState copyWith({
@@ -57,6 +63,8 @@ class SoundState extends Equatable {
     String? notificationSound,
     double? inputSoundLevel,
     double? outputSoundLevel,
+    bool? inputDeviceLoading,
+    bool? outputDeviceLoading,
   }) {
     return SoundState(
       loading: loading ?? this.loading,
@@ -71,6 +79,8 @@ class SoundState extends Equatable {
       notificationSound: notificationSound ?? this.notificationSound,
       inputSoundLevel: inputSoundLevel ?? this.inputSoundLevel,
       outputSoundLevel: outputSoundLevel ?? this.outputSoundLevel,
+      inputDeviceLoading: inputDeviceLoading ?? this.inputDeviceLoading,
+      outputDeviceLoading: outputDeviceLoading ?? this.outputDeviceLoading,
     );
   }
 
@@ -88,5 +98,7 @@ class SoundState extends Equatable {
         notificationSound,
         inputSoundLevel,
         outputSoundLevel,
+        inputDeviceLoading,
+        outputDeviceLoading,
       ];
 }
