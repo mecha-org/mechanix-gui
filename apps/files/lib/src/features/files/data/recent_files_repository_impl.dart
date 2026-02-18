@@ -1,5 +1,4 @@
 import 'package:hive/hive.dart';
-import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/models/recent_files.dart';
 
@@ -42,7 +41,7 @@ class RecentFilesRepositoryImpl extends RecentFilesRepository {
 
     await _box().add(RecentFile(path: path, openedAt: DateTime.now()));
 
-    final limit = AppConfig().recentFilesCount;
+    final limit = AppLimits.recentFilesCount;
 
     final items =
         _box().values.toList()

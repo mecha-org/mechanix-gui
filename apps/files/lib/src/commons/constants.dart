@@ -70,3 +70,20 @@ class HiveTables {
   static const String appSettingsTable = "appSettingsTable";
   static const String recentFilesTable = "recentFilesTable";
 }
+
+class AppPaths {
+  static const String homeDir = '/home/mecha';
+  static const String downloadsDir = '/home/mecha/Downloads';
+  static const String documentsDir = '/home/mecha/Documents';
+
+  /// Virtual recent page (not filesystem path)
+  static const String recentDir = '/recent';
+
+  /// PDFium native library
+  static const String pdfiumModulePath = '/usr/lib64/libpdfium.so';
+}
+
+class AppLimits {
+  /// Max recent files stored
+  static const int recentFilesCount = 50;
+}

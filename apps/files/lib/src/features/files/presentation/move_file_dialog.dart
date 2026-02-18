@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
-import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
@@ -64,9 +63,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
   final ScrollController _scrollController = ScrollController();
   String currentPath = "";
   final ValueNotifier<String> searchQuery = ValueNotifier("");
-  final downloadsDir = AppConfig().downloadsDir;
-  final documentsDir = AppConfig().documentsDir;
-  final homeDir = AppConfig().homeDir;
+  final downloadsDir = AppPaths.downloadsDir;
+  final documentsDir = AppPaths.documentsDir;
+  final homeDir = AppPaths.homeDir;
 
   bool showHomeView = false;
   bool isSearching = false;
@@ -166,9 +165,10 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final selectedPaths = widget.filesBloc.state.movedPaths;
 
     final selectedCount = selectedPaths.length;
-    final label = selectedCount > 1
-        ? " $selectedCount items"
-        : " ${selectedPaths.first.split('/').last}";
+    final label =
+        selectedCount > 1
+            ? " $selectedCount items"
+            : " ${selectedPaths.first.split('/').last}";
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -194,10 +194,14 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
         // Folder list
         Expanded(
-          child: showHomeView
-              ? buildHomeView(context)
-              : buildListViewMoveAndExtract(
-                  context, _scrollController, controller),
+          child:
+              showHomeView
+                  ? buildHomeView(context)
+                  : buildListViewMoveAndExtract(
+                    context,
+                    _scrollController,
+                    controller,
+                  ),
         ),
 
         Divider(
@@ -238,8 +242,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                           });
                           controller.search('');
                         },
-                        tapBackgroundColor:
-                            context.colorScheme.surfaceContainer.withAlpha(100),
+                        tapBackgroundColor: context.colorScheme.surfaceContainer
+                            .withAlpha(100),
                         icon: const Icon(Icons.close),
                       ),
                     ),
@@ -261,23 +265,29 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                   ),
                 ),
               ] else if (showRenameBar) ...[
-                _buildRenameDialog()
+                _buildRenameDialog(),
               ] else ...[
                 // Entire MechanixBottomBar must be inside Row children
                 Expanded(
                   child: MechanixBottomBar(
                     theme: MechanixBottomBarThemeData(
-                        height: 66,
-                        decoration: BoxDecoration(
-                            color: context.colorScheme.surfaceContainerHigh),
-                        widgetPadding:
-                            const EdgeInsets.only(left: 8, top: 10, right: 8)),
+                      height: 66,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surfaceContainerHigh,
+                      ),
+                      widgetPadding: const EdgeInsets.only(
+                        left: 8,
+                        top: 10,
+                        right: 8,
+                      ),
+                    ),
                     leadingWidget: [
                       BottomBarButton.widget(
                         widget: DecoratedPressableIcon(
                           iconPath: Images.back,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () {
                             (isHomePageDir ? homeNavigation() : handleBack());
@@ -290,7 +300,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         widget: DecoratedPressableIcon(
                           iconPath: Images.search,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () {
                             setState(() => isSearching = true);
@@ -301,7 +312,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         widget: DecoratedPressableIcon(
                           iconPath: Images.home,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () {
                             setState(() => showHomeView = true);
@@ -312,7 +324,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                         widget: DecoratedPressableIcon(
                           iconPath: Images.createFolder,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () async {
                             await createFolderAndRename();
@@ -322,7 +335,7 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                     ],
                   ),
                 ),
-              ]
+              ],
             ],
           ),
         ),
@@ -331,12 +344,17 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
         Container(
           // height: 90,
           height: isTextInputOpened ? 65 : 90,
-          padding:
-              const EdgeInsets.only(left: 16, right: 16, bottom: 30, top: 8),
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 30,
+            top: 8,
+          ),
           decoration: BoxDecoration(
             color: context.colorScheme.secondaryContainer,
-            borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(12),
+            ),
           ),
           child: Row(
             children: [
@@ -364,14 +382,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
                       maxLines: 1,
                       text: TextSpan(
                         children: [
-                          TextSpan(
-                            text: prefix,
-                            style: prefixStyle,
-                          ),
-                          TextSpan(
-                            text: truncatedLabel,
-                            style: labelStyle,
-                          ),
+                          TextSpan(text: prefix, style: prefixStyle),
+                          TextSpan(text: truncatedLabel, style: labelStyle),
                         ],
                       ),
                     );
@@ -380,8 +392,11 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               ),
               const SizedBox(width: 8),
               MechanixFilledButton(
-                theme: buttonThemeData(context,
-                    type: MechanixButtonType.cancel, size: const Size(94, 40)),
+                theme: buttonThemeData(
+                  context,
+                  type: MechanixButtonType.cancel,
+                  size: const Size(94, 40),
+                ),
                 label: "Cancel",
                 onPressed: () {
                   widget.filesBloc.add(CancelMoveMode());
@@ -390,19 +405,23 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
               ),
               const SizedBox(width: 10),
               MechanixFilledButton(
-                theme: buttonThemeData(context,
-                    type: showHomeView
-                        ? MechanixButtonType.disable
-                        : MechanixButtonType.action,
-                    size: const Size(94, 40)),
+                theme: buttonThemeData(
+                  context,
+                  type:
+                      showHomeView
+                          ? MechanixButtonType.disable
+                          : MechanixButtonType.action,
+                  size: const Size(94, 40),
+                ),
                 label: "Move",
-                onPressed: !showHomeView
-                    ? () {
-                        handlePaste(context, widget.filesBloc.state);
-                        Navigator.pop(context, true);
-                      }
-                    : null,
-              )
+                onPressed:
+                    !showHomeView
+                        ? () {
+                          handlePaste(context, widget.filesBloc.state);
+                          Navigator.pop(context, true);
+                        }
+                        : null,
+              ),
             ],
           ),
         ),
@@ -418,11 +437,9 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     final folderName = await generateUniqueFolderName(path);
     final newPath = p.join(path, folderName);
 
-    bloc.add(CreateFolder(
-      path: path,
-      folderName: folderName,
-      controller: controller,
-    ));
+    bloc.add(
+      CreateFolder(path: path, folderName: folderName, controller: controller),
+    );
 
     // Wait for folder to appear in UI (optional small delay)
     await Future.delayed(const Duration(milliseconds: 200));
@@ -462,39 +479,40 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
           controller.setLiveRename(oldPath, v);
         },
-        anchorWidget: showCheck
-            ? Padding(
-                padding: const EdgeInsets.only(left: 5),
-                child: DecoratedPressableIcon(
-                  icon: const Icon(Icons.check),
-                  onTap: () {
-                    final filesBloc = context.read<FilesBloc>();
-                    filesBloc.add(
-                      Rename(
-                        oldPath: createdFolderPath,
-                        newName: renameText,
-                        controller: controller,
-                      ),
-                    );
-                    setState(() => showRenameBar = false);
-                    controller.clearNewFolder();
-                  },
-                  tapBackgroundColor:
-                      context.colorScheme.surfaceContainer.withAlpha(100),
+        anchorWidget:
+            showCheck
+                ? Padding(
+                  padding: const EdgeInsets.only(left: 5),
+                  child: DecoratedPressableIcon(
+                    icon: const Icon(Icons.check),
+                    onTap: () {
+                      final filesBloc = context.read<FilesBloc>();
+                      filesBloc.add(
+                        Rename(
+                          oldPath: createdFolderPath,
+                          newName: renameText,
+                          controller: controller,
+                        ),
+                      );
+                      setState(() => showRenameBar = false);
+                      controller.clearNewFolder();
+                    },
+                    tapBackgroundColor: context.colorScheme.surfaceContainer
+                        .withAlpha(100),
+                  ),
+                )
+                : Padding(
+                  padding: const EdgeInsets.only(left: 5),
+                  child: DecoratedPressableIcon(
+                    icon: const Icon(Icons.close),
+                    onTap: () {
+                      setState(() => showRenameBar = false);
+                      controller.clearNewFolder();
+                    },
+                    tapBackgroundColor: context.colorScheme.surfaceContainer
+                        .withAlpha(100),
+                  ),
                 ),
-              )
-            : Padding(
-                padding: const EdgeInsets.only(left: 5),
-                child: DecoratedPressableIcon(
-                  icon: const Icon(Icons.close),
-                  onTap: () {
-                    setState(() => showRenameBar = false);
-                    controller.clearNewFolder();
-                  },
-                  tapBackgroundColor:
-                      context.colorScheme.surfaceContainer.withAlpha(100),
-                ),
-              ),
       ),
     );
   }
@@ -522,68 +540,70 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
             // Home directory
             MechanixSectionList(
-                theme: MechanixSectionListThemeData(
-                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
+              theme: MechanixSectionListThemeData(
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+              ),
+              sectionListItems: [
+                SectionListItems.leadingIcon(
+                  title: "Home directory",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory(homeDir));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.home,
                 ),
-                sectionListItems: [
-                  SectionListItems.leadingIcon(
-                    title: "Home directory",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(homeDir));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.home,
-                  ),
-                  // Downloads
-                  SectionListItems.leadingIcon(
-                    title: "Downloads",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(downloadsDir));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.downloads,
-                  ),
+                // Downloads
+                SectionListItems.leadingIcon(
+                  title: "Downloads",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory(downloadsDir));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.downloads,
+                ),
 
-                  // Documents
-                  SectionListItems.leadingIcon(
-                    title: "Documents",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(documentsDir));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.homeDocuments,
-                  ),
-                ]),
+                // Documents
+                SectionListItems.leadingIcon(
+                  title: "Documents",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory(documentsDir));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.homeDocuments,
+                ),
+              ],
+            ),
 
             // Root dir
             MechanixSectionList(
-                title: 'Hard Drive',
-                theme: MechanixSectionListThemeData(
-                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                  titleTextStyle: TextStyle(
-                    fontSize: 20,
-                    color: context.colorScheme.onSecondaryFixed,
-                    fontWeight: FontWeight.w500,
-                  ),
+              title: 'Hard Drive',
+              theme: MechanixSectionListThemeData(
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                titleTextStyle: TextStyle(
+                  fontSize: 20,
+                  color: context.colorScheme.onSecondaryFixed,
+                  fontWeight: FontWeight.w500,
                 ),
-                sectionListItems: [
-                  SectionListItems.leadingIcon(
-                    title: "Root (/)",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory("/"));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.hardDrive,
-                  ),
-                ]),
+              ),
+              sectionListItems: [
+                SectionListItems.leadingIcon(
+                  title: "Root (/)",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory("/"));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.hardDrive,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -605,7 +625,8 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
 
     if (hasInvalidMove) {
       await Future.delayed(
-          const Duration(milliseconds: 200)); // allow animation
+        const Duration(milliseconds: 200),
+      ); // allow animation
       if (widget.rootContext.mounted) {
         await showInvalidMoveSheet(widget.rootContext, movePathCount);
       }
@@ -613,11 +634,13 @@ class MoveBottomSheetContentState extends State<MoveBottomSheetContent> {
     }
 
     final completer = Completer<void>();
-    bloc.add(Move(
-      sourcePaths: state.movedPaths,
-      destinationPath: targetPath,
-      completer: completer,
-    ));
+    bloc.add(
+      Move(
+        sourcePaths: state.movedPaths,
+        destinationPath: targetPath,
+        completer: completer,
+      ),
+    );
     await completer.future;
     bloc.add(CancelMoveMode());
 
@@ -671,17 +694,18 @@ Future<void> handleConflictsSequentially(
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final fileStyle = confirmationDialogBoldStyle(context);
-                      final suffixStyle =
-                          confirmationDialogRegularStyle(context);
+                      final suffixStyle = confirmationDialogRegularStyle(
+                        context,
+                      );
                       const suffix = ' already exists';
 
                       // Measure suffix width
                       final suffixWidth = textWidth(suffix, suffixStyle);
 
                       // Remaining width for filename
-                      final availableWidth =
-                          (constraints.maxWidth - suffixWidth)
-                              .clamp(0.0, double.infinity);
+                      final availableWidth = (constraints.maxWidth -
+                              suffixWidth)
+                          .clamp(0.0, double.infinity);
 
                       final truncatedName = middleEllipsisString(
                         conflict.fileName,
@@ -693,14 +717,8 @@ Future<void> handleConflictsSequentially(
                         maxLines: 1,
                         text: TextSpan(
                           children: [
-                            TextSpan(
-                              text: truncatedName,
-                              style: fileStyle,
-                            ),
-                            TextSpan(
-                              text: suffix,
-                              style: suffixStyle,
-                            ),
+                            TextSpan(text: truncatedName, style: fileStyle),
+                            TextSpan(text: suffix, style: suffixStyle),
                           ],
                         ),
                       );
@@ -710,9 +728,10 @@ Future<void> handleConflictsSequentially(
                   Text(
                     'Would you like to replace?',
                     style: TextStyle(
-                        color: context.colorScheme.onSurface,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w400),
+                      color: context.colorScheme.onSurface,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   Row(
@@ -726,21 +745,26 @@ Future<void> handleConflictsSequentially(
                               ConflictResolutionStrategy.skip,
                             );
                           },
-                          theme: buttonThemeData(context,
-                              type: MechanixButtonType.cancel),
+                          theme: buttonThemeData(
+                            context,
+                            type: MechanixButtonType.cancel,
+                          ),
                           label: "Cancel",
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: MechanixFilledButton(
-                          theme: buttonThemeData(context,
-                              type: MechanixButtonType.action),
-                          label: "Replace",
-                          onPressed: () => Navigator.pop(
-                            sheetContext,
-                            ConflictResolutionStrategy.replace,
+                          theme: buttonThemeData(
+                            context,
+                            type: MechanixButtonType.action,
                           ),
+                          label: "Replace",
+                          onPressed:
+                              () => Navigator.pop(
+                                sheetContext,
+                                ConflictResolutionStrategy.replace,
+                              ),
                         ),
                       ),
                     ],

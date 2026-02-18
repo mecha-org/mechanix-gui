@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/app_route.dart';
 import 'package:mechanix_files/load_settings.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
@@ -22,9 +21,6 @@ import 'package:widgets/mechanix.dart';
 Future<void> main(List<String> args) async {
   di.registerSingleton(ThemeToggle());
   WidgetsFlutterBinding.ensureInitialized();
-
-  final configResult = await connectToMxconf();
-  AppConfig().loadFromMap(configResult);
 
   final openPath = _parseOpenPath();
 
