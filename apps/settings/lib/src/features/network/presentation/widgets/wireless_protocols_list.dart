@@ -26,6 +26,7 @@ class WirelessProtocolsList extends StatefulWidget {
 
 class _WirelessProtocolsListState extends State<WirelessProtocolsList> {
   WirelessProtocol? selectedValue;
+  bool isPrivateAddress = false;
 
   void onChange(SelectOption value) {
     setState(() {
@@ -42,21 +43,34 @@ class _WirelessProtocolsListState extends State<WirelessProtocolsList> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               CustomTitle(
-                title:
-                    "Join ${widget.accessPoint != null ? '\'${utf8.decode(widget.accessPoint!.ssid)}\'' : ''}",
+                title: widget.accessPoint != null
+                    ? 'Join ${utf8.decode(widget.accessPoint!.ssid)}'
+                    : 'Security',
               ),
               MechanixSimpleList(listItems: [
                 SimpleListItems(
-                    title: 'Private wireless address',
-                    trailing: MechanixSwitch(
-                        activeText: 'OFF',
-                        inactiveText: 'ON',
-                        style: MechanixSwitchStyle(
-                          activeTrackColor: context.secondaryContainer,
-                          inactiveTrackColor: context.secondaryContainer,
-                        ),
-                        value: true,
-                        onChanged: (v) {}))
+                  title: 'Private Wireless Address',
+                  titleTextStyle: const TextStyle(fontWeight: FontWeight.w700),
+                  onTap: () {
+                    setState(() {
+                      isPrivateAddress = !isPrivateAddress;
+                    });
+                  },
+                  trailing: MechanixSwitch(
+                    activeText: 'OFF',
+                    inactiveText: 'ON',
+                    style: MechanixSwitchStyle(
+                      activeTrackColor: context.secondaryContainer,
+                      inactiveTrackColor: context.secondaryContainer,
+                    ),
+                    value: isPrivateAddress,
+                    onChanged: (val) => {
+                      setState(() {
+                        isPrivateAddress = val;
+                      })
+                    },
+                  ),
+                ),
               ]),
               MechanixSelect(
                 value: selectedValue,

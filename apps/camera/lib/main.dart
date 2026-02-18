@@ -1,6 +1,8 @@
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/home/home.dart';
 import 'package:mechanix_camera/load_settings.dart';
 import 'package:watch_it/watch_it.dart';
@@ -12,7 +14,12 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   di.registerSingleton(ThemeToggle());
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(MechanixCameraApp());
+  runApp(
+    MultiBlocProvider(
+      providers: [BlocProvider(create: (context) => CameraBloc())],
+      child: MechanixCameraApp(),
+    ),
+  );
 }
 
 class MechanixCameraApp extends StatelessWidget with WatchItMixin {

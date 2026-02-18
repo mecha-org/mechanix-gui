@@ -64,6 +64,7 @@ class _AddNetworkState extends State<AddNetwork> {
                         hintText: 'Name',
                         isFormField: true,
                         autofocus: true,
+                        initialValue: state.username,
                         theme: MechanixTextInputThemeData(
                           widgetHeight: 58,
                           borderRadius: BorderRadius.circular(8),
@@ -107,6 +108,7 @@ class _AddNetworkState extends State<AddNetwork> {
                           return MechanixTextInput.password(
                             hintText: 'Enter Password',
                             isFormField: true,
+                            initialValue: state.password,
                             prefixIcon: IconWidget(
                               iconPath: Images.lockIcon,
                               iconWidth: 19,

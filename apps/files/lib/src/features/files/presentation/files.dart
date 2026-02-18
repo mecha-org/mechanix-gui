@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' as io;
 import 'dart:io';
 
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/app_config.dart';
@@ -348,8 +349,10 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                             : (path == '/'
                                 ? "Root"
                                 : getCurrentFolderName(path));
-                        return MiddleEllipsisText(
+
+                        return EllipsizedText(
                           title,
+                          type: EllipsisType.middle,
                           style: TextStyle(
                             fontSize: 24,
                             color: context.colorScheme.primary,

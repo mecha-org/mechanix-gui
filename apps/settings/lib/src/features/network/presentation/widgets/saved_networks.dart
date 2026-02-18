@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
@@ -133,12 +132,7 @@ class _SavedNetworksState extends State<SavedNetworks> {
           previous.deviceState != current.deviceState &&
           current.deviceState == NetworkManagerDeviceState.failed,
       listener: (context, state) {
-        final fromSavedNetwork = state.availableSavedNetworks.any((network) =>
-            listEquals(network.nmAccessPoint.ssid,
-                state.selectedAccessPoint?.nmAccessPoint.ssid));
-
-        if (fromSavedNetwork &&
-            state.deviceState == NetworkManagerDeviceState.failed) {
+        if (state.deviceState == NetworkManagerDeviceState.failed) {
           _showSecureNetworkDialog(context, state.selectedAccessPoint);
         }
       },
