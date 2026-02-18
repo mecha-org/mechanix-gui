@@ -56,6 +56,7 @@ class _NetworkDetailsState extends State<NetworkDetails> {
 
             MechanixBottomSheet.show(
               context,
+              withCloseButton: true,
               child: MultiBlocProvider(
                 providers: [
                   BlocProvider.value(value: connectNetworkBloc),

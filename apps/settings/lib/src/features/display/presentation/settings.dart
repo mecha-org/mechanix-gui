@@ -38,7 +38,7 @@ class ScreenOffTimeSettingsState extends State<ScreenOffTimeSettings> {
           body: ContainerWidget(
             child: Column(
               children: [
-                const CustomTitle(title: 'Screen Off Time'),
+                const CustomTitle(title: 'Screen off time'),
                 MechanixSelect(
                   options: screenOffOptions,
                   onChanged: onChanged,

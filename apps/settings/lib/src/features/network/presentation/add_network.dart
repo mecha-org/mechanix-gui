@@ -63,6 +63,7 @@ class _AddNetworkState extends State<AddNetwork> {
                       MechanixTextInput.textInput(
                         hintText: 'Name',
                         isFormField: true,
+                        autofocus: true,
                         theme: MechanixTextInputThemeData(
                           widgetHeight: 58,
                           borderRadius: BorderRadius.circular(8),
@@ -90,8 +91,7 @@ class _AddNetworkState extends State<AddNetwork> {
                         ),
                         prefixIcon: IconWidget(
                           iconPath: Images.wifi,
-                          iconWidth: 19,
-                          iconHeight: 21,
+                          iconWidth: 23,
                           boxWidth: 24,
                           boxHeight: 24,
                           iconColor: context.outline,

@@ -22,7 +22,9 @@ import 'package:mechanix_settings/src/features/network/presentation/wireless_adv
 import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
+import 'package:widgets/widgets/list_items/mechanix_simple_list_theme.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
+import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 import 'package:widgets/widgets/switch/mechanix_switch.dart';
 import 'package:widgets/widgets/switch/mechanix_switch_theme.dart';
@@ -132,8 +134,7 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                     ),
                   );
 
-                  if (data.wifiOn &&
-                      data.activatingNetwork != null &&
+                  if (data.activatingNetwork != null &&
                       data.activatingNetwork!.ssid.isNotEmpty &&
                       !data.activatingNetwork!.isActivate) {
                     final network = data.activatingNetwork?.accessPoint;
@@ -183,14 +184,14 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                         ),
                         trailing: Row(
                           children: [
-                            IconWidget(
-                              iconPath: Images.circularCheckIcon,
-                              iconColor: context.primary,
-                              isActive: true,
-                              iconHeight: 19,
-                              iconWidth: 19,
-                              activeIconColor: context.primary,
-                            ).padRight(8),
+                            Container(
+                              margin: const EdgeInsets.only(right: 8),
+                              child: Image.asset(
+                                Images.circularCheckIcon,
+                                width: 19,
+                                height: 19,
+                              ),
+                            ),
                             IconButton(
                               onPressed: () => onInfoTap(network, context),
                               icon: IconWidget(
@@ -207,6 +208,9 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   return MechanixSimpleList(
                     physics: const BouncingScrollPhysics(),
                     isDividerRequired: false,
+                    theme: const MechanixSimpleListThemeData(
+                      widgetMargin: EdgeInsets.zero,
+                    ),
                     listItems: items,
                   );
                 },
@@ -219,13 +223,23 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   list: state.availableSavedNetworks,
                 ),
                 builder: (context, data) {
-                  if (data.wifiOn && !data.loading) {
-                    if (data.list.isNotEmpty) {
-                      return SavedNetworks(scrollToTop: scrollToTop);
-                    }
-                  }
-
-                  return const SizedBox();
+                  return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            axisAlignment: -1,
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: data.wifiOn && data.list.isNotEmpty
+                          ? SavedNetworks(scrollToTop: scrollToTop)
+                          : null);
                 },
               ),
               BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
@@ -236,27 +250,38 @@ class _WirelessSettingsState extends State<WirelessSettings> {
                   list: state.availableOtherNetworks,
                 ),
                 builder: (context, data) {
-                  if (data.wifiOn) {
-                    if (data.loading) {
-                      return MechanixSectionList(
-                        title: 'Available networks',
-                        sectionListItems: [
-                          SectionListItems(
-                            title: '',
-                            backgroundColor: Colors.transparent,
-                            defaultTrailingIcon: false,
-                            leading: const CustomLoader(),
+                  return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            axisAlignment: -1,
+                            child: child,
                           ),
-                        ],
-                      );
-                    }
-
-                    if (data.list.isNotEmpty) {
-                      return AvailableNetworks(scrollToTop: scrollToTop);
-                    }
-                  }
-
-                  return const SizedBox();
+                        );
+                      },
+                      child: (data.wifiOn && data.loading)
+                          ? MechanixSectionList(
+                              title: 'Available networks',
+                              theme: const MechanixSectionListThemeData(
+                                widgetPadding: EdgeInsets.zero,
+                              ),
+                              sectionListItems: [
+                                SectionListItems(
+                                  title: '',
+                                  backgroundColor: Colors.transparent,
+                                  defaultTrailingIcon: false,
+                                  leading: const CustomLoader(),
+                                ),
+                              ],
+                            ).padTop(36)
+                          : data.list.isNotEmpty
+                              ? AvailableNetworks(scrollToTop: scrollToTop)
+                              : null);
                 },
               ),
               const WirelessAdvanceSettings().padTop(36),

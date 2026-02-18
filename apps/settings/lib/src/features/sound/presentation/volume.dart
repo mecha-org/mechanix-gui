@@ -20,6 +20,7 @@ class VolumeWidget extends StatefulWidget {
 
 class _VolumeWidgetState extends State<VolumeWidget> {
   void _onOutputDeviceTap() {
+    context.read<SoundBloc>().add(GetOutputDeviceList());
     final bloc = context.read<SoundBloc>();
 
     Navigator.push(
@@ -34,6 +35,7 @@ class _VolumeWidgetState extends State<VolumeWidget> {
   }
 
   void _onInputDeviceTap() {
+    context.read<SoundBloc>().add(GetInputDeviceList());
     final bloc = context.read<SoundBloc>();
 
     Navigator.push(

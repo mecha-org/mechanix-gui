@@ -74,6 +74,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
 
           MechanixBottomSheet.show(
             context,
+            withCloseButton: true,
             child: MultiBlocProvider(
               providers: [
                 BlocProvider.value(value: connectNetworkBloc),
@@ -102,6 +103,7 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
 
       MechanixBottomSheet.show(
         context,
+        withCloseButton: true,
         child: MultiBlocProvider(
           providers: [
             BlocProvider.value(value: connectNetworkBloc),
@@ -140,8 +142,10 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
-      builder: (context, state) {
+    return BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
+        List<AccessPoints>>(
+      selector: (state) => state.availableOtherNetworks,
+      builder: (context, list) {
         return MechanixSectionList(
           physics: const BouncingScrollPhysics(),
           title: 'Available networks',
@@ -150,9 +154,9 @@ class _AvailableNetworksState extends State<AvailableNetworks> {
           ),
           sectionListItems: _buildWifiListItems(
             context,
-            state.availableOtherNetworks,
+            list,
           ),
-        );
+        ).padTop(36);
       },
     );
   }

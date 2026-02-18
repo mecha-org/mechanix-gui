@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
@@ -50,7 +51,7 @@ class Sound extends StatelessWidget {
                 MechanixSimpleList(
                   listItems: [
                     SimpleListItems(
-                      title: 'Launcher Sound',
+                      title: 'Launcher sound',
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
@@ -65,7 +66,7 @@ class Sound extends StatelessWidget {
                       ),
                     ),
                     SimpleListItems(
-                      title: 'Vibration',
+                      title: 'Haptics',
                       trailing: MechanixSwitch(
                         activeText: 'OFF',
                         inactiveText: 'ON',
@@ -80,12 +81,22 @@ class Sound extends StatelessWidget {
                       ),
                     ),
                     SimpleListItems(
-                      title: 'Notification Sound',
+                      title: 'Notification sound',
                       onTap: () => _onNotificationSoundTap(context),
-                      trailing: CustomTrailingText(
-                              title: notificationSoundLabel(
-                                  state.notificationSound))
-                          .padRight(8),
+                      trailing: Row(
+                        children: [
+                          CustomTrailingText(
+                            title:
+                                notificationSoundLabel(state.notificationSound),
+                          ).padRight(8),
+                          IconWidget(
+                            iconWidth: 9,
+                            iconHeight: 18,
+                            iconColor: context.outlineVariant,
+                            iconPath: Images.rightIconArrow,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
