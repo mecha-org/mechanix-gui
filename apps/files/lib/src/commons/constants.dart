@@ -66,7 +66,7 @@ class Images {
   static const String edit = 'assets/images/edit.png';
 }
 
-class TableName {
+class HiveTables {
   static const String appSettingsTable = "appSettingsTable";
   static const String recentFilesTable = "recentFilesTable";
 }

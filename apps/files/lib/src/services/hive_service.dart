@@ -20,7 +20,6 @@ class HiveService {
     Hive.registerAdapter(AppSettingsAdapter());
     Hive.registerAdapter(RecentFileAdapter());
 
-    await Hive.openBox<AppSettings>(TableName.appSettingsTable);
-    await Hive.openBox<RecentFile>(TableName.recentFilesTable);
+    await Hive.openBox<AppSettings>(HiveTables.appSettingsTable);
   }
 }

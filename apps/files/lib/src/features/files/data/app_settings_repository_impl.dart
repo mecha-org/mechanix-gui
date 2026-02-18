@@ -8,8 +8,8 @@ class AppSettingsRepositoryImpl extends AppSettingsRepository {
   final logger = Logger();
 
   Future<void> ensureAppSettingsConnected() async {
-    if (!Hive.isBoxOpen(TableName.appSettingsTable)) {
-      await Hive.openBox<AppSettings>(TableName.appSettingsTable);
+    if (!Hive.isBoxOpen(HiveTables.appSettingsTable)) {
+      await Hive.openBox<AppSettings>(HiveTables.appSettingsTable);
     }
   }
 
@@ -19,7 +19,7 @@ class AppSettingsRepositoryImpl extends AppSettingsRepository {
     showHiddenFiles: false,
   );
 
-  Box<AppSettings> _box() => Hive.box<AppSettings>(TableName.appSettingsTable);
+  Box<AppSettings> _box() => Hive.box<AppSettings>(HiveTables.appSettingsTable);
 
   @override
   Future<AppSettings> getSettings() async {

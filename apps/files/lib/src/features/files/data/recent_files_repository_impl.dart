@@ -7,12 +7,12 @@ import 'recent_files_repository.dart';
 
 class RecentFilesRepositoryImpl extends RecentFilesRepository {
   Future<void> ensureRecentFilesConnected() async {
-    if (!Hive.isBoxOpen(TableName.recentFilesTable)) {
-      await Hive.openBox<RecentFile>(TableName.recentFilesTable);
+    if (!Hive.isBoxOpen(HiveTables.recentFilesTable)) {
+      await Hive.openBox<RecentFile>(HiveTables.recentFilesTable);
     }
   }
 
-  Box<RecentFile> _box() => Hive.box<RecentFile>(TableName.recentFilesTable);
+  Box<RecentFile> _box() => Hive.box<RecentFile>(HiveTables.recentFilesTable);
 
   @override
   Future<List<RecentFile>> getRecentFiles() async {
