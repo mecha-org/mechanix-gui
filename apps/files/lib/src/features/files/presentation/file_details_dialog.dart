@@ -1,6 +1,6 @@
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/tab_clipper.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
@@ -90,8 +90,9 @@ class FileDetailsDialog extends StatelessWidget {
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
                                     Flexible(
-                                      child: MiddleEllipsisText(
+                                      child: EllipsizedText(
                                         fileItem.name,
+                                        type: EllipsisType.middle,
                                         textAlign: TextAlign.right,
                                         style: TextStyle(
                                           color: context

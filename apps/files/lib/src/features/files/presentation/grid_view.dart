@@ -1,9 +1,9 @@
 import 'dart:io' as io;
 import 'dart:ui';
 
+import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
-import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
@@ -140,7 +140,8 @@ Widget buildGridView(
                         ),
                         const SizedBox(height: 4),
                         Flexible(
-                          child: MiddleEllipsisText(
+                          child: EllipsizedText(
+                            type: EllipsisType.middle,
                             title,
                             textAlign: TextAlign.center,
                             style: TextStyle(
@@ -259,7 +260,8 @@ Widget buildGridViewForRecentFiles(
                     ),
                     const SizedBox(height: 6),
                     Flexible(
-                      child: MiddleEllipsisText(
+                      child: EllipsizedText(
+                        type: EllipsisType.middle,
                         file.name,
                         style: TextStyle(
                           fontSize: 18,
