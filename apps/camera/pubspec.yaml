@@ -41,20 +41,23 @@ dependencies:
       path: flutter/widgets
       ref: 2ff2167006cf10f74146a696de0bd34415abbdce 
   camera: ^0.11.2+1
+  # TODO: Link to camera_elinux of Mecha
   camera_elinux:
     git:
-      url: https://github.com/sony/flutter-elinux-plugins.git
+      url: https://github.com/sandptel/flutter-elinux-plugins.git
       path: packages/camera
       ref: main 
   watch_it: ^1.7.0
   dbus: ^0.7.12
   logger: ^2.6.2
   video_player: ^2.10.1
+  # TODO: Link to video_player_elinux of Mecha
   video_player_elinux:
     git:
-      url: https://github.com/sony/flutter-elinux-plugins.git
+      url: https://github.com/sandptel/flutter-elinux-plugins.git
       path: packages/video_player
       ref: main
+  tuple: ^2.0.2
 
 dev_dependencies:
   flutter_test:

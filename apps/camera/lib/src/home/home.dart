@@ -9,6 +9,9 @@ import 'package:mechanix_camera/src/home/camera_view.dart';
 import 'package:mechanix_camera/src/home/capture_button.dart';
 import 'package:mechanix_camera/src/home/circle_overlay_painter.dart';
 import 'package:mechanix_camera/src/home/circular_frame_painter.dart';
+import 'package:mechanix_camera/src/home/widgets/center_dot_painter.dart';
+import 'package:mechanix_camera/src/home/widgets/video_bottom_actions.dart';
+import 'package:mechanix_camera/src/home/widgets/video_timer.dart';
 import 'package:mechanix_camera/src/home/zoom_strips.dart';
 import 'package:widgets/mechanix.dart';
 
@@ -47,7 +50,7 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _cameraController?.dispose();
+    _disposeCamera();
     _zoomLevel.dispose();
     _isRecording.dispose();
     _captureButtonOffset.dispose();
@@ -63,9 +66,41 @@ class _CameraScreenState extends State<CameraScreen>
     }
 
     if (state == AppLifecycleState.inactive) {
-      cameraController.dispose();
+      _disposeCamera();
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
+    }
+  }
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    // Handle hot reload - dispose and reinitialize camera
+    _disposeCamera();
+    _requestPermissionsAndInitialize();
+  }
+
+  Future<void> _disposeCamera() async {
+    if (_cameraController != null) {
+      // Stop recording if active
+      if (_cameraController!.value.isRecordingVideo) {
+        try {
+          await _cameraController!.stopVideoRecording();
+          _isRecording.value = false;
+        } catch (e) {
+          debugPrint('Error stopping recording during disposal: $e');
+        }
+      }
+
+      // Dispose the controller
+      await _cameraController!.dispose();
+      _cameraController = null;
+
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+        });
+      }
     }
   }
 
@@ -85,7 +120,8 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Future<void> _setupCamera(CameraDescription cameraDescription) async {
-    await _cameraController?.dispose();
+    // Ensure previous controller is disposed
+    await _disposeCamera();
 
     final CameraController cameraController = CameraController(
       cameraDescription,
@@ -98,7 +134,6 @@ class _CameraScreenState extends State<CameraScreen>
 
     try {
       await cameraController.initialize();
-
       _maxZoomLevel = await cameraController.getMaxZoomLevel();
       _minZoomLevel = await cameraController.getMinZoomLevel();
 
@@ -111,6 +146,11 @@ class _CameraScreenState extends State<CameraScreen>
       }
     } catch (e) {
       debugPrint('Error setting up camera: $e');
+      if (mounted) {
+        setState(() {
+          _isCameraInitialized = false;
+        });
+      }
     }
   }
 
@@ -132,7 +172,6 @@ class _CameraScreenState extends State<CameraScreen>
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return;
     }
-
     try {
       final XFile picture = await _cameraController!.takePicture();
       debugPrint('Picture saved to: ${picture.path}');
@@ -155,27 +194,22 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Future<void> _stopVideoRecording() async {
-    // if (_cameraController == null) {
-    //   print("Controller is null");
-    //   return;
-    // }
+    if (_cameraController == null || !_cameraController!.value.isInitialized) {
+      return;
+    }
 
     if (!_cameraController!.value.isRecordingVideo) {
-      // Try to stop anyway for debugging
-      try {
-        await _cameraController!.stopVideoRecording();
-      } catch (e) {
-        debugPrint("Error as expected: $e");
-      }
       return;
     }
 
     try {
       final XFile video = await _cameraController!.stopVideoRecording();
+
       _isRecording.value = false;
       debugPrint('Video saved to: ${video.path}');
     } catch (e) {
       debugPrint('Error stopping video recording: $e');
+      _isRecording.value = false;
     }
   }
 
@@ -196,10 +230,20 @@ class _CameraScreenState extends State<CameraScreen>
                     cameraController: _cameraController,
                   ),
                 ),
-
                 // Dark overlay outside circle (when zooming)
                 if (!isSettingsOpen) ...[
-                  const BottomActions(),
+                  // Bottom Actions
+                  ValueListenableBuilder(
+                    valueListenable: _isRecording,
+                    builder: (context, value, child) {
+                      if (value) {
+                        return VideoBottomActions(
+                          cameraController: _cameraController,
+                        );
+                      }
+                      return const BottomActions();
+                    },
+                  ),
                   ValueListenableBuilder<double>(
                     valueListenable: _captureButtonOffset,
                     builder: (context, offset, child) {
@@ -218,6 +262,19 @@ class _CameraScreenState extends State<CameraScreen>
                     },
                   ),
 
+                  ValueListenableBuilder(
+                    valueListenable: _isRecording,
+                    builder:
+                        (context, value, child) =>
+                            _isRecording.value
+                                ? const Positioned(
+                                  top: 15,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(child: VideoTimer()),
+                                )
+                                : const SizedBox.shrink(),
+                  ),
                   // Circular UI Overlay
                   Center(
                     child: CustomPaint(
@@ -265,6 +322,13 @@ class _CameraScreenState extends State<CameraScreen>
                 ] else
                   // Bottom Action Buttons
                   const BottomSettings(),
+
+                // Center Circle Dot
+                Center(
+                  child: CustomPaint(
+                    painter: CenterDotPainter(colorScheme: context.colorScheme),
+                  ),
+                ),
               ],
             ),
       ),
