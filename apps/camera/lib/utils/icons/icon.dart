@@ -8,5 +8,5 @@ class CameraIcons {
   static String hdIcon = 'assets/images/hd.png';
   static String gridIcon = 'assets/images/grid.png';
   static String timerIcon = 'assets/images/timer.png';
-  static String audioIcon = 'assets/images/audio.png';
+  static String soundIcon = 'assets/images/sound.png';
 }

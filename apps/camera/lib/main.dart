@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:dbus/dbus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
+import 'package:mechanix_camera/data/camera_repository.dart';
+import 'package:mechanix_camera/data/camera_repository_impl.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/home/home.dart';
 import 'package:mechanix_camera/load_settings.dart';
@@ -10,16 +15,53 @@ import 'package:widgets/theme/mechanix_theme.dart';
 import 'package:widgets/theme/variants.dart';
 import 'package:widgets/widgets/theme/theme_toggle.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   di.registerSingleton(ThemeToggle());
-  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  Hive.registerAdapter(CameraConfigAdapter());
+  Hive.registerAdapter(CaptureModeAdapter());
+  Hive.registerAdapter(SoundModeAdapter());
+  Hive.registerAdapter(CameraTimerAdapter());
+  Hive.registerAdapter(CameraGridAdapter());
+  Hive.registerAdapter(CameraResolutionAdapter());
+  Hive.registerAdapter(CameraAspectRatioAdapter());
+  await initializeHive();
+
   runApp(
-    MultiBlocProvider(
-      providers: [BlocProvider(create: (context) => CameraBloc())],
-      child: MechanixCameraApp(),
+    MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<CameraRepository>(
+          create: (_) => CameraRepositoryImpl(),
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create:
+                (context) =>
+                    CameraBloc(repository: context.read<CameraRepository>()),
+          ),
+        ],
+        child: MechanixCameraApp(),
+      ),
     ),
   );
+}
+
+Future<void> initializeHive() async {
+  final home = Platform.environment['HOME'];
+  final xdgConfig = Platform.environment['XDG_CONFIG_HOME'];
+
+  if (home == null && xdgConfig == null) {
+    throw Exception('Cannot determine home directory');
+  }
+
+  final baseDir = xdgConfig ?? '$home/.config';
+  final appDir = Directory('$baseDir/mechanix_camera');
+  if (!await appDir.exists()) {
+    await appDir.create(recursive: true);
+  }
+  Hive.init(appDir.path);
 }
 
 class MechanixCameraApp extends StatelessWidget with WatchItMixin {
@@ -46,7 +88,7 @@ class _MechanixCameraAppContentState extends State<_MechanixCameraAppContent> {
   late final DBusClient _bus;
   late final ThemeSettingsService _themeService;
 
-  MechanixThemeData _currentThemeData = MechanixThemeData(
+  MechanixThemeData _currentThemeData = const MechanixThemeData(
     mechanixVariant: MechanixVariant.amber,
   );
 

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/home/bottom_actions/capture_mode_toggle.dart';
 import 'package:mechanix_camera/src/home/bottom_actions/gallery_thumbnail.dart';
 import 'package:mechanix_camera/src/home/bottom_actions/settings_button.dart';

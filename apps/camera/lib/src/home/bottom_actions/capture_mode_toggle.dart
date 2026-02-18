@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/home/bottom_actions/mode_icon_button.dart';
 import 'package:mechanix_camera/utils/icons/icon.dart';
 import 'package:widgets/extensions/color.dart';

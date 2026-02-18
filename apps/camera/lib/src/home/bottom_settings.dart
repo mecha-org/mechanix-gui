@@ -4,7 +4,7 @@ import 'package:mechanix_camera/models/camera_models.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
-import 'package:mechanix_camera/src/home/bottom_settings/audio_settings.dart';
+import 'package:mechanix_camera/src/home/bottom_settings/sound_settings.dart';
 import 'package:mechanix_camera/src/home/bottom_settings/frame_resize_settings.dart';
 import 'package:mechanix_camera/src/home/bottom_settings/grid_settings.dart';
 import 'package:mechanix_camera/src/home/bottom_settings/hd_settings.dart';
@@ -36,9 +36,9 @@ class BottomSettings extends StatelessWidget {
               MechanixBottomBar(
                 centerWidgetSpacing: 16,
                 theme: MechanixBottomBarThemeData(
-                  iconTheme: MechanixBottomBarIconThemeData(
-                    iconSize: const Size(28, 28),
-                    iconBoxSize: const Size(44, 44),
+                  iconTheme: const MechanixBottomBarIconThemeData(
+                    iconSize: Size(28, 28),
+                    iconBoxSize: Size(44, 44),
                   ),
                   decoration: BoxDecoration(
                     color: context.secondaryContainer,
@@ -53,10 +53,10 @@ class BottomSettings extends StatelessWidget {
                 ),
                 leadingWidget: [
                   BottomBarButton(
-                    iconTheme: MechanixBottomBarIconThemeData(
-                      buttonMargin: const EdgeInsets.only(left: 10),
-                      iconSize: const Size(28, 28),
-                      iconBoxSize: const Size(44, 44),
+                    iconTheme: const MechanixBottomBarIconThemeData(
+                      buttonMargin: EdgeInsets.only(left: 10),
+                      iconSize: Size(28, 28),
+                      iconBoxSize: Size(44, 44),
                     ),
                     onPressed: () {
                       context.read<CameraBloc>().add(ToggleSettingsMode());
@@ -68,7 +68,7 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        SwitchCameraSettingType(CameraSettingType.frameResize),
+                        const SwitchCameraSettingType(CameraSettingType.frameResize),
                       );
                     },
                     iconPath: CameraIcons.frameResizeIcon,
@@ -78,7 +78,7 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        SwitchCameraSettingType(CameraSettingType.hd),
+                        const SwitchCameraSettingType(CameraSettingType.hd),
                       );
                     },
                     iconPath: CameraIcons.hdIcon,
@@ -87,7 +87,7 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        SwitchCameraSettingType(CameraSettingType.grid),
+                        const SwitchCameraSettingType(CameraSettingType.grid),
                       );
                     },
                     iconPath: CameraIcons.gridIcon,
@@ -96,7 +96,7 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        SwitchCameraSettingType(CameraSettingType.timer),
+                        const SwitchCameraSettingType(CameraSettingType.timer),
                       );
                     },
                     iconPath: CameraIcons.timerIcon,
@@ -105,11 +105,12 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        SwitchCameraSettingType(CameraSettingType.audio),
+                        const SwitchCameraSettingType(CameraSettingType.shutterSound),
                       );
                     },
-                    iconPath: CameraIcons.audioIcon,
-                    isSelected: cameraSettingType == CameraSettingType.audio,
+                    iconPath: CameraIcons.soundIcon,
+                    isSelected:
+                        cameraSettingType == CameraSettingType.shutterSound,
                   ),
                 ],
               ),
@@ -130,8 +131,8 @@ class BottomSettings extends StatelessWidget {
         return const GridSettings();
       case CameraSettingType.timer:
         return const TimerSettings();
-      case CameraSettingType.audio:
-        return const AudioSettings();
+      case CameraSettingType.shutterSound:
+        return const SoundSettings();
       default:
         return const SizedBox.shrink();
     }
