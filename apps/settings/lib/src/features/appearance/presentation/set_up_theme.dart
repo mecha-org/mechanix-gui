@@ -34,7 +34,7 @@ class _SetUpThemeState extends State<SetUpTheme> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CustomTitle(title: "Set Theme"),
+              const CustomTitle(title: "Theme"),
               const CustomTrailingText(
                 title: 'Set accent color',
                 textAlign: TextAlign.start,
