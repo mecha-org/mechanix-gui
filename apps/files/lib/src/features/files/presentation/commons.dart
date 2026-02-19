@@ -19,6 +19,7 @@ import 'package:mechanix_files/src/features/preview/presentation/pdf_viewer.dart
 import 'package:mechanix_files/src/features/preview/presentation/video_player.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/filled_button/mechanix_filled_button_theme.dart';
+import 'package:widgets/widgets/notification/notification_type.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
 import 'package:intl/intl.dart';
@@ -31,7 +32,8 @@ String formatModifiedTime(DateTime modified) {
     return "Now";
   }
 
-  final isSameDay = now.year == modified.year &&
+  final isSameDay =
+      now.year == modified.year &&
       now.month == modified.month &&
       now.day == modified.day;
 
@@ -57,8 +59,10 @@ String formatBytesDecimal(int bytes, {int decimals = 1}) {
   const base = 1000;
   const suffixes = ['B', 'KB', 'MB', 'GB', 'TB'];
 
-  final exponent =
-      (math.log(bytes) / math.log(base)).floor().clamp(0, suffixes.length - 1);
+  final exponent = (math.log(bytes) / math.log(base)).floor().clamp(
+    0,
+    suffixes.length - 1,
+  );
 
   final size = bytes / math.pow(base, exponent);
 
@@ -76,10 +80,8 @@ void _navigateToDirectory(
   Navigator.push(
     context,
     MaterialPageRoute(
-      builder: (_) => FileExplorerPage(
-        title: directory.name,
-        startPath: pathString,
-      ),
+      builder:
+          (_) => FileExplorerPage(title: directory.name, startPath: pathString),
     ),
   );
 }
@@ -108,34 +110,47 @@ void handleTap(
     return;
   }
 
-  if (textFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+  // Determine supported type
+  final isText = textFileTypes.contains(fileType);
+  final isAudio = audioFileTypes.contains(fileType);
+  final isVideo = videoFileTypes.contains(fileType);
+  final isImage = imageFileTypes.contains(fileType);
+  final isPdf = fileType == '.pdf';
+  final isZip = fileType == '.zip';
 
+  final isSupported = isText || isAudio || isVideo || isImage || isPdf || isZip;
+
+  if (isSupported) {
+    // Add to recent once (only for supported types)
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+  } else {
+    showUnsupportedFileNotification(context, fileType);
+    return;
+  }
+
+  if (isText) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            CodeEditorPage(rootContext: context, filePath: fullPath),
+        builder:
+            (_) => CodeEditorPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
   }
 
-  if (audioFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) =>
-          AudioPlayerOverlay(rootContext: context, filePath: fullPath),
+  if (isAudio) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => AudioPlayerOverlay(rootContext: context, filePath: fullPath),
+      ),
     );
     return;
   }
 
-  if (videoFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
+  if (isVideo) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -145,9 +160,7 @@ void handleTap(
     return;
   }
 
-  if (fileType == '.pdf') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
+  if (isPdf) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -157,14 +170,12 @@ void handleTap(
     return;
   }
 
-  if (imageFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
+  if (isImage) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            ImageViewerPage(rootContext: context, filePath: fullPath),
+        builder:
+            (_) => ImageViewerPage(rootContext: context, filePath: fullPath),
       ),
     );
     return;
@@ -190,76 +201,115 @@ void handleFileTap(
     state?.clearSearch(); // will reset and remove overlay
   }
 
-  if (textFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+  // Determine supported type
+  final isText = textFileTypes.contains(fileType);
+  final isAudio = audioFileTypes.contains(fileType);
+  final isVideo = videoFileTypes.contains(fileType);
+  final isImage = imageFileTypes.contains(fileType);
+  final isPdf = fileType == '.pdf';
+  final isZip = fileType == '.zip';
 
+  final isSupported = isText || isAudio || isVideo || isImage || isPdf || isZip;
+
+  if (isSupported) {
+    // Add to recent once (only for supported types)
+    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+  } else {
+    showUnsupportedFileNotification(context, fileType);
+    return;
+  }
+
+  if (isText) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CodeEditorPage(
-            rootContext: context, filePath: fullPath, state: state),
+        builder:
+            (_) => CodeEditorPage(
+              rootContext: context,
+              filePath: fullPath,
+              state: state,
+            ),
       ),
     );
     return;
   }
 
-  if (audioFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AudioPlayerOverlay(
-          rootContext: context, filePath: fullPath, state: state),
-    );
-    return;
-  }
-
-  if (videoFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
+  if (isAudio) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            VideoPlayer(rootContext: context, filePath: fullPath, state: state),
+        builder:
+            (_) => AudioPlayerOverlay(
+              rootContext: context,
+              filePath: fullPath,
+              state: state,
+            ),
       ),
     );
     return;
   }
 
-  if (fileType == '.pdf') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
+  if (isVideo) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PdfViewerPage(
-            rootContext: context, filePath: fullPath, state: state),
+        builder:
+            (_) => VideoPlayer(
+              rootContext: context,
+              filePath: fullPath,
+              state: state,
+            ),
       ),
     );
     return;
   }
 
-  if (imageFileTypes.contains(fileType)) {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
-
+  if (isPdf) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ImageViewerPage(
-            rootContext: context, filePath: fullPath, state: state),
+        builder:
+            (_) => PdfViewerPage(
+              rootContext: context,
+              filePath: fullPath,
+              state: state,
+            ),
       ),
     );
     return;
   }
 
-  if (fileType == '.zip') {
-    context.read<FilesBloc>().add(AddToRecentFiles(fullPath));
+  if (isImage) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (_) => ImageViewerPage(
+              rootContext: context,
+              filePath: fullPath,
+              state: state,
+            ),
+      ),
+    );
+    return;
+  }
+
+  if (isZip) {
     final state = context.findAncestorStateOfType<FileExplorerPageState>();
     state?.handleExtraction(context, {fullPath});
     return;
   }
+}
+
+void showUnsupportedFileNotification(BuildContext context, String fileType) {
+  MechanixNotification.show(
+    context: context,
+    notificationType: NotificationType.error,
+    message:
+        fileType.isEmpty
+            ? 'Unsupported file type'
+            : 'Files of type "$fileType" are not supported',
+  );
 }
 
 bool isZipFileValid(String path) {
@@ -333,7 +383,9 @@ Future<String> generateUniqueFolderName(String basePath) async {
 }
 
 List<FileItem> getFilesAtPath(
-    List<FileItem> path, List<FileSystemEntity> fileSystemList) {
+  List<FileItem> path,
+  List<FileSystemEntity> fileSystemList,
+) {
   // Build full path from root and path list
   String currentPath = '/';
   for (final item in path) {
@@ -354,10 +406,13 @@ List<FileItem> getFilesAtPath(
         items.add(FileItem(name: name, type: 'dir', modified: modifiedTime));
       } else if (entity is File) {
         final ext = p.extension(name);
-        items.add(FileItem(
+        items.add(
+          FileItem(
             name: name,
             type: ext.isNotEmpty ? ext : 'file',
-            modified: modifiedTime));
+            modified: modifiedTime,
+          ),
+        );
       }
     }
   } catch (e) {
@@ -367,12 +422,7 @@ List<FileItem> getFilesAtPath(
   return items;
 }
 
-enum MechanixButtonType {
-  action,
-  delete,
-  cancel,
-  disable,
-}
+enum MechanixButtonType { action, delete, cancel, disable }
 
 MechanixFilledButtonThemeData buttonThemeData(
   BuildContext context, {
@@ -403,47 +453,49 @@ MechanixFilledButtonThemeData buttonThemeData(
   }
 
   return MechanixFilledButtonThemeData(
-      buttonSize: size,
-      buttonColor: backgroundColor,
-      pressedButtonColor: Color.lerp(backgroundColor, Colors.white, 0.12)!,
-      textStyle: TextStyle(
-        color: isDisabled
-            ? context.colorScheme.onSecondaryFixed
-            : context.colorScheme.onSurface,
-        fontSize: 20,
-        fontWeight: FontWeight.w400,
-      ));
+    buttonSize: size,
+    buttonColor: backgroundColor,
+    pressedButtonColor: Color.lerp(backgroundColor, Colors.white, 0.12)!,
+    textStyle: TextStyle(
+      color:
+          isDisabled
+              ? context.colorScheme.onSecondaryFixed
+              : context.colorScheme.onSurface,
+      fontSize: 20,
+      fontWeight: FontWeight.w400,
+    ),
+  );
 }
 
 TextStyle regularStyle(BuildContext context) => TextStyle(
-      color: context.colorScheme.onSurface,
-      fontSize: 22,
-      fontWeight: FontWeight.w400,
-    );
+  color: context.colorScheme.onSurface,
+  fontSize: 22,
+  fontWeight: FontWeight.w400,
+);
 
 TextStyle boldStyle(BuildContext context) => TextStyle(
-      color: context.colorScheme.onSurface,
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-    );
+  color: context.colorScheme.onSurface,
+  fontSize: 22,
+  fontWeight: FontWeight.w600,
+);
 
 TextStyle confirmationDialogRegularStyle(BuildContext context) => TextStyle(
-      color: context.colorScheme.onSurface,
-      fontSize: 24,
-      fontWeight: FontWeight.w400,
-    );
+  color: context.colorScheme.onSurface,
+  fontSize: 24,
+  fontWeight: FontWeight.w400,
+);
 
 TextStyle confirmationDialogBoldStyle(BuildContext context) => TextStyle(
-      color: context.colorScheme.onSurface,
-      fontSize: 24,
-      fontWeight: FontWeight.w600,
-    );
+  color: context.colorScheme.onSurface,
+  fontSize: 24,
+  fontWeight: FontWeight.w600,
+);
 
 TextStyle previewTitleStyle(BuildContext context) => TextStyle(
-      color: context.colorScheme.onSurface,
-      fontSize: 22,
-      fontWeight: FontWeight.w600,
-    );
+  color: context.colorScheme.onSurface,
+  fontSize: 22,
+  fontWeight: FontWeight.w600,
+);
 
 Widget searchNavButton({
   required IconData icon,
@@ -484,10 +536,7 @@ class _SearchNavButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onTap;
 
-  const _SearchNavButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _SearchNavButton({required this.icon, required this.onTap});
 
   @override
   State<_SearchNavButton> createState() => _SearchNavButtonState();
@@ -513,12 +562,13 @@ class _SearchNavButtonState extends State<_SearchNavButton> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.all(6),
-        decoration: isEnabled
-            ? BoxDecoration(
-                color: isPressed ? pressedColor : baseColor,
-                borderRadius: BorderRadius.circular(6),
-              )
-            : null,
+        decoration:
+            isEnabled
+                ? BoxDecoration(
+                  color: isPressed ? pressedColor : baseColor,
+                  borderRadius: BorderRadius.circular(6),
+                )
+                : null,
         child: Icon(
           widget.icon,
           size: 24,
