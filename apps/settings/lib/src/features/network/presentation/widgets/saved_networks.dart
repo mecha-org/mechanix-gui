@@ -1,10 +1,8 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
-import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkBloc.dart';
 import 'package:mechanix_settings/src/features/network/blocs/connectNetworkEvent.dart';
 import 'package:mechanix_settings/src/features/network/blocs/wireless_settings_bloc.dart';
@@ -21,30 +19,20 @@ import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
 class SavedNetworks extends StatefulWidget {
-  const SavedNetworks({super.key});
+  const SavedNetworks({super.key, required this.scrollToTop});
+
+  final Function scrollToTop;
 
   @override
   State<SavedNetworks> createState() => _SavedNetworksState();
 }
 
 class _SavedNetworksState extends State<SavedNetworks> {
-  bool _isNetworkLoading(AccessPoints ap, WirelessSettingsState state) {
-    if (listEquals(ap.nmAccessPoint.ssid, state.activationProcessState?.ssid)) {
-      if (state.activationProcessState?.deviceState ==
-          NetworkManagerActiveConnectionState.activating) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   List<SectionListItems> _buildWifiListItems(
     BuildContext context,
     List<AccessPoints> accessPoints,
-    WirelessSettingsState state,
   ) {
     return accessPoints.map((ap) {
-      final isLoading = _isNetworkLoading(ap, state);
       final ssid = utf8.decode(ap.nmAccessPoint.ssid);
 
       return SectionListItems(
@@ -59,7 +47,6 @@ class _SavedNetworksState extends State<SavedNetworks> {
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (isLoading) const CustomLoader(),
             IconButton(
               onPressed: () => _onInfoTap(ap, context),
               icon: SizedBox(
@@ -94,18 +81,22 @@ class _SavedNetworksState extends State<SavedNetworks> {
     }
   }
 
-  void _showSecureNetworkDialog(BuildContext context, AccessPoints item) {
+  void _showSecureNetworkDialog(BuildContext context, AccessPoints? item) {
     final connectNetworkBloc = context.read<ConnectNetworkBloc>();
     final wirelessSettingsBloc = context.read<WirelessSettingsBloc>();
 
     MechanixBottomSheet.show(
       context,
+      withCloseButton: true,
       child: MultiBlocProvider(
         providers: [
           BlocProvider.value(value: connectNetworkBloc),
           BlocProvider.value(value: wirelessSettingsBloc),
         ],
-        child: ConnectSecureNetwork(accessPoint: item.nmAccessPoint),
+        child: ConnectSecureNetwork(
+          accessPoint: item?.nmAccessPoint,
+          scrollToTop: widget.scrollToTop,
+        ),
       ),
     );
   }
@@ -128,7 +119,7 @@ class _SavedNetworksState extends State<SavedNetworks> {
             BlocProvider.value(value: connectNetworkBloc),
             BlocProvider.value(value: wirelessSettingsBloc),
           ],
-          child: const NetworkDetails(),
+          child: NetworkDetails(scrollToTop: widget.scrollToTop),
         ),
       ),
     );
@@ -136,21 +127,32 @@ class _SavedNetworksState extends State<SavedNetworks> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<WirelessSettingsBloc, WirelessSettingsState>(
-      builder: (context, state) {
-        return MechanixSectionList(
-          physics: const BouncingScrollPhysics(),
-          title: 'My Networks',
-          theme: const MechanixSectionListThemeData(
-            widgetPadding: EdgeInsets.zero,
-          ),
-          sectionListItems: _buildWifiListItems(
-            context,
-            state.availableSavedNetworks,
-            state,
-          ),
-        ).padBottom(36);
+    return BlocListener<WirelessSettingsBloc, WirelessSettingsState>(
+      listenWhen: (previous, current) =>
+          previous.deviceState != current.deviceState &&
+          current.deviceState == NetworkManagerDeviceState.failed,
+      listener: (context, state) {
+        if (state.deviceState == NetworkManagerDeviceState.failed) {
+          _showSecureNetworkDialog(context, state.selectedAccessPoint);
+        }
       },
+      child: BlocSelector<WirelessSettingsBloc, WirelessSettingsState,
+          ({List<AccessPoints> list})>(
+        selector: (state) => (list: state.availableSavedNetworks,),
+        builder: (context, data) {
+          return MechanixSectionList(
+            physics: const BouncingScrollPhysics(),
+            title: 'My networks',
+            theme: const MechanixSectionListThemeData(
+              widgetPadding: EdgeInsets.zero,
+            ),
+            sectionListItems: _buildWifiListItems(
+              context,
+              data.list,
+            ),
+          ).padTop(36);
+        },
+      ),
     );
   }
 }

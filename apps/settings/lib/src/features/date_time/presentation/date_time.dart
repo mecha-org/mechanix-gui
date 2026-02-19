@@ -74,7 +74,10 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
     return BlocBuilder<DateTimeBloc, DateTimeState>(
       builder: (context, state) {
         final currentTimeZoneAbbr = state.selectedTimezone.isNotEmpty
-            ? '(${selectTimeZones.firstWhere((e) => e.value == state.selectedTimezone, orElse: () => defaultTimeZones).label})'
+            ? selectTimeZones
+                .firstWhere((e) => e.value == state.selectedTimezone,
+                    orElse: () => defaultTimeZones)
+                .label
             : '';
 
         final month = state.systemDateTime?.month != null
@@ -115,6 +118,11 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                       listItems: [
                         SimpleListItems(
                           title: 'Auto-time',
+                          onTap: () {
+                            context
+                                .read<DateTimeBloc>()
+                                .add(ToggleAutoDateTime(!state.autoDateTime));
+                          },
                           trailing: MechanixSwitch(
                             value: state.autoDateTime,
                             activeText: 'OFF',
@@ -135,7 +143,7 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                           onTap: _onSetTimezoneTap,
                           trailing: Row(
                             children: [
-                              CustomTrailingText(title: state.selectedTimezone),
+                              CustomTrailingText(title: currentTimeZoneAbbr),
                               IconWidget(
                                 iconWidth: 10,
                                 iconHeight: 17,
@@ -153,8 +161,7 @@ class _DateTimeSettingsState extends State<DateTimeSettings> {
                             trailing: Row(
                               children: [
                                 CustomTrailingText(
-                                  title:
-                                      '$hourMinute $meridiem $currentTimeZoneAbbr',
+                                  title: '$hourMinute $meridiem',
                                 ),
                                 IconWidget(
                                   iconWidth: 10,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
@@ -14,21 +13,17 @@ class FileHomePage extends StatefulWidget {
   final String title;
   final List<FileItem> path;
 
-  const FileHomePage({
-    super.key,
-    this.title = "Files",
-    this.path = const [],
-  });
+  const FileHomePage({super.key, this.title = "Files", this.path = const []});
 
   @override
   FileHomePageState createState() => FileHomePageState();
 }
 
 class FileHomePageState extends State<FileHomePage> {
-  final downloadsDir = AppConfig().downloadsDir;
-  final documentsDir = AppConfig().documentsDir;
-  final homeDir = AppConfig().homeDir;
-  final recentDir = AppConfig().recentDir;
+  final downloadsDir = AppPaths.downloadsDir;
+  final documentsDir = AppPaths.documentsDir;
+  final homeDir = AppPaths.homeDir;
+  final recentDir = AppPaths.recentDir;
 
   @override
   void initState() {
@@ -39,10 +34,11 @@ class FileHomePageState extends State<FileHomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => FileExplorerPage(
-              startPath: "/${widget.path.map((e) => e.name).join("/")}",
-              path: widget.path,
-            ),
+            builder:
+                (_) => FileExplorerPage(
+                  startPath: "/${widget.path.map((e) => e.name).join("/")}",
+                  path: widget.path,
+                ),
           ),
         );
       });
@@ -150,22 +146,21 @@ class FileHomePageState extends State<FileHomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => BlocProvider.value(
-            value: filesBloc,
-            child: FileExplorerPage(
-              title: 'Recent',
-              path: pathToSegments(path),
-            ),
-          ),
+          builder:
+              (_) => BlocProvider.value(
+                value: filesBloc,
+                child: FileExplorerPage(
+                  title: 'Recent',
+                  path: pathToSegments(path),
+                ),
+              ),
         ),
       );
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => FileExplorerPage(
-            startPath: path,
-          ),
+          builder: (_) => FileExplorerPage(startPath: path),
           //   ),
         ),
       );

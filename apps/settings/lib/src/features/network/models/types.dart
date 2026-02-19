@@ -1,3 +1,4 @@
+import 'package:mechanix_settings/src/features/network/models/access_points.dart';
 import 'package:nm/nm.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/select/select_type.dart';
@@ -84,21 +85,13 @@ enum SignalLevel { high, medium, low, none }
 class ActivatingNetwork {
   final List<int> ssid;
   final bool isActivate;
+  final AccessPoints? accessPoint;
   final NetworkManagerActiveConnectionState deviceState;
 
   const ActivatingNetwork({
     required this.ssid,
     required this.isActivate,
     required this.deviceState,
-  });
-}
-
-class ActivationProcessState {
-  final List<int> ssid;
-  final NetworkManagerActiveConnectionState deviceState;
-
-  const ActivationProcessState({
-    required this.ssid,
-    required this.deviceState,
+    this.accessPoint,
   });
 }

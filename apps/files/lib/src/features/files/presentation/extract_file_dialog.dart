@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_files/app_config.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
 import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/commons/customWidgets/pressable_icon.dart';
@@ -55,9 +54,9 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
   final ScrollController _scrollController = ScrollController();
   String currentPath = "";
   final ValueNotifier<String> searchQuery = ValueNotifier("");
-  final downloadsDir = AppConfig().downloadsDir;
-  final documentsDir = AppConfig().documentsDir;
-  final homeDir = AppConfig().homeDir;
+  final downloadsDir = AppPaths.downloadsDir;
+  final documentsDir = AppPaths.documentsDir;
+  final homeDir = AppPaths.homeDir;
 
   bool showHomeView = false;
   bool isSearching = false;
@@ -144,9 +143,10 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
     final selectedPaths = widget.filesBloc.state.zipFilePaths;
 
     final selectedCount = selectedPaths.length;
-    final label = selectedCount > 1
-        ? " $selectedCount items"
-        : " ${selectedPaths.first.split('/').last}";
+    final label =
+        selectedCount > 1
+            ? " $selectedCount items"
+            : " ${selectedPaths.first.split('/').last}";
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -172,16 +172,17 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
 
         // Folder list
         Expanded(
-          child: showHomeView
-              ? buildHomeView(context)
-              : buildListViewMoveAndExtract(
-                  context, _scrollController, controller),
+          child:
+              showHomeView
+                  ? buildHomeView(context)
+                  : buildListViewMoveAndExtract(
+                    context,
+                    _scrollController,
+                    controller,
+                  ),
         ),
 
-        Divider(
-          height: 1,
-          color: context.colorScheme.surfaceContainer,
-        ),
+        Divider(height: 1, color: context.colorScheme.surfaceContainer),
         // Navigation bar
         Container(
           height: 66,
@@ -216,8 +217,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                           });
                           controller.search('');
                         },
-                        tapBackgroundColor:
-                            context.colorScheme.surfaceContainer.withAlpha(100),
+                        tapBackgroundColor: context.colorScheme.surfaceContainer
+                            .withAlpha(100),
                         icon: const Icon(Icons.close),
                       ),
                     ),
@@ -239,23 +240,29 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                   ),
                 ),
               ] else if (showRenameBar) ...[
-                _buildRenameDialog()
+                _buildRenameDialog(),
               ] else ...[
                 // Entire MechanixBottomBar must be inside Row children
                 Expanded(
                   child: MechanixBottomBar(
                     theme: MechanixBottomBarThemeData(
-                        height: 66,
-                        decoration: BoxDecoration(
-                            color: context.colorScheme.surfaceContainerHigh),
-                        widgetPadding:
-                            const EdgeInsets.only(left: 8, top: 10, right: 8)),
+                      height: 66,
+                      decoration: BoxDecoration(
+                        color: context.colorScheme.surfaceContainerHigh,
+                      ),
+                      widgetPadding: const EdgeInsets.only(
+                        left: 8,
+                        top: 10,
+                        right: 8,
+                      ),
+                    ),
                     leadingWidget: [
                       BottomBarButton.widget(
                         widget: DecoratedPressableIcon(
                           iconPath: Images.back,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () {
                             (isHomePageDir ? homeNavigation() : handleBack());
@@ -268,7 +275,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         widget: DecoratedPressableIcon(
                           iconPath: Images.search,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () {
                             setState(() => isSearching = true);
@@ -279,7 +287,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         widget: DecoratedPressableIcon(
                           iconPath: Images.home,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () {
                             setState(() => showHomeView = true);
@@ -290,7 +299,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                         widget: DecoratedPressableIcon(
                           iconPath: Images.createFolder,
                           tapBackgroundColor: context
-                              .colorScheme.surfaceContainer
+                              .colorScheme
+                              .surfaceContainer
                               .withAlpha(100),
                           onTap: () async {
                             await createFolderAndRename();
@@ -300,19 +310,24 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                     ],
                   ),
                 ),
-              ]
+              ],
             ],
           ),
         ),
 
         // Bottom bar
         Container(
-          padding:
-              const EdgeInsets.only(left: 16, right: 16, bottom: 30, top: 8),
+          padding: const EdgeInsets.only(
+            left: 16,
+            right: 16,
+            bottom: 30,
+            top: 8,
+          ),
           decoration: BoxDecoration(
             color: context.colorScheme.secondaryContainer,
-            borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(12),
+            ),
           ),
           child: Row(
             children: [
@@ -320,8 +335,10 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final prefix = 'Extracting ';
-                    final prefixWidth =
-                        textWidth(prefix, regularStyle(context));
+                    final prefixWidth = textWidth(
+                      prefix,
+                      regularStyle(context),
+                    );
 
                     final availableWidth = constraints.maxWidth - prefixWidth;
 
@@ -336,10 +353,7 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
                       overflow: TextOverflow.clip, // important!
                       text: TextSpan(
                         children: [
-                          TextSpan(
-                            text: prefix,
-                            style: regularStyle(context),
-                          ),
+                          TextSpan(text: prefix, style: regularStyle(context)),
                           TextSpan(
                             text: truncatedLabel,
                             style: boldStyle(context),
@@ -352,8 +366,11 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
               ),
               const SizedBox(width: 8),
               MechanixFilledButton(
-                theme: buttonThemeData(context,
-                    type: MechanixButtonType.cancel, size: const Size(94, 40)),
+                theme: buttonThemeData(
+                  context,
+                  type: MechanixButtonType.cancel,
+                  size: const Size(94, 40),
+                ),
                 label: "Cancel",
                 onPressed: () {
                   widget.filesBloc.add(CancelExtractMode());
@@ -362,19 +379,23 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
               ),
               const SizedBox(width: 10),
               MechanixFilledButton(
-                theme: buttonThemeData(context,
-                    type: showHomeView
-                        ? MechanixButtonType.disable
-                        : MechanixButtonType.action,
-                    size: const Size(94, 40)),
+                theme: buttonThemeData(
+                  context,
+                  type:
+                      showHomeView
+                          ? MechanixButtonType.disable
+                          : MechanixButtonType.action,
+                  size: const Size(94, 40),
+                ),
                 label: "Extract",
-                onPressed: !showHomeView
-                    ? () {
-                        handleExtract(context, widget.filesBloc.state);
-                        Navigator.pop(context, true);
-                      }
-                    : null,
-              )
+                onPressed:
+                    !showHomeView
+                        ? () {
+                          handleExtract(context, widget.filesBloc.state);
+                          Navigator.pop(context, true);
+                        }
+                        : null,
+              ),
             ],
           ),
         ),
@@ -390,11 +411,9 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
     final folderName = await generateUniqueFolderName(path);
     final newPath = p.join(path, folderName);
 
-    bloc.add(CreateFolder(
-      path: path,
-      folderName: folderName,
-      controller: controller,
-    ));
+    bloc.add(
+      CreateFolder(path: path, folderName: folderName, controller: controller),
+    );
 
     // Wait for folder to appear in UI (optional small delay)
     await Future.delayed(const Duration(milliseconds: 200));
@@ -434,39 +453,40 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
 
           controller.setLiveRename(oldPath, v);
         },
-        anchorWidget: showCheck
-            ? Padding(
-                padding: const EdgeInsets.only(left: 5),
-                child: DecoratedPressableIcon(
-                  icon: const Icon(Icons.check),
-                  onTap: () {
-                    final filesBloc = context.read<FilesBloc>();
-                    filesBloc.add(
-                      Rename(
-                        oldPath: createdFolderPath,
-                        newName: renameText,
-                        controller: controller,
-                      ),
-                    );
-                    setState(() => showRenameBar = false);
-                    controller.clearNewFolder();
-                  },
-                  tapBackgroundColor:
-                      context.colorScheme.surfaceContainer.withAlpha(100),
+        anchorWidget:
+            showCheck
+                ? Padding(
+                  padding: const EdgeInsets.only(left: 5),
+                  child: DecoratedPressableIcon(
+                    icon: const Icon(Icons.check),
+                    onTap: () {
+                      final filesBloc = context.read<FilesBloc>();
+                      filesBloc.add(
+                        Rename(
+                          oldPath: createdFolderPath,
+                          newName: renameText,
+                          controller: controller,
+                        ),
+                      );
+                      setState(() => showRenameBar = false);
+                      controller.clearNewFolder();
+                    },
+                    tapBackgroundColor: context.colorScheme.surfaceContainer
+                        .withAlpha(100),
+                  ),
+                )
+                : Padding(
+                  padding: const EdgeInsets.only(left: 5),
+                  child: DecoratedPressableIcon(
+                    icon: const Icon(Icons.close),
+                    onTap: () {
+                      setState(() => showRenameBar = false);
+                      controller.clearNewFolder();
+                    },
+                    tapBackgroundColor: context.colorScheme.surfaceContainer
+                        .withAlpha(100),
+                  ),
                 ),
-              )
-            : Padding(
-                padding: const EdgeInsets.only(left: 5),
-                child: DecoratedPressableIcon(
-                  icon: const Icon(Icons.close),
-                  onTap: () {
-                    setState(() => showRenameBar = false);
-                    controller.clearNewFolder();
-                  },
-                  tapBackgroundColor:
-                      context.colorScheme.surfaceContainer.withAlpha(100),
-                ),
-              ),
       ),
     );
   }
@@ -494,68 +514,70 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
 
             // Home directory
             MechanixSectionList(
-                theme: MechanixSectionListThemeData(
-                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
+              theme: MechanixSectionListThemeData(
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+              ),
+              sectionListItems: [
+                SectionListItems.leadingIcon(
+                  title: "Home directory",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory(homeDir));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.home,
                 ),
-                sectionListItems: [
-                  SectionListItems.leadingIcon(
-                    title: "Home directory",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(homeDir));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.home,
-                  ),
-                  // Downloads
-                  SectionListItems.leadingIcon(
-                    title: "Downloads",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(downloadsDir));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.downloads,
-                  ),
+                // Downloads
+                SectionListItems.leadingIcon(
+                  title: "Downloads",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory(downloadsDir));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.downloads,
+                ),
 
-                  // Documents
-                  SectionListItems.leadingIcon(
-                    title: "Documents",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory(documentsDir));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.homeDocuments,
-                  ),
-                ]),
+                // Documents
+                SectionListItems.leadingIcon(
+                  title: "Documents",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory(documentsDir));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.homeDocuments,
+                ),
+              ],
+            ),
 
             // Root dir
             MechanixSectionList(
-                title: 'Hard Drive',
-                theme: MechanixSectionListThemeData(
-                  backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                  titleTextStyle: TextStyle(
-                    fontSize: 20,
-                    color: context.colorScheme.onSecondaryFixed,
-                    fontWeight: FontWeight.w500,
-                  ),
+              title: 'Hard Drive',
+              theme: MechanixSectionListThemeData(
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                titleTextStyle: TextStyle(
+                  fontSize: 20,
+                  color: context.colorScheme.onSecondaryFixed,
+                  fontWeight: FontWeight.w500,
                 ),
-                sectionListItems: [
-                  SectionListItems.leadingIcon(
-                    title: "Root (/)",
-                    titleTextStyle: listItemTitleTextStyle(context),
-                    onTap: () {
-                      setState(() => showHomeView = false);
-                      controller.openDirectory(Directory("/"));
-                    },
-                    iconColor: context.colorScheme.primaryContainer,
-                    iconPath: Images.hardDrive,
-                  ),
-                ]),
+              ),
+              sectionListItems: [
+                SectionListItems.leadingIcon(
+                  title: "Root (/)",
+                  titleTextStyle: listItemTitleTextStyle(context),
+                  onTap: () {
+                    setState(() => showHomeView = false);
+                    controller.openDirectory(Directory("/"));
+                  },
+                  iconColor: context.colorScheme.primaryContainer,
+                  iconPath: Images.hardDrive,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -575,16 +597,19 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
       final zipPath = zipPaths[i];
       final zipName = p.basenameWithoutExtension(zipPath);
 
-      final uniquePath =
-          await getUniqueExtractPath(p.join(currentPath, zipName));
+      final uniquePath = await getUniqueExtractPath(
+        p.join(currentPath, zipName),
+      );
 
-      bloc.add(ExtractZipTo(
-        zipPath,
-        uniquePath,
-        completer,
-        index: i,
-        total: zipPaths.length,
-      ));
+      bloc.add(
+        ExtractZipTo(
+          zipPath,
+          uniquePath,
+          completer,
+          index: i,
+          total: zipPaths.length,
+        ),
+      );
 
       String status = await completer.future;
 
@@ -595,9 +620,8 @@ class ExtractBottomSheetContentState extends State<ExtractBottomSheetContent> {
       }
     }
 
-    bloc.add(ExtractZipBatchCompleted(
-      successCount: success,
-      failureCount: failed,
-    ));
+    bloc.add(
+      ExtractZipBatchCompleted(successCount: success, failureCount: failed),
+    );
   }
 }

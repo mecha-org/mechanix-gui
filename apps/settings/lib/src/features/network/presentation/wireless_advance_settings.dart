@@ -24,9 +24,9 @@ class WirelessAdvanceSettings extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MechanixSectionList(title: 'Advanced Settings', sectionListItems: [
+    return MechanixSectionList(title: 'Advanced settings', sectionListItems: [
       SectionListItems(
-        title: 'Manage Wireless',
+        title: 'Manage wireless',
         onTap: () => onTap(context),
       ),
     ]);

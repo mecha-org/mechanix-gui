@@ -50,7 +50,7 @@ class _AddNetworkState extends State<AddNetwork> {
                   child: Column(
                     children: [
                       CustomTitle(
-                        title: "Add Wireless Network",
+                        title: "Add wireless network",
                         textStyle: TextStyle(
                           color: context.onSurface,
                           fontWeight: FontWeight.w400,
@@ -63,6 +63,8 @@ class _AddNetworkState extends State<AddNetwork> {
                       MechanixTextInput.textInput(
                         hintText: 'Name',
                         isFormField: true,
+                        autofocus: true,
+                        initialValue: state.username,
                         theme: MechanixTextInputThemeData(
                           widgetHeight: 58,
                           borderRadius: BorderRadius.circular(8),
@@ -90,8 +92,7 @@ class _AddNetworkState extends State<AddNetwork> {
                         ),
                         prefixIcon: IconWidget(
                           iconPath: Images.wifi,
-                          iconWidth: 19,
-                          iconHeight: 21,
+                          iconWidth: 23,
                           boxWidth: 24,
                           boxHeight: 24,
                           iconColor: context.outline,
@@ -107,6 +108,7 @@ class _AddNetworkState extends State<AddNetwork> {
                           return MechanixTextInput.password(
                             hintText: 'Enter Password',
                             isFormField: true,
+                            initialValue: state.password,
                             prefixIcon: IconWidget(
                               iconPath: Images.lockIcon,
                               iconWidth: 19,

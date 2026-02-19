@@ -88,7 +88,7 @@ class _AppearanceState extends State<Appearance> {
             MechanixSimpleList(
               listItems: [
                 SimpleListItems(
-                  title: 'Dark Mode',
+                  title: 'Dark mode',
                   disabled: true,
                   trailing:
                       BlocSelector<AppearanceBloc, AppearanceState, ThemeMode>(
@@ -111,7 +111,7 @@ class _AppearanceState extends State<Appearance> {
                   ),
                 ),
                 SimpleListItems(
-                  title: 'Set Wallpaper',
+                  title: 'Set wallpaper',
                   onTap: () => onWallpaperTap(context),
                   trailing: const RightIconArrowWidget(),
                 ),

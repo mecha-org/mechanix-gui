@@ -54,7 +54,6 @@ class WirelessSettingsBloc
     on<ConnectSavedNetwork>(_connectSavedNetwork);
     on<ForgetNetwork>(onForgetNetwork);
 
-    on<UpdateAvailableNetworksEvent>(_updateAvailableNetworkList);
     on<GetSavedNetworksEvent>(_getSavedNetworkList);
 
     on<UpdateConnectedNetworkEvent>(_updateConnectedNetwork);
@@ -64,8 +63,8 @@ class WirelessSettingsBloc
     on<UpdateNMDeviceState>(_onNetworkManagerDeviceStatusChanged);
     on<ActivatingNetworkEvent>(_onActivatingNetwork);
     on<ActivatedNetworkEvent>(_onActivatedNetwork);
-    on<DeActivatedNetworkEvent>(_onDeActivatedNetwork);
-    on<ActivationProcessEvent>(_onActivationProcessEvent);
+    on<UpdateSavedNetworkList>(_updateSavedNetworkList);
+    on<UpdateAvailableNetworkList>(_updateAvailableNetworkList);
   }
 
   Future<void> _onInit(
@@ -91,6 +90,10 @@ class WirelessSettingsBloc
         add(GetSavedNetworksEvent());
         add(LoadNetworks());
       });
+      final wifiDevice = await wifiRepository.getWifiDevice();
+      if (wifiDevice.state != state.deviceState) {
+        add(UpdateNMDeviceState(wifiDevice.state));
+      }
     }
 
     /// Get wired device
@@ -162,34 +165,12 @@ class WirelessSettingsBloc
       add(ActivatingNetworkEvent(const ActivatingNetwork(
         ssid: [],
         isActivate: false,
+        accessPoint: null,
         deviceState: NetworkManagerActiveConnectionState.unknown,
       )));
     }
 
     emit(state.copyWith(activatedNetwork: event.activatingNetwork));
-  }
-
-  Future<void> _onDeActivatedNetwork(DeActivatedNetworkEvent event,
-      Emitter<WirelessSettingsState> emit) async {
-    final isSameNetwork =
-        listEquals(state.activatingNetwork?.ssid, event.activatingNetwork.ssid);
-
-    // remove activating network when network is de-activated
-    if (isSameNetwork) {
-      add(ActivatingNetworkEvent(const ActivatingNetwork(
-        ssid: [],
-        isActivate: false,
-        deviceState: NetworkManagerActiveConnectionState.unknown,
-      )));
-    }
-
-    emit(state.copyWith(deActivatedNetwork: event.activatingNetwork));
-  }
-
-  // currently activating network states activate, activating, activated etc
-  Future<void> _onActivationProcessEvent(
-      ActivationProcessEvent event, Emitter<WirelessSettingsState> emit) async {
-    emit(state.copyWith(activationProcessState: event.activationProcessState));
   }
 
   void _onWifiEnabledChanged(
@@ -223,164 +204,166 @@ class WirelessSettingsBloc
   Future<void> _initializeWifiStream() async {
     try {
       logger.i('Initializing WiFi event stream HERE...');
+
       final stream = await wifiRepository.streamWifiEvents();
+
       _wifiEventsSubscription = stream.listen((prop) async {
-        if (prop.contains("State")) {
-          final wifiState = await wifiRepository.getWifiState();
-          final wifiDevice = await wifiRepository.getWifiDevice();
+        if (!prop.contains("State")) return;
 
-          // when network connection failed
-          if (wifiDevice.state == NetworkManagerDeviceState.failed) {
-            final failedNetwork = [
-              ...state.availableOtherNetworks,
-              ...state.availableOtherNetworks
-            ].firstWhereOrNull((sn) =>
-                utf8.decode(sn.nmAccessPoint.ssid ?? []) ==
-                wifiDevice.activeConnection?.id);
+        final wifiState = await wifiRepository.getWifiState();
+        final wifiDevice = await wifiRepository.getWifiDevice();
 
-            // when network failed remove from activating network
-            if (utf8.decode(failedNetwork?.nmAccessPoint.ssid ?? []) != '') {
-              if (listEquals(state.activatingNetwork?.ssid,
-                  failedNetwork?.nmAccessPoint.ssid)) {
-                add(
-                  ActivationProcessEvent(
-                    ActivationProcessState(
-                      deviceState: NetworkManagerActiveConnectionState.unknown,
-                      ssid: failedNetwork?.nmAccessPoint.ssid ?? [],
-                    ),
-                  ),
-                );
-              }
-            }
+        if (wifiDevice.state != state.deviceState) {
+          add(UpdateNMDeviceState(wifiDevice.state));
+        }
 
-            // when network failed remove from saved network
-            if (failedNetwork != null) {
-              await wifiRepository.deleteSavedNetwork(
-                failedNetwork.nmAccessPoint,
-              );
-            }
-          }
+        if (wifiDevice.state == NetworkManagerDeviceState.failed) {
+          add(
+            ActivatingNetworkEvent(
+              const ActivatingNetwork(
+                ssid: [],
+                isActivate: false,
+                accessPoint: null,
+                deviceState: NetworkManagerActiveConnectionState.unknown,
+              ),
+            ),
+          );
+        }
 
-          // get currently activate connection list
-          final connections = await wifiRepository.activatingConnection();
+        if (wifiDevice.state == NetworkManagerDeviceState.prepare ||
+            wifiDevice.state == NetworkManagerDeviceState.activated) {
+          await _handleConnections();
+        }
 
-          if (connections.isNotEmpty) {
-            for (var connection in connections) {
-              final networks = [
-                ...state.availableSavedNetworks,
-                ...state.availableOtherNetworks,
-              ];
-
-              final conn = networks.firstWhereOrNull(
-                  (sn) => utf8.decode(sn.nmAccessPoint.ssid) == connection.id);
-              // updates states of currently activating network
-              if (utf8.decode(conn?.nmAccessPoint.ssid ?? []) != '') {
-                if (listEquals(
-                    state.activatingNetwork?.ssid, conn?.nmAccessPoint.ssid)) {
-                  add(
-                    ActivationProcessEvent(
-                      ActivationProcessState(
-                        deviceState: connection.state,
-                        ssid: conn?.nmAccessPoint.ssid ?? [],
-                      ),
-                    ),
-                  );
-                }
-              }
-
-              if (conn != null) {
-                // add activating network
-                if (connection.state ==
-                    NetworkManagerActiveConnectionState.activating) {
-                  add(
-                    ActivationProcessEvent(
-                      ActivationProcessState(
-                        deviceState: connection.state,
-                        ssid: conn.nmAccessPoint.ssid,
-                      ),
-                    ),
-                  );
-
-                  add(
-                    ActivatingNetworkEvent(
-                      ActivatingNetwork(
-                        deviceState:
-                            NetworkManagerActiveConnectionState.activating,
-                        isActivate: false,
-                        ssid: conn?.nmAccessPoint.ssid ?? [],
-                      ),
-                    ),
-                  );
-                }
-
-                // add activated network
-                if (connection.state ==
-                    NetworkManagerActiveConnectionState.activated) {
-                  final savedNetworks = await wifiRepository.getSavedNetworks();
-
-                  final availAccessPoints =
-                      await wifiRepository.availableAccessPoints(savedNetworks);
-
-                  if (availAccessPoints.active != null) {
-                    add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
-                    add(UpdateAvailableNetworksEvent(
-                        availAccessPoints.available));
-                  }
-                  add(
-                    ActivatedNetworkEvent(
-                      ActivatingNetwork(
-                        deviceState:
-                            NetworkManagerActiveConnectionState.activated,
-                        isActivate: false,
-                        ssid: conn?.nmAccessPoint.ssid ?? [],
-                      ),
-                    ),
-                  );
-                }
-
-                // add de-activated network
-                if (connection.state ==
-                    NetworkManagerActiveConnectionState.deactivated) {
-                  add(
-                    DeActivatedNetworkEvent(
-                      ActivatingNetwork(
-                        deviceState:
-                            NetworkManagerActiveConnectionState.deactivated,
-                        isActivate: false,
-                        ssid: conn.nmAccessPoint.ssid,
-                      ),
-                    ),
-                  );
-                }
-              }
-            }
-          }
-
-          if (wifiDevice.state != state.deviceState) {
-            add(UpdateNMDeviceState(wifiDevice.state));
-          }
-
-          switch (wifiState) {
-            case NetworkManagerState.connecting:
-              add(WifiStatusChanged(WifiStatus.connecting));
-              break;
-            case NetworkManagerState.connectedGlobal:
-              add(WifiStatusChanged(WifiStatus.connected));
-              break; // Prevents fallthrough to the default case
-            case NetworkManagerState.disconnecting:
-              add(WifiStatusChanged(WifiStatus.disconnecting));
-              break;
-            case NetworkManagerState.disconnected:
-              add(WifiStatusChanged(WifiStatus.disconnected));
-              break;
-            default:
-              add(WifiStatusChanged(WifiStatus.unknown));
-              break;
-          }
+        switch (wifiState) {
+          case NetworkManagerState.connecting:
+            add(WifiStatusChanged(WifiStatus.connecting));
+            break;
+          case NetworkManagerState.connectedGlobal:
+            add(WifiStatusChanged(WifiStatus.connected));
+            break;
+          case NetworkManagerState.disconnecting:
+            add(WifiStatusChanged(WifiStatus.disconnecting));
+            break;
+          case NetworkManagerState.disconnected:
+            add(WifiStatusChanged(WifiStatus.disconnected));
+            break;
+          default:
+            add(WifiStatusChanged(WifiStatus.unknown));
+            break;
         }
       });
     } catch (e, stackTrace) {
       logger.e('Error initializing wifi stream $e, $stackTrace');
+    }
+  }
+
+  Future<void> _handleConnections() async {
+    try {
+      final connections = await wifiRepository.activatingConnection();
+      final savedNetworks = await wifiRepository.getSavedNetworks();
+
+      final accessPoints =
+          await wifiRepository.availableAccessPoints(savedNetworks);
+
+      if (connections.isEmpty) return;
+
+      final allNetworks = [
+        ...accessPoints.available,
+        if (accessPoints.active != null) accessPoints.active!,
+      ];
+
+      for (final connection in connections) {
+        final conn = allNetworks.firstWhereOrNull(
+          (sn) => utf8.decode(sn.nmAccessPoint.ssid) == connection.id,
+        );
+
+        if (conn == null) continue;
+
+        switch (connection.state) {
+          case NetworkManagerActiveConnectionState.activating:
+            _handleActivatingState(conn, accessPoints.available);
+            break;
+
+          case NetworkManagerActiveConnectionState.activated:
+            _handleActivatedState(conn, accessPoints);
+            break;
+
+          default:
+            break;
+        }
+      }
+    } catch (e) {
+      print("handle connections error $e");
+    }
+  }
+
+  void _handleActivatingState(
+    AccessPoints conn,
+    List<AccessPoints> accessPoints,
+  ) {
+    try {
+      add(
+        ActivatingNetworkEvent(
+          ActivatingNetwork(
+            deviceState: NetworkManagerActiveConnectionState.activating,
+            isActivate: false,
+            accessPoint: conn,
+            ssid: conn.nmAccessPoint.ssid,
+          ),
+        ),
+      );
+
+      _updateNetworkLists(accessPoints);
+    } catch (e) {
+      print("Activating State error $e");
+    }
+  }
+
+  void _handleActivatedState(
+    AccessPoints conn,
+    ({AccessPoints? active, List<AccessPoints> available}) accessPoints,
+  ) {
+    try {
+      if (accessPoints.active != null) {
+        add(UpdateConnectedNetworkEvent(accessPoints.active!));
+      }
+
+      _updateNetworkLists(accessPoints.available);
+
+      add(
+        ActivatedNetworkEvent(
+          ActivatingNetwork(
+            deviceState: NetworkManagerActiveConnectionState.activated,
+            isActivate: false,
+            ssid: conn.nmAccessPoint.ssid,
+          ),
+        ),
+      );
+    } catch (e) {
+      print("Activated State error $e");
+    }
+  }
+
+  void _updateNetworkLists(List<AccessPoints> list) {
+    try {
+      final saved = <AccessPoints>[];
+      final available = <AccessPoints>[];
+
+      for (final ap in list) {
+        if (ap.isActive) continue;
+
+        if (ap.isSaved) {
+          saved.add(ap);
+        } else {
+          available.add(ap);
+        }
+      }
+
+      add(UpdateSavedNetworkList(saved));
+      add(UpdateAvailableNetworkList(available));
+    } catch (e) {
+      print("Updated Network List Error $e");
     }
   }
 
@@ -389,6 +372,7 @@ class WirelessSettingsBloc
       if (!state.wifiOn) return;
 
       final stream = await wifiRepository.streamWirelessDeviceStream();
+
       _accessPointSubscription = stream.listen((prop) async {
         if (prop.isNotEmpty && (prop.contains("AccessPoints"))) {
           final savedNetworks = await wifiRepository.getSavedNetworks();
@@ -396,27 +380,24 @@ class WirelessSettingsBloc
           final availAccessPoints =
               await wifiRepository.availableAccessPoints(savedNetworks);
 
-          add(UpdateAvailableNetworksEvent(availAccessPoints.available));
+          if (availAccessPoints.available.isNotEmpty) {
+            final savedAccessPoints = <AccessPoints>[];
+            final availableAccessPoints = <AccessPoints>[];
 
-          // TODO: Revisit this code later
-          // if (availAccessPoints.active != null) {
-          //   add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
-          // }
+            for (final ap in availAccessPoints.available) {
+              if (ap.isActive) continue;
 
-          // final savedNetworks =
-          //     await wifiRepository.savedNetworks(state.availableOtherNetworks);
+              if (ap.isSaved) {
+                savedAccessPoints.add(ap);
+              } else {
+                availableAccessPoints.add(ap);
+              }
+            }
 
-          // final availAccessPoints =
-          //     await wifiRepository.availableAccessPoints(savedNetworks);
+            add(UpdateSavedNetworkList(savedAccessPoints));
 
-          // if (availAccessPoints.available.isNotEmpty) {
-          //   add(UpdateAvailableNetworksEvent(availAccessPoints.available));
-          // }
-
-          // if (availAccessPoints.active != null) {
-          //   add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
-          //   add(WifiStatusChanged(WifiStatus.connected));
-          // }
+            add(UpdateAvailableNetworkList(availableAccessPoints));
+          }
         }
       });
     } catch (e, stackTrace) {
@@ -452,6 +433,7 @@ class WirelessSettingsBloc
     print('Toggling WiFi: ${event.enabled}');
     logger.i('Toggling WiFi: ${event.enabled}');
     try {
+      emit(state.copyWith(wifiOn: event.enabled));
       await wifiRepository.setWifiEnabled(event.enabled);
     } catch (e) {
       logger.e('Error toggling WiFi: $e');
@@ -476,17 +458,23 @@ class WirelessSettingsBloc
   Future<void> onForgetNetwork(
       ForgetNetwork event, Emitter<WirelessSettingsState> emit) async {
     try {
-      await wifiRepository.forgetNetwork(event.ssid);
-
-      final updatedNetworks = state.availableSavedNetworks
+      final updatedSavedNetworks = state.availableSavedNetworks
           .where((sn) => utf8.decode(sn.nmAccessPoint.ssid) != event.ssid)
           .toList();
 
-      if (updatedNetworks.length != state.availableSavedNetworks.length) {
-        emit(state.copyWith(availableSavedNetworks: updatedNetworks));
+      final updatedAllNetworks =
+          state.allSavedNetworks.where((sn) => sn.ssid != event.ssid).toList();
+
+      if (updatedSavedNetworks.length != state.availableSavedNetworks.length) {
+        emit(state.copyWith(
+          availableSavedNetworks: updatedSavedNetworks,
+          allSavedNetworks: updatedAllNetworks,
+        ));
       }
+      await wifiRepository.forgetNetwork(event.ssid);
 
       add(GetSavedNetworksEvent());
+      add(LoadNetworks());
     } catch (e) {
       logger.e('Error in forgetting network: $e');
       emit(state.copyWith(error: e.toString()));
@@ -505,102 +493,86 @@ class WirelessSettingsBloc
     }
   }
 
-  Future<void> _updateAvailableNetworkList(UpdateAvailableNetworksEvent event,
-      Emitter<WirelessSettingsState> emit) async {
+  List<AccessPoints> _mergeAccessPoints({
+    required List<AccessPoints> oldNetworks,
+    required List<AccessPoints> newNetworks,
+    required List<int>? activatingSsid,
+  }) {
     try {
-      emit(state.copyWith(
-        availableOtherNetworksLoading: true,
-        availableSavedNetworksLoading: true,
-      ));
+      final Map<String, AccessPoints> oldBySsid = {
+        for (final ap in oldNetworks) utf8.decode(ap.nmAccessPoint.ssid): ap,
+      };
 
-      // if network is activating from not saved network list
-      final isActivatingFromOtherNetwork = state.availableOtherNetworks.any(
-          (network) =>
-              utf8.decode(network.nmAccessPoint.ssid) ==
-              utf8.decode(state.activatingNetwork?.ssid ?? []));
+      final List<AccessPoints> mergedNetworkList = [];
 
-      final accessPoints = event.accessPoints;
+      for (final ap in newNetworks) {
+        final ssidBytes = ap.nmAccessPoint.ssid;
+        final ssid = utf8.decode(ssidBytes);
 
-      // Old available networks SSIDs
-      final existingSSIDs = state.availableOtherNetworks
-          .map((n) => utf8.decode(n.nmAccessPoint.ssid))
-          .toSet();
+        final old = oldBySsid[ssid];
 
-      // new searched AccessPoints which are not in old available network state
-      final newNetworks = accessPoints.where((network) {
-        final ssid = utf8.decode(network.nmAccessPoint.ssid);
-        return ssid.isNotEmpty && !existingSSIDs.contains(ssid);
-      }).toList();
+        if (activatingSsid != null && listEquals(ssidBytes, activatingSsid)) {
+          continue;
+        }
 
-      // all scanned AccessPoints SSIDs
-      final allScanSSIDs = accessPoints
-          .map((network) => utf8.decode(network.nmAccessPoint.ssid))
-          .where((ssid) => ssid.isNotEmpty)
-          .toSet();
-
-      // not available SSIDs in new scan
-      final unavailableSSIDs =
-          existingSSIDs.where((ssid) => !allScanSSIDs.contains(ssid)).toList();
-
-      // For Showing saved and available network
-      var availableOtherNetworks = [
-        ...state.availableOtherNetworks,
-        ...newNetworks
-      ].where((network) => !network.isSaved).toList();
-
-      if (newNetworks.isNotEmpty && unavailableSSIDs.isEmpty) {
-        // while activating network from unsaved network
-        // activating network not supposed to list in saved networks
-        var availableSavedNetworks = accessPoints.where((ap) {
-          if (isActivatingFromOtherNetwork) {
-            final isSameSsid = listEquals(
-                state.activatingNetwork?.ssid, ap.nmAccessPoint.ssid);
-            if (isSameSsid) return false;
-            return ap.isSaved && !ap.isActive;
-          } else {
-            return ap.isSaved && !ap.isActive;
-          }
-        }).toList();
-
-        emit(state.copyWith(
-          availableOtherNetworks: availableOtherNetworks,
-          availableSavedNetworks: availableSavedNetworks,
-          availableOtherNetworksLoading: false,
-          availableSavedNetworksLoading: false,
-        ));
+        if (old != null &&
+            listEquals(old.nmAccessPoint.ssid, ap.nmAccessPoint.ssid)) {
+          mergedNetworkList.add(old);
+        } else {
+          mergedNetworkList.add(ap);
+        }
       }
 
-      if (unavailableSSIDs.isNotEmpty) {
-        final updatedNetworks = List<AccessPoints>.from(availableOtherNetworks);
-
-        updatedNetworks.removeWhere((network) {
-          final networkSsid = utf8.decode(network.nmAccessPoint.ssid);
-          return (unavailableSSIDs.contains(networkSsid));
-        });
-
-        var availableSavedNetworks = accessPoints.where((ap) {
-          if (isActivatingFromOtherNetwork) {
-            final isSameSsid = listEquals(
-                state.activatingNetwork?.ssid, ap.nmAccessPoint.ssid);
-            if (isSameSsid) return false;
-            return true;
-          } else {
-            return ap.isSaved && !ap.isActive;
-          }
-        }).toList();
-
-        emit(state.copyWith(
-          availableOtherNetworks: updatedNetworks,
-          availableSavedNetworks: availableSavedNetworks,
-          availableOtherNetworksLoading: false,
-          availableSavedNetworksLoading: false,
-        ));
-      }
+      return mergedNetworkList;
     } catch (e) {
-      logger.e('error in update available networks $e');
+      print("Error in merge access points $e");
+      return [];
+    }
+  }
+
+  Future<void> _updateSavedNetworkList(
+    UpdateSavedNetworkList event,
+    Emitter<WirelessSettingsState> emit,
+  ) async {
+    try {
+      final updatedNetworks = _mergeAccessPoints(
+        oldNetworks: state.availableSavedNetworks,
+        newNetworks: event.accessPoint,
+        activatingSsid: state.activatingNetwork?.ssid,
+      );
+
+      if (listEquals(updatedNetworks, state.availableSavedNetworks)) {
+        return;
+      }
+
       emit(state.copyWith(
-          availableOtherNetworksLoading: false,
-          availableSavedNetworksLoading: false));
+        availableSavedNetworks: updatedNetworks,
+      ));
+    } catch (e) {
+      print("Error in update saved network $e");
+    }
+  }
+
+  Future<void> _updateAvailableNetworkList(
+    UpdateAvailableNetworkList event,
+    Emitter<WirelessSettingsState> emit,
+  ) async {
+    try {
+      final updatedNetworks = _mergeAccessPoints(
+        oldNetworks: state.availableOtherNetworks,
+        newNetworks: event.accessPoint,
+        activatingSsid: state.activatingNetwork?.ssid,
+      );
+
+      if (listEquals(updatedNetworks, state.availableOtherNetworks)) {
+        return;
+      }
+
+      emit(state.copyWith(
+        availableOtherNetworks: updatedNetworks,
+      ));
+    } catch (e) {
+      print("Error in update saved network $e");
     }
   }
 
@@ -622,38 +594,8 @@ class WirelessSettingsBloc
         return;
       }
 
-      // update saved network and unsaved network list when network is updated
-      final isSavedNetworkIsActive =
-          state.availableSavedNetworks.any((network) {
-        return utf8.decode(network.nmAccessPoint?.ssid ?? []) ==
-            utf8.decode(event.accessPoint.nmAccessPoint.ssid ?? []);
-      });
-
-      if (isSavedNetworkIsActive) {
-        final updatedSavedNetworks = state.availableSavedNetworks
-            .where((network) =>
-                utf8.decode(network.nmAccessPoint?.ssid ?? []) !=
-                utf8.decode(event.accessPoint.nmAccessPoint.ssid ?? []))
-            .toList();
-        emit(state.copyWith(availableSavedNetworks: updatedSavedNetworks));
-      } else {
-        final updatedOtherNetworks = state.availableOtherNetworks
-            .where((network) =>
-                utf8.decode(network.nmAccessPoint?.ssid ?? []) !=
-                utf8.decode(event.accessPoint.nmAccessPoint.ssid ?? []))
-            .toList();
-        emit(state.copyWith(availableOtherNetworks: updatedOtherNetworks));
-      }
-
-      final newSsid = utf8.decode(event.accessPoint.nmAccessPoint.ssid);
-      final currentSsid =
-          utf8.decode(state.connectedNetwork!.nmAccessPoint.ssid);
-
-      // Use exact equality comparison, not contains()
-      final isSameNetwork = newSsid == currentSsid;
-
-      // Only update if it's actually a different network
-      if (!isSameNetwork) {
+      if (!listEquals(event.accessPoint.nmAccessPoint.ssid,
+          state.connectedNetwork!.nmAccessPoint.ssid)) {
         emit(state.copyWith(connectedNetwork: event.accessPoint));
       }
     } catch (e) {
@@ -670,32 +612,42 @@ class WirelessSettingsBloc
         return;
       }
 
-      logger.i('BLOC:: Refreshing WiFi list...');
+      print('BLOC:: Refreshing WiFi list...');
 
-      // Show loading state
       emit(state.copyWith(
         availableOtherNetworksLoading: true,
         availableSavedNetworksLoading: true,
         error: null,
       ));
 
-      // Get updated access points
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final savedNetworks = await wifiRepository.getSavedNetworks();
+
       final availAccessPoints =
           await wifiRepository.availableAccessPoints(savedNetworks);
 
       if (availAccessPoints.available.isNotEmpty) {
-        add(UpdateAvailableNetworksEvent(availAccessPoints.available));
+        final savedAccessPoints = availAccessPoints.available
+            .where((ap) => ap.isSaved && !ap.isActive)
+            .toList();
+
+        add(UpdateSavedNetworkList(savedAccessPoints));
+
+        final availableAccessPoints = availAccessPoints.available
+            .where((ap) => !ap.isSaved && !ap.isActive)
+            .toList();
+
+        add(UpdateAvailableNetworkList(availableAccessPoints));
       }
 
       if (availAccessPoints.active != null) {
         add(UpdateConnectedNetworkEvent(availAccessPoints.active!));
       }
 
-      // Also update saved networks
       add(GetSavedNetworksEvent());
 
-      logger.i('BLOC:: WiFi list refreshed successfully');
+      print('BLOC:: WiFi list refreshed successfully');
 
       emit(state.copyWith(
         availableOtherNetworksLoading: false,

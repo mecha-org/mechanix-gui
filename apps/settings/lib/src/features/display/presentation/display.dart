@@ -102,7 +102,7 @@ class _DisplayPageState extends State<DisplayPage> {
                       physics: const BouncingScrollPhysics(),
                       sectionListItems: [
                         SectionListItems(
-                            title: 'Auto Brightness',
+                            title: 'Auto brightness',
                             defaultTrailingIcon: false,
                             trailing: MechanixSwitch(
                               activeText: 'OFF',
@@ -115,7 +115,7 @@ class _DisplayPageState extends State<DisplayPage> {
                               onChanged: changeBrightnessAuto,
                             )),
                         SectionListItems(
-                          title: 'Screen Off Time',
+                          title: 'Screen off time',
                           onTap: _onScreenOffTap,
                           trailing: Text(displayLabel(state.screenTimeout))
                               .padRight(8),

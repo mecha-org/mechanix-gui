@@ -15,7 +15,7 @@ class SetUpWallpaper extends StatelessWidget {
         physics: BouncingScrollPhysics(),
         child: ContainerWidget(
             child: Column(
-          children: [CustomTitle(title: "Set Wallpaper"), WallpaperGallery()],
+          children: [CustomTitle(title: "Set wallpaper"), WallpaperGallery()],
         )),
       ),
       bottomNavigationBar: MechanixBottomBar(
