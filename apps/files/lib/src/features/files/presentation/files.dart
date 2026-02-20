@@ -84,11 +84,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   final ValueNotifier<bool> allSelectedNotifier = ValueNotifier(false);
 
-  //tap states
-  bool isMovePressed = false;
-  bool isCopyPressed = false;
-  bool isSharePressed = false;
-  bool isDeletePressed = false;
   bool isTextInputOpened = false;
   final FocusNode _focusNode = FocusNode();
 
@@ -349,11 +344,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                         valueListenable: controller.getPathNotifier,
                         builder: (context, path, _) {
                           final title =
-                              widget.title == "Recent"
-                                  ? "Recents"
-                                  : (path == '/'
-                                      ? "Root"
-                                      : getCurrentFolderName(path));
+                              (path == '/'
+                                  ? "Root"
+                                  : getCurrentFolderName(path));
 
                           return EllipsizedText(
                             title,
@@ -377,58 +370,14 @@ class FileExplorerPageState extends State<FileExplorerPage> {
               child: ValueListenableBuilder<String>(
                 valueListenable: searchQuery,
                 builder: (context, query, _) {
-                  List<FileSystemEntity> filteredFilesRecent = [];
-                  List<FileItem> filteredFiles = [];
-
-                  if (widget.title == 'Recent') {
-                    // Read the current file list from the bloc state synchronously
-                    final fileSystemList =
-                        BlocProvider.of<FilesBloc>(
-                          context,
-                        ).state.fileSystemList;
-                    filteredFilesRecent =
-                        query.isEmpty
-                            ? fileSystemList
-                            : fileSystemList
-                                .where(
-                                  (file) => p
-                                      .basename(file.path)
-                                      .toLowerCase()
-                                      .contains(query.toLowerCase()),
-                                )
-                                .toList();
-                  } else {
-                    // Normal directory
-                    filteredFiles =
-                        query.isEmpty
-                            ? displayedFiles
-                            : displayedFiles
-                                .where(
-                                  (file) => file.name.toLowerCase().contains(
-                                    query.toLowerCase(),
-                                  ),
-                                )
-                                .toList();
-                  }
-
                   return ValueListenableBuilder<bool>(
                     valueListenable: viewModeNotifier,
                     builder: (context, isGrid, _) {
                       return isGrid
-                          ? widget.title == 'Recent'
-                              ? buildGridViewForRecentFiles(
-                                context,
-                                filteredFilesRecent,
-                              )
-                              : buildGridView(
-                                context,
-                                _scrollController,
-                                controller,
-                              )
-                          : widget.title == 'Recent'
-                          ? buildListViewForRecentFiles(
+                          ? buildGridView(
                             context,
-                            filteredFilesRecent,
+                            _scrollController,
+                            controller,
                           )
                           : buildListView(
                             context,

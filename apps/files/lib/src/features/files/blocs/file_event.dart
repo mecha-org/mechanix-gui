@@ -15,8 +15,11 @@ class CreateFolder extends FilesEvent {
   final String folderName;
   final FileManagerController controller;
 
-  CreateFolder(
-      {required this.path, required this.folderName, required this.controller});
+  CreateFolder({
+    required this.path,
+    required this.folderName,
+    required this.controller,
+  });
 }
 
 class DeleteEntities extends FilesEvent {
@@ -31,8 +34,11 @@ class Rename extends FilesEvent {
   final String newName;
   final FileManagerController controller;
 
-  Rename(
-      {required this.oldPath, required this.newName, required this.controller});
+  Rename({
+    required this.oldPath,
+    required this.newName,
+    required this.controller,
+  });
 }
 
 class Copy extends FilesEvent {
@@ -40,16 +46,14 @@ class Copy extends FilesEvent {
   final String destinationPath;
   final FileManagerController? controller;
 
-  Copy(
-      {required this.sourcePaths,
-      required this.destinationPath,
-      required this.controller});
+  Copy({
+    required this.sourcePaths,
+    required this.destinationPath,
+    required this.controller,
+  });
 }
 
-enum ConflictResolutionStrategy {
-  replace,
-  skip,
-}
+enum ConflictResolutionStrategy { replace, skip }
 
 class ContinueCopyWithConflictResolution extends FilesEvent {
   final List<String> sourcePaths;
@@ -179,3 +183,9 @@ class SearchFilesInDirectory extends FilesEvent {
 }
 
 class ClearSearchResults extends FilesEvent {}
+
+class RemoveRecentEntities extends FilesEvent {
+  final List<String> entitiesPath;
+
+  RemoveRecentEntities(this.entitiesPath);
+}

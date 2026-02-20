@@ -6,4 +6,6 @@ abstract class RecentFilesRepository {
   Future<void> addRecentFile(String path);
 
   Future<void> clear();
+
+  Future<void> removeRecentFile(List<String> entitiesPath);
 }

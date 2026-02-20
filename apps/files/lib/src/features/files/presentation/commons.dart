@@ -12,6 +12,7 @@ import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
 import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
+import 'package:mechanix_files/src/features/files/presentation/recent_files.dart';
 import 'package:mechanix_files/src/features/preview/presentation/audio_player.dart';
 import 'package:mechanix_files/src/features/preview/presentation/code_editor.dart';
 import 'package:mechanix_files/src/features/preview/presentation/image_viewer.dart';
@@ -92,7 +93,7 @@ void handleTap(
   List<FileItem> currentPath,
   String fullPath,
   bool isSelectionMode,
-  FileExplorerPageState? state,
+  RecentFilesPageState? state,
 ) {
   final fileType = p.extension(fullPath).toLowerCase();
 

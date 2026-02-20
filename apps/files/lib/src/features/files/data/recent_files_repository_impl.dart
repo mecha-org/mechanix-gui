@@ -60,4 +60,28 @@ class RecentFilesRepositoryImpl extends RecentFilesRepository {
     await ensureRecentFilesConnected();
     await _box().clear();
   }
+
+  @override
+  Future<void> removeRecentFile(List<String> entitiesPath) async {
+    await ensureRecentFilesConnected();
+
+    final box = _box();
+
+    // Convert to Set for fast lookup
+    final pathsToRemove = entitiesPath.toSet();
+
+    final keysToDelete = <dynamic>[];
+
+    for (final key in box.keys) {
+      final file = box.get(key);
+
+      if (file != null && pathsToRemove.contains(file.path)) {
+        keysToDelete.add(key);
+      }
+    }
+
+    if (keysToDelete.isNotEmpty) {
+      await box.deleteAll(keysToDelete);
+    }
+  }
 }
