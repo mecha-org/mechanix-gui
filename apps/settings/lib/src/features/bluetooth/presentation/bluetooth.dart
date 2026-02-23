@@ -10,6 +10,7 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/bluetooth_device_list.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
@@ -28,18 +29,33 @@ class Bluetooth extends StatefulWidget {
 class _BluetoothState extends State<Bluetooth> {
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BluetoothBloc, BluetoothState>(
-        builder: (context, state) {
-      final devices = state.devices;
+    return BlocSelector<
+        BluetoothBloc,
+        BluetoothState,
+        ({
+          List<BluetoothDeviceDetails> devices,
+          BluetoothAdapter? bluetoothAdapter,
+          bool isPowered,
+          bool loading,
+        })>(selector: (state) {
+      return (
+        devices: state.devices,
+        bluetoothAdapter: state.bluetoothAdapter,
+        isPowered: state.isPowered,
+        loading: state.loading,
+      );
+    }, builder: (context, data) {
+      final devices = data.devices;
 
       final connectedDevices =
-          devices.where((d) => d.connected && d.paired).toList();
+          devices.where((d) => d.device.connected && d.device.paired).toList();
 
       final pairedDevices =
-          devices.where((d) => d.paired && !d.connected).toList();
+          devices.where((d) => d.device.paired && !d.device.connected).toList();
 
-      final newDevices =
-          devices.where((d) => !d.paired && !d.connected).toList();
+      final newDevices = devices
+          .where((d) => !d.device.paired && !d.device.connected)
+          .toList();
 
       final connectedAndPairedDevices = [
         ...connectedDevices,
@@ -47,9 +63,6 @@ class _BluetoothState extends State<Bluetooth> {
       ].toList();
 
       return Scaffold(
-        // appBar: const PreferredSize(
-        //     preferredSize: Size.fromHeight(52),
-        //     child: MechanixNavigationBar(title: "Bluetooth")),
         body: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
           child: ContainerWidget(
@@ -62,8 +75,7 @@ class _BluetoothState extends State<Bluetooth> {
                     physics: const BouncingScrollPhysics(),
                     listItems: [
                       SimpleListItems(
-                        title: state.bluetoothAdapter?.alias ?? 'Bluetooth',
-                        // titleTextStyle: TextStyle(color: Colors.red),
+                        title: data.bluetoothAdapter?.alias ?? 'Bluetooth',
                         trailing: MechanixSwitch(
                           activeText: 'OFF',
                           inactiveText: 'ON',
@@ -71,13 +83,13 @@ class _BluetoothState extends State<Bluetooth> {
                             activeTrackColor: context.secondaryContainer,
                             inactiveTrackColor: context.secondaryContainer,
                           ),
-                          value: state.isPowered,
+                          value: data.isPowered,
                           onChanged: (val) => context
                               .read<BluetoothBloc>()
                               .add(ToggleBluetooth(val)),
                         ),
                       ),
-                      if (state.isPowered)
+                      if (data.isPowered)
                         SimpleListItems(
                           title: 'Device discoverable',
                           onTap: () => Navigator.pushNamed(
@@ -86,8 +98,8 @@ class _BluetoothState extends State<Bluetooth> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               CustomTrailingText(
-                                      title: state.bluetoothAdapter != null &&
-                                              state.bluetoothAdapter!
+                                      title: data.bluetoothAdapter != null &&
+                                              data.bluetoothAdapter!
                                                   .discoverable
                                           ? 'Yes'
                                           : 'No')
@@ -104,9 +116,9 @@ class _BluetoothState extends State<Bluetooth> {
                           ),
                         )
                     ]),
-                if (state.isPowered &&
+                if (data.isPowered &&
                     connectedAndPairedDevices.isEmpty &&
-                    state.loading)
+                    data.loading)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
                     title: 'Paired Devices',
@@ -119,12 +131,12 @@ class _BluetoothState extends State<Bluetooth> {
                       ),
                     ],
                   ),
-                if (state.isPowered && connectedAndPairedDevices.isNotEmpty)
+                if (data.isPowered && connectedAndPairedDevices.isNotEmpty)
                   BluetoothDeviceList(
                     isPaired: true,
                     devices: connectedAndPairedDevices,
                   ),
-                if (state.isPowered && newDevices.isEmpty && state.loading)
+                if (data.isPowered && newDevices.isEmpty && data.loading)
                   MechanixSectionList(
                     physics: const BouncingScrollPhysics(),
                     title: 'Available Devices',
@@ -137,7 +149,7 @@ class _BluetoothState extends State<Bluetooth> {
                       ),
                     ],
                   ),
-                if (state.isPowered && newDevices.isNotEmpty)
+                if (data.isPowered && newDevices.isNotEmpty)
                   BluetoothDeviceList(
                     isPaired: false,
                     devices: newDevices,

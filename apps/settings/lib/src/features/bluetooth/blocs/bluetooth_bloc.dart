@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/web.dart';
 import 'package:mechanix_settings/src/features/bluetooth/data/bluetooth_repository.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/bluetooth_device_classifier.dart';
 import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
 import 'bluetooth_event.dart';
@@ -60,6 +61,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     on<BluetoothDevicesAdded>(_addedBluetoothDevices);
     on<BluetoothDevicesRemoved>(_removedBluetoothDevices);
     on<BluetoothConnectingEvent>(_onBluetoothConnectionLoading);
+    on<BluetoothDevicesUpdate>(_updateBluetoothDevices);
   }
 
   Future<void> _onInit(
@@ -162,7 +164,8 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       _bluetoothDeviceRemovedStream = stream.listen((device) {
         if (!isClosed) {
           print("-------- Device removed -------- : ${device.name}");
-          add(BluetoothDevicesRemoved(device));
+
+          add(BluetoothDevicesRemoved(device.address));
         }
       });
     } catch (e, stackTrace) {
@@ -219,7 +222,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       final allDevices = await bluetoothRepository.getDevices();
 
       final validDevices = allDevices
-          .where((d) => d.name.isNotEmpty && d.address.isNotEmpty)
+          .where((d) => d.device.name.isNotEmpty && d.device.address.isNotEmpty)
           .toList();
 
       emit(state.copyWith(
@@ -246,7 +249,7 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       var allDevices = await bluetoothRepository.getDevices();
 
       var validDevices = allDevices
-          .where((d) => d.name.isNotEmpty && d.address.isNotEmpty)
+          .where((d) => d.device.name.isNotEmpty && d.device.address.isNotEmpty)
           .toList();
 
       emit(state.copyWith(
@@ -288,10 +291,10 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
       final allDevices = await bluetoothRepository.getDevices();
       final connectedDevice =
-          allDevices.firstWhere((d) => d.address == event.address);
+          allDevices.firstWhere((d) => d.device.address == event.address);
 
       final updatedDevices = state.devices
-          .map((d) => d.address == event.address ? connectedDevice : d);
+          .map((d) => d.device.address == event.address ? connectedDevice : d);
 
       add(BluetoothConnectingEvent(
           address: event.address, connectionLoading: false));
@@ -316,10 +319,10 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
       final allDevices = await bluetoothRepository.getDevices();
       final disconnectedDevice =
-          allDevices.firstWhere((d) => d.address == event.address);
+          allDevices.firstWhere((d) => d.device.address == event.address);
 
-      final updatedDevices = state.devices
-          .map((d) => d.address == event.address ? disconnectedDevice : d);
+      final updatedDevices = state.devices.map(
+          (d) => d.device.address == event.address ? disconnectedDevice : d);
 
       emit(state.copyWith(devices: [...updatedDevices]));
 
@@ -369,13 +372,38 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
   void _addedBluetoothDevices(
       BluetoothDevicesAdded event, Emitter<BluetoothState> emit) {
     if (event.device.name != '') {
-      final isAlreadyAdded =
-          state.devices.any((device) => device.address == event.device.address);
+      final isAlreadyAdded = state.devices
+          .any((device) => device.device.address == event.device.address);
 
       if (!isAlreadyAdded) {
-        emit(state.copyWith(devices: [...state.devices, event.device]));
+        final deviceType = BluetoothDeviceClassifier.classify(
+          deviceClass: event.device.deviceClass,
+          uuids: event.device.uuids,
+        );
+
+        final BluetoothDeviceDetails deviceDetails = BluetoothDeviceDetails(
+            device: event.device, deviceType: deviceType);
+
+        emit(state.copyWith(devices: [...state.devices, deviceDetails]));
       }
     }
+  }
+
+  void _updateBluetoothDevices(
+    BluetoothDevicesUpdate event,
+    Emitter<BluetoothState> emit,
+  ) {
+    final updatedDevices = state.devices.map((d) {
+      if (d.device.address == event.device.device.address) {
+        return d.copyWith(deviceType: event.category);
+      }
+      return d;
+    }).toList();
+
+    emit(state.copyWith(
+        devices: updatedDevices,
+        selectedDevice:
+            state.selectedDevice?.copyWith(deviceType: event.category)));
   }
 
   void _onBluetoothConnectionLoading(
@@ -389,9 +417,9 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
   void _removedBluetoothDevices(
       BluetoothDevicesRemoved event, Emitter<BluetoothState> emit) {
-    if (event.device.name != '') {
+    if (event.address != '') {
       final devices = state.devices
-          .where((device) => device.address != event.device.address)
+          .where((device) => device.device.address != event.address)
           .toList();
       emit(state.copyWith(
         devices: devices,

@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:bluez/bluez.dart';
 import 'package:logger/web.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/bluetooth_device_classifier.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
 import 'bluetooth_repository.dart';
 
@@ -100,6 +102,7 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
     try {
       final adapter = await getBluezAdapter();
       final checkPowered = adapter.powered;
+
       if (!checkPowered) await adapter.setPowered(true);
 
       if (!adapter.discovering) await adapter.startDiscovery();
@@ -119,16 +122,28 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   }
 
   @override
-  Future<List<BlueZDevice>> getDevices() async {
+  Future<List<BluetoothDeviceDetails>> getDevices() async {
     try {
       print("IMPL:  getDevices - CHECK CLIENT $_client");
-      var devices = _client.devices;
+      final List<BluetoothDeviceDetails> devices = [];
       print("Devices: ${devices.length}");
+
+      for (var device in _client.devices) {
+        final deviceType = BluetoothDeviceClassifier.classify(
+          deviceClass: device.deviceClass,
+          uuids: device.uuids,
+        );
+
+        devices.add(
+            BluetoothDeviceDetails(device: device, deviceType: deviceType));
+
+        print("${device.alias} → $deviceType");
+      }
 
       return devices;
     } catch (e) {
-      logger.e("Error getting devices $e");
-      return <BlueZDevice>[]; // Return an empty list on error
+      print("Error getting devices $e");
+      return [];
     }
   }
 
