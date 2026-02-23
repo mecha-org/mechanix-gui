@@ -189,3 +189,9 @@ class RemoveRecentEntities extends FilesEvent {
 
   RemoveRecentEntities(this.entitiesPath);
 }
+
+class SortRecentFiles extends FilesEvent {
+  final String sortBy;
+  final bool isAscending;
+  SortRecentFiles(this.sortBy, this.isAscending);
+}

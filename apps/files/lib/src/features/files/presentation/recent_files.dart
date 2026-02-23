@@ -699,7 +699,9 @@ class RecentFilesPageState extends State<RecentFilesPage> {
   }
 
   void handleSortMode(String value, bool isAscending) {
-    BlocProvider.of<FilesBloc>(context).add(SortFiles(value, isAscending));
+    BlocProvider.of<FilesBloc>(
+      context,
+    ).add(SortRecentFiles(value, isAscending));
   }
 
   void showDetailsDialog(BuildContext context, String path) {

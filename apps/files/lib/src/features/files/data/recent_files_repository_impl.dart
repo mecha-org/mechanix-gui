@@ -1,5 +1,7 @@
+import 'package:file/src/interface/file_system_entity.dart';
 import 'package:hive/hive.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
+import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/models/recent_files.dart';
 
 import 'recent_files_repository.dart';
@@ -83,5 +85,50 @@ class RecentFilesRepositoryImpl extends RecentFilesRepository {
     if (keysToDelete.isNotEmpty) {
       await box.deleteAll(keysToDelete);
     }
+  }
+
+  @override
+  Future<List<FileSystemEntity>> getSortedFiles({
+    required List<FileSystemEntity> files,
+    required SortBy sortBy,
+    required bool ascending,
+  }) async {
+    final sorted = List<FileSystemEntity>.from(files);
+
+    sorted.sort((a, b) {
+      final statA = a.statSync();
+      final statB = b.statSync();
+
+      int result;
+
+      switch (sortBy) {
+        case SortBy.name:
+          result = a.path
+              .split('/')
+              .last
+              .toLowerCase()
+              .compareTo(b.path.split('/').last.toLowerCase());
+          break;
+
+        case SortBy.size:
+          result = statA.size.compareTo(statB.size);
+          break;
+
+        case SortBy.accessedTime:
+          result = statA.accessed.compareTo(statB.accessed);
+          break;
+
+        case SortBy.modTime:
+          result = statA.modified.compareTo(statB.modified);
+          break;
+        case SortBy.type:
+          // TODO: Handle this case.
+          throw UnimplementedError();
+      }
+
+      return ascending ? result : -result;
+    });
+
+    return sorted;
   }
 }

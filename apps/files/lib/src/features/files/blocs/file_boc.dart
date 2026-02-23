@@ -8,6 +8,7 @@ import 'package:mechanix_files/src/features/files/blocs/file_state.dart';
 import 'package:mechanix_files/src/features/files/data/app_settings_repository.dart';
 import 'package:mechanix_files/src/features/files/data/file_repository.dart';
 import 'package:mechanix_files/src/features/files/data/recent_files_repository.dart';
+import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:path/path.dart' as p;
 
 class FilesBloc extends Bloc<FilesEvent, FilesState> {
@@ -62,6 +63,7 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
     on<LoadRecentFiles>(_onLoadRecentFiles);
     on<AddToRecentFiles>(_onAddToRecentFiles);
     on<RemoveRecentEntities>(_onRemoveRecentEntities);
+    on<SortRecentFiles>(_onSortRecentFiles);
 
     on<SearchFilesInDirectory>(_onSearchFilesInDirectory);
     on<ClearSearchResults>((event, emit) {
@@ -341,6 +343,27 @@ class FilesBloc extends Bloc<FilesEvent, FilesState> {
 
   void _onCancelMoveMode(CancelMoveMode event, Emitter<FilesState> emit) {
     emit(state.copyWith(isMoveMode: false, movedPaths: []));
+  }
+
+  Future<void> _onSortRecentFiles(
+    SortRecentFiles event,
+    Emitter<FilesState> emit,
+  ) async {
+    final sorted = await recentFilesRepository.getSortedFiles(
+      files: state.fileSystemList,
+      sortBy: sortByFromKey(event.sortBy),
+      ascending: event.isAscending,
+    );
+
+    await appSettingsRepository.updateSort(event.sortBy, event.isAscending);
+
+    emit(
+      state.copyWith(
+        fileSystemList: sorted,
+        currentSortBy: event.sortBy,
+        isAscending: event.isAscending,
+      ),
+    );
   }
 
   Future<void> _onSortFiles(SortFiles event, Emitter<FilesState> emit) async {
