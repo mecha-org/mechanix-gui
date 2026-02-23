@@ -205,75 +205,85 @@ Widget buildListViewForRecentFiles(
         final fullPath = entry.key;
         final file = entry.value;
         final isSelected = selectedPaths.contains(fullPath);
-
-        return GestureDetector(
-          onSecondaryTap: () => state?.toggleSelection(fullPath),
-          onLongPress: () => state?.toggleSelection(fullPath),
-          child: ListTile(
-            minTileHeight: 36,
-            contentPadding: const EdgeInsets.only(
-              bottom: 8,
-              top: 8,
-              left: 16,
-              right: 16,
-            ),
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: CustomCircleCheckbox(
-                      isChecked: isSelected,
-                      onTap: () => state?.toggleSelection(fullPath),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 1),
+          child: GestureDetector(
+            onSecondaryTap: () => state?.toggleSelection(fullPath),
+            onLongPress: () => state?.toggleSelection(fullPath),
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? context.colorScheme.secondaryContainer
+                        : Colors.transparent,
+              ),
+              child: ListTile(
+                minTileHeight: 36,
+                contentPadding: const EdgeInsets.only(
+                  bottom: 8,
+                  top: 8,
+                  left: 16,
+                  right: 16,
+                ),
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isSelectionMode)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: CustomCircleCheckbox(
+                          isChecked: isSelected,
+                          onTap: () => state?.toggleSelection(fullPath),
+                        ),
+                      ),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      padding: const EdgeInsets.all(6),
+                      child: Center(
+                        child: Image.asset(
+                          file.iconPath,
+                          fit: BoxFit.contain,
+                          width: 24,
+                          height: 24,
+                          color: context.colorScheme.primaryContainer,
+                        ),
+                      ),
                     ),
-                  ),
-                Container(
-                  width: 36,
-                  height: 36,
-                  padding: const EdgeInsets.all(6),
-                  child: Center(
-                    child: Image.asset(
-                      file.iconPath,
-                      fit: BoxFit.contain,
-                      width: 24,
-                      height: 24,
-                      color: context.colorScheme.primaryContainer,
-                    ),
+                  ],
+                ),
+                title: EllipsizedText(
+                  file.name,
+                  type: EllipsisType.middle,
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: context.colorScheme.onSurface,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-              ],
-            ),
-            title: EllipsizedText(
-              file.name,
-              type: EllipsisType.middle,
-              style: TextStyle(
-                fontSize: 20,
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w400,
+                trailing:
+                    file.modified != null
+                        ? Text(
+                          formatModifiedTime(file.modified!),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: context.colorScheme.onSecondaryFixed,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        )
+                        : null,
+                onTap: () {
+                  handleTap(
+                    context,
+                    file,
+                    [], // no currentPath for recent
+                    fullPath, // ✅ correct path for this file
+                    isSelectionMode,
+                    state,
+                  );
+                },
               ),
             ),
-            trailing:
-                file.modified != null
-                    ? Text(
-                      formatModifiedTime(file.modified!),
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: context.colorScheme.onSecondaryFixed,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    )
-                    : null,
-            onTap: () {
-              handleTap(
-                context,
-                file,
-                [], // no currentPath for recent
-                fullPath, // ✅ correct path for this file
-                isSelectionMode,
-                state,
-              );
-            },
           ),
         );
       },

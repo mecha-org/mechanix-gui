@@ -242,6 +242,14 @@ Widget buildGridViewForRecentFiles(
                       decoration: BoxDecoration(
                         color: context.colorScheme.secondary,
                         borderRadius: BorderRadius.circular(14),
+                        border:
+                            isSelected
+                                ? Border.all(
+                                  color: context.colorScheme.primaryFixed
+                                      .withOpacity(0.8),
+                                  width: 1,
+                                )
+                                : null,
                       ),
                       child: Stack(
                         children: [
