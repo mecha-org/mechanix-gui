@@ -20,6 +20,7 @@ import 'package:mechanix_files/src/features/files/presentation/conflict_resoluti
 import 'package:mechanix_files/src/features/files/presentation/extract_file_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/file_details_dialog.dart';
 import 'package:mechanix_files/src/features/files/presentation/move_file_dialog.dart';
+import 'package:mechanix_files/src/features/files/presentation/search_dialog.dart';
 import 'package:path/path.dart' as p;
 import 'package:widgets/constants.dart';
 import 'package:widgets/mechanix.dart';
@@ -86,6 +87,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
   bool isTextInputOpened = false;
   final FocusNode _focusNode = FocusNode();
+
+  final searchOverlayController = SearchOverlayController();
 
   @override
   void initState() {
@@ -160,6 +163,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
   @override
   void dispose() {
     searchQuery.dispose();
+    searchOverlayController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     _fabController.dispose();
@@ -419,82 +423,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     Navigator.pop(context);
   }
 
-  OverlayEntry? _searchOverlayEntry;
-
-  void showSearchBottomSheet(
-    BuildContext context,
-    ValueNotifier<String> searchQuery,
-  ) {
-    final overlay = Overlay.of(context);
-    if (overlay == null) return;
-
-    _searchOverlayEntry?.remove();
-
-    _searchOverlayEntry = OverlayEntry(
-      builder: (ctx) {
-        WidgetsBinding.instance.addPostFrameCallback((_) async {
-          await Future.delayed(const Duration(milliseconds: 300));
-          _focusNode.addListener(focusChange);
-          if (!mounted) return;
-          if (!_focusNode.canRequestFocus) return;
-          if (_searchOverlayEntry == null) return; // overlay still exists
-
-          // FocusManager.instance.primaryFocus?.unfocus();
-          // _focusNode.requestFocus();
-        });
-
-        return Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: Material(
-            color: Colors.transparent,
-            child: Container(
-              color: context.secondaryContainer,
-              child: MechanixTextInput.search(
-                autofocus: true,
-                // canRequestFocus: true,
-                focusNode: _focusNode,
-                prefixIcon: IconWidget(
-                  iconPath: Images.search,
-                  iconColor: context.colorScheme.onSurface,
-                  iconHeight: 24,
-                  iconWidth: 24,
-                ),
-                isClearButtonRequired: false,
-                anchorWidget: Padding(
-                  padding: const EdgeInsets.only(left: 5),
-                  child: DecoratedPressableIcon(
-                    onTap: () {
-                      clearSearch();
-                    },
-                    tapBackgroundColor: context.colorScheme.surfaceContainer
-                        .withAlpha(100),
-                    icon: const Icon(Icons.close),
-                  ),
-                ),
-                hintText: "Search here",
-                onChanged: (query) {
-                  searchQuery.value = query;
-
-                  if (query.trim().length > 2) {
-                    controller.search(query.trim());
-                  }
-                },
-                onClear: () {
-                  clearSearch();
-                  _buildBottomActionMenuBar(context);
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
-
-    overlay.insert(_searchOverlayEntry!);
-  }
-
   void clearSearch() {
     setState(() {
       isSearching = false;
@@ -502,8 +430,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     });
 
     // safely remove overlay if still mounted
-    _searchOverlayEntry?.remove();
-    _searchOverlayEntry = null;
+    searchOverlayController.hide();
 
     // Reload directory content when clearing search
     controller.search('');
@@ -682,7 +609,21 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                 !selectionMode
                     ? () {
                       setState(() => isSearching = true);
-                      showSearchBottomSheet(context, searchQuery);
+                      searchOverlayController.show(
+                        context,
+                        searchQuery: searchQuery,
+
+                        onClear: () {
+                          clearSearch();
+                          _buildBottomActionMenuBar(context);
+                        },
+
+                        onSearch: (query) {
+                          if (query.length > 2) {
+                            controller.search(query);
+                          }
+                        },
+                      );
                     }
                     : null,
             icon: IconWidget(
@@ -1646,15 +1587,6 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
           if (!_focusNode.canRequestFocus) return;
           if (entry == null) return;
-
-          // FocusManager.instance.primaryFocus?.unfocus();
-          // _focusNode.requestFocus();
-
-          print("_focusNode.hasFocus");
-          print(_focusNode.hasFocus);
-          // setState(() {
-          //   isTextInputOpened = _focusNode.hasFocus;
-          // });
         });
 
         return Positioned(

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/src/commons/constants.dart';

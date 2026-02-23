@@ -80,10 +80,6 @@ class SearchOverlayController {
     );
 
     overlay.insert(_searchOverlayEntry!);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focusNode.requestFocus();
-    });
   }
 
   void hide() {
