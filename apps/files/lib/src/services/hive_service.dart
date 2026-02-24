@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:hive/hive.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/models/app_settings.dart';
 import 'package:mechanix_files/src/models/recent_files.dart';
 
