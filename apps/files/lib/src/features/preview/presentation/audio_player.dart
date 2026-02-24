@@ -333,7 +333,8 @@ class _AudioPlayerOverlayState extends State<AudioPlayerOverlay> {
 
     return MechanixMenu(
       offset: offset,
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 190),
       animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
         iconPath: Images.dots,

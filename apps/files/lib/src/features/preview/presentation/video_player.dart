@@ -96,9 +96,10 @@ class _VideoPlayerState extends State<VideoPlayer> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      body: _playerReady
-          ? Center(child: _buildVideo())
-          : const Center(child: CircularProgressIndicator()),
+      body:
+          _playerReady
+              ? Center(child: _buildVideo())
+              : const Center(child: CircularProgressIndicator()),
       bottomNavigationBar:
           _playerReady ? _buildBottomBar(context) : const SizedBox(),
     );
@@ -209,13 +210,13 @@ class _VideoPlayerState extends State<VideoPlayer> {
                         child: Slider(
                           min: 0,
                           max: _duration.inMilliseconds.toDouble().clamp(
-                                1,
-                                double.infinity,
-                              ),
+                            1,
+                            double.infinity,
+                          ),
                           value: _position.inMilliseconds.toDouble().clamp(
-                                0,
-                                _duration.inMilliseconds.toDouble(),
-                              ),
+                            0,
+                            _duration.inMilliseconds.toDouble(),
+                          ),
                           activeColor: context.colorScheme.primaryContainer,
                           inactiveColor: context.colorScheme.surfaceContainer,
                           thumbColor: context.colorScheme.onSurface,
@@ -280,12 +281,13 @@ class _VideoPlayerState extends State<VideoPlayer> {
                 widget: Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: IconButton(
-                      icon: const IconWidget(
-                        iconHeight: 28,
-                        iconWidth: 28,
-                        iconPath: Images.back,
-                      ),
-                      onPressed: () => Navigator.pop(context)),
+                    icon: const IconWidget(
+                      iconHeight: 28,
+                      iconWidth: 28,
+                      iconPath: Images.back,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
               ),
             ],
@@ -320,13 +322,14 @@ class _VideoPlayerState extends State<VideoPlayer> {
               ),
               BottomBarButton.widget(
                 widget: IconButton(
-                    icon: IconWidget(
-                      iconHeight: 28,
-                      iconWidth: 28,
-                      iconPath: Images.share,
-                      iconColor: context.colorScheme.outline,
-                    ),
-                    onPressed: null),
+                  icon: IconWidget(
+                    iconHeight: 28,
+                    iconWidth: 28,
+                    iconPath: Images.share,
+                    iconColor: context.colorScheme.outline,
+                  ),
+                  onPressed: null,
+                ),
               ),
             ],
             anchorWidget: [
@@ -344,15 +347,17 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
     return MechanixMenu(
       offset: offset,
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 190),
       animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
         iconPath: Images.dots,
         iconHeight: 28,
         iconWidth: 28,
-        iconColor: isMenuOpen
-            ? context.colorScheme.primaryContainer
-            : context.colorScheme.onSurface,
+        iconColor:
+            isMenuOpen
+                ? context.colorScheme.primaryContainer
+                : context.colorScheme.onSurface,
       ),
       openMenu: () {
         setState(() => isMenuOpen = true);

@@ -455,8 +455,9 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     return MechanixMenu(
       offset: offset,
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
       animationDuration: const Duration(milliseconds: 100),
+      dropdownSize: const Size(250, 290),
       buttonIcon: IconWidget(
         iconWidth: 28,
         iconHeight: 28,
@@ -794,7 +795,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
         FileSystemEntity.typeSync(selectedPath!) == FileSystemEntityType.file;
 
     return MechanixMenu(
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 390),
       animationDuration: const Duration(milliseconds: 100),
       offset: offset,
       buttonIcon: IconWidget(
@@ -931,7 +933,8 @@ class FileExplorerPageState extends State<FileExplorerPage> {
 
     return MechanixMenu(
       offset: offset,
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 290),
       animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
         iconPath: Images.dots,
