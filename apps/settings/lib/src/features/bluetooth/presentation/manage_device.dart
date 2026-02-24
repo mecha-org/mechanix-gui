@@ -1,6 +1,6 @@
-import 'package:bluez/bluez.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/back_button.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_container.dart';
@@ -9,12 +9,11 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_title.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
-import 'package:mechanix_settings/src/features/bluetooth/presentation/device_info/bluetooth_device_info.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/forget_device.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/list_items/simple_list_items_type.dart';
 import 'package:widgets/widgets/menu/constants/menu_positions.dart';
-import 'package:widgets/widgets/menu/mechanix_menu_theme.dart';
 import 'package:widgets/widgets/menu/models/mechanix_menu_item.dart';
 
 class ManageDevice extends StatefulWidget {
@@ -26,25 +25,35 @@ class ManageDevice extends StatefulWidget {
 
 class _ManageDeviceState extends State<ManageDevice> {
   List<SimpleListItems> getDeviceList({
-    required List<BlueZDevice> devices,
+    required List<BluetoothDeviceDetails> devices,
     required BluetoothState state,
   }) {
     final devicesList = devices.map((device) {
       return SimpleListItems(
-        title: device.name,
+        title: device.device.name,
         trailing: MechanixMenu(
-            theme: MechanixMenuThemeData(
-              decoration: BoxDecoration(color: context.surfaceContainerHigh),
-            ),
-            animationDuration: const Duration(milliseconds: 400),
-            offset: const Offset(-45, 45),
-            topTabWidth: 1,
-            dropdownPosition: DropdownPosition.centerRight,
+            dropdownSize: const Size(135, 128),
+            wingSize: 50,
+            dropdownPosition: MenuDropdownPosition.leftStart,
             items: [
               MechanixMenuItemsType(
-                title: 'Forget',
+                title: "About",
                 leading: const IconWidget(
                   iconPath: Images.settings,
+                  boxWidth: 20,
+                  boxHeight: 20,
+                  iconWidth: 20,
+                  iconHeight: 20,
+                ),
+                onTap: () {
+                  context.read<BluetoothBloc>().add(SelectDevice(device));
+                  Navigator.pushNamed(context, AppRoutes.bluetoothDeviceInfo);
+                },
+              ),
+              MechanixMenuItemsType(
+                title: "Forget",
+                leading: const IconWidget(
+                  iconPath: Images.blockIcon,
                   boxWidth: 20,
                   boxHeight: 20,
                   iconWidth: 16,
@@ -58,31 +67,6 @@ class _ManageDeviceState extends State<ManageDevice> {
                   );
                 },
               ),
-              MechanixMenuItemsType(
-                title: 'About',
-                leading: const IconWidget(
-                  iconPath: Images.blockIcon,
-                  boxWidth: 20,
-                  boxHeight: 20,
-                  iconWidth: 16,
-                  iconHeight: 16,
-                ),
-                onTap: () {
-                  context.read<BluetoothBloc>().add(SelectDevice(device));
-
-                  final bloc = context.read<BluetoothBloc>();
-
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BlocProvider.value(
-                        value: bloc,
-                        child: const BluetoothDeviceInfo(),
-                      ),
-                    ),
-                  );
-                },
-              )
             ]),
       );
     }).toList();
@@ -94,7 +78,8 @@ class _ManageDeviceState extends State<ManageDevice> {
   Widget build(BuildContext context) {
     return BlocBuilder<BluetoothBloc, BluetoothState>(
       builder: (context, state) {
-        final devices = state.devices.where((device) => device.paired).toList();
+        final devices =
+            state.devices.where((device) => device.device.paired).toList();
 
         return Scaffold(
           body: SingleChildScrollView(

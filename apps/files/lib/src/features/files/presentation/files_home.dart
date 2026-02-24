@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_files/src/commons/constants.dart';
-import 'package:mechanix_files/src/features/files/blocs/file_boc.dart';
-import 'package:mechanix_files/src/features/files/blocs/file_event.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/files.dart';
+import 'package:mechanix_files/src/features/files/presentation/recent_files.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/mechanix_section_list_theme.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
@@ -140,21 +138,9 @@ class FileHomePageState extends State<FileHomePage> {
 
   void onTap(BuildContext context, String path, String title) {
     if (path == recentDir) {
-      final filesBloc = BlocProvider.of<FilesBloc>(context);
-      filesBloc.add(LoadRecentFiles());
-
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder:
-              (_) => BlocProvider.value(
-                value: filesBloc,
-                child: FileExplorerPage(
-                  title: 'Recent',
-                  path: pathToSegments(path),
-                ),
-              ),
-        ),
+        MaterialPageRoute(builder: (_) => const RecentFilesPage()),
       );
     } else {
       Navigator.push(

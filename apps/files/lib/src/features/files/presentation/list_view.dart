@@ -4,11 +4,11 @@ import 'dart:ui';
 import 'package:ellipsized_text/ellipsized_text.dart';
 import 'package:flutter/material.dart';
 import 'package:mechanix_files/src/commons/customWidgets/custom_circular_checkbox.dart';
-import 'package:mechanix_files/src/commons/customWidgets/middle_ellipsis_text.dart';
 import 'package:mechanix_files/src/controllers/file_manager.dart';
 import 'package:mechanix_files/src/controllers/file_manager_controller.dart';
 import 'package:mechanix_files/src/features/files/models/types.dart';
 import 'package:mechanix_files/src/features/files/presentation/commons.dart';
+import 'package:mechanix_files/src/features/files/presentation/recent_files.dart';
 import 'package:widgets/mechanix.dart';
 import 'files.dart';
 import 'package:path/path.dart' as p;
@@ -33,8 +33,8 @@ Widget buildListView(
           child: Text(
             isSearching ? "No results found" : "No items yet",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: context.colorScheme.onSecondaryFixed,
-                ),
+              color: context.colorScheme.onSecondaryFixed,
+            ),
           ),
         );
       }
@@ -50,10 +50,7 @@ Widget buildListView(
 
       return ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-          },
+          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
         ),
         child: ListView.builder(
           controller: scrollController,
@@ -68,22 +65,28 @@ Widget buildListView(
             final isNew = entity.path == controller.newFolderPath;
             return Padding(
               padding: const EdgeInsets.symmetric(
-                  vertical: 1), // spacing between items
+                vertical: 1,
+              ), // spacing between items
               child: GestureDetector(
                 onSecondaryTap: () => state?.toggleSelection(entity.path),
                 onLongPress: () => state?.toggleSelection(entity.path),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isNew
-                        ? context.colorScheme.secondaryContainer
-                        : isSelected
+                    color:
+                        isNew
+                            ? context.colorScheme.secondaryContainer
+                            : isSelected
                             ? context.colorScheme.secondaryContainer
                             : Colors.transparent,
                   ),
                   child: ListTile(
                     minTileHeight: 36,
                     contentPadding: const EdgeInsets.only(
-                        bottom: 8, top: 8, left: 16, right: 16),
+                      bottom: 8,
+                      top: 8,
+                      left: 16,
+                      right: 16,
+                    ),
                     leading: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -171,30 +174,29 @@ Widget buildListViewForRecentFiles(
   BuildContext context,
   List<io.FileSystemEntity> fileSystemList,
 ) {
-  final state = context.findAncestorStateOfType<FileExplorerPageState>();
+  final state = context.findAncestorStateOfType<RecentFilesPageState>();
   final isSelectionMode = state?.selectionMode ?? false;
   final selectedPaths = state?.selectedPaths ?? {};
 
   // Create a list of tuples (fullPath, fileItem)
-  final files = fileSystemList.map((entity) {
-    final fullPath = entity.path;
-    final name = p.basename(fullPath);
-    final accessed = entity.statSync().accessed;
-    final fileItem = FileItem(
-        name: name,
-        type: p.extension(fullPath).toLowerCase(),
-        children: [],
-        modified: accessed);
-    return MapEntry(fullPath, fileItem);
-  }).toList();
+  final files =
+      fileSystemList.map((entity) {
+        final fullPath = entity.path;
+        final name = p.basename(fullPath);
+        final accessed = entity.statSync().accessed;
+        final fileItem = FileItem(
+          name: name,
+          type: p.extension(fullPath).toLowerCase(),
+          children: [],
+          modified: accessed,
+        );
+        return MapEntry(fullPath, fileItem);
+      }).toList();
 
   return ScrollConfiguration(
-    behavior: ScrollConfiguration.of(context).copyWith(
-      dragDevices: {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-      },
-    ),
+    behavior: ScrollConfiguration.of(
+      context,
+    ).copyWith(dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse}),
     child: ListView.builder(
       padding: const EdgeInsets.only(bottom: 80),
       itemCount: files.length,
@@ -203,70 +205,85 @@ Widget buildListViewForRecentFiles(
         final fullPath = entry.key;
         final file = entry.value;
         final isSelected = selectedPaths.contains(fullPath);
-
-        return GestureDetector(
-          onSecondaryTap: () => state?.toggleSelection(fullPath),
-          onLongPress: () => state?.toggleSelection(fullPath),
-          child: ListTile(
-            minTileHeight: 36,
-            contentPadding:
-                const EdgeInsets.only(bottom: 8, top: 8, left: 16, right: 16),
-            leading: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: CustomCircleCheckbox(
-                      isChecked: isSelected,
-                      onTap: () => state?.toggleSelection(fullPath),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 1),
+          child: GestureDetector(
+            onSecondaryTap: () => state?.toggleSelection(fullPath),
+            onLongPress: () => state?.toggleSelection(fullPath),
+            child: Container(
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? context.colorScheme.secondaryContainer
+                        : Colors.transparent,
+              ),
+              child: ListTile(
+                minTileHeight: 36,
+                contentPadding: const EdgeInsets.only(
+                  bottom: 8,
+                  top: 8,
+                  left: 16,
+                  right: 16,
+                ),
+                leading: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isSelectionMode)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: CustomCircleCheckbox(
+                          isChecked: isSelected,
+                          onTap: () => state?.toggleSelection(fullPath),
+                        ),
+                      ),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      padding: const EdgeInsets.all(6),
+                      child: Center(
+                        child: Image.asset(
+                          file.iconPath,
+                          fit: BoxFit.contain,
+                          width: 24,
+                          height: 24,
+                          color: context.colorScheme.primaryContainer,
+                        ),
+                      ),
                     ),
-                  ),
-                Container(
-                  width: 36,
-                  height: 36,
-                  padding: const EdgeInsets.all(6),
-                  child: Center(
-                    child: Image.asset(
-                      file.iconPath,
-                      fit: BoxFit.contain,
-                      width: 24,
-                      height: 24,
-                      color: context.colorScheme.primaryContainer,
-                    ),
+                  ],
+                ),
+                title: EllipsizedText(
+                  file.name,
+                  type: EllipsisType.middle,
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: context.colorScheme.onSurface,
+                    fontWeight: FontWeight.w400,
                   ),
                 ),
-              ],
-            ),
-            title: EllipsizedText(
-              file.name,
-              type: EllipsisType.middle,
-              style: TextStyle(
-                fontSize: 20,
-                color: context.colorScheme.onSurface,
-                fontWeight: FontWeight.w400,
+                trailing:
+                    file.modified != null
+                        ? Text(
+                          formatModifiedTime(file.modified!),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: context.colorScheme.onSecondaryFixed,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        )
+                        : null,
+                onTap: () {
+                  handleTap(
+                    context,
+                    file,
+                    [], // no currentPath for recent
+                    fullPath, // ✅ correct path for this file
+                    isSelectionMode,
+                    state,
+                  );
+                },
               ),
             ),
-            trailing: file.modified != null
-                ? Text(
-                    formatModifiedTime(file.modified!),
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: context.colorScheme.onSecondaryFixed,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  )
-                : null,
-            onTap: () {
-              handleTap(
-                context,
-                file,
-                [], // no currentPath for recent
-                fullPath, // ✅ correct path for this file
-                isSelectionMode,
-                state,
-              );
-            },
           ),
         );
       },
@@ -291,12 +308,16 @@ Widget buildListViewMoveAndExtract(
         // Show message if folder is empty
         return Padding(
           padding: const EdgeInsets.only(
-              bottom: 8, top: 8, left: 16, right: 16), // space above Move bar
+            bottom: 8,
+            top: 8,
+            left: 16,
+            right: 16,
+          ), // space above Move bar
           child: Text(
             isSearching ? "No results found" : "No items yet",
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: context.colorScheme.onSecondaryFixed,
-                ),
+              color: context.colorScheme.onSecondaryFixed,
+            ),
           ),
         );
       }
@@ -312,10 +333,7 @@ Widget buildListViewMoveAndExtract(
 
       return ScrollConfiguration(
         behavior: ScrollConfiguration.of(context).copyWith(
-          dragDevices: {
-            PointerDeviceKind.touch,
-            PointerDeviceKind.mouse,
-          },
+          dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.mouse},
         ),
         child: ListView.builder(
           controller: scrollController,
@@ -332,26 +350,33 @@ Widget buildListViewMoveAndExtract(
             final isDisabled = !isDirectory; // disable if file
 
             return GestureDetector(
-              onSecondaryTap: !isDisabled
-                  ? () => state?.toggleSelection(entity.path)
-                  : null,
-              onLongPress: !isDisabled
-                  ? () => state?.toggleSelection(entity.path)
-                  : null,
+              onSecondaryTap:
+                  !isDisabled
+                      ? () => state?.toggleSelection(entity.path)
+                      : null,
+              onLongPress:
+                  !isDisabled
+                      ? () => state?.toggleSelection(entity.path)
+                      : null,
               child: Opacity(
                 opacity: isDisabled ? 0.4 : 1, // grey out
                 child: IgnorePointer(
                   ignoring: isDisabled, // block interaction
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isNew
-                          ? context.colorScheme.surfaceContainerHighest
-                          : Colors.transparent,
+                      color:
+                          isNew
+                              ? context.colorScheme.surfaceContainerHighest
+                              : Colors.transparent,
                     ),
                     child: ListTile(
                       minTileHeight: 36,
                       contentPadding: const EdgeInsets.only(
-                          bottom: 8, top: 8, left: 16, right: 16),
+                        bottom: 8,
+                        top: 8,
+                        left: 16,
+                        right: 16,
+                      ),
                       leading: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -360,8 +385,8 @@ Widget buildListViewMoveAndExtract(
                               padding: const EdgeInsets.only(right: 16),
                               child: CustomCircleCheckbox(
                                 isChecked: isSelected,
-                                onTap: () =>
-                                    state?.toggleSelection(entity.path),
+                                onTap:
+                                    () => state?.toggleSelection(entity.path),
                               ),
                             ),
                           Container(

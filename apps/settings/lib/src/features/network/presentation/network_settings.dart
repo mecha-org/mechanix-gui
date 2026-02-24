@@ -59,9 +59,7 @@ class _NetworkSettingsState extends State<NetworkSettings> {
               dropdownSize: const Size(135, 128),
               wingSize: 50,
               animationDuration: const Duration(milliseconds: 400),
-              offset: const Offset(-45, 50),
-              topTabWidth: 1,
-              dropdownPosition: DropdownPosition.centerRight,
+              dropdownPosition: MenuDropdownPosition.leftStart,
               items: [
                 MechanixMenuItemsType(
                   title: "About",

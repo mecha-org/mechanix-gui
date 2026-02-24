@@ -55,6 +55,8 @@ class Images {
   static const String tv = 'assets/images/tv.png';
   static const String car = 'assets/images/car.png';
   static const String mic = 'assets/images/mic.png';
+  static const String laptop = 'assets/images/laptop.png';
+  static const String computer = 'assets/images/computer.png';
   static const String sunIcon = 'assets/images/sun_icon.png';
   static const String micOn = 'assets/images/mic_on.png';
   static const String micOff = 'assets/images/mic_off.png';
