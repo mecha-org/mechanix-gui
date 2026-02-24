@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:mechanix_camera/db/camera_config.dart';
 
-
 class CameraHelper {
   static Future<CameraDescription?> getBackCamera() async {
     try {

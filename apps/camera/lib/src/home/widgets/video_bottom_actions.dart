@@ -1,5 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:mechanix_camera/utils/camera_colors.dart';
 import 'package:widgets/extensions/color.dart';
 
 class VideoBottomActions extends StatefulWidget {
@@ -137,7 +138,7 @@ class _VideoBottomActionsState extends State<VideoBottomActions> {
                     isPaused ? Icons.play_arrow : Icons.pause,
                     color:
                         isPaused
-                            ? const Color(0xFFD30000)
+                            ? CameraColors.redColor
                             : context.onSurfaceVariant,
                     size: 34,
                   ),

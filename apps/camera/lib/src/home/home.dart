@@ -1,6 +1,8 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
@@ -9,7 +11,7 @@ import 'package:mechanix_camera/src/home/bottom_settings.dart';
 import 'package:mechanix_camera/src/home/camera_view.dart';
 import 'package:mechanix_camera/src/home/capture_button.dart';
 import 'package:mechanix_camera/src/home/circle_overlay_painter.dart';
-import 'package:mechanix_camera/src/home/circular_frame_painter.dart';
+import 'package:mechanix_camera/src/home/widgets/capture_with_overlay.dart';
 import 'package:mechanix_camera/src/home/widgets/center_dot_painter.dart';
 import 'package:mechanix_camera/src/home/widgets/countdown_overlay.dart';
 import 'package:mechanix_camera/src/home/widgets/timer_label.dart';
@@ -17,6 +19,7 @@ import 'package:mechanix_camera/src/home/widgets/video_bottom_actions.dart';
 import 'package:mechanix_camera/src/home/widgets/video_timer.dart';
 import 'package:mechanix_camera/src/home/zoom_strips.dart';
 import 'package:mechanix_camera/utils/constants.dart';
+import 'package:mechanix_camera/utils/icons/sounds.dart';
 import 'package:widgets/mechanix.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -32,6 +35,9 @@ class _CameraScreenState extends State<CameraScreen>
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
   bool _showCountdown = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final GlobalKey<CaptureFlashOverlayState> _flashKey =
+      GlobalKey<CaptureFlashOverlayState>();
 
   final ValueNotifier<double> _zoomLevel = ValueNotifier<double>(1.0);
   final ValueNotifier<bool> _isRecording = ValueNotifier<bool>(false);
@@ -56,6 +62,7 @@ class _CameraScreenState extends State<CameraScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _disposeCamera();
+    _audioPlayer.dispose();
     _zoomLevel.dispose();
     _isRecording.dispose();
     _captureButtonOffset.dispose();
@@ -107,7 +114,6 @@ class _CameraScreenState extends State<CameraScreen>
   Future<void> _initializeCamera() async {
     try {
       _cameras = await availableCameras();
-
       if (_cameras == null || _cameras!.isEmpty) {
         debugPrint('No cameras available');
         return;
@@ -124,7 +130,7 @@ class _CameraScreenState extends State<CameraScreen>
 
     final CameraController cameraController = CameraController(
       cameraDescription,
-      ResolutionPreset.max,
+      ResolutionPreset.low,
       enableAudio: true,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -181,6 +187,14 @@ class _CameraScreenState extends State<CameraScreen>
       return;
     }
     try {
+      _flashKey.currentState?.flash();
+
+      // Play shutter sound
+      if (mounted &&
+          context.read<CameraBloc>().state.soundMode == SoundMode.on) {
+        await _audioPlayer.play(AssetSource(CameraSounds.shutterSound));
+      }
+
       final path = '${Constants.imageStorePath}${DateTime.now()}.jpg';
       final XFile picture = await _cameraController!.takePicture();
 
@@ -301,16 +315,6 @@ class _CameraScreenState extends State<CameraScreen>
                                 : const SizedBox.shrink(),
                   ),
 
-                  // Circular UI Overlay
-                  Center(
-                    child: CustomPaint(
-                      size: Size(circleSize, circleSize),
-                      painter: CircularFramePainter(
-                        colorScheme: context.colorScheme,
-                      ),
-                    ),
-                  ),
-
                   // Capture Button with Drag Control
                   CaptureButton(
                     isCountingDown: _showCountdown,
@@ -338,6 +342,10 @@ class _CameraScreenState extends State<CameraScreen>
                             return CustomPaint(
                               size: Size(circleSize, circleSize),
                               painter: ZoomStrips(
+                                activeColor:
+                                    context.colorScheme.primaryFixedDim,
+                                stripsColor:
+                                    context.colorScheme.onTertiaryFixed,
                                 zoomLevel: zoom >= 2.0 ? 2.0 : zoom,
                               ),
                             );
@@ -361,6 +369,9 @@ class _CameraScreenState extends State<CameraScreen>
 
                 // Countdown Overlay — sits on top of everything
                 if (!isSettingsOpen) const TimerLabel(),
+
+                // Flash Overlay
+                CaptureFlashOverlay(key: _flashKey),
 
                 if (_showCountdown)
                   CountdownOverlay(

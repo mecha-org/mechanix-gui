@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
+import 'package:mechanix_camera/utils/camera_colors.dart';
 import 'package:widgets/extensions/color.dart';
 
 class CaptureButton extends StatefulWidget {
@@ -37,8 +38,56 @@ class CaptureButton extends StatefulWidget {
   State<CaptureButton> createState() => _CaptureButtonState();
 }
 
-class _CaptureButtonState extends State<CaptureButton> {
+class _CaptureButtonState extends State<CaptureButton>
+    with SingleTickerProviderStateMixin {
   static const double _maxDragDistance = 30.0;
+
+  late final AnimationController _pressController;
+  late final Animation<double> _pressScale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+      reverseDuration: const Duration(milliseconds: 200),
+    );
+
+    _pressScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.0,
+          end: 0.88,
+        ).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 100,
+      ),
+    ]).animate(_pressController);
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    _pressController.forward();
+  }
+
+  void _onTapUp(TapUpDetails _, bool isVideoMode) {
+    _handleTap(isVideoMode);
+    _springBack();
+  }
+
+  void _onTapCancel() {
+    _springBack();
+  }
+
+  void _springBack() {
+    _pressController.reverse();
+  }
 
   void _updateZoomFromOffset(double offset) {
     final normalizedOffset = (offset / _maxDragDistance).clamp(-1.0, 1.0);
@@ -75,6 +124,7 @@ class _CaptureButtonState extends State<CaptureButton> {
 
   void _handleDragEnd(DragEndDetails details) {
     widget.captureButtonOffset.value = 0.0;
+    _springBack();
   }
 
   @override
@@ -91,11 +141,12 @@ class _CaptureButtonState extends State<CaptureButton> {
               return ValueListenableBuilder<bool>(
                 valueListenable: widget.isRecording,
                 builder: (context, isRecording, _) {
-                  // Show stop icon when: photo countdown active OR video recording active
                   final showStopIcon = widget.isCountingDown || isRecording;
 
                   return GestureDetector(
-                    onTap: () => _handleTap(isVideoMode),
+                    onTapDown: _onTapDown,
+                    onTapUp: (details) => _onTapUp(details, isVideoMode),
+                    onTapCancel: _onTapCancel,
                     onVerticalDragUpdate:
                         widget.isCountingDown ? null : _handleDragUpdate,
                     onVerticalDragEnd:
@@ -121,32 +172,44 @@ class _CaptureButtonState extends State<CaptureButton> {
                                 left: 6,
                                 right: 6,
                                 bottom: 6 + offset,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color:
-                                        isVideoMode && !isRecording
-                                            ? const Color(0xFFD30000)
-                                            : context.onSurface,
-                                    border: Border.all(
-                                      color: context.onSurface,
-                                      width: 2.87,
+                                child: AnimatedBuilder(
+                                  animation: _pressScale,
+                                  builder: (context, child) {
+                                    return Transform.scale(
+                                      scale: _pressScale.value,
+                                      child: child,
+                                    );
+                                  },
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          isVideoMode && !isRecording
+                                              ? CameraColors.redColor
+                                              : context.onSurface,
+                                      border: Border.all(
+                                        color: context.onSurface,
+                                        width: 2.87,
+                                      ),
                                     ),
-                                  ),
-                                  child:
-                                      showStopIcon
-                                          ? Center(
-                                            child: Container(
-                                              width: 20,
-                                              height: 20,
-                                              decoration: BoxDecoration(
-                                                color: context.onSurfaceVariant,
-                                                borderRadius:
-                                                    BorderRadius.circular(3.3),
+                                    child:
+                                        showStopIcon
+                                            ? Center(
+                                              child: Container(
+                                                width: 20,
+                                                height: 20,
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      context.onSurfaceVariant,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        3.3,
+                                                      ),
+                                                ),
                                               ),
-                                            ),
-                                          )
-                                          : null,
+                                            )
+                                            : null,
+                                  ),
                                 ),
                               ),
                             ],

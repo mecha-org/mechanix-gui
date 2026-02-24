@@ -14,8 +14,82 @@ import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
 import 'package:widgets/widgets/bottom_bar/mechanix_bottom_bar_theme.dart';
 
-class BottomSettings extends StatelessWidget {
+class BottomSettings extends StatefulWidget {
   const BottomSettings({super.key});
+
+  @override
+  State<BottomSettings> createState() => _BottomSettingsState();
+}
+
+class _BottomSettingsState extends State<BottomSettings>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animationController;
+  late final Animation<Offset> _slideAnimation;
+  late final Animation<double> _fadeAnimation;
+
+  CameraSettingType _visibleSettingType = CameraSettingType.none;
+  CameraSettingType _previousSettingType = CameraSettingType.none;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      ),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    // Once the reverse animation finishes, clear the visible widget.
+    _animationController.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed) {
+        setState(() {
+          _visibleSettingType = CameraSettingType.none;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _handleSettingTypeChange(CameraSettingType newType) {
+    if (newType == _previousSettingType) return;
+
+    _previousSettingType = newType;
+
+    if (newType != CameraSettingType.none) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _visibleSettingType = newType);
+        if (_animationController.status == AnimationStatus.dismissed ||
+            _animationController.status == AnimationStatus.reverse) {
+          _animationController.forward();
+        }
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _animationController.reverse();
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +100,19 @@ class BottomSettings extends StatelessWidget {
       child: BlocSelector<CameraBloc, CameraState, CameraSettingType>(
         selector: (state) => state.cameraSettingType,
         builder: (context, cameraSettingType) {
+          _handleSettingTypeChange(cameraSettingType);
+
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (cameraSettingType != CameraSettingType.none)
-                _buildSettingWidget(context, cameraSettingType),
+              if (_visibleSettingType != CameraSettingType.none)
+                SlideTransition(
+                  position: _slideAnimation,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: _buildSettingWidget(context, _visibleSettingType),
+                  ),
+                ),
 
               // Bottom bar
               MechanixBottomBar(
@@ -68,7 +150,9 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        const SwitchCameraSettingType(CameraSettingType.frameResize),
+                        const SwitchCameraSettingType(
+                          CameraSettingType.frameResize,
+                        ),
                       );
                     },
                     iconPath: CameraIcons.frameResizeIcon,
@@ -105,7 +189,9 @@ class BottomSettings extends StatelessWidget {
                   BottomBarButton(
                     onPressed: () {
                       context.read<CameraBloc>().add(
-                        const SwitchCameraSettingType(CameraSettingType.shutterSound),
+                        const SwitchCameraSettingType(
+                          CameraSettingType.shutterSound,
+                        ),
                       );
                     },
                     iconPath: CameraIcons.soundIcon,

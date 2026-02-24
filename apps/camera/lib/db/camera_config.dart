@@ -79,7 +79,7 @@ enum CameraAspectRatio {
   final String label;
   const CameraAspectRatio(this.height, this.width, this.label);
 
-  double? get value => this == CameraAspectRatio.off ? null : width / height;
+  double? get value => this != CameraAspectRatio.off ? width / height : null;
   bool get isEnabled => this != CameraAspectRatio.off;
 }
 
