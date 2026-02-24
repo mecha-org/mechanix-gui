@@ -60,7 +60,6 @@ dependencies:
       path: packages/video_player
       ref: main
   tuple: ^2.0.2
-  shared_preferences: ^2.5.3
   # TODO: Link to audio_player_elinux of Mecha
   audioplayers: ^6.5.1
   audioplayers_elinux:
