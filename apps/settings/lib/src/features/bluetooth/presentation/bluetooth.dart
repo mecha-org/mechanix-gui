@@ -116,21 +116,6 @@ class _BluetoothState extends State<Bluetooth> {
                           ),
                         )
                     ]),
-                if (data.isPowered &&
-                    connectedAndPairedDevices.isEmpty &&
-                    data.loading)
-                  MechanixSectionList(
-                    physics: const BouncingScrollPhysics(),
-                    title: 'Paired Devices',
-                    sectionListItems: [
-                      SectionListItems(
-                        title: '',
-                        backgroundColor: Colors.transparent,
-                        defaultTrailingIcon: false,
-                        leading: const CustomLoader(),
-                      ),
-                    ],
-                  ),
                 if (data.isPowered && connectedAndPairedDevices.isNotEmpty)
                   BluetoothDeviceList(
                     isPaired: true,

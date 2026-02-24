@@ -244,7 +244,9 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     try {
       await bluetoothRepository.startDiscovery();
 
-      await Future.delayed(const Duration(seconds: 15));
+      await Future.delayed(const Duration(seconds: 10));
+
+      await bluetoothRepository.stopDiscovery();
 
       var allDevices = await bluetoothRepository.getDevices();
 
@@ -255,8 +257,6 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
       emit(state.copyWith(
         devices: validDevices,
       ));
-
-      await bluetoothRepository.stopDiscovery();
 
       emit(state.copyWith(loading: false));
     } catch (e, stack) {
@@ -270,7 +270,10 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
 
   Future<void> _onPair(PairDevice event, Emitter<BluetoothState> emit) async {
     try {
-      logger.i('Pairing device with address: ${event.address}');
+      add(BluetoothConnectingEvent(
+          address: event.address, connectionLoading: true));
+
+      print('Pairing device with address: ${event.address}');
 
       await bluetoothRepository.pair(event.address);
 
@@ -278,35 +281,36 @@ class BluetoothBloc extends Bloc<BluetoothEvent, BluetoothState> {
     } catch (e) {
       logger.e('Error pairing device: $e');
       emit(state.copyWith(error: e.toString()));
+    } finally {
+      add(BluetoothConnectingEvent(
+          address: event.address, connectionLoading: false));
     }
   }
 
   Future<void> _onConnect(
       ConnectDevice event, Emitter<BluetoothState> emit) async {
     try {
-      logger.i('Connecting to device with address: ${event.address}');
       add(BluetoothConnectingEvent(
           address: event.address, connectionLoading: true));
-      await bluetoothRepository.connect(event.address);
+      final result = await bluetoothRepository.connect(event.address);
 
-      final allDevices = await bluetoothRepository.getDevices();
-      final connectedDevice =
-          allDevices.firstWhere((d) => d.device.address == event.address);
+      if (result) {
+        final allDevices = await bluetoothRepository.getDevices();
 
-      final updatedDevices = state.devices
-          .map((d) => d.device.address == event.address ? connectedDevice : d);
+        final connectedDevice =
+            allDevices.firstWhere((d) => d.device.address == event.address);
 
-      add(BluetoothConnectingEvent(
-          address: event.address, connectionLoading: false));
+        final updatedDevices = state.devices.map(
+            (d) => d.device.address == event.address ? connectedDevice : d);
 
-      emit(state.copyWith(devices: [...updatedDevices]));
-
+        emit(state.copyWith(devices: [...updatedDevices]));
+      }
       logger.i('Device connected successfully: ${event.address}');
     } catch (e) {
       logger.e('Error connecting to device: $e');
+    } finally {
       add(BluetoothConnectingEvent(
           address: event.address, connectionLoading: false));
-      emit(state.copyWith(error: e.toString()));
     }
   }
 

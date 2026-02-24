@@ -43,6 +43,7 @@ void forgetDeviceBottomSheet({
                         RemoveDevice(
                             state.selectedDevice?.device.address ?? ''),
                       );
+                  Navigator.pop(context);
                 },
                 theme: const MechanixFilledButtonThemeData(
                   buttonColor: Color.fromRGBO(211, 0, 42, 1),

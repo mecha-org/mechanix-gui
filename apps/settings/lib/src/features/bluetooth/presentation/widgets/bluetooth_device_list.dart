@@ -36,12 +36,14 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
     if (device.device.paired && !device.device.connected) {
       context.read<BluetoothBloc>().add(ConnectDevice(device.device.address));
     }
+    if (!device.device.paired && !device.device.connected) {
+      context.read<BluetoothBloc>().add(PairDevice(device.device.address));
+    }
   }
 
-  List<SectionListItems> getDeviceList({
-    required List<BluetoothDeviceDetails> devices,
-    required BluetoothState state,
-  }) {
+  List<SectionListItems> getDeviceList(
+      {required List<BluetoothDeviceDetails> devices,
+      required BluetoothConnection? connection}) {
     final devicesList = devices.map((deviceDetail) {
       final device = deviceDetail.device;
 
@@ -58,9 +60,9 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
         isActive: device.connected,
         trailing: Row(
           children: [
-            if (state.connection != null &&
-                state.connection?.address == device.address &&
-                state.connection!.connectionLoading)
+            if (connection != null &&
+                connection.address == device.address &&
+                connection.connectionLoading)
               const CustomLoader().padRight(8),
             if (device.connected)
               IconWidget(
@@ -77,7 +79,7 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
                 iconPath: Images.settings,
                 iconColor: context.onSecondaryFixed,
                 isActive: device.connected,
-                activeIconColor: context.onSecondaryFixed,
+                activeIconColor: context.onSurface,
               ),
             ),
           ],
@@ -90,12 +92,24 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
 
   @override
   Widget build(BuildContext context) {
-    final state = context.read<BluetoothBloc>().state;
-
-    return MechanixSectionList(
-      title: widget.isPaired ? 'Paired Devices' : 'Available Devices',
-      physics: const NeverScrollableScrollPhysics(),
-      sectionListItems: getDeviceList(devices: widget.devices, state: state),
+    return BlocSelector<
+        BluetoothBloc,
+        BluetoothState,
+        ({
+          List<BluetoothDeviceDetails> devices,
+          BluetoothConnection? connection,
+        })>(
+      selector: (state) {
+        return (devices: state.devices, connection: state.connection);
+      },
+      builder: (context, data) {
+        return MechanixSectionList(
+          title: widget.isPaired ? 'Paired devices' : 'Available devices',
+          physics: const NeverScrollableScrollPhysics(),
+          sectionListItems: getDeviceList(
+              devices: widget.devices, connection: data.connection),
+        );
+      },
     );
   }
 }
