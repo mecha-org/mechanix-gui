@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
+import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
 import 'package:mechanix_camera/src/home/bottom_actions.dart';
 import 'package:mechanix_camera/src/home/bottom_settings.dart';
@@ -10,9 +11,12 @@ import 'package:mechanix_camera/src/home/capture_button.dart';
 import 'package:mechanix_camera/src/home/circle_overlay_painter.dart';
 import 'package:mechanix_camera/src/home/circular_frame_painter.dart';
 import 'package:mechanix_camera/src/home/widgets/center_dot_painter.dart';
+import 'package:mechanix_camera/src/home/widgets/countdown_overlay.dart';
+import 'package:mechanix_camera/src/home/widgets/timer_label.dart';
 import 'package:mechanix_camera/src/home/widgets/video_bottom_actions.dart';
 import 'package:mechanix_camera/src/home/widgets/video_timer.dart';
 import 'package:mechanix_camera/src/home/zoom_strips.dart';
+import 'package:mechanix_camera/utils/constants.dart';
 import 'package:widgets/mechanix.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -27,6 +31,7 @@ class _CameraScreenState extends State<CameraScreen>
   CameraController? _cameraController;
   List<CameraDescription>? _cameras;
   bool _isCameraInitialized = false;
+  bool _showCountdown = false;
 
   final ValueNotifier<double> _zoomLevel = ValueNotifier<double>(1.0);
   final ValueNotifier<bool> _isRecording = ValueNotifier<bool>(false);
@@ -34,7 +39,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   double _minZoomLevel = 1.0;
   double _maxZoomLevel = 1.0;
-  int _currentCameraIndex = 0;
+  final int _currentCameraIndex = 0;
 
   @override
   void initState() {
@@ -75,14 +80,12 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void reassemble() {
     super.reassemble();
-    // Handle hot reload - dispose and reinitialize camera
     _disposeCamera();
     _requestPermissionsAndInitialize();
   }
 
   Future<void> _disposeCamera() async {
     if (_cameraController != null) {
-      // Stop recording if active
       if (_cameraController!.value.isRecordingVideo) {
         try {
           await _cameraController!.stopVideoRecording();
@@ -92,14 +95,11 @@ class _CameraScreenState extends State<CameraScreen>
         }
       }
 
-      // Dispose the controller
       await _cameraController!.dispose();
       _cameraController = null;
 
       if (mounted) {
-        setState(() {
-          _isCameraInitialized = false;
-        });
+        setState(() => _isCameraInitialized = false);
       }
     }
   }
@@ -120,36 +120,29 @@ class _CameraScreenState extends State<CameraScreen>
   }
 
   Future<void> _setupCamera(CameraDescription cameraDescription) async {
-    // Ensure previous controller is disposed
     await _disposeCamera();
 
     final CameraController cameraController = CameraController(
       cameraDescription,
-      ResolutionPreset.high,
+      ResolutionPreset.max,
       enableAudio: true,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
-
     _cameraController = cameraController;
 
     try {
       await cameraController.initialize();
       _maxZoomLevel = await cameraController.getMaxZoomLevel();
       _minZoomLevel = await cameraController.getMinZoomLevel();
-
       await cameraController.setZoomLevel(_zoomLevel.value);
 
       if (mounted) {
-        setState(() {
-          _isCameraInitialized = true;
-        });
+        setState(() => _isCameraInitialized = true);
       }
     } catch (e) {
       debugPrint('Error setting up camera: $e');
       if (mounted) {
-        setState(() {
-          _isCameraInitialized = false;
-        });
+        setState(() => _isCameraInitialized = false);
       }
     }
   }
@@ -168,13 +161,34 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
+  void _onCapturePressed() {
+    final timerValue = context.read<CameraBloc>().state.timer.seconds;
+
+    if (timerValue > 0) {
+      setState(() => _showCountdown = true);
+    } else {
+      _takePicture();
+    }
+  }
+
+  void _onCountdownComplete() {
+    setState(() => _showCountdown = false);
+    _takePicture();
+  }
+
   Future<void> _takePicture() async {
     if (_cameraController == null || !_cameraController!.value.isInitialized) {
       return;
     }
     try {
+      final path = '${Constants.imageStorePath}${DateTime.now()}.jpg';
       final XFile picture = await _cameraController!.takePicture();
-      debugPrint('Picture saved to: ${picture.path}');
+
+      await picture.saveTo(path);
+      if (mounted) {
+        context.read<CameraBloc>().add(UpdateMediaPath(path));
+      }
+      debugPrint('Picture saved to: $path');
     } catch (e) {
       debugPrint('Error taking picture: $e');
     }
@@ -198,25 +212,32 @@ class _CameraScreenState extends State<CameraScreen>
       return;
     }
 
-    if (!_cameraController!.value.isRecordingVideo) {
-      return;
-    }
+    if (!_cameraController!.value.isRecordingVideo) return;
 
     try {
+      final path = '${Constants.videoStorePath}${DateTime.now()}.mp4';
       final XFile video = await _cameraController!.stopVideoRecording();
-
       _isRecording.value = false;
-      debugPrint('Video saved to: ${video.path}');
+      await video.saveTo(path);
+      if (mounted) {
+        context.read<CameraBloc>().add(UpdateMediaPath(path));
+      }
+      debugPrint('Video saved to: $path');
     } catch (e) {
       debugPrint('Error stopping video recording: $e');
       _isRecording.value = false;
     }
   }
 
+  void _cancelCountdown() {
+    setState(() => _showCountdown = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final circleSize = screenWidth * 0.89;
+
     return Scaffold(
       body: BlocSelector<CameraBloc, CameraState, bool>(
         selector: (state) => state.isSettingsOpen,
@@ -230,20 +251,23 @@ class _CameraScreenState extends State<CameraScreen>
                     cameraController: _cameraController,
                   ),
                 ),
-                // Dark overlay outside circle (when zooming)
+
                 if (!isSettingsOpen) ...[
-                  // Bottom Actions
-                  ValueListenableBuilder(
-                    valueListenable: _isRecording,
-                    builder: (context, value, child) {
-                      if (value) {
-                        return VideoBottomActions(
-                          cameraController: _cameraController,
-                        );
-                      }
-                      return const BottomActions();
-                    },
-                  ),
+                  if (!_showCountdown)
+                    // Bottom Actions
+                    ValueListenableBuilder(
+                      valueListenable: _isRecording,
+                      builder: (context, value, child) {
+                        if (value) {
+                          return VideoBottomActions(
+                            cameraController: _cameraController,
+                          );
+                        }
+                        return const BottomActions();
+                      },
+                    ),
+
+                  // Dark overlay outside circle (when zooming)
                   ValueListenableBuilder<double>(
                     valueListenable: _captureButtonOffset,
                     builder: (context, offset, child) {
@@ -262,11 +286,12 @@ class _CameraScreenState extends State<CameraScreen>
                     },
                   ),
 
+                  // Video recording timer
                   ValueListenableBuilder(
                     valueListenable: _isRecording,
                     builder:
                         (context, value, child) =>
-                            _isRecording.value
+                            value
                                 ? const Positioned(
                                   top: 15,
                                   left: 0,
@@ -275,6 +300,7 @@ class _CameraScreenState extends State<CameraScreen>
                                 )
                                 : const SizedBox.shrink(),
                   ),
+
                   // Circular UI Overlay
                   Center(
                     child: CustomPaint(
@@ -287,10 +313,12 @@ class _CameraScreenState extends State<CameraScreen>
 
                   // Capture Button with Drag Control
                   CaptureButton(
+                    isCountingDown: _showCountdown,
+                    onCancelCountdown: _cancelCountdown,
                     zoomLevel: _zoomLevel,
                     isRecording: _isRecording,
                     captureButtonOffset: _captureButtonOffset,
-                    onCapture: _takePicture,
+                    onCapture: _onCapturePressed,
                     onStartRecording: _startVideoRecording,
                     onStopRecording: _stopVideoRecording,
                     onZoomChange: _updateZoom,
@@ -298,12 +326,11 @@ class _CameraScreenState extends State<CameraScreen>
                     maxZoom: _maxZoomLevel,
                   ),
 
-                  // Zoom Strips Overlay (separate layer)
+                  // Zoom Strips Overlay
                   ValueListenableBuilder<double>(
                     valueListenable: _captureButtonOffset,
                     builder: (context, offset, child) {
                       if (offset == 0.0) return const SizedBox.shrink();
-
                       return Center(
                         child: ValueListenableBuilder<double>(
                           valueListenable: _zoomLevel,
@@ -320,15 +347,26 @@ class _CameraScreenState extends State<CameraScreen>
                     },
                   ),
                 ] else
-                  // Bottom Action Buttons
                   const BottomSettings(),
 
                 // Center Circle Dot
-                Center(
-                  child: CustomPaint(
-                    painter: CenterDotPainter(colorScheme: context.colorScheme),
+                if (!_showCountdown)
+                  Center(
+                    child: CustomPaint(
+                      painter: CenterDotPainter(
+                        colorScheme: context.colorScheme,
+                      ),
+                    ),
                   ),
-                ),
+
+                // Countdown Overlay — sits on top of everything
+                if (!isSettingsOpen) const TimerLabel(),
+
+                if (_showCountdown)
+                  CountdownOverlay(
+                    seconds: context.read<CameraBloc>().state.timer.seconds,
+                    onComplete: _onCountdownComplete,
+                  ),
               ],
             ),
       ),

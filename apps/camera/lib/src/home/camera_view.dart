@@ -24,7 +24,6 @@ class CameraView extends StatelessWidget {
       children: [
         // Camera Preview
         CameraPreview(cameraController!),
-
         // Image.asset("assets/images/demo.jpg", fit: BoxFit.cover),
         const Positioned.fill(
           child: CameraFrameProvider(

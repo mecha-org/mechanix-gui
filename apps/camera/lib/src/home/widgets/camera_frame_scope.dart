@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
 import 'package:mechanix_camera/src/home/camera_helper.dart';

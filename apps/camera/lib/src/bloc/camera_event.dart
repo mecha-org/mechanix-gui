@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/models/camera_models.dart';
 
 abstract class CameraEvent extends Equatable {
@@ -6,6 +7,10 @@ abstract class CameraEvent extends Equatable {
 
   @override
   List<Object?> get props => [];
+}
+
+class InitialiseCamera extends CameraEvent {
+  const InitialiseCamera();
 }
 
 class ToggleCaptureMode extends CameraEvent {}
@@ -37,7 +42,12 @@ class UpdateTimer extends CameraEvent {
   const UpdateTimer(this.timer);
 }
 
-class UpdateAudioMode extends CameraEvent {
-  final AudioMode audioMode;
-  const UpdateAudioMode(this.audioMode);
+class UpdateSoundMode extends CameraEvent {
+  final SoundMode soundMode;
+  const UpdateSoundMode(this.soundMode);
+}
+
+class UpdateMediaPath extends CameraEvent {
+  final String path;
+  const UpdateMediaPath(this.path);
 }

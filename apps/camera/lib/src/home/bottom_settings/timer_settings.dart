@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
@@ -20,15 +20,6 @@ class TimerSettings extends StatelessWidget {
             SettingsButton(
               onTap: () {
                 context.read<CameraBloc>().add(
-                  const UpdateTimer(CameraTimer.fifteen),
-                );
-              },
-              text: CameraTimer.fifteen.label,
-              isActive: timer == CameraTimer.fifteen,
-            ),
-            SettingsButton(
-              onTap: () {
-                context.read<CameraBloc>().add(
                   const UpdateTimer(CameraTimer.ten),
                 );
               },
@@ -43,6 +34,15 @@ class TimerSettings extends StatelessWidget {
               },
               text: CameraTimer.five.label,
               isActive: timer == CameraTimer.five,
+            ),
+            SettingsButton(
+              onTap: () {
+                context.read<CameraBloc>().add(
+                  const UpdateTimer(CameraTimer.three),
+                );
+              },
+              text: CameraTimer.three.label,
+              isActive: timer == CameraTimer.three,
             ),
             SettingsButton(
               onTap: () {

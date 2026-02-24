@@ -83,35 +83,25 @@ class _VideoBottomActionsState extends State<VideoBottomActions> {
     setState(() {
       isProcessing = true;
     });
-
+    String message = "";
     try {
       // Capture photo while recording video
       final XFile photo = await widget.cameraController!.takePicture();
       debugPrint('Photo captured: ${photo.path}');
 
       widget.onCapturePhoto?.call();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Photo captured'),
-            duration: Duration(seconds: 1),
-          ),
-        );
-      }
+      message = "Photo captured";
     } catch (e) {
       debugPrint('Error capturing photo: $e');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to capture photo'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+      message = "Failed to capture photo";
     } finally {
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            duration: const Duration(seconds: 1),
+          ),
+        );
         setState(() {
           isProcessing = false;
         });

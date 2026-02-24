@@ -1,12 +1,19 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
+import 'package:mechanix_camera/data/camera_repository.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/models/camera_models.dart';
 import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
 
 class CameraBloc extends Bloc<CameraEvent, CameraState> {
-  final Logger logger = Logger();
-  CameraBloc() : super(const CameraState(captureMode: CaptureMode.photo)) {
+  final Logger _logger = Logger();
+  final CameraRepository _repository;
+
+  CameraBloc({required CameraRepository repository})
+    : _repository = repository,
+      super(const CameraState(captureMode: CaptureMode.photo)) {
+    on<InitialiseCamera>(_initialiseCamera);
     on<ToggleCaptureMode>(_toggleCaptureMode);
     on<ToggleSettingsMode>(_toggleSettingsMode);
     on<SwitchCameraSettingType>(_switchCameraSettingType);
@@ -14,22 +21,55 @@ class CameraBloc extends Bloc<CameraEvent, CameraState> {
     on<UpdateResolution>(_updateResolution);
     on<UpdateGrid>(_updateGrid);
     on<UpdateTimer>(_updateTimer);
-    on<UpdateAudioMode>(_updateAudioMode);
+    on<UpdateSoundMode>(_updateSoundMode);
+    on<UpdateMediaPath>(_updateLastMediaPath);
+    add(const InitialiseCamera());
   }
 
-  void _toggleCaptureMode(ToggleCaptureMode event, Emitter emit) {
-    final updatedCaptureMode =
+  Future<void> _initialiseCamera(
+    InitialiseCamera event,
+    Emitter<CameraState> emit,
+  ) async {
+    try {
+      final config = await _repository.getConfig();
+      _logger.i('Camera config loaded: $config');
+
+      emit(
+        state.copyWith(
+          captureMode: config.captureMode,
+          aspectRatio: config.aspectRatio,
+          resolution: config.resolution,
+          grid: config.grid,
+          timer: config.timer,
+          soundMode: config.soundMode,
+        ),
+      );
+    } catch (e, st) {
+      _logger.e('Failed to load camera config', error: e, stackTrace: st);
+      // State stays at default — app still works
+    }
+  }
+
+  Future<void> _toggleCaptureMode(
+    ToggleCaptureMode event,
+    Emitter<CameraState> emit,
+  ) async {
+    final updated =
         state.captureMode == CaptureMode.photo
             ? CaptureMode.video
             : CaptureMode.photo;
 
-    logger.i('Toggling capture mode to $updatedCaptureMode');
+    _logger.i('Toggling capture mode to $updated');
 
-    emit(state.copyWith(captureMode: updatedCaptureMode));
+    final config = await _repository.updateConfig(captureMode: updated);
+    emit(state.copyWith(captureMode: config.captureMode));
   }
 
-  void _toggleSettingsMode(ToggleSettingsMode event, Emitter emit) {
-    logger.i('Toggling settings mode to ${!state.isSettingsOpen}');
+  void _toggleSettingsMode(
+    ToggleSettingsMode event,
+    Emitter<CameraState> emit,
+  ) {
+    _logger.i('Toggling settings mode to ${!state.isSettingsOpen}');
     emit(
       state.copyWith(
         isSettingsOpen: !state.isSettingsOpen,
@@ -38,39 +78,68 @@ class CameraBloc extends Bloc<CameraEvent, CameraState> {
     );
   }
 
-  void _switchCameraSettingType(SwitchCameraSettingType event, Emitter emit) {
-    logger.i('Switching camera setting type to ${event.cameraSettingType}');
-    final updatedSettingType =
+  void _switchCameraSettingType(
+    SwitchCameraSettingType event,
+    Emitter<CameraState> emit,
+  ) {
+    _logger.i('Switching camera setting type to ${event.cameraSettingType}');
+    final updated =
         event.cameraSettingType != state.cameraSettingType
             ? event.cameraSettingType
             : CameraSettingType.none;
-    emit(state.copyWith(cameraSettingType: updatedSettingType));
+    emit(state.copyWith(cameraSettingType: updated));
   }
 
-  void _updateAspectRatio(UpdateAspectRatio event, Emitter emit) {
-    logger.i('Updating aspect ratio to ${event.aspectRatio.label}');
-    emit(state.copyWith(aspectRatio: event.aspectRatio));
+  Future<void> _updateAspectRatio(
+    UpdateAspectRatio event,
+    Emitter<CameraState> emit,
+  ) async {
+    _logger.i('Updating aspect ratio to ${event.aspectRatio.label}');
+    final config = await _repository.updateConfig(
+      aspectRatio: event.aspectRatio,
+    );
+    emit(state.copyWith(aspectRatio: config.aspectRatio));
   }
 
-  void _updateResolution(UpdateResolution event, Emitter emit) {
-    logger.i('Updating resolution to ${event.resolution.label}');
-    emit(state.copyWith(resolution: event.resolution));
+  Future<void> _updateResolution(
+    UpdateResolution event,
+    Emitter<CameraState> emit,
+  ) async {
+    _logger.i('Updating resolution to ${event.resolution.label}');
+    final config = await _repository.updateConfig(resolution: event.resolution);
+    emit(state.copyWith(resolution: config.resolution));
   }
 
-  void _updateGrid(UpdateGrid event, Emitter emit) {
-    logger.i(
+  Future<void> _updateGrid(UpdateGrid event, Emitter<CameraState> emit) async {
+    _logger.i(
       'Updating grid to ${event.grid.name} (${event.grid.divisions} divisions)',
     );
-    emit(state.copyWith(grid: event.grid));
+    final config = await _repository.updateConfig(grid: event.grid);
+    emit(state.copyWith(grid: config.grid));
   }
 
-  void _updateTimer(UpdateTimer event, Emitter emit) {
-    logger.i('Updating timer to ${event.timer.label}');
-    emit(state.copyWith(timer: event.timer));
+  Future<void> _updateTimer(
+    UpdateTimer event,
+    Emitter<CameraState> emit,
+  ) async {
+    _logger.i('Updating timer to ${event.timer.label}');
+    final config = await _repository.updateConfig(timer: event.timer);
+    emit(state.copyWith(timer: config.timer));
   }
 
-  void _updateAudioMode(UpdateAudioMode event, Emitter emit) {
-    logger.i('Updating audio mode to ${event.audioMode.name}');
-    emit(state.copyWith(audioMode: event.audioMode));
+  Future<void> _updateSoundMode(
+    UpdateSoundMode event,
+    Emitter<CameraState> emit,
+  ) async {
+    _logger.i('Updating sound mode to ${event.soundMode.name}');
+    final config = await _repository.updateConfig(soundMode: event.soundMode);
+    emit(state.copyWith(soundMode: config.soundMode));
+  }
+
+  void _updateLastMediaPath(UpdateMediaPath event, Emitter<CameraState> emit) {
+    _logger.i('Updating last media path to ${event.path}');
+    if (state.mediaPath.contains(event.path)) return;
+    final updatedList = List<String>.from(state.mediaPath)..add(event.path);
+    emit(state.copyWith(mediaPath: updatedList));
   }
 }
