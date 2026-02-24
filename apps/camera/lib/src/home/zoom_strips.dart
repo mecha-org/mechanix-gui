@@ -4,8 +4,14 @@ import 'package:flutter/material.dart';
 
 class ZoomStrips extends CustomPainter {
   final double zoomLevel;
+  final Color stripsColor;
+  final Color activeColor;
 
-  ZoomStrips({required this.zoomLevel});
+  const ZoomStrips({
+    required this.zoomLevel,
+    required this.stripsColor,
+    required this.activeColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -50,8 +56,7 @@ class ZoomStrips extends CustomPainter {
 
       final stripPaint =
           Paint()
-            ..color =
-                isActive ? Colors.orange : Colors.white.withValues(alpha: 0.6)
+            ..color = isActive ? activeColor : stripsColor
             ..style = PaintingStyle.stroke
             ..strokeWidth = strokeWidth
             ..strokeCap = StrokeCap.butt;
@@ -85,10 +90,7 @@ class ZoomStrips extends CustomPainter {
         text: TextSpan(
           text: label,
           style: TextStyle(
-            color:
-                isNearActive
-                    ? Colors.orange
-                    : Colors.white.withValues(alpha: 0.7),
+            color: isNearActive ? activeColor : stripsColor,
             fontSize: isNearActive ? 16 : 14,
             fontWeight: isNearActive ? FontWeight.bold : FontWeight.normal,
           ),

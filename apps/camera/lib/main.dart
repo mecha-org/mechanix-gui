@@ -7,7 +7,9 @@ import 'package:hive/hive.dart';
 import 'package:mechanix_camera/data/camera_repository.dart';
 import 'package:mechanix_camera/data/camera_repository_impl.dart';
 import 'package:mechanix_camera/db/camera_config.dart';
+import 'package:mechanix_camera/src/app_routes.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
+import 'package:mechanix_camera/src/media/media_view.dart';
 import 'package:mechanix_camera/src/home/home.dart';
 import 'package:mechanix_camera/load_settings.dart';
 import 'package:watch_it/watch_it.dart';
@@ -187,6 +189,10 @@ class MainApp extends StatelessWidget {
       ),
       themeMode: themeMode,
       home: const CameraScreen(),
+      routes: {
+        AppRoutes.home: (context) => const CameraScreen(),
+        AppRoutes.media: (context) => const MediaView(),
+      },
     );
   }
 }
