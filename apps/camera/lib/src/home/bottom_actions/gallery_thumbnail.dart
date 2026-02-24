@@ -96,16 +96,15 @@ class _GalleryThumbnailState extends State<GalleryThumbnail>
             );
           },
           child: GestureDetector(
-            onTap:
-                mediaPath == null || mediaPath.isEmpty
-                    ? null
-                    : () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.media,
-                        arguments: mediaPath,
-                      );
-                    },
+            onTap: () {
+              if (mediaPath == null || mediaPath.isEmpty) return;
+
+              Navigator.pushNamed(
+                context,
+                AppRoutes.media,
+                arguments: mediaPath,
+              );
+            },
             child: Container(
               width: 44,
               height: 44,
