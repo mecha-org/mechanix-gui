@@ -1,78 +1,73 @@
 import 'dart:async';
 
 import 'package:bluez/bluez.dart';
-import 'package:logger/web.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/bluetooth_device_classifier.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
 import 'bluetooth_repository.dart';
 
 class BluetoothRepositoryImpl implements BluetoothRepository {
-  bool connected = false; // for client connection
-  final logger = Logger();
-
   late BlueZClient _client;
   late BlueZAdapter _adapter;
+  StreamSubscription<List<String>>? _adapterPropsSub;
+
+  bool _connected = false;
+
+  final _adapterPowerController = StreamController<bool>.broadcast();
+  final _adapterDiscoverableController = StreamController<bool>.broadcast();
 
   @override
   Stream<bool> get bluezAdapterPowerStream => _adapterPowerController.stream;
-  final _adapterPowerController = StreamController<bool>.broadcast();
 
   @override
   Stream<bool> get bluezAdapterDiscoverableStream =>
       _adapterDiscoverableController.stream;
-  final _adapterDiscoverableController = StreamController<bool>.broadcast();
 
   @override
   Future<void> init() async {
+    await _ensureConnected();
+  }
+
+  Future<void> _ensureConnected() async {
     try {
+      if (_connected) return;
+
       _client = BlueZClient();
-      await _client.connect();
-      connected = true;
-      logger.i('IMPL:init::  Connected to BlueZClient');
 
-      // start listening for adapter changes
-      final adapters = _client.adapters;
-      if (adapters.isNotEmpty) {
-        _adapter = adapters.first;
-
-        _adapter.propertiesChanged.listen((props) {
-          print('props ====== $props');
-          if (props.contains('Powered')) {
-            logger.i(
-                'IMPL:init:: Using adapter: power change ${_adapter.powered}');
-            _adapterPowerController.add(_adapter.powered);
-          } else if (props.contains('Discoverable')) {
-            logger.i(
-                'IMPL:init:: Using adapter: discoverable change ${_adapter.discoverable}');
-
-            _adapterDiscoverableController.add(_adapter.discoverable);
-          }
-        });
-      } else {
-        logger.w('IMPL:init:: No Bluetooth adapter found!');
+      if (!_connected) {
+        await _client.connect();
+        _connected = true;
       }
+
+      if (_client.adapters.isEmpty) {
+        return;
+      }
+
+      _adapter = _client.adapters.first;
+
+      _adapterPropsSub ??= _adapter.propertiesChanged.listen((props) {
+        if (props.contains('Powered')) {
+          _adapterPowerController.add(_adapter.powered);
+        }
+        if (props.contains('Discoverable')) {
+          _adapterDiscoverableController.add(_adapter.discoverable);
+        }
+      });
     } catch (e) {
-      logger.e('IMPL:init:: Failed to connect to BlueZClient: $e');
-      rethrow;
+      print("EnsureConnected error: $e");
     }
   }
 
   @override
   Future<BlueZAdapter> getBluezAdapter() async {
-    return _client.adapters.first;
+    await _ensureConnected();
+    return _adapter;
   }
 
   @override
   Future<bool> isBluetoothEnabled() async {
-    if (connected) {
-      final adapter = await getBluezAdapter();
-      return adapter.powered;
-    } else {
-      var client = BlueZClient();
-      await client.connect();
-      connected = true;
-      final adapter = await getBluezAdapter();
-      return adapter.powered;
-    }
+    final adapter = await getBluezAdapter();
+    return adapter.powered;
   }
 
   @override
@@ -90,21 +85,27 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
   @override
   Future<String> setAdapterAlias(String alias) async {
-    final adapter = await getBluezAdapter();
-    await adapter.setAlias(alias);
-    return alias;
+    try {
+      final adapter = await getBluezAdapter();
+
+      await adapter.setAlias(alias);
+      return alias;
+    } catch (e) {
+      print("setAdapterAlias error: $e");
+      return '';
+    }
   }
 
   @override
   Future<void> startDiscovery() async {
     try {
       final adapter = await getBluezAdapter();
-      final checkPowered = adapter.powered;
-      if (!checkPowered) await adapter.setPowered(true);
+
+      if (!adapter.powered) await adapter.setPowered(true);
 
       if (!adapter.discovering) await adapter.startDiscovery();
     } catch (e) {
-      print("Start Discovery error $e");
+      print("startDiscovery error: $e");
     }
   }
 
@@ -112,38 +113,63 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   Future<void> stopDiscovery() async {
     try {
       final adapter = await getBluezAdapter();
+
       if (adapter.discovering) await adapter.stopDiscovery();
     } catch (e) {
-      print("Stop Discovery error $e");
+      print("stopDiscovery error: $e");
     }
   }
 
   @override
-  Future<List<BlueZDevice>> getDevices() async {
+  Future<List<BluetoothDeviceDetails>> getDevices() async {
     try {
-      print("IMPL:  getDevices - CHECK CLIENT $_client");
-      var devices = _client.devices;
-      print("Devices: ${devices.length}");
+      await _ensureConnected();
+
+      final List<BluetoothDeviceDetails> devices = [];
+
+      for (final device in _client.devices) {
+        final deviceType = BluetoothDeviceClassifier.classify(
+          deviceClass: device.deviceClass,
+          uuids: device.uuids,
+        );
+
+        devices.add(
+          BluetoothDeviceDetails(device: device, deviceType: deviceType),
+        );
+      }
 
       return devices;
     } catch (e) {
-      logger.e("Error getting devices $e");
-      return <BlueZDevice>[]; // Return an empty list on error
+      return [];
+    }
+  }
+
+  BlueZDevice? _findDevice(String address) {
+    try {
+      return _client.devices.firstWhere((d) => d.address == address);
+    } catch (_) {
+      return null;
     }
   }
 
   @override
   Future<void> pair(String address) async {
-    var device = _client.devices.firstWhere((d) => d.address == address);
-    // await device.setTrusted(true);
-    await device.pair();
-    logger.i("Device paired: $address");
+    try {
+      final device = _findDevice(address);
+      if (device == null) return;
+
+      await device.pair();
+    } catch (e) {
+      print("pair error: $e");
+    }
   }
 
   @override
   Future<bool> connect(String address) async {
-    var device = _client.devices.firstWhere((d) => d.address == address);
     try {
+      final device = _findDevice(address);
+      if (device == null) return false;
+
       await device.connect();
       return true;
     } catch (e) {
@@ -153,58 +179,62 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
   @override
   Future<void> disconnect(String address) async {
-    var device = _client.devices.firstWhere((d) => d.address == address);
-    await device.disconnect();
-    logger.i("Device disconnected: $address");
+    try {
+      final device = _findDevice(address);
+      if (device == null) return;
+
+      await device.disconnect();
+    } catch (e) {
+      print("disconnect error: $e");
+    }
   }
 
   @override
   Future<void> remove(String address) async {
-    var device = _client.devices.firstWhere((d) => d.address == address);
-    final adapter = await getBluezAdapter();
+    try {
+      final device = _findDevice(address);
+      final adapter = await getBluezAdapter();
 
-    await adapter.removeDevice(device);
-    logger.i("Device removed: $address");
+      if (device == null) return;
+
+      await adapter.removeDevice(device);
+    } catch (e) {
+      print("remove error: $e");
+    }
   }
 
   @override
   Future<Stream<BlueZDevice>> onDeviceAdded() async {
-    // return client.deviceAdded.map((device) {
-    // logger.i("Device added: ${device.name} --- ${device.address}");
-    //   return true;
-    // });
-
+    await _ensureConnected();
     return _client.deviceAdded;
   }
 
   @override
   Future<Stream<BlueZDevice>> onDeviceRemoved() async {
-    // return client.deviceRemoved.map((device) {
-    // logger.i("Device removed: ${device.name} ${device.icon}");
-    //   return true;
-    // });
+    await _ensureConnected();
     return _client.deviceRemoved;
   }
 
   @override
   Future<void> setDiscoverable(bool value) async {
-    final adapter = await getBluezAdapter();
-    final checkPowered = adapter.powered;
-    if (!checkPowered) await adapter.setPowered(true);
-    await adapter.setDiscoverable(value);
-  }
+    try {
+      final adapter = await getBluezAdapter();
 
-  // @override
-  // Future<BlueZAdapter> onAdapterClick(BlueZDevice device) async {
-  //   await _ensureConnected();
-  //   final deviceInfo = client.adapters.firstWhere(
-  //     (element) => element.address == device.address,
-  //   );
-  //   return deviceInfo;
-  // }
+      if (!adapter.powered) {
+        await adapter.setPowered(true);
+      }
+
+      await adapter.setDiscoverable(value);
+    } catch (e) {
+      print("setDiscoverable error: $e");
+    }
+  }
 
   @override
   Future<void> close() async {
+    await _adapterPropsSub?.cancel();
+    await _adapterPowerController.close();
+    await _adapterDiscoverableController.close();
     await _client.close();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:bluez/bluez.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
 abstract class BluetoothRepository {
   Future<void> init(); // connect BlueZ client
@@ -13,7 +14,7 @@ abstract class BluetoothRepository {
 
   Future<void> startDiscovery();
   Future<void> stopDiscovery();
-  Future<List<BlueZDevice>> getDevices();
+  Future<List<BluetoothDeviceDetails>> getDevices();
   Future<void> pair(String address);
   Future<bool> connect(String address);
   Future<void> disconnect(String address);

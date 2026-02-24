@@ -338,12 +338,7 @@ class MainApp extends StatelessWidget {
           AppRoutes.security: (context) => const WifiSecurityWidget(),
 
           // Bluetooth Routes
-          AppRoutes.bluetooth: (context) => BlocProvider(
-                create: (context) => BluetoothBloc(
-                  bluetoothRepository: context.read<BluetoothRepository>(),
-                )..add(InitBluetooth()),
-                child: const Bluetooth(),
-              ),
+          AppRoutes.bluetooth: (context) => const Bluetooth(),
           AppRoutes.bluetoothDeviceInfo: (context) =>
               const BluetoothDeviceInfo(),
           AppRoutes.adapterSettings: (context) => const AdapterSettings(),
