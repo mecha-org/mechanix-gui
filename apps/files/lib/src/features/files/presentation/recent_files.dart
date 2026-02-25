@@ -385,7 +385,8 @@ class RecentFilesPageState extends State<RecentFilesPage> {
         FileSystemEntity.typeSync(selectedPath!) == FileSystemEntityType.file;
 
     return MechanixMenu(
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 390),
       animationDuration: const Duration(milliseconds: 100),
       offset: offset,
       buttonIcon: IconWidget(
@@ -493,7 +494,8 @@ class RecentFilesPageState extends State<RecentFilesPage> {
 
     return MechanixMenu(
       offset: offset,
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 290),
       animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
         iconPath: Images.dots,
@@ -592,7 +594,8 @@ class RecentFilesPageState extends State<RecentFilesPage> {
 
     return MechanixMenu(
       offset: offset,
-      dropdownPosition: DropdownPosition.topRight,
+      dropdownPosition: MenuDropdownPosition.topEnd,
+      dropdownSize: const Size(250, 290),
       animationDuration: const Duration(milliseconds: 100),
       buttonIcon: IconWidget(
         iconWidth: 28,
