@@ -454,7 +454,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
     final offset = const Offset(-8, -14);
 
     return MechanixMenu(
-      offset: offset,
+      offset: offset, // TODO: Recheck on widget update
       dropdownPosition: MenuDropdownPosition.topEnd,
       animationDuration: const Duration(milliseconds: 100),
       dropdownSize: const Size(250, 290),
@@ -1611,6 +1611,7 @@ class FileExplorerPageState extends State<FileExplorerPage> {
                       Container(
                         color: context.surfaceContainerHigh,
                         child: MechanixTextInput.textInput(
+                          // TODO: Recheck on widget update
                           autofocus: true,
                           focusNode: _focusNode,
                           cursorColor: context.colorScheme.primaryContainer,
