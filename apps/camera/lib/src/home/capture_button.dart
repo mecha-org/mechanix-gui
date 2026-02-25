@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
+import 'package:mechanix_camera/utils/camera_colors.dart';
 import 'package:widgets/extensions/color.dart';
 
 class CaptureButton extends StatefulWidget {
@@ -12,9 +13,11 @@ class CaptureButton extends StatefulWidget {
   final VoidCallback onCapture;
   final VoidCallback onStartRecording;
   final VoidCallback onStopRecording;
+  final VoidCallback? onCancelCountdown;
   final Function(double) onZoomChange;
   final double minZoom;
   final double maxZoom;
+  final bool isCountingDown;
 
   const CaptureButton({
     super.key,
@@ -27,25 +30,79 @@ class CaptureButton extends StatefulWidget {
     required this.onZoomChange,
     required this.minZoom,
     required this.maxZoom,
+    required this.isCountingDown,
+    this.onCancelCountdown,
   });
 
   @override
   State<CaptureButton> createState() => _CaptureButtonState();
 }
 
-class _CaptureButtonState extends State<CaptureButton> {
-  static const double maxDragDistance = 30.0;
+class _CaptureButtonState extends State<CaptureButton>
+    with SingleTickerProviderStateMixin {
+  static const double _maxDragDistance = 30.0;
 
-  void updateZoomFromOffset(double offset) {
-    final normalizedOffset = (offset / maxDragDistance).clamp(-1.0, 1.0);
+  late final AnimationController _pressController;
+  late final Animation<double> _pressScale;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pressController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+      reverseDuration: const Duration(milliseconds: 200),
+    );
+
+    _pressScale = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(
+          begin: 1.0,
+          end: 0.88,
+        ).chain(CurveTween(curve: Curves.easeIn)),
+        weight: 100,
+      ),
+    ]).animate(_pressController);
+  }
+
+  @override
+  void dispose() {
+    _pressController.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    _pressController.forward();
+  }
+
+  void _onTapUp(TapUpDetails _, bool isVideoMode) {
+    _handleTap(isVideoMode);
+    _springBack();
+  }
+
+  void _onTapCancel() {
+    _springBack();
+  }
+
+  void _springBack() {
+    _pressController.reverse();
+  }
+
+  void _updateZoomFromOffset(double offset) {
+    final normalizedOffset = (offset / _maxDragDistance).clamp(-1.0, 1.0);
     final zoomRange = widget.maxZoom - widget.minZoom;
     final newZoom = widget.minZoom + (zoomRange * ((normalizedOffset + 1) / 2));
     widget.onZoomChange(newZoom);
   }
 
   void _handleTap(bool isVideoMode) {
+    if (widget.isCountingDown) {
+      widget.onCancelCountdown?.call();
+      return;
+    }
+
     if (isVideoMode) {
-      // Video mode: toggle recording
       if (!widget.isRecording.value) {
         widget.isRecording.value = true;
         widget.onStartRecording();
@@ -54,9 +111,20 @@ class _CaptureButtonState extends State<CaptureButton> {
         widget.isRecording.value = false;
       }
     } else {
-      // Photo mode: capture photo
       widget.onCapture();
     }
+  }
+
+  void _handleDragUpdate(DragUpdateDetails details) {
+    widget.captureButtonOffset.value = (widget.captureButtonOffset.value -
+            details.delta.dy)
+        .clamp(-_maxDragDistance, _maxDragDistance);
+    _updateZoomFromOffset(widget.captureButtonOffset.value);
+  }
+
+  void _handleDragEnd(DragEndDetails details) {
+    widget.captureButtonOffset.value = 0.0;
+    _springBack();
   }
 
   @override
@@ -69,52 +137,55 @@ class _CaptureButtonState extends State<CaptureButton> {
         children: [
           BlocSelector<CameraBloc, CameraState, bool>(
             selector: (state) => state.captureMode == CaptureMode.video,
-            builder:
-                (context, isVideoMode) => GestureDetector(
-                  onTap: () => _handleTap(isVideoMode),
-                  onVerticalDragUpdate: (details) {
-                    widget.captureButtonOffset.value =
-                        (widget.captureButtonOffset.value - details.delta.dy)
-                            .clamp(-maxDragDistance, maxDragDistance);
-                    updateZoomFromOffset(widget.captureButtonOffset.value);
-                  },
-                  onVerticalDragEnd: (details) {
-                    widget.captureButtonOffset.value = 0.0;
-                    // widget.onZoomChange(widget.minZoom);
-                  },
-                  child: ValueListenableBuilder<double>(
-                    valueListenable: widget.captureButtonOffset,
-                    builder: (context, offset, child) {
-                      return Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: context.onSecondaryFixed,
-                            width: 1.5,
+            builder: (context, isVideoMode) {
+              return ValueListenableBuilder<bool>(
+                valueListenable: widget.isRecording,
+                builder: (context, isRecording, _) {
+                  final showStopIcon = widget.isCountingDown || isRecording;
+
+                  return GestureDetector(
+                    onTapDown: _onTapDown,
+                    onTapUp: (details) => _onTapUp(details, isVideoMode),
+                    onTapCancel: _onTapCancel,
+                    onVerticalDragUpdate:
+                        widget.isCountingDown ? null : _handleDragUpdate,
+                    onVerticalDragEnd:
+                        widget.isCountingDown ? null : _handleDragEnd,
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: widget.captureButtonOffset,
+                      builder: (context, offset, _) {
+                        return Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: context.onSecondaryFixed,
+                              width: 1.5,
+                            ),
                           ),
-                        ),
-                        clipBehavior: Clip.none,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            Positioned(
-                              top: 6 - offset,
-                              left: 6,
-                              right: 6,
-                              bottom: 6 + offset,
-                              child: ValueListenableBuilder<bool>(
-                                valueListenable: widget.isRecording,
-                                builder: (context, isRecording, child) {
-                                  return Container(
-                                    width: 44,
-                                    height: 44,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Positioned(
+                                top: 6 - offset,
+                                left: 6,
+                                right: 6,
+                                bottom: 6 + offset,
+                                child: AnimatedBuilder(
+                                  animation: _pressScale,
+                                  builder: (context, child) {
+                                    return Transform.scale(
+                                      scale: _pressScale.value,
+                                      child: child,
+                                    );
+                                  },
+                                  child: Container(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color:
                                           isVideoMode && !isRecording
-                                              ? Color(0xFFD30000)
+                                              ? CameraColors.redColor
                                               : context.onSurface,
                                       border: Border.all(
                                         color: context.onSurface,
@@ -122,7 +193,7 @@ class _CaptureButtonState extends State<CaptureButton> {
                                       ),
                                     ),
                                     child:
-                                        isRecording
+                                        showStopIcon
                                             ? Center(
                                               child: Container(
                                                 width: 20,
@@ -138,16 +209,18 @@ class _CaptureButtonState extends State<CaptureButton> {
                                               ),
                                             )
                                             : null,
-                                  );
-                                },
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              );
+            },
           ),
           const SizedBox(height: 30),
         ],

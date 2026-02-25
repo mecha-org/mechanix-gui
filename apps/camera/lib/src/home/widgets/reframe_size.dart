@@ -16,7 +16,7 @@ class ReframeSize extends StatelessWidget {
     return CustomPaint(
       painter: ReframePainter(
         frameRect: frameRect,
-        overlayColor: context.surface.withValues(alpha: 0.6),
+        overlayColor: context.surface,
       ),
       child: const SizedBox.expand(),
     );

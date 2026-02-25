@@ -1,39 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:mechanix_camera/models/camera_models.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/src/bloc/camera_bloc.dart';
 import 'package:mechanix_camera/src/bloc/camera_event.dart';
 import 'package:mechanix_camera/src/bloc/camera_state.dart';
 import 'package:mechanix_camera/src/home/bottom_settings/settings_button.dart';
 import 'package:mechanix_camera/src/home/bottom_settings/settings_option_bar.dart';
 
-class AudioSettings extends StatelessWidget {
-  const AudioSettings({super.key});
+class SoundSettings extends StatelessWidget {
+  const SoundSettings({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocSelector<CameraBloc, CameraState, AudioMode>(
-      selector: (state) => state.audioMode,
-      builder: (context, audioMode) {
+    return BlocSelector<CameraBloc, CameraState, SoundMode>(
+      selector: (state) => state.soundMode,
+      builder: (context, soundMode) {
         return SettingsOptionsBar(
           children: [
             SettingsButton(
               onTap: () {
                 context.read<CameraBloc>().add(
-                  const UpdateAudioMode(AudioMode.on),
+                  const UpdateSoundMode(SoundMode.on),
                 );
               },
               text: 'On',
-              isActive: audioMode == AudioMode.on,
+              isActive: soundMode == SoundMode.on,
             ),
             SettingsButton(
               onTap: () {
                 context.read<CameraBloc>().add(
-                  const UpdateAudioMode(AudioMode.off),
+                  const UpdateSoundMode(SoundMode.off),
                 );
               },
               text: 'Off',
-              isActive: audioMode == AudioMode.off,
+              isActive: soundMode == SoundMode.off,
             ),
           ],
         );

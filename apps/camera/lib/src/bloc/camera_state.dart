@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_camera/db/camera_config.dart';
 import 'package:mechanix_camera/models/camera_models.dart';
 
 class CameraState extends Equatable {
@@ -9,7 +10,8 @@ class CameraState extends Equatable {
   final CameraResolution resolution;
   final CameraGrid grid;
   final CameraTimer timer;
-  final AudioMode audioMode;
+  final SoundMode soundMode;
+  final List<String> mediaPath;
 
   const CameraState({
     this.captureMode = CaptureMode.photo,
@@ -19,7 +21,8 @@ class CameraState extends Equatable {
     this.resolution = CameraResolution.eight,
     this.grid = CameraGrid.off,
     this.timer = CameraTimer.off,
-    this.audioMode = AudioMode.on,
+    this.soundMode = SoundMode.on,
+    this.mediaPath = const [],
   });
 
   CameraState copyWith({
@@ -30,7 +33,8 @@ class CameraState extends Equatable {
     CameraResolution? resolution,
     CameraGrid? grid,
     CameraTimer? timer,
-    AudioMode? audioMode,
+    SoundMode? soundMode,
+    List<String>? mediaPath,
   }) {
     return CameraState(
       captureMode: captureMode ?? this.captureMode,
@@ -40,7 +44,8 @@ class CameraState extends Equatable {
       resolution: resolution ?? this.resolution,
       grid: grid ?? this.grid,
       timer: timer ?? this.timer,
-      audioMode: audioMode ?? this.audioMode,
+      soundMode: soundMode ?? this.soundMode,
+      mediaPath: mediaPath ?? this.mediaPath,
     );
   }
 
@@ -53,6 +58,7 @@ class CameraState extends Equatable {
     resolution,
     grid,
     timer,
-    audioMode,
+    soundMode,
+    mediaPath,
   ];
 }

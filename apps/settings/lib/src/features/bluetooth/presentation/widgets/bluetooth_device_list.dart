@@ -1,13 +1,13 @@
-import 'package:bluez/bluez.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:mechanix_settings/app_route.dart';
 import 'package:mechanix_settings/src/commons/constants.dart';
 import 'package:mechanix_settings/src/commons/customWidgets/custom_loader.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
-import 'package:mechanix_settings/src/features/bluetooth/models/bluetooth_device_icon.dart';
-import 'package:mechanix_settings/src/features/bluetooth/presentation/device_info/bluetooth_device_info.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/bluetooth_device_classifier.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/section_list/section_list_items_type.dart';
 
@@ -18,7 +18,7 @@ class BluetoothDeviceList extends StatefulWidget {
     required this.isPaired,
   });
 
-  final List<BlueZDevice> devices;
+  final List<BluetoothDeviceDetails> devices;
 
   final bool isPaired;
 
@@ -27,49 +27,42 @@ class BluetoothDeviceList extends StatefulWidget {
 }
 
 class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
-  void onSettingsTap(BlueZDevice device) {
+  void onSettingsTap(BluetoothDeviceDetails device) {
     context.read<BluetoothBloc>().add(SelectDevice(device));
-
-    final bloc = context.read<BluetoothBloc>();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BlocProvider.value(
-          value: bloc,
-          child: const BluetoothDeviceInfo(),
-        ),
-      ),
-    );
+    Navigator.pushNamed(context, AppRoutes.bluetoothDeviceInfo);
   }
 
-  void onDeviceTap(BlueZDevice device) {
-    if (device.paired && !device.connected) {
-      context.read<BluetoothBloc>().add(ConnectDevice(device.address));
+  void onDeviceTap(BluetoothDeviceDetails device) {
+    if (device.device.paired && !device.device.connected) {
+      context.read<BluetoothBloc>().add(ConnectDevice(device.device.address));
+    }
+    if (!device.device.paired && !device.device.connected) {
+      context.read<BluetoothBloc>().add(PairDevice(device.device.address));
     }
   }
 
-  List<SectionListItems> getDeviceList({
-    required List<BlueZDevice> devices,
-    required BluetoothState state,
-  }) {
-    final devicesList = devices.map((device) {
+  List<SectionListItems> getDeviceList(
+      {required List<BluetoothDeviceDetails> devices,
+      required BluetoothConnection? connection}) {
+    final devicesList = devices.map((deviceDetail) {
+      final device = deviceDetail.device;
+
       return SectionListItems.leadingIcon(
         title: device.name,
         titleTextStyle: device.connected
             ? context.textTheme.labelMedium?.copyWith(color: context.primary)
             : context.textTheme.labelMedium,
         defaultTrailingIcon: false,
-        onTap: () => onDeviceTap(device),
-        iconPath: getBluetoothDeviceIcon(device.icon),
+        onTap: () => onDeviceTap(deviceDetail),
+        iconPath: BluetoothDeviceClassifier.deviceIcon(deviceDetail.deviceType),
         iconColor: context.onSecondary,
         activeIconColor: context.primary,
         isActive: device.connected,
         trailing: Row(
           children: [
-            if (state.connection != null &&
-                state.connection?.address == device.address &&
-                state.connection!.connectionLoading)
+            if (connection != null &&
+                connection.address == device.address &&
+                connection.connectionLoading)
               const CustomLoader().padRight(8),
             if (device.connected)
               IconWidget(
@@ -81,12 +74,12 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
                 activeIconColor: context.primary,
               ).padRight(8),
             IconButton(
-              onPressed: () => onSettingsTap(device),
+              onPressed: () => onSettingsTap(deviceDetail),
               icon: IconWidget(
                 iconPath: Images.settings,
                 iconColor: context.onSecondaryFixed,
                 isActive: device.connected,
-                activeIconColor: context.onSecondaryFixed,
+                activeIconColor: context.onSurface,
               ),
             ),
           ],
@@ -99,13 +92,22 @@ class _BluetoothDeviceListState extends State<BluetoothDeviceList> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BluetoothBloc, BluetoothState>(
-      builder: (context, state) {
+    return BlocSelector<
+        BluetoothBloc,
+        BluetoothState,
+        ({
+          List<BluetoothDeviceDetails> devices,
+          BluetoothConnection? connection,
+        })>(
+      selector: (state) {
+        return (devices: state.devices, connection: state.connection);
+      },
+      builder: (context, data) {
         return MechanixSectionList(
-          title: widget.isPaired ? 'Paired Devices' : 'Available Devices',
+          title: widget.isPaired ? 'Paired devices' : 'Available devices',
           physics: const NeverScrollableScrollPhysics(),
-          sectionListItems:
-              getDeviceList(devices: widget.devices, state: state),
+          sectionListItems: getDeviceList(
+              devices: widget.devices, connection: data.connection),
         );
       },
     );

@@ -9,7 +9,8 @@ import 'package:mechanix_settings/src/commons/customWidgets/custom_trailing_text
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_bloc.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_event.dart';
 import 'package:mechanix_settings/src/features/bluetooth/blocs/bluetooth_state.dart';
-import 'package:mechanix_settings/src/features/bluetooth/models/device_type.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/bluetooth_device_classifier.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 import 'package:mechanix_settings/src/features/bluetooth/presentation/widgets/forget_device.dart';
 import 'package:widgets/mechanix.dart';
 import 'package:widgets/widgets/bottom_bar/bottom_bar_button_type.dart';
@@ -35,7 +36,7 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
             child: ContainerWidget(
               child: Column(
                 children: [
-                  CustomTitle(title: state.selectedDevice?.alias ?? ''),
+                  CustomTitle(title: state.selectedDevice?.device.alias ?? ''),
                   MechanixSimpleList(
                     physics: const NeverScrollableScrollPhysics(),
                     isDividerRequired: false,
@@ -43,21 +44,34 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                       SimpleListItems(
                         title: 'Device Name',
                         trailing: CustomTrailingText(
-                          title: state.selectedDevice?.alias ?? '',
+                          title: state.selectedDevice?.device.alias ?? '',
                         ),
                       ),
                       SimpleListItems(
-                        title: 'Device Type',
-                        onTap: () => Navigator.pushNamed(
-                            context, AppRoutes.bluetoothDeviceTypes),
-                        trailing: DeviceType(
-                          deviceType: state.selectedDevice?.icon ?? '',
-                        ),
-                      ),
+                          title: 'Device Type',
+                          onTap: () => Navigator.pushNamed(
+                              context, AppRoutes.bluetoothDeviceTypes),
+                          trailing: Row(
+                            children: [
+                              CustomTrailingText(
+                                title: BluetoothDeviceClassifier.categoryLabel(
+                                    state.selectedDevice?.deviceType ??
+                                        BluetoothDeviceCategory.unknown),
+                              ).padRight(8),
+                              IconWidget(
+                                iconPath: Images.rightIconArrow,
+                                iconWidth: 9,
+                                iconHeight: 15,
+                                boxWidth: 20,
+                                boxHeight: 20,
+                                iconColor: context.onSurfaceVariant,
+                              )
+                            ],
+                          )),
                       SimpleListItems(
                         title: 'Device Status',
                         trailing: state.selectedDevice != null &&
-                                state.selectedDevice!.connected
+                                state.selectedDevice!.device.connected
                             ? Text(
                                 "Connected",
                                 style: TextStyle(color: context.primary),
@@ -78,12 +92,12 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
             leadingWidget: [context.backButton],
             centerWidget: [
               if (state.selectedDevice != null)
-                state.selectedDevice!.connected
+                state.selectedDevice!.device.connected
                     ? BottomBarButton.widget(
                         widget: TextButton.icon(
                           onPressed: () {
                             context.read<BluetoothBloc>().add(DisconnectDevice(
-                                state.selectedDevice?.address ?? ''));
+                                state.selectedDevice?.device.address ?? ''));
                           },
                           icon: const IconWidget(
                             iconPath: Images.unlinkIcon,
@@ -101,12 +115,12 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
                         widget: TextButton.icon(
                           onPressed: () {
                             if (state.selectedDevice != null &&
-                                state.selectedDevice!.paired) {
+                                state.selectedDevice!.device.paired) {
                               context.read<BluetoothBloc>().add(ConnectDevice(
-                                  state.selectedDevice?.address ?? ''));
+                                  state.selectedDevice?.device.address ?? ''));
                             } else {
                               context.read<BluetoothBloc>().add(PairDevice(
-                                  state.selectedDevice?.address ?? ''));
+                                  state.selectedDevice?.device.address ?? ''));
                             }
                             Navigator.pop(context);
                           },
@@ -122,11 +136,19 @@ class _BluetoothDeviceInfoState extends State<BluetoothDeviceInfo> {
             anchorWidget: [
               BottomBarButton.widget(
                 widget: MechanixMenu(
-                  offset: const Offset(0, -13),
-                  dropdownPosition: DropdownPosition.topRight,
+                  dropdownSize: const Size(135, 84),
+                  wingSize: 50,
+                  dropdownPosition: MenuDropdownPosition.topEnd,
                   items: [
                     MechanixMenuItemsType(
                       title: "Forget",
+                      leading: const IconWidget(
+                        iconPath: Images.blockIcon,
+                        boxWidth: 20,
+                        boxHeight: 20,
+                        iconWidth: 16,
+                        iconHeight: 16,
+                      ),
                       onTap: () {
                         forgetDeviceBottomSheet(
                             context: context,

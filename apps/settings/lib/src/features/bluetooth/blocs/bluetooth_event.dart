@@ -1,5 +1,6 @@
 import 'package:bluez/bluez.dart';
 import 'package:equatable/equatable.dart';
+import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
 abstract class BluetoothEvent extends Equatable {
   @override
@@ -70,7 +71,7 @@ class RemoveDevice extends BluetoothEvent {
 }
 
 class SelectDevice extends BluetoothEvent {
-  final BlueZDevice selectedDevice;
+  final BluetoothDeviceDetails selectedDevice;
   SelectDevice(this.selectedDevice);
 
   @override
@@ -90,12 +91,22 @@ class BluetoothDevicesAdded extends BluetoothEvent {
   List<Object?> get props => [device];
 }
 
-class BluetoothDevicesRemoved extends BluetoothEvent {
-  final BlueZDevice device;
-  BluetoothDevicesRemoved(this.device);
+class BluetoothDevicesUpdate extends BluetoothEvent {
+  final BluetoothDeviceDetails device;
+  final BluetoothDeviceCategory category;
+
+  BluetoothDevicesUpdate({required this.device, required this.category});
 
   @override
   List<Object?> get props => [device];
+}
+
+class BluetoothDevicesRemoved extends BluetoothEvent {
+  final String address;
+  BluetoothDevicesRemoved(this.address);
+
+  @override
+  List<Object?> get props => [address];
 }
 
 class BluetoothConnectingEvent extends BluetoothEvent {

@@ -2,7 +2,7 @@ name: mechanix_camera
 description: "A Camera App for Mechanix Devices."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -34,20 +34,22 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   equatable: ^2.0.7
-  flutter_bloc: ^9.1.1  
+  flutter_bloc: ^9.1.1
   widgets:
     git:
       url: https://github.com/mecha-org/mechanix.dart.git
       path: flutter/widgets
-      ref: 2ff2167006cf10f74146a696de0bd34415abbdce 
+      ref: b1f4961b2eaa9ccd104906a4453c9ed58ccf3724
   camera: ^0.11.2+1
   # TODO: Link to camera_elinux of Mecha
   camera_elinux:
     git:
       url: https://github.com/sandptel/flutter-elinux-plugins.git
       path: packages/camera
-      ref: main 
+      ref: exposure-focus
   watch_it: ^1.7.0
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
   dbus: ^0.7.12
   logger: ^2.6.2
   video_player: ^2.10.1
@@ -58,11 +60,21 @@ dependencies:
       path: packages/video_player
       ref: main
   tuple: ^2.0.2
-
+  # TODO: Link to audio_player_elinux of Mecha
+  audioplayers: ^6.5.1
+  audioplayers_elinux:
+    git:
+      url: https://github.com/DhanishMecha/flutter-elinux-plugins
+      path: packages/audioplayers
+      ref: video-record
+  image: ^4.8.0
+  photo_view: ^0.15.0
+  ellipsized_text: ^2.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
+  build_runner: ^2.4.6
+  hive_generator: ^2.0.1
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -75,13 +87,13 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/images/ 
+    - assets/images/
+    - assets/sounds/
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg

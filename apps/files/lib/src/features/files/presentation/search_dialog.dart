@@ -96,10 +96,6 @@ class SearchOverlayController {
   }
 
   Future<void> focusChange() async {
-    if (!_focusNode.hasFocus) {
-      await Future.delayed(const Duration(milliseconds: 300));
-    }
-
     isTextInputOpened.value = _focusNode.hasFocus;
   }
 }

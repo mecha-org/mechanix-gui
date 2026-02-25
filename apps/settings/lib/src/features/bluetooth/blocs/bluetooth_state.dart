@@ -1,4 +1,3 @@
-import 'package:bluez/bluez.dart';
 import 'package:equatable/equatable.dart';
 import 'package:mechanix_settings/src/features/bluetooth/models/types.dart';
 
@@ -6,8 +5,8 @@ class BluetoothState extends Equatable {
   final bool isPowered;
   final bool loading;
   final BluetoothConnection? connection;
-  final List<BlueZDevice> devices;
-  final BlueZDevice? selectedDevice;
+  final List<BluetoothDeviceDetails> devices;
+  final BluetoothDeviceDetails? selectedDevice;
   final String? deviceState;
   final String? error;
   final bool isDiscoveryEnabled;
@@ -29,9 +28,9 @@ class BluetoothState extends Equatable {
     bool? isPowered,
     bool? loading,
     String? error,
-    List<BlueZDevice>? devices,
+    List<BluetoothDeviceDetails>? devices,
     String? deviceState,
-    BlueZDevice? selectedDevice,
+    BluetoothDeviceDetails? selectedDevice,
     BluetoothAdapter? bluetoothAdapter,
     bool? isDiscoveryEnabled,
     BluetoothConnection? connection,
