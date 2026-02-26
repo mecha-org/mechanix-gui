@@ -245,7 +245,12 @@ impl Camera {
                 Camera::get();
                 match GST_CAMERA.lock().unwrap().as_mut().unwrap().frame() {
                     Ok(f) => {
-                        Self::get().frame_buffer.set(f);
+                        let raw_data = f.as_raw();
+                        let buffer = yuyv422_to_rgb(raw_data, true).unwrap();
+                        let width = *Self::get().width.get();
+                        let height = *Self::get().height.get();
+                        let frame = ImageBuffer::from_raw(width, height, buffer).unwrap();
+                        Self::get().frame_buffer.set(frame);
                     }
                     Err(e) => {
                         println!("error from frame {:?}", e);
