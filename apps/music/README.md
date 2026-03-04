@@ -99,32 +99,7 @@ sudo apt install libmpv-dev
 
 ---
 
-## 📌 Smart Limits & Optimizations
-
-To ensure **high performance on Embedded Linux devices**, the app includes intentional limits and optimizations:
-
-### 🕒 Recently Played
-
-- **Recently Played Limit:** `9 songs`
-- Only the **last 9 played tracks** are stored and shown
-- Helps reduce memory usage and keeps the UI fast
-
----
-
-### 📂 Playlists
-
-- **Maximum Playlists:** `10`
-- **Maximum Songs per Playlist:** `30`
-
-**Why these limits?**
-
-- Keeps playlist management lightweight
-- Prevents UI and storage overhead on embedded systems
-- Ensures consistent performance on low-resource devices
-
----
-
 ## TODO
 
-- Implementation of search algorithm
+- Implementation of better search algorithm
 - Add support for multiple artwork icons
