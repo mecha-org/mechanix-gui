@@ -61,6 +61,9 @@ class _SettingMenuState extends State<SettingMenu> {
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
                       title: 'Network',
+                      titleTextStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold), //This is for testing
                       onTap: () => onTap(context, AppRoutes.wireless),
                       iconPath: Images.wifi,
                     ),
