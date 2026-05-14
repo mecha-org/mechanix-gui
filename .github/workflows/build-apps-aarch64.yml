@@ -219,22 +219,22 @@ jobs:
 
           echo "should_publish=$SHOULD_PUBLISH" >> $GITHUB_OUTPUT
 
-      - name: Publish DEB
-        if: steps.check_publish.outputs.should_publish == 'true'
-        run: |
-          DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
-          echo "[INFO] 📦 Publishing DEB: $DEB_FILE"
+      # - name: Publish DEB
+      #   if: steps.check_publish.outputs.should_publish == 'true'
+      #   run: |
+      #     DEB_FILE=$(find ./build/deb -name "mechanix-${{ matrix.app }}*.deb" -type f | head -n1)
+      #     echo "[INFO] 📦 Publishing DEB: $DEB_FILE"
 
-          pulp deb content upload --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" --file="$DEB_FILE"
+      #     pulp deb content upload --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" --file="$DEB_FILE"
 
-          PUB_HREF=$(pulp deb publication create \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --signing-service=mecha-pkg-sign | jq -r '.pulp_href')
+      #     PUB_HREF=$(pulp deb publication create \
+      #       --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+      #       --signing-service=mecha-pkg-sign | jq -r '.pulp_href')
             
-          pulp deb distribution update \
-            --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
-            --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
+      #     pulp deb distribution update \
+      #       --name="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+      #       --base-path="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}" \
+      #       --repository="${{ vars.MECHA_PULP_DEBS_REPOSITORY_NAME }}"
 
       - name: Publish RPM
         if: steps.check_publish.outputs.should_publish == 'true'
