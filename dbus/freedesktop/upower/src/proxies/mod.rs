@@ -186,7 +186,7 @@ impl<'a> UPowerInterface for DeviceProxy<'a> {
 }
 
 async fn get_device_proxy<'a>(cn: &'a Connection) -> Result<DeviceProxy<'a>, ProxyError> {
-    let proxy = match DeviceProxy::new(&cn).await {
+    let proxy = match DeviceProxy::new(cn).await {
         Ok(n) => n,
         Err(e) => {
             error!("failed to create Device proxy: {}", e);
