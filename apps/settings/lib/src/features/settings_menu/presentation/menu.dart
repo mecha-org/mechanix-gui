@@ -82,6 +82,9 @@ class _SettingMenuState extends State<SettingMenu> {
                     SectionListItems.leadingIcon(
                       iconColor: context.primary,
                       title: 'Bluetooth',
+                      titleTextStyle: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold), //This is for testing
                       onTap: () => onTap(context, AppRoutes.bluetooth),
                       iconPath: Images.bluetooth,
                     ),
