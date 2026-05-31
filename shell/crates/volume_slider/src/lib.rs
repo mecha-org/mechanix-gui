@@ -87,7 +87,7 @@ fn handle_volume_delta(
     min_volume: f32,
     max_volume: f32,
 ) {
-    let current = slider.read(cx).value();
+    let current = get_volume(cx);
     let new_value = (current + delta).clamp(min_volume, max_volume);
 
     slider.update(cx, |state, cx| {

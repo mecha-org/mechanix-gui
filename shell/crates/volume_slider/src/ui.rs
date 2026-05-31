@@ -6,6 +6,7 @@ use std::time::Duration;
 
 use crate::slider::{Slider, SliderEvent, SliderPattern, SliderState};
 use crate::{get_volume, set_volume, sync_volume_to_system};
+use shell_state::ShellState;
 
 const OVERLAY_PADDING: f32 = 16.0;
 const OVERLAY_GAP: f32 = 12.0;
@@ -72,18 +73,8 @@ pub fn init(cx: &mut App) -> SliderConfig {
         },
         move |window, cx| {
             let slider_state = slider_state_for_overlay.clone();
-            let initial_value = get_volume(cx).clamp(min_volume_level, max_volume_level);
             window.set_input_regions(Some(Vec::new()));
-            cx.new(move |cx| {
-                SliderOverlay::new(
-                    cx,
-                    slider_state.clone(),
-                    initial_value,
-                    min_volume_level,
-                    max_volume_level,
-                    overlay_timeout_ms,
-                )
-            })
+            cx.new(move |cx| SliderOverlay::new(cx, slider_state.clone(), overlay_timeout_ms))
         },
     )
     .unwrap();
@@ -97,44 +88,54 @@ pub fn init(cx: &mut App) -> SliderConfig {
 
 struct SliderOverlay {
     slider_state: Entity<SliderState>,
-    slider_value: f32,
-    min_volume: f32,
-    max_volume: f32,
     overlay_timeout_ms: u64,
     visible: bool,
     last_visible: bool,
     dismiss_generation: u64,
+    // This one here -> listens to SliderState changes from the overlay UI (drag/tap)
     _subscription: Subscription,
+    // This one -> listens to ShellState changes to update the slider overlay
+    _shell_state_subscription: Subscription,
 }
 
 impl SliderOverlay {
     fn new(
         cx: &mut Context<Self>,
         slider_state: Entity<SliderState>,
-        initial_value: f32,
-        min_volume: f32,
-        max_volume: f32,
         overlay_timeout_ms: u64,
     ) -> Self {
         let subscription = cx.subscribe(&slider_state, |this, _, event: &SliderEvent, cx| {
             let SliderEvent::Change(value) = *event;
-            this.slider_value = value;
             this.show_overlay(cx);
             // Sync volume to ShellState and system when slider is changed via touch/drag
             set_volume(cx, value);
             sync_volume_to_system(value, cx);
         });
 
+        let slider_state_for_shell = slider_state.clone();
+        let shell_state_subscription = cx.observe_global::<ShellState>(move |_this, cx| {
+            let volume = ShellState::global(cx).volume;
+            let state = slider_state_for_shell.read(cx);
+            let new_value = volume.clamp(state.min, state.max);
+            // Threshold on when to show ui: Without it, on every ShellState change would still trigger update()/notify()
+            if (state.value - new_value).abs() < f32::EPSILON {
+                return;
+            }
+             // Not using the shell state updates to show overlay just upate the slider state values
+            slider_state_for_shell.update(cx, |state, cx| {
+                state.value = new_value;
+                cx.notify();
+            });
+        });
+
         Self {
             slider_state,
-            slider_value: initial_value,
-            min_volume,
-            max_volume,
             overlay_timeout_ms,
             visible: false,
             last_visible: false,
             dismiss_generation: 0,
             _subscription: subscription,
+            _shell_state_subscription: shell_state_subscription,
         }
     }
 
@@ -188,12 +189,20 @@ impl SliderOverlay {
 impl Render for SliderOverlay {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let icons = Icons::global(cx).settings_drawer.clone();
+        let state = self.slider_state.read(cx);
+        let current_value = state.value();
+        let min_volume = state.min;
+        let max_volume = state.max;
 
-        let icon_name = if self.slider_value <= self.min_volume {
+        let icon_name = if current_value <= min_volume {
             icons.volume_off
         } else {
-            let range = self.max_volume - self.min_volume;
-            let normalized = (self.slider_value - self.min_volume) / range;
+            let range = max_volume - min_volume;
+            let normalized = if range <= 0.0 {
+                0.0
+            } else {
+                (current_value - min_volume) / range
+            };
             if normalized <= 0.33 {
                 icons.volume_low
             } else if normalized <= 0.66 {
