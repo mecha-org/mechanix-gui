@@ -12,7 +12,7 @@ use zbus::connection;
 pub const DISPLAY_CONNECTION_BUS_NAME: &str = "org.mechanix.services.Display";
 pub const HW_BUTTONS_CONNECTION_BUS_NAME: &str = "org.mechanix.services.HwButton";
 
-pub const BRIGHTNESS_PATH: &str = "/sys/class/backlight/32e60000.mipi_dsi.0/brightness";
+pub const BRIGHTNESS_PATH: &str = "/sys/class/backlight/32e60000.dsi.0/brightness";
 pub const POWER_BUTTON_PATH: &str = "/dev/input/event0";
 pub const HOME_BUTTON_PATH: &str = "/dev/input/event2";
 pub const VOLUME_UP_BUTTON_PATH: &str = "/dev/input/event3";
