@@ -95,17 +95,19 @@ async fn test_i2c_connection(bus_path: &str, slave_addr: u16) -> Result<bool, Li
 pub async fn watch_i2c_extensions(
     event_sender: mpsc::Sender<ExtensionServiceEvent>
 ) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Starting I2C extension detection...");
+    // The connector's I2C bus differs between boards (and is a USB adapter in the Virtual Comet).
+    let bus = std::env::var("MECHANIX_EXTENSIONS_I2C_BUS").unwrap_or_else(|_| I2C_BUS.to_string());
+    println!("Starting I2C extension detection on {}...", bus);
     
     let mut connected_devices: std::collections::HashMap<String, I2CExtension> = std::collections::HashMap::new();
     let poll_interval = Duration::from_secs(2); // Poll every 2 seconds
 
     loop {
         // Test the configured I2C bus and address
-        match test_i2c_connection(I2C_BUS, EXTENSION_SLAVE_ADDR).await {
+        match test_i2c_connection(&bus, EXTENSION_SLAVE_ADDR).await {
             Ok(true) => {
                 // Valid I2C extension detected
-                let extension = I2CExtension::new(I2C_BUS.to_string(), EXTENSION_SLAVE_ADDR);
+                let extension = I2CExtension::new(bus.clone(), EXTENSION_SLAVE_ADDR);
                 let device_id = extension.unique_id.clone();
                 
                 if !connected_devices.contains_key(&device_id) {
@@ -123,10 +125,10 @@ pub async fn watch_i2c_extensions(
             }
             Ok(false) => {
                 // Device responded but with invalid data
-                eprintln!("I2C device at {} responded with invalid data", I2C_BUS);
+                eprintln!("I2C device at {} responded with invalid data", bus);
                 
                 // Remove device if it was previously connected
-                let device_id = format!("i2c-{}-0x{:02x}", I2C_BUS.replace("/dev/i2c-", ""), EXTENSION_SLAVE_ADDR);
+                let device_id = format!("i2c-{}-0x{:02x}", bus.replace("/dev/i2c-", ""), EXTENSION_SLAVE_ADDR);
                 if let Some(extension) = connected_devices.remove(&device_id) {
                     println!("Removing I2C extension due to invalid response: {}", extension.name);
                     let device = extension.to_device();
@@ -138,7 +140,7 @@ pub async fn watch_i2c_extensions(
             }
             Err(_) => {
                 // No device or communication error
-                let device_id = format!("i2c-{}-0x{:02x}", I2C_BUS.replace("/dev/i2c-", ""), EXTENSION_SLAVE_ADDR);
+                let device_id = format!("i2c-{}-0x{:02x}", bus.replace("/dev/i2c-", ""), EXTENSION_SLAVE_ADDR);
                 if let Some(extension) = connected_devices.remove(&device_id) {
                     println!("I2C extension disconnected: {}", extension.name);
                     let device = extension.to_device();
